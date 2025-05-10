@@ -1,0 +1,27 @@
+name: Code Review
+
+on:
+    pull_request:
+        types: [ opened, reopened, synchronize ]
+
+permissions:
+    pull-requests: write
+    contents: read
+
+jobs:
+    review:
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout code
+                uses: actions/checkout@v3
+
+            -   name: ChatGPT Code Review
+                uses: anc95/ChatGPT-CodeReview@main
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+                    LANGUAGE: Korean
+                    PROMPT: ${{secrets.OPENAI_PROMPT}}
+                    MODEL: gpt-4o-mini
+                    TEMPERATURE: 0.5
+                    MAX_TOKENS: 2048
