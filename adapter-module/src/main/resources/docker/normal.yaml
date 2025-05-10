@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile:
+        - local
+        - stage
+        - production
+  docker:
+    compose:
+      enabled: false

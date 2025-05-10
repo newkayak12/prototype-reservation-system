@@ -1,0 +1,15 @@
+spring:
+    config:
+        import:
+            - classpath:restApi/local.yaml
+            - classpath:restApi/production.yaml
+            - classpath:restApi/stage.yaml
+            - classpath:restApi/temporary.yaml
+    data:
+        web:
+            pageable:
+                default-page-size: 10
+                page-parameter: pageNumber
+                size-parameter: pageSize
+                max-page-size: 100
+                one-indexed-parameters: true

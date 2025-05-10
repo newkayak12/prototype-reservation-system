@@ -1,0 +1,98 @@
+permissions:
+    contents: read
+    pull-requests: write
+    issues: write
+
+name: PR label auto addition
+
+on:
+    pull_request:
+        types: [ opened, edited, synchronize ]
+
+jobs:
+    pr-automation:
+        runs-on: ubuntu-latest
+
+        steps:
+            -   name: Check out repository
+                uses: actions/checkout@v2
+
+            -   name: Add Label
+                uses: actions/github-script@v6
+                with:
+                    script: |
+                        const title = context.payload.pull_request.title;
+
+                        if (title.startsWith('Revert')) {
+                          console.log("PR 제목이 'Revert' 로 시작합니다. 'Revert' 라벨을 추가합니다.");
+                          const { data: repoLabels } = await github.rest.issues.listLabelsForRepo({
+                            owner: context.repo.owner,
+                            repo: context.repo.repo,
+                          });
+
+                          const validLabels = repoLabels.map(l => l.name);
+                          if (validLabels.includes('Revert')) {
+                            await github.rest.issues.addLabels({
+                              issue_number: context.issue.number,
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              labels: ['Revert']
+                            });
+                            console.log("Revert 라벨이 추가되었습니다.");
+                          } else {
+                            console.log("라벨 추가 생략: 'Revert' 라벨이 저장소에 존재하지 않습니다.");
+                          }
+                          return;
+                        }
+
+                        const beforeColon = title ? title.split(':')[0] : null;
+
+                        if (!beforeColon) {
+                          console.log("PR 제목에 ':'가 없습니다. 제목 형식이 규칙에 맞지 않습니다.");
+                          return;
+                        }
+
+                        const match = beforeColon.match(/^[^\(]+/);
+                        const label = match ? match[0].trim() : null;
+
+                        if (!label) {
+                          console.log("PR 제목에 '('가 없습니다. 제목 형식이 규칙에 맞지 않습니다.");
+                          return;
+                        }
+
+                        const { data: repoLabels } = await github.rest.issues.listLabelsForRepo({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                        });
+
+                        const validLabels = repoLabels.map(l => l.name);
+                        if (validLabels.includes(label)) {
+                          await github.rest.issues.addLabels({
+                            issue_number: context.issue.number,
+                            owner: context.repo.owner,
+                            repo: context.repo.repo,
+                            labels: [label]
+                          });
+                          console.log(`라벨 '${label}'이(가) 추가되었습니다.`);
+                        } else {
+                          console.log(`라벨 추가 생략: '${label}' 라벨이 저장소에 존재하지 않습니다.`);
+                        }
+
+            -   name: Add Assign Creator
+                uses: actions/github-script@v6
+                with:
+                    script: |
+                        const creator = context.payload.pull_request.user.login;
+
+                        if (!creator) {
+                          console.log("할당 생략: PR 작성자를 찾을 수 없습니다.");
+                          return;
+                        }
+
+                        await github.rest.issues.addAssignees({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: context.payload.pull_request.number,
+                          assignees: [creator]
+                        });
+                        console.log(`PR 작성자 '${creator}'를 할당자로 추가했습니다.`);

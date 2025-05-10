@@ -1,0 +1,10 @@
+spring:
+    activate:
+        on-profile: production
+
+security:
+    jwt:
+        properties:
+            expire-time: 300000
+            secret: HELLO
+            issuer: HELLO
