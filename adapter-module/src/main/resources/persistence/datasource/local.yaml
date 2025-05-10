@@ -1,0 +1,10 @@
+spring:
+    config:
+        import: "classpath:hibernate.yaml"
+        activate:
+            on-profile: local
+    jpa:
+        database-platform: org.hibernate.dialect.H2Dialect
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.H2Dialect

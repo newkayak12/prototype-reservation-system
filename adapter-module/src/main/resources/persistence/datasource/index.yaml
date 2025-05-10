@@ -1,0 +1,7 @@
+spring:
+    config:
+        import:
+            - classpath:persistence/datasource/local.yaml
+            - classpath:persistence/datasource/production.yaml
+            - classpath:persistence/datasource/stage.yaml
+            - classpath:persistence/datasource/temporary.yaml

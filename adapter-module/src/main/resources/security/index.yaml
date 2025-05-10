@@ -1,0 +1,7 @@
+spring:
+    config:
+        import:
+            - classpath:security/local.yaml
+            - classpath:security/production.yaml
+            - classpath:security/stage.yaml
+            - classpath:security/temporary.yaml
