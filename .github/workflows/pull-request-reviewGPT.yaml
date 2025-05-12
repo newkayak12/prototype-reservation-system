@@ -26,5 +26,5 @@ jobs:
                     TEMPERATURE: 0.5
                     MAX_TOKENS: 2048
                     IGNORE_PATTERNS: .github,.gradle/**/*,.gitignore,*.yaml,*.jar,.gitkeep
-                    INCLUDE_PATTERNS: *.kt,*.java
+                    INCLUDE_PATTERNS: "*.kt,*.java"
 
