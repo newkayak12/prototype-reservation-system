@@ -25,9 +25,9 @@ enum class QueryType(val value: String) {
 }
 
 internal class P6SpyEventListener : JdbcEventListener() {
-
     override fun onAfterGetConnection(
-        connectionInformation: ConnectionInformation?, e: SQLException?
+        connectionInformation: ConnectionInformation?,
+        e: SQLException?,
     ) {
         P6SpyOptions.getActiveInstance().logMessageFormat = P6SpyFormatter::class.java.name
     }

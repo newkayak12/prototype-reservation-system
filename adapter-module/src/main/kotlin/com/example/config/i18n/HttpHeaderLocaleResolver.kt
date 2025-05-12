@@ -24,7 +24,9 @@ internal class HttpHeaderLocaleResolver : LocaleResolver {
 
     @Suppress("EmptyFunctionBlock")
     override fun setLocale(
-        request: HttpServletRequest, response: HttpServletResponse?, locale: Locale?,
+        request: HttpServletRequest,
+        response: HttpServletResponse?,
+        locale: Locale?,
     ) {
     }
 }
