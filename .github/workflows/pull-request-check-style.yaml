@@ -37,5 +37,6 @@ jobs:
 
             -   name: Grant execute permission to gradlew
                 run: chmod +x ./gradlew
+
             -   name: apply style
-                run: ./gradlew  spotlessKotlinApply
+                run: ./gradlew  spotlessKotlinCheck
