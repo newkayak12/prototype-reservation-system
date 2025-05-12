@@ -1,0 +1,6 @@
+spring:
+    config:
+        activate:
+            on-profile: stage
+    jpa:
+        database-platform: org.hibernate.dialect.H2Dialect

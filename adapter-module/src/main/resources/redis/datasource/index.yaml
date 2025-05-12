@@ -1,0 +1,7 @@
+spring:
+    config:
+        import:
+            - classpath:redis/datasource/local.yaml
+            - classpath:redis/datasource/production.yaml
+            - classpath:redis/datasource/stage.yaml
+            - classpath:redis/datasource/temporary.yaml
