@@ -1,0 +1,28 @@
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+performance:
+  SpreadOperator:
+    active: false
+
+style:
+  WildcardImport:
+    active: true
+  NewLineAtEndOfFile:
+    active: true
+  UnusedImports:
+    active: true
+  UnusedPrivateMember:
+    active: false
+
+naming:
+  ClassNaming:
+    active: true
+    classPattern: '[A-Z][a-zA-Z0-9]*'
+
+complexity:
+  LongMethod:
+    active: true
+

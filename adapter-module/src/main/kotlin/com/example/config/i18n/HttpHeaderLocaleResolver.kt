@@ -22,10 +22,9 @@ internal class HttpHeaderLocaleResolver : LocaleResolver {
         return Locale.lookup(languageRanges, SUPPORTED_LANGUAGE) ?: DEFAULT_LANGUAGE
     }
 
+    @Suppress("EmptyFunctionBlock")
     override fun setLocale(
-        request: HttpServletRequest,
-        response: HttpServletResponse?,
-        locale: Locale?,
+        request: HttpServletRequest, response: HttpServletResponse?, locale: Locale?,
     ) {
     }
 }

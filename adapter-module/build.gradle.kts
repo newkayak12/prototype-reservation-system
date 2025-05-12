@@ -1,4 +1,21 @@
+import io.gitlab.arturbosch.detekt.Detekt
+
 configurations.create("asciidoctorExt")
+
+detekt {
+    config.setFrom(files("$rootDir/detekt.yaml"))
+    buildUponDefaultConfig = true
+}
+
+tasks.named<Detekt>("detekt") {
+    reports {
+        html.required.set(true)
+        html.outputLocation.set(file("build/reports/detekt/detekt.html"))
+        sarif.required.set(false)
+        xml.required.set(false)
+        txt.required.set(false)
+    }
+}
 
 dependencies {
     implementation("io.jsonwebtoken:jjwt:0.12.6")
