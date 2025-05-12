@@ -4,5 +4,5 @@ include(
     "shared-module",
     "core-module",
     "application-module",
-    "adapter-module"
+    "adapter-module",
 )

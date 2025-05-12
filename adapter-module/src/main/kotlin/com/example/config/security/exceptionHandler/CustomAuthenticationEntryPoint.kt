@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component
 @Component
 class CustomAuthenticationEntryPoint: AuthenticationEntryPoint {
     override fun commence(
-        request: HttpServletRequest?, response: HttpServletResponse?, authException: AuthenticationException?
+        request: HttpServletRequest, response: HttpServletResponse, authException: AuthenticationException
     ) {
-        response?.status = HttpStatus.UNAUTHORIZED.value()
+        response.status = HttpStatus.UNAUTHORIZED.value()
     }
 }
