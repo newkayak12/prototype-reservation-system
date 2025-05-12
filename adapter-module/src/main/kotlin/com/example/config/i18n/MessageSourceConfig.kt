@@ -1,12 +1,14 @@
 package com.example.config.i18n
 
-import com.example.config.persistence.PersistenceConfig
 import org.springframework.context.MessageSource
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.support.ResourceBundleMessageSource
 import org.yaml.snakeyaml.Yaml
-import java.util.*
+import java.util.Locale
+import java.util.ResourceBundle
+import java.util.Enumeration
+import java.util.Collections
 
 @Configuration
 internal class MessageSourceConfig {
@@ -30,7 +32,7 @@ private class YamlConverter : ResourceBundle.Control() {
     override fun getFormats(baseName: String): List<String> = listOf("yaml", "yml")
     override fun newBundle(
         baseName: String, locale: Locale, format: String,
-        loader: ClassLoader, reload: Boolean
+        loader: ClassLoader, reload: Boolean,
     ): ResourceBundle? {
         val resourceName = toResourceName(toBundleName(baseName, locale), format)
         val inputStream = loader.getResourceAsStream(resourceName) ?: return null
