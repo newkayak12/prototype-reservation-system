@@ -27,13 +27,13 @@ private class YamlMessageSource : ResourceBundleMessageSource() {
 }
 
 private class YamlConverter : ResourceBundle.Control() {
-    override fun getFormats(baseName: String?): MutableList<String> = mutableListOf("yaml", "yml")
+    override fun getFormats(baseName: String): List<String> = listOf("yaml", "yml")
     override fun newBundle(
-        baseName: String?, locale: Locale?, format: String?,
-        loader: ClassLoader?, reload: Boolean
+        baseName: String, locale: Locale, format: String,
+        loader: ClassLoader, reload: Boolean
     ): ResourceBundle? {
         val resourceName = toResourceName(toBundleName(baseName, locale), format)
-        val inputStream = loader?.getResourceAsStream(resourceName) ?: return null
+        val inputStream = loader.getResourceAsStream(resourceName) ?: return null
 
 
         val yaml = Yaml();

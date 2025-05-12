@@ -13,29 +13,30 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer
 import org.springframework.data.redis.serializer.RedisSerializationContext
 import org.springframework.data.redis.serializer.StringRedisSerializer
 import java.time.Duration
+import kotlin.reflect.KClass
 
 @Configuration
 internal class CacheManager (val objectMapper: ObjectMapper) {
 
     @Bean
-    fun redisCacheManager(redisConnectionFactory: RedisConnectionFactory?): RedisCacheManager =
+    fun redisCacheManager(redisConnectionFactory: RedisConnectionFactory): RedisCacheManager =
         RedisCacheManagerBuilder
             .fromConnectionFactory(redisConnectionFactory)
-            .cacheDefaults(defaultConfiguration(Any::class.java, Duration.ofDays(1)))
+            .cacheDefaults(defaultConfiguration(Any::class, Duration.ofDays(1)))
             .withInitialCacheConfigurations(initialCacheConfigurations())
             .build()
 
-    private fun <T> defaultConfiguration(clazz: Class<T>, ttl: Duration): RedisCacheConfiguration =
+    private inline fun < reified T : Any> defaultConfiguration(clazz: KClass<T>, ttl: Duration): RedisCacheConfiguration =
         RedisCacheConfiguration.defaultCacheConfig()
             .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(StringRedisSerializer()))
             .serializeValuesWith(
-                RedisSerializationContext.SerializationPair.fromSerializer(Jackson2JsonRedisSerializer(clazz))
+                RedisSerializationContext.SerializationPair.fromSerializer(Jackson2JsonRedisSerializer(clazz::class.java))
             )
             .entryTtl(ttl)
 
-    private fun <T> listConfiguration(clazz: Class<T>, ttl: Duration): RedisCacheConfiguration {
+    private inline fun < reified T : Any> listConfiguration(clazz: KClass<T>, ttl: Duration): RedisCacheConfiguration {
         val typeFactory: TypeFactory = objectMapper.typeFactory
-        val javaType: JavaType = typeFactory.constructCollectionType(MutableList::class.java, clazz)
+        val javaType: JavaType = typeFactory.constructCollectionType(MutableList::class.java, clazz::class.java)
         val serializer = Jackson2JsonRedisSerializer<List<T>>(javaType)
 
         return RedisCacheConfiguration.defaultCacheConfig()
