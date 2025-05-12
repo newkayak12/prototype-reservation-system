@@ -49,6 +49,9 @@ tasks.register("gitPreCommitHook") {
         exec {
             commandLine("bash", "./gradlew", "spotlessKotlinGradleApply")
         }
+        exec {
+            commandLine("bash", "./gradlew", "detekt")
+        }
 
         // 변경된 파일을 git에 다시 stage
         exec {
