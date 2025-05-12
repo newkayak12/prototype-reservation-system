@@ -9,7 +9,6 @@ import jakarta.persistence.Table
 @Table(name = "sample")
 @Entity
 class Sample {
-
     @Id
     @TimeBasedUuidStrategy
     val id: String? = null

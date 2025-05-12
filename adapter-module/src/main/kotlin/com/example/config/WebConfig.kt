@@ -8,5 +8,5 @@ import org.springframework.web.servlet.LocaleResolver
 @Configuration
 internal class WebConfig {
     @Bean
-    fun localeResolver() : LocaleResolver = HttpHeaderLocaleResolver()
+    fun localeResolver(): LocaleResolver = HttpHeaderLocaleResolver()
 }

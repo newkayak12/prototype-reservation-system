@@ -8,9 +8,11 @@ import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.stereotype.Component
 
 @Component
-class CustomAccessDenialHandler : AccessDeniedHandler{
+class CustomAccessDenialHandler : AccessDeniedHandler {
     override fun handle(
-        request: HttpServletRequest, response: HttpServletResponse, accessDeniedException: AccessDeniedException
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        accessDeniedException: AccessDeniedException,
     ) {
         response.status = HttpStatus.FORBIDDEN.value()
     }

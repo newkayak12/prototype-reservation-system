@@ -5,46 +5,50 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.support.ResourceBundleMessageSource
 import org.yaml.snakeyaml.Yaml
+import java.util.Collections
+import java.util.Enumeration
 import java.util.Locale
 import java.util.ResourceBundle
-import java.util.Enumeration
-import java.util.Collections
 
 @Configuration
 internal class MessageSourceConfig {
-
-
     @Bean
-    fun messageSource(): MessageSource = YamlMessageSource()
-        .apply {
-            setBasenames("classpath:messages")
-            setDefaultEncoding("UTF-8")
-            setFallbackToSystemLocale(false)
-        }
+    fun messageSource(): MessageSource =
+        YamlMessageSource()
+            .apply {
+                setBasenames("classpath:messages")
+                setDefaultEncoding("UTF-8")
+                setFallbackToSystemLocale(false)
+            }
 }
 
 private class YamlMessageSource : ResourceBundleMessageSource() {
-    override fun doGetBundle(basename: String, locale: Locale): ResourceBundle =
-        ResourceBundle.getBundle(basename, locale, YamlConverter());
+    override fun doGetBundle(
+        basename: String,
+        locale: Locale,
+    ): ResourceBundle = ResourceBundle.getBundle(basename, locale, YamlConverter())
 }
 
 private class YamlConverter : ResourceBundle.Control() {
     override fun getFormats(baseName: String): List<String> = listOf("yaml", "yml")
+
     override fun newBundle(
-        baseName: String, locale: Locale, format: String,
-        loader: ClassLoader, reload: Boolean,
+        baseName: String,
+        locale: Locale,
+        format: String,
+        loader: ClassLoader,
+        reload: Boolean,
     ): ResourceBundle? {
         val resourceName = toResourceName(toBundleName(baseName, locale), format)
         val inputStream = loader.getResourceAsStream(resourceName) ?: return null
 
-
-        val yaml = Yaml();
+        val yaml = Yaml()
         val data: Map<String, Any> = yaml.load(inputStream)
 
         return object : ResourceBundle() {
             override fun handleGetObject(key: String): Any? = data[key]
+
             override fun getKeys(): Enumeration<String> = Collections.enumeration(data.keys)
         }
     }
-
 }

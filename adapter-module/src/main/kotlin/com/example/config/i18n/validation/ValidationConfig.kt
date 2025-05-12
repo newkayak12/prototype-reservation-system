@@ -8,8 +8,9 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 @Configuration
 internal class ValidationConfig {
     @Bean
-    fun getValidator(messageSource: MessageSource): LocalValidatorFactoryBean = LocalValidatorFactoryBean()
-        .apply {
-            setValidationMessageSource(messageSource)
-        }
+    fun getValidator(messageSource: MessageSource): LocalValidatorFactoryBean =
+        LocalValidatorFactoryBean()
+            .apply {
+                setValidationMessageSource(messageSource)
+            }
 }

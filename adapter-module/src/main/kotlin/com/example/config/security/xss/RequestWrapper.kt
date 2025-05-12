@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletRequestWrapper
 
 class RequestWrapper(request: HttpServletRequest?) : HttpServletRequestWrapper(request) {
-
     companion object {
         private const val LT = "<"
         private const val LT_REPLACEMENT = "&lt;"
@@ -25,25 +24,32 @@ class RequestWrapper(request: HttpServletRequest?) : HttpServletRequestWrapper(r
         private const val EMPTY_STRING = ""
     }
 
-    override fun getParameterValues(parameter: String ): Array<String>? {
-        val values  = super.getParameterValues(parameter) ?: return null
-        return Array<String>(values.size){
-            i -> manipulateRequest(values[i])
+    override fun getParameterValues(parameter: String): Array<String>? {
+        val values = super.getParameterValues(parameter) ?: return null
+        return Array<String>(values.size) {
+                i ->
+            manipulateRequest(values[i])
         }
     }
 
-    override fun getParameter(name: String?): String? = super.getParameter(name) ?.let { manipulateRequest(it) }
+    override fun getParameter(name: String?): String? =
+        super.getParameter(name) ?.let {
+            manipulateRequest(it)
+        }
 
-    override fun getHeader(name: String?): String? = super.getHeader(name) ?.let { manipulateRequest(it) }
+    override fun getHeader(name: String?): String? =
+        super.getHeader(name) ?.let {
+            manipulateRequest(it)
+        }
 
     private fun manipulateRequest(value: String): String {
         return value
-            .replace(LT , LT_REPLACEMENT)
+            .replace(LT, LT_REPLACEMENT)
             .replace(GT, GT_REPLACEMENT)
             .replace(OPEN_PAREN, OPEN_PAREN_REPLACEMENT)
             .replace(CLOSE_PAREN, CLOSE_PAREN_REPLACEMENT)
             .replace(SINGLE_QUOTE, SINGLE_QUOTE_REPLACEMENT)
-            .replace(EVAL_PATTERN , EMPTY_STRING)
+            .replace(EVAL_PATTERN, EMPTY_STRING)
             .replace(JAVASCRIPT_PATTERN, QUOTED_EMPTY_STRING)
             .replace(SCRIPT_PATTERN, EMPTY_STRING)
     }

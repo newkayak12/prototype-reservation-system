@@ -2,11 +2,11 @@ package com.example.config.security.jwt
 
 import org.springframework.security.core.GrantedAuthority
 
-enum class SecurityRole: GrantedAuthority {
+enum class SecurityRole : GrantedAuthority {
     ROLE_ADMIN,
     ROLE_MANAGER,
-    ROLE_USER;
-
+    ROLE_USER,
+    ;
 
     override fun getAuthority(): String = this.name
 }

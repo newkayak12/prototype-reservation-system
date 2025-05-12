@@ -12,19 +12,23 @@ import org.springframework.web.filter.OncePerRequestFilter
 
 class JwtFilter(
     private val jwtProvider: JwtProvider,
-    private val jwtPath: JwtWhitelist
+    private val jwtPath: JwtWhitelist,
 ) : OncePerRequestFilter() {
-
     override fun doFilterInternal(
-        request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        filterChain: FilterChain,
     ) {
         val bearerToken: String = request.getHeader(HttpHeaders.AUTHORIZATION)
 
         if (jwtProvider.validate(bearerToken)) {
             val principal: TokenableAuthenticationDetails = jwtProvider.decrypt(bearerToken)
-            val authentication: Authentication = UsernamePasswordAuthenticationToken(
-                principal, bearerToken, principal.authorities
-            )
+            val authentication: Authentication =
+                UsernamePasswordAuthenticationToken(
+                    principal,
+                    bearerToken,
+                    principal.authorities,
+                )
             SecurityContextHolder.getContext().authentication = authentication
         }
 

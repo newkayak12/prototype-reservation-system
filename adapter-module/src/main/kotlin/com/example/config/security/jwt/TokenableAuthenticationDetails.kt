@@ -7,16 +7,15 @@ data class TokenableAuthenticationDetails(
     private val id: String,
     private val username: String,
     private val password: String,
-    private val securityRole: SecurityRole
-): UserDetails, Tokenable{
+    private val securityRole: SecurityRole,
+) : UserDetails, Tokenable {
+    override fun identity(): String = id
 
-    override fun identity(): String  = id
+    override fun role(): String = securityRole.name
 
-    override fun role(): String  = securityRole.name
+    override fun getAuthorities(): Collection<GrantedAuthority> = setOf(securityRole)
 
-    override fun getAuthorities(): Collection<out GrantedAuthority>  = setOf(securityRole)
+    override fun getPassword(): String = password
 
-    override fun getPassword(): String  = password
-
-    override fun getUsername(): String  = username
+    override fun getUsername(): String = username
 }

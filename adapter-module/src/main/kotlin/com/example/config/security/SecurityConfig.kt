@@ -28,23 +28,23 @@ class SecurityConfig(
     private val customAccessDeniedHandler: AccessDeniedHandler,
     private val customAuthenticationEntryPoint: AuthenticationEntryPoint,
     private val jwtProperties: JwtProperties,
-    private val provider: JwtProvider = JwtProvider(jwtProperties)
+    private val provider: JwtProvider = JwtProvider(jwtProperties),
 ) {
-
     @Bean
     fun passwordEncoder(): PasswordEncoder = PasswordEncoderUtility.getInstance()
 
     @Bean
-    fun authorityMapper(): GrantedAuthoritiesMapper = GrantedAuthoritiesMapper { authorities ->
-        val mapped = authorities.toMutableList()
-        if (authorities.any { it.authority == SecurityRole.ROLE_ADMIN.name }) {
-            mapped.add(SecurityRole.ROLE_MANAGER)
+    fun authorityMapper(): GrantedAuthoritiesMapper =
+        GrantedAuthoritiesMapper { authorities ->
+            val mapped = authorities.toMutableList()
+            if (authorities.any { it.authority == SecurityRole.ROLE_ADMIN.name }) {
+                mapped.add(SecurityRole.ROLE_MANAGER)
+            }
+            if (authorities.any { it.authority == SecurityRole.ROLE_MANAGER.name }) {
+                mapped.add(SecurityRole.ROLE_USER)
+            }
+            mapped
         }
-        if (authorities.any { it.authority == SecurityRole.ROLE_MANAGER.name }) {
-            mapped.add(SecurityRole.ROLE_USER)
-        }
-        mapped
-    }
 
     @Bean
     fun filterChain(httpSecurity: HttpSecurity) {
@@ -62,10 +62,11 @@ class SecurityConfig(
                 it.requestMatchers("/**").permitAll()
                 it.anyRequest().authenticated()
             }
-            .addFilterBefore(JwtFilter(provider, jwtPath), UsernamePasswordAuthenticationFilter::class.java)
+            .addFilterBefore(
+                JwtFilter(provider, jwtPath),
+                UsernamePasswordAuthenticationFilter::class.java,
+            )
             .addFilterAfter(CrossSiteScriptFilter(xssPath), RequestCacheAwareFilter::class.java)
             .build()
     }
-
-
 }

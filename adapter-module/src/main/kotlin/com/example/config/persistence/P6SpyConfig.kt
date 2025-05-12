@@ -15,12 +15,11 @@ internal class P6SpyConfig {
 }
 
 enum class QueryType(val value: String) {
-    CREATE  ("create"),
-    ALTER  ("alter"),
-    DROP  ("drop"),
-    COMMENT  ("comment"),
-    STATEMENT (Category.STATEMENT.name);
-
+    CREATE("create"),
+    ALTER("alter"),
+    DROP("drop"),
+    COMMENT("comment"),
+    STATEMENT(Category.STATEMENT.name),
 }
 
 internal class P6SpyEventListener : JdbcEventListener() {
@@ -31,51 +30,64 @@ internal class P6SpyEventListener : JdbcEventListener() {
 
 internal class P6SpyFormatter : MessageFormattingStrategy {
     override fun formatMessage(
-        connectionId: Int, now: String, elapsed: Long, category: String, prepared: String, sql: String, url: String
-    ): String = if (sql.isBlank())
-        formatByCommand(category)
-    else
-        """
+        connectionId: Int,
+        now: String,
+        elapsed: Long,
+        category: String,
+        prepared: String,
+        sql: String,
+        url: String,
+    ): String =
+        if (sql.isBlank()) {
+            formatByCommand(category)
+        } else {
+            """
         ${formatBySql(sql, category)}
         ${getAdditionalMessages(elapsed)}
-        """.trimMargin()
+            """.trimMargin()
+        }
 
     private fun formatByCommand(category: String): String =
         """
-                ----------------------------------------------------------------------------------------------------
-                Execute Command :
-                $category
-                ----------------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------------
+        Execute Command :
+        $category
+        ----------------------------------------------------------------------------------------------------
         """.trimIndent()
 
-    private fun formatBySql(sql: String, category: String): String =
+    private fun formatBySql(
+        sql: String,
+        category: String,
+    ): String =
         if (isStatementDDL(sql, category)) {
             """
-                        Execute DDL :${FormatStyle.DDL.formatter.format(sql)}
-                        
-                """.trimIndent()
+            Execute DDL :${FormatStyle.DDL.formatter.format(sql)}
+
+            """.trimIndent()
         } else {
             """
-                        Execute DML : ${FormatStyle.BASIC.formatter.format(sql)}
-                        
-                """.trimIndent()
+            Execute DML : ${FormatStyle.BASIC.formatter.format(sql)}
+
+            """.trimIndent()
         }
 
     private fun getAdditionalMessages(elapsed: Long): String =
         """
 
-                Execution Time: $elapsed ms
-                ----------------------------------------------------------------------------------------------------
-            """.trimIndent()
+        Execution Time: $elapsed ms
+        ----------------------------------------------------------------------------------------------------
+        """.trimIndent()
 
-    private fun isStatementDDL(sql: String, category: String): Boolean =
-        isStatement(category) && isDDL(sql.trim { it <= ' ' }.lowercase())
+    private fun isStatementDDL(
+        sql: String,
+        category: String,
+    ): Boolean = isStatement(category) && isDDL(sql.trim { it <= ' ' }.lowercase())
 
     private fun isStatement(category: String): Boolean = QueryType.STATEMENT.value == category
 
     private fun isDDL(lowerSql: String): Boolean =
-        lowerSql.startsWith(QueryType.CREATE.value)
-                || lowerSql.startsWith(QueryType.ALTER.value)
-                || lowerSql.startsWith(QueryType.DROP.value)
-                || lowerSql.startsWith(QueryType.COMMENT.value)
+        lowerSql.startsWith(QueryType.CREATE.value) ||
+            lowerSql.startsWith(QueryType.ALTER.value) ||
+            lowerSql.startsWith(QueryType.DROP.value) ||
+            lowerSql.startsWith(QueryType.COMMENT.value)
 }
