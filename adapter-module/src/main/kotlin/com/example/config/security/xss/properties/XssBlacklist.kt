@@ -4,5 +4,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(value = "security.xss.restricted")
 data class XssBlacklist(
-    val path: List<String>,
+    val path: List<String>?,
 )

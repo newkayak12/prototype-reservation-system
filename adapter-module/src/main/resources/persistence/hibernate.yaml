@@ -15,7 +15,8 @@ spring:
 
 logging:
     level:
-        p6spy: info
+        p6spy: DEBUG
+        com.p6spy: DEBUG
 decorator:
     datasource:
         p6spy:
