@@ -47,7 +47,6 @@ tasks.register("gitPreCommitHook") {
 
         // spotlessKotlinGradleApply 작업 실행 (gradlew를 통해 실행)
         exec {
-            commandLine("bash", "./gradlew", "detekt")
             commandLine("bash", "./gradlew", "spotlessKotlinGradleApply")
         }
 
