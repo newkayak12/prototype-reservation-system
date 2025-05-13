@@ -12,7 +12,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 
 class JwtFilter(
     private val jwtProvider: JwtProvider,
-    private val jwtPath: JwtWhitelist,
+    private val jwtPath: JwtWhitelist?,
 ) : OncePerRequestFilter() {
     override fun doFilterInternal(
         request: HttpServletRequest,
@@ -37,6 +37,6 @@ class JwtFilter(
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val servletPath = request.servletPath
-        return jwtPath.path.contains(servletPath)
+        return jwtPath?.path?.contains(servletPath) ?: false
     }
 }

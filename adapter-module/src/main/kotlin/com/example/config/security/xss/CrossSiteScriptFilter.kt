@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.web.filter.OncePerRequestFilter
 
-class CrossSiteScriptFilter(private val xssBlacklist: XssBlacklist) : OncePerRequestFilter() {
+class CrossSiteScriptFilter(private val xssBlacklist: XssBlacklist?) : OncePerRequestFilter() {
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -15,6 +15,6 @@ class CrossSiteScriptFilter(private val xssBlacklist: XssBlacklist) : OncePerReq
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val servletPath = request.servletPath
-        return !xssBlacklist.path.contains(servletPath)
+        return !(xssBlacklist?.path?.contains(servletPath)?: true)
     }
 }

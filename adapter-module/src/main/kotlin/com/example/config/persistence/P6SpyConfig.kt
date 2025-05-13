@@ -1,5 +1,6 @@
 package com.example.config.persistence
 
+import com.p6spy.engine.common.ConnectionInformation
 import com.p6spy.engine.event.JdbcEventListener
 import com.p6spy.engine.logging.Category
 import com.p6spy.engine.spy.P6SpyOptions
@@ -7,6 +8,7 @@ import com.p6spy.engine.spy.appender.MessageFormattingStrategy
 import org.hibernate.engine.jdbc.internal.FormatStyle
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.sql.SQLException
 
 @Configuration
 internal class P6SpyConfig {
@@ -23,7 +25,10 @@ enum class QueryType(val value: String) {
 }
 
 internal class P6SpyEventListener : JdbcEventListener() {
-    init {
+    override fun onAfterGetConnection(
+        connectionInformation: ConnectionInformation?,
+        e: SQLException?,
+    ) {
         P6SpyOptions.getActiveInstance().logMessageFormat = P6SpyFormatter::class.java.name
     }
 }
