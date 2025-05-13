@@ -9,7 +9,7 @@ plugins {
     id("org.asciidoctor.jvm.convert") version "3.3.2" apply false
     id("com.epages.restdocs-api-spec") version "0.19.4" apply false
     id("org.hidetake.swagger.generator") version "2.18.2" apply false
-    id("io.gitlab.arturbosch.detekt") version "1.23.7" apply false
+    id("io.gitlab.arturbosch.detekt") version "1.23.7"
     id("com.diffplug.spotless") version "6.25.0"
     id("com.github.ben-manes.versions") version "0.51.0"
 }
@@ -24,6 +24,11 @@ kotlin {
     compilerOptions {
         freeCompilerArgs.addAll("-Xjsr305=strict")
     }
+}
+
+detekt {
+    config.setFrom(files("$rootDir/detekt.yaml"))
+    buildUponDefaultConfig = true
 }
 
 spotless {
@@ -91,6 +96,7 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlin.plugin.spring")
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "io.gitlab.arturbosch.detekt")
 
     dependencies {
         implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -160,7 +166,6 @@ project(":adapter-module") {
     apply(plugin = "org.asciidoctor.jvm.convert")
     apply(plugin = "com.epages.restdocs-api-spec")
     apply(plugin = "org.hidetake.swagger.generator")
-    apply(plugin = "io.gitlab.arturbosch.detekt")
 
     tasks.named("bootJar") { enabled = true }
     tasks.named("jar") { enabled = false }

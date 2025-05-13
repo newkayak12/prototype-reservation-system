@@ -40,6 +40,7 @@ internal class CacheManager(val objectMapper: ObjectMapper) {
             )
             .entryTtl(ttl)
 
+    @Suppress("UnusedPrivateMember")
     private inline fun <reified T : Any> listConfiguration(
         clazz: KClass<T>,
         ttl: Duration,
