@@ -1,0 +1,14 @@
+package com.reservation.sample.config
+
+import com.reservation.generator.uuid.UuidGenerator
+import org.hibernate.engine.spi.SharedSessionContractImplementor
+import org.hibernate.id.IdentifierGenerator
+
+class TimeBasedIdGenerator : IdentifierGenerator {
+    override fun generate(
+        p0: SharedSessionContractImplementor?,
+        p1: Any?,
+    ): String {
+        return UuidGenerator.generate()
+    }
+}

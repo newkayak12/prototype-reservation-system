@@ -1,4 +1,4 @@
-rootProject.name = "base"
+rootProject.name = "reservation"
 
 include(
     "shared-module",
