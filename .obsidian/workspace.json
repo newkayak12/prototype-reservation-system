@@ -6,7 +6,6 @@
       {
         "id": "43b0db3622e6d2cc",
         "type": "tabs",
-        "dimension": 32.88912579957356,
         "children": [
           {
             "id": "f7a2f135bd90a155",
@@ -23,12 +22,11 @@
         ]
       },
       {
-        "id": "401b70d8ad19502f",
+        "id": "5a5de1c7f1c7a270",
         "type": "tabs",
-        "dimension": 67.11087420042644,
         "children": [
           {
-            "id": "67fdd42dcb20773d",
+            "id": "a3fb5900181a5f03",
             "type": "leaf",
             "state": {
               "type": "excalidraw",
@@ -87,8 +85,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "564e860bdc5fa897",
@@ -168,7 +165,7 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "67fdd42dcb20773d",
+  "active": "a3fb5900181a5f03",
   "lastOpenFiles": [
     "docs/request/v2/request.md",
     "docs/request/v2/eventstoming.excalidraw.md",
