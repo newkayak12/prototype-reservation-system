@@ -11,9 +11,11 @@
             "id": "67fdd42dcb20773d",
             "type": "leaf",
             "state": {
-              "type": "excalidraw",
+              "type": "markdown",
               "state": {
-                "file": "docs/request/v2/eventstoming.excalidraw.md"
+                "file": "docs/request/v2/request.md",
+                "mode": "source",
+                "source": false
               }
             }
           }
@@ -83,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/request/v2/eventstoming.excalidraw.md",
+                "file": "docs/request/v2/request.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -100,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/request/v2/eventstoming.excalidraw.md",
+                "file": "docs/request/v2/request.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -123,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/request/v2/eventstoming.excalidraw.md"
+                "file": "docs/request/v2/request.md"
               }
             }
           }
