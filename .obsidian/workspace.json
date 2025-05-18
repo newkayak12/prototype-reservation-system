@@ -11,8 +11,10 @@
             "id": "67fdd42dcb20773d",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {}
+              "type": "excalidraw",
+              "state": {
+                "file": "docs/request/v2/eventstoming.excalidraw.md"
+              }
             }
           }
         ]
@@ -81,6 +83,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "docs/request/v2/eventstoming.excalidraw.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -97,6 +100,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "docs/request/v2/eventstoming.excalidraw.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -118,7 +122,9 @@
             "type": "leaf",
             "state": {
               "type": "outline",
-              "state": {}
+              "state": {
+                "file": "docs/request/v2/eventstoming.excalidraw.md"
+              }
             }
           }
         ]
@@ -143,6 +149,7 @@
   },
   "active": "67fdd42dcb20773d",
   "lastOpenFiles": [
+    "docs/request/v2/eventstoming.excalidraw.md",
     "build/spotless/spotlessKotlinGradle/settings.gradle.kts"
   ]
 }
