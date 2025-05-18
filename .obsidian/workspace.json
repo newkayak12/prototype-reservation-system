@@ -6,9 +6,10 @@
       {
         "id": "43b0db3622e6d2cc",
         "type": "tabs",
+        "dimension": 32.88912579957356,
         "children": [
           {
-            "id": "67fdd42dcb20773d",
+            "id": "f7a2f135bd90a155",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -16,6 +17,23 @@
                 "file": "docs/request/v2/request.md",
                 "mode": "source",
                 "source": false
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "401b70d8ad19502f",
+        "type": "tabs",
+        "dimension": 67.11087420042644,
+        "children": [
+          {
+            "id": "67fdd42dcb20773d",
+            "type": "leaf",
+            "state": {
+              "type": "excalidraw",
+              "state": {
+                "file": "docs/request/v2/eventstoming.excalidraw.md"
               }
             }
           }
@@ -69,7 +87,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "564e860bdc5fa897",
@@ -85,7 +104,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/request/v2/request.md",
+                "file": "docs/request/v2/eventstoming.excalidraw.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +121,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/request/v2/request.md",
+                "file": "docs/request/v2/eventstoming.excalidraw.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +144,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/request/v2/request.md"
+                "file": "docs/request/v2/eventstoming.excalidraw.md"
               }
             }
           }
@@ -151,6 +170,7 @@
   },
   "active": "67fdd42dcb20773d",
   "lastOpenFiles": [
+    "docs/request/v2/request.md",
     "docs/request/v2/eventstoming.excalidraw.md",
     "build/spotless/spotlessKotlinGradle/settings.gradle.kts"
   ]
