@@ -6,3 +6,7 @@
   - [2025.05.01 ~ 2025.05.17](https://github.com/users/newkayak12/projects/2)
   - [2025.05.18 ~ 2025.05.31](https://github.com/users/newkayak12/projects/3)
 - [프로젝트 진행 방식](/.github/PROJECT.md)
+
+---
+#### ~ 2025.05.17 요구 사항 및 이벤트 스토밍 정리
+![eventstoming.excalidraw.svg](img/eventStorming.excalidraw.svg)
