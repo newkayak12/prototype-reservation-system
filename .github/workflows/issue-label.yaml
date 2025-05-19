@@ -1,0 +1,24 @@
+name: Label by Issue Title
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.issue.title;
+            const labels = [];
+            if (title.startsWith('bug:')) labels.push('bug');
+            else if (title.startsWith('feat:')) labels.push('feature');
+            else if (title.startsWith('chore:')) labels.push('chore');
+            if (labels.length) {
+              await github.rest.issues.addLabels({
+                ...context.repo,
+                issue_number: context.issue.number,
+                labels
+              });
+            }

@@ -1,0 +1,11 @@
+name: TODO to Issue
+on:
+  push:
+    branches: [main]
+
+jobs:
+  todo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: alstr/todo-to-issue-action@v4
