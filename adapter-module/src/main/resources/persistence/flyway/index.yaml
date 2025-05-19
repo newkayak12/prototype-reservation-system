@@ -1,0 +1,7 @@
+spring:
+  flyway:
+    enabled: true
+    encoding: UTF-8
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    clean-disabled: true
