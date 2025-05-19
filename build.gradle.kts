@@ -5,6 +5,7 @@ plugins {
     kotlin("plugin.spring") version "2.0.10" apply false
     kotlin("plugin.jpa") version "2.0.10" apply false
     kotlin("kapt") version "2.0.10" apply false
+    id("org.flywaydb.flyway") version "10.20.1" apply false
 
     id("org.asciidoctor.jvm.convert") version "3.3.2" apply false
     id("com.epages.restdocs-api-spec") version "0.19.4" apply false
@@ -155,6 +156,7 @@ project(":adapter-module") {
     apply(plugin = "org.hidetake.swagger.generator")
     apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
     apply(plugin = "org.jetbrains.kotlin.kapt")
+    apply(plugin = "org.flywaydb.flyway")
 
     tasks.named("bootJar") { enabled = true }
     tasks.named("jar") { enabled = false }

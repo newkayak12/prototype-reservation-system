@@ -2,6 +2,13 @@ import io.gitlab.arturbosch.detekt.Detekt
 
 configurations.create("asciidoctorExt")
 
+flyway {
+    url = "jdbc:mysql://localhost:3306/prototype-reservation"
+    user = "temporary"
+    password = "temporary"
+    driver = "com.mysql.cj.jdbc.Driver"
+}
+
 kapt {
     arguments {
         arg("querydsl.generatedAnnotation", "javax.annotation.Generated")

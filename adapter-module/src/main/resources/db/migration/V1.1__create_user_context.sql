@@ -15,7 +15,7 @@ CREATE TABLE `user`
     created_datetime          DATETIME COMMENT '생성 날짜-시간',
     updated_datetime          DATETIME COMMENT '수정 날짜-시간',
     PRIMARY KEY (id),
-    index 'index_login_id_and_role' (login_id, role)
+    index index_login_id_and_role (login_id, role)
 ) ENGINE = innodb
   DEFAULT CHARACTER SET 'utf8mb4'
   COLLATE 'utf8mb4_general_ci';
