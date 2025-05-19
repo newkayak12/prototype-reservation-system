@@ -1,0 +1,26 @@
+name: Auto Close Linked Issues
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  close-issues:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-close referenced issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body;
+            const issueRefs = prBody.match(/#\d+/g);
+            if (issueRefs) {
+              for (const ref of issueRefs) {
+                const issueNumber = parseInt(ref.replace('#', ''));
+                await github.rest.issues.update({
+                  ...context.repo,
+                  issue_number: issueNumber,
+                  state: 'closed'
+                });
+              }
+            }

@@ -1,0 +1,13 @@
+name: Conflict Label
+on:
+  pull_request:
+    types: [synchronize, opened]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: eps1lon/actions-label-merge-conflict@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          label-name: "conflict"
