@@ -1,4 +1,4 @@
-package com.reservation.sample.config
+package com.reservation.config.persistence.entity
 
 import com.reservation.generator.uuid.UuidGenerator
 import org.hibernate.engine.spi.SharedSessionContractImplementor

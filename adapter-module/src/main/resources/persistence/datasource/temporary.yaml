@@ -9,6 +9,6 @@ spring:
     datasource:
         hikari:
         driver-class-name: com.p6spy.engine.spy.P6SpyDriver
-        url: jdbc:mysql://localhost:3306/your_database?serverTimezone=UTC&characterEncoding=UTF-8
+        url: jdbc:mysql://localhost:3306/prototype-reservation?serverTimezone=UTC&characterEncoding=UTF-8
         username: temporary
         password: temporary
