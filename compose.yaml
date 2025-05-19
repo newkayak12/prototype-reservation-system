@@ -7,8 +7,8 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql-data:/var/lib/mysql
-      - init-sql:/docker-entrypoint-initdb.d/init.sql
+      - ./mysql_data:/var/lib/mysql
+      - ./adapter-module/src/main/resources/db/migration/V1__init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pverysecret"]
       interval: 10s
@@ -26,5 +26,4 @@ services:
 
 
 volumes:
-  mysql-data: ./mysql_data
-  init-sql: ./adapter-module/src/main/resources/db/migration/V1__init.sql
+  mysql-data:
