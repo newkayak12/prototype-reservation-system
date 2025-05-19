@@ -136,21 +136,8 @@ project(":shared-module") {
 }
 
 project(":core-module") {
-    apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
-    apply(plugin = "org.jetbrains.kotlin.kapt")
-
     tasks.named("bootJar") { enabled = false }
     tasks.named("jar") { enabled = true }
-
-    val kapt by configurations
-
-    dependencies {
-        implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-        compileOnly("com.querydsl:querydsl-jpa:$queryDslVersion:jakarta")
-        add("kapt", "com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
-        add("kapt", "jakarta.annotation:jakarta.annotation-api")
-        add("kapt", "jakarta.persistence:jakarta.persistence-api")
-    }
 }
 
 project(":application-module") {
@@ -166,11 +153,14 @@ project(":adapter-module") {
     apply(plugin = "org.asciidoctor.jvm.convert")
     apply(plugin = "com.epages.restdocs-api-spec")
     apply(plugin = "org.hidetake.swagger.generator")
+    apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
+    apply(plugin = "org.jetbrains.kotlin.kapt")
 
     tasks.named("bootJar") { enabled = true }
     tasks.named("jar") { enabled = false }
 
     val developmentOnly by configurations
+    val kapt by configurations
 
     dependencies {
         implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -182,6 +172,9 @@ project(":adapter-module") {
         implementation("org.flywaydb:flyway-mysql")
         runtimeOnly("com.mysql:mysql-connector-j")
         implementation("com.querydsl:querydsl-jpa:$queryDslVersion:jakarta")
+        add("kapt", "com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
+        add("kapt", "jakarta.annotation:jakarta.annotation-api")
+        add("kapt", "jakarta.persistence:jakarta.persistence-api")
 
         developmentOnly("org.springframework.boot:spring-boot-docker-compose")
         testImplementation("com.navercorp.fixturemonkey:fixture-monkey:1.1.8")

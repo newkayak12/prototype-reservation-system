@@ -2,6 +2,20 @@ import io.gitlab.arturbosch.detekt.Detekt
 
 configurations.create("asciidoctorExt")
 
+kapt {
+    arguments {
+        arg("querydsl.generatedAnnotation", "javax.annotation.Generated")
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs("build/generated/kapt/main")
+        }
+    }
+}
+
 tasks.named<Detekt>("detekt") {
     reports {
         html.required.set(true)
