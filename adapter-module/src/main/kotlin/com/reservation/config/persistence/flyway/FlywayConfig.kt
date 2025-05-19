@@ -18,7 +18,6 @@ class FlywayConfig {
 
     @Bean
     @FlywayDataSource
-    @ConfigurationProperties("spring.flyway")
     fun flywayDataSource(flyway: FlywayProperties): DataSource = DataSourceBuilder.create()
         .url(flyway.url)
         .username(flyway.user)
