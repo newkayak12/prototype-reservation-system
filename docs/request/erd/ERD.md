@@ -1,7 +1,10 @@
 ```mermaid
 ---
 title: prototype-user-context
-layout: elk
+theme: 'dark'
+config:
+  fontFamily: 'Pretendard'
+  securityLevel: loose
 ---
 erDiagram
     
@@ -45,5 +48,17 @@ erDiagram
         VARCHAR(128) user_id "식별키"
         ENUM access_status "상태(SUCCESS, FAILURE)"
         DATETIME access_datetime "요청 날짜-시간"
+    }
+
+    withdrawal_user[withdrawal_user] {
+        VARCHAR(128) id "식별키"
+        VARCHAR(32) login_id "사용자 아이디"
+
+        VARCHAR(256) encrypted_email "이메일"
+        VARCHAR(256) encrypted_nickname "닉네임"
+        VARCHAR(256) encrypted_mobile "휴대폰 번호"
+        VARCHAR(256) encrypted_role "역할 (ROOT, SELLER, USER)"
+
+        DATETIME created_datetime "생성 날짜-시간"
     }
 ```
