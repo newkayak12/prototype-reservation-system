@@ -1,6 +1,7 @@
 ```mermaid
 ---
-prototype
+title: prototype-user-context
+layout: elk
 ---
 erDiagram
     
@@ -18,11 +19,11 @@ erDiagram
         ENUM role "역할 (ROOT, SELLER, USER)"
         
         TINYINT fail_count "로그인 실패 카운트"
-        DATETIME locked_datetime "접근 잠긴 시간"
+        DATETIME locked_datetime "접근 잠긴 날짜-시간"
+        ENUM user_status "사용자 상태 (ACTIVATE, DEACTIVATE)"
         
-        
-        DATETIME created_datetime "생성일"
-        DATETIME updated_datetime "수정일"
+        DATETIME created_datetime "생성 날짜-시간"
+        DATETIME updated_datetime "수정 날짜-시간"
     }
 
     user_change_history[user_change_history] {
@@ -34,15 +35,15 @@ erDiagram
         VARCHAR(13) mobile "휴대폰 번호"
         ENUM role "역할 (ROOT, SELLER, USER)"
         TINYINT fail_count "로그인 실패 카운트"
-        DATETIME locked_datetime "접근 잠긴 시간"
-        DATETIME created_datetime "생성일"
-        DATETIME updated_datetime "수정일"
+        DATETIME locked_datetime "접근 잠긴 날짜-시간"
+        DATETIME created_datetime "생성 날짜-시간"
+        DATETIME updated_datetime "수정 날짜-시간"
     }
     
     user_access_history[user_access_history] {
         VARCHAR(128) id "식별키"
         VARCHAR(128) user_id "식별키"
-        ENUM status "상태(SUCCESS, FAILURE)",
-        DATETIME access_datetime
+        ENUM access_status "상태(SUCCESS, FAILURE)"
+        DATETIME access_datetime "요청 날짜-시간"
     }
 ```
