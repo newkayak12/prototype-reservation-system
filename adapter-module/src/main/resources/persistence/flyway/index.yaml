@@ -6,4 +6,4 @@ spring:
     baseline-on-migrate: true
     clean-disabled: true
     validate-on-migrate: true
-
+    url: jdbc:mysql://mysql:3306/prototype-reservation
