@@ -1,4 +1,4 @@
-CREATE TABLE `user`
+CREATE TABLE prototype_reservation.`user`
 (
     id                        VARCHAR(128) comment '식별키',
     login_id                  VARCHAR(32) comment '사용자 아이디',
@@ -21,7 +21,7 @@ CREATE TABLE `user`
   COLLATE 'utf8mb4_general_ci';
 
 
-CREATE TABLE user_change_history
+CREATE TABLE prototype_reservation.user_change_history
 (
     id               VARCHAR(128) COMMENT '식별키',
     user_id          VARCHAR(128) COMMENT '식별키',
@@ -40,7 +40,7 @@ CREATE TABLE user_change_history
   COLLATE 'utf8mb4_general_ci';
 
 
-CREATE TABLE user_access_history
+CREATE TABLE prototype_reservation.user_access_history
 (
     id              VARCHAR(128) COMMENT '식별키',
     user_id         VARCHAR(128) COMMENT '식별키',
@@ -52,7 +52,7 @@ CREATE TABLE user_access_history
   COLLATE 'utf8mb4_general_ci';
 
 
-CREATE TABLE withdrawal_user
+CREATE TABLE prototype_reservation.withdrawal_user
 (
     id                 VARCHAR(128) COMMENT '식별키',
     login_id           VARCHAR(32) COMMENT '사용자 아이디',

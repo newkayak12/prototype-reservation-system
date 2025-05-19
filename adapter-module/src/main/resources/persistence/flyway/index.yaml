@@ -1,9 +1,11 @@
 spring:
   flyway:
-    enabled: true
-    encoding: UTF-8
-    locations: classpath:db/migration
+    jdbc-url: jdbc:mysql://localhost:3306/flyway
+    user: temporary
+    password: temporary
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    table: flyway_version_control
     baseline-on-migrate: true
-    clean-disabled: true
     validate-on-migrate: true
-    url: jdbc:mysql://mysql:3306/prototype-reservation
+    clean-disabled: true
+    locations: classpath:db/migration

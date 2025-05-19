@@ -3,7 +3,7 @@ import io.gitlab.arturbosch.detekt.Detekt
 configurations.create("asciidoctorExt")
 
 flyway {
-    url = "jdbc:mysql://localhost:3306/prototype-reservation"
+    url = "jdbc:mysql://localhost:3306/flyway"
     user = "temporary"
     password = "temporary"
     driver = "com.mysql.cj.jdbc.Driver"
