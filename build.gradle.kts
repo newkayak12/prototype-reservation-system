@@ -1,6 +1,7 @@
 plugins {
     id("org.springframework.boot") version "3.4.5" apply false
     id("io.spring.dependency-management") version "1.1.7" apply false
+    id("jacoco")
     kotlin("jvm") version "2.0.10"
     kotlin("plugin.spring") version "2.0.10" apply false
     kotlin("plugin.jpa") version "2.0.10" apply false
@@ -47,6 +48,10 @@ spotless {
     }
 }
 
+jacoco {
+    toolVersion = "0.8.11" // 원하는 버전 명시
+}
+
 tasks.register("gitPreCommitHook") {
     doLast {
         println("Running spotlessKotlinGradleApply before commit...")
@@ -83,6 +88,41 @@ tasks.named("gitPreCommitHook") {
     }
 }
 
+tasks.test {
+    useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+
+    reports {
+        xml.required.set(false)
+        html.required.set(true)
+        tasks.jacocoTestReport {
+            dependsOn(tasks.test)
+
+            reports {
+                xml.required.set(false)
+                csv.required.set(false)
+                html.required.set(true)
+
+                html.outputLocation.set(
+                    layout.buildDirectory.dir(
+                        "$rootDir/build/reports/jacoco/${project.name}/jacocoTestReport.html",
+                    ),
+                )
+            }
+        }
+
+        csv.required.set(false)
+
+        // ✅ 커스텀 리포트 경로
+        xml.outputLocation.set(layout.buildDirectory.file("custom-reports/jacoco/report.xml"))
+        html.outputLocation.set(layout.buildDirectory.dir("custom-reports/jacoco/html"))
+    }
+}
+
 allprojects {
     group = "com.reservation"
     version = "0.0.1-SNAPSHOT"
@@ -111,6 +151,8 @@ subprojects {
         testImplementation("io.kotest:kotest-runner-junit5:5.9.0")
         testImplementation("io.kotest:kotest-assertions-core:5.9.0")
         testImplementation("io.kotest:kotest-framework-engine:5.9.0")
+        testImplementation("io.kotest:kotest-assertions-core:5.9.0")
+        testImplementation("io.kotest:kotest-property:5.9.0")
         testImplementation("io.mockk:mockk:1.13.10")
         testImplementation("io.mockk:mockk-agent:1.13.10")
     }
