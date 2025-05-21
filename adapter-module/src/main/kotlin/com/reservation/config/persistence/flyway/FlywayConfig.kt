@@ -1,6 +1,5 @@
 package com.reservation.config.persistence.flyway
 
-import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.flyway.FlywayDataSource
 import org.springframework.boot.autoconfigure.flyway.FlywayProperties
 import org.springframework.boot.jdbc.DataSourceBuilder
@@ -10,13 +9,13 @@ import javax.sql.DataSource
 
 @Configuration
 class FlywayConfig {
-
     @Bean
     @FlywayDataSource
-    fun flywayDataSource(flyway: FlywayProperties): DataSource = DataSourceBuilder.create()
-        .url(flyway.url)
-        .username(flyway.user)
-        .password(flyway.password)
-        .driverClassName(flyway.driverClassName)
-        .build()
+    fun flywayDataSource(flyway: FlywayProperties): DataSource =
+        DataSourceBuilder.create()
+            .url(flyway.url)
+            .username(flyway.user)
+            .password(flyway.password)
+            .driverClassName(flyway.driverClassName)
+            .build()
 }
