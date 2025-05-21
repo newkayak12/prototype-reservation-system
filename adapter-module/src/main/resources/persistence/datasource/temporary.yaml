@@ -5,10 +5,10 @@ spring:
     jpa:
         database-platform: org.hibernate.dialect.MySQL8Dialect
         hibernate:
-            ddl-auto: create-drop
+            ddl-auto: validate
     datasource:
         hikari:
         driver-class-name: com.p6spy.engine.spy.P6SpyDriver
-        url: jdbc:mysql://localhost:3306/your_database?serverTimezone=UTC&characterEncoding=UTF-8
+        url: jdbc:mysql://localhost:3306/prototype_reservation?serverTimezone=UTC&characterEncoding=UTF-8
         username: temporary
         password: temporary

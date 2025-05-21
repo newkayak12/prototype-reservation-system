@@ -1,4 +1,4 @@
-package com.reservation.sample.config
+package com.reservation.config.persistence.entity
 
 import org.hibernate.annotations.IdGeneratorType
 
