@@ -3,7 +3,7 @@ permissions:
     pull-requests: write
     issues: write
 
-name: PR label auto addition
+name: PR check-style
 
 on:
     pull_request:
