@@ -28,11 +28,6 @@ kotlin {
     }
 }
 
-detekt {
-    config.setFrom(files("$rootDir/detekt.yaml"))
-    buildUponDefaultConfig = true
-}
-
 spotless {
     kotlin {
         target("**/*.kt")
@@ -138,6 +133,11 @@ subprojects {
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
     apply(plugin = "io.gitlab.arturbosch.detekt")
+
+    detekt {
+        config.setFrom(files("$rootDir/detekt.yaml"))
+        buildUponDefaultConfig = true
+    }
 
     dependencies {
         implementation("org.jetbrains.kotlin:kotlin-reflect")
