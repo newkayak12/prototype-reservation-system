@@ -1,4 +1,4 @@
-package com.reservation.encoder.password
+package com.reservation.encrypt.password
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 
