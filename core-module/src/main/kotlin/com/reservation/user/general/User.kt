@@ -20,9 +20,7 @@ class User(
     private var personalAttributes: PersonalAttributes,
     nickname: String,
 ) : UserWithdrawable, PasswordChangeable, PersonalAttributesChangeable {
-
     private var userAttributes: UserAttribute = UserAttribute(nickname, Role.USER)
-
 
     override fun withdraw(): WithdrawalUser {
         return WithdrawalUser(
@@ -34,7 +32,7 @@ class User(
                 AESUtility.encrypt(personalAttributes.mobile),
                 AESUtility.encrypt(userAttributes.role.name),
             ),
-            LocalDateTime.now()
+            LocalDateTime.now(),
         )
     }
 

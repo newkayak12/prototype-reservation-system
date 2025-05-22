@@ -9,15 +9,16 @@ data class LockState(
     private var lockedDateTime: LocalDateTime?,
     private val userStatus: UserStatus,
 ) {
-
     fun hasExceededFailCount(limit: Int): Boolean = failCount >= limit
 
     fun isDeactivated(): Boolean = userStatus.isDeactivated()
 
     fun isActivated(): Boolean = userStatus.isActivated()
 
-    fun isLockdownTimeOver(interval: Long, unit: TemporalUnit): Boolean =
-        lockedDateTime?.plus(interval, unit)?.isBefore(LocalDateTime.now()) ?: false
+    fun isLockdownTimeOver(
+        interval: Long,
+        unit: TemporalUnit,
+    ): Boolean = lockedDateTime?.plus(interval, unit)?.isBefore(LocalDateTime.now()) ?: false
 
     fun deactivate(): LockState = LockState(failCount, LocalDateTime.now(), UserStatus.DEACTIVATED)
 

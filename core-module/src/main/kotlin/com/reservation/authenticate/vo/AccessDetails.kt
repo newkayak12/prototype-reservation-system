@@ -5,15 +5,12 @@ import java.time.LocalDateTime
 
 data class AccessDetails(
     val accessStatus: AccessStatus,
-    val accessDateTime: LocalDateTime
+    val accessDateTime: LocalDateTime,
 ) {
-
     companion object {
-        fun accessGranted(): AccessDetails
-        = AccessDetails(AccessStatus.SUCCESS, LocalDateTime.now())
+        fun accessGranted(): AccessDetails =
+            AccessDetails(AccessStatus.SUCCESS, LocalDateTime.now())
 
-        fun accessDenied(): AccessDetails
-        = AccessDetails(AccessStatus.FAILURE, LocalDateTime.now())
-
+        fun accessDenied(): AccessDetails = AccessDetails(AccessStatus.FAILURE, LocalDateTime.now())
     }
 }

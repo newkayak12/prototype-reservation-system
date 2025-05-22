@@ -14,9 +14,8 @@ class Admin(
     private val id: String,
     private val loginId: LoginId,
     private var password: Password,
-    private val role: Role = Role.ROOT
-): UserWithdrawable, PasswordChangeable {
-
+    private val role: Role = Role.ROOT,
+) : UserWithdrawable, PasswordChangeable {
     override fun withdraw(): WithdrawalUser {
         return WithdrawalUser(
             id,
@@ -25,9 +24,9 @@ class Admin(
                 AESUtility.encrypt(loginId.loginId),
                 AESUtility.encrypt("root"),
                 AESUtility.encrypt(""),
-                AESUtility.encrypt(role.name)
+                AESUtility.encrypt(role.name),
             ),
-            LocalDateTime.now()
+            LocalDateTime.now(),
         )
     }
 

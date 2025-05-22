@@ -15,7 +15,6 @@ class Authenticate(
 ) {
     private val accessLog: MutableList<AccessHistory> = mutableListOf()
 
-
     fun addHistory(history: AccessHistory) {
         accessLog.add(history)
     }
@@ -23,7 +22,7 @@ class Authenticate(
     private fun isPasswordSame(rawPassword: String): Boolean {
         return PasswordEncoderUtility.matches(rawPassword, password.encodedPassword)
             .also {
-                if(!it) {
+                if (!it) {
                     lockState.addFailureCount()
                 }
             }
@@ -33,12 +32,18 @@ class Authenticate(
         lockState.hasExceededFailCount(limitCount)
 
     private fun isDeactivated(): Boolean = lockState.isDeactivated()
+
     private fun isActivated(): Boolean = lockState.isActivated()
 
-    private fun isLockdownTimeOver(interval: Long, unit: TemporalUnit): Boolean =
-        lockState.isLockdownTimeOver(interval, unit)
+    private fun isLockdownTimeOver(
+        interval: Long,
+        unit: TemporalUnit,
+    ): Boolean = lockState.isLockdownTimeOver(interval, unit)
 
-    fun canISignIn(rawPassword: String, signInPolicy: SignInPolicy): Boolean {
+    fun canISignIn(
+        rawPassword: String,
+        signInPolicy: SignInPolicy,
+    ): Boolean {
         if (
             !isPasswordSame(rawPassword) ||
             (isDeactivated() && !isLockdownTimeOver(signInPolicy.interval(), signInPolicy.unit()))
@@ -49,7 +54,6 @@ class Authenticate(
             return false
         }
 
-
         if (isActivated()) {
             lockState.activate()
         }
@@ -57,7 +61,7 @@ class Authenticate(
         return true
     }
 
+    fun accessGranted(): AccessHistory = AccessHistory.success(id, loginId)
 
-    fun accessGranted(): AccessHistory  = AccessHistory.success(id, loginId)
     fun accessDenied(): AccessHistory = AccessHistory.failure(id, loginId)
 }

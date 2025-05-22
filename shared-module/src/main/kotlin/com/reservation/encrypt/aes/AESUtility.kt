@@ -2,14 +2,13 @@ package com.reservation.encrypt.aes
 
 @Suppress(names = ["FunctionOnlyReturningConstant", "UnusedParameter"])
 object AESUtility {
-
     fun encrypt(plainText: String): String {
-        //TODO
+        // TODO
         return plainText
     }
 
     fun decrypt(encrypted: String): String {
-        //TODO
+        // TODO
         return encrypted
     }
 }

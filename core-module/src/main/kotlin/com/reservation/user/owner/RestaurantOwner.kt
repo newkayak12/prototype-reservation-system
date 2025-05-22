@@ -18,12 +18,9 @@ class RestaurantOwner(
     private val loginId: LoginId,
     private var password: Password,
     private var personalAttributes: PersonalAttributes,
-    nickname: String
-): UserWithdrawable, PasswordChangeable, PersonalAttributesChangeable {
-
-
+    nickname: String,
+) : UserWithdrawable, PasswordChangeable, PersonalAttributesChangeable {
     private var userAttributes: UserAttribute = UserAttribute(nickname, Role.RESTAURANT_OWNER)
-
 
     override fun withdraw(): WithdrawalUser {
         return WithdrawalUser(
@@ -35,7 +32,7 @@ class RestaurantOwner(
                 AESUtility.encrypt(personalAttributes.mobile),
                 AESUtility.encrypt(userAttributes.role.name),
             ),
-            LocalDateTime.now()
+            LocalDateTime.now(),
         )
     }
 
@@ -45,7 +42,7 @@ class RestaurantOwner(
 
     override fun password(): Password = password
 
-    override fun personalAttributes(): PersonalAttributes  = personalAttributes
+    override fun personalAttributes(): PersonalAttributes = personalAttributes
 
     override fun changePersonalAttributes(personalAttributes: PersonalAttributes) {
         this.personalAttributes = personalAttributes
