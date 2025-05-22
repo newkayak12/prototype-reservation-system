@@ -5,7 +5,7 @@ data class PersonalAttributes(
     private val mobile: String
 ) {
 
-    fun changePersonalAttributes(email: String, mobile: String): PersonalAttributes {
+    fun updatePersonalAttributes(email: String, mobile: String): PersonalAttributes {
         return PersonalAttributes(
             email,
             mobile

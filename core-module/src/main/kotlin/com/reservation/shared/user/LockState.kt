@@ -10,7 +10,7 @@ data class LockState(
     private val userStatus: UserStatus,
 ) {
 
-    fun isFailCountLargerThan(limit: Int): Boolean = failCount <= limit
+    fun hasExceededFailCount(limit: Int): Boolean = failCount >= limit
 
     fun isDeactivated(): Boolean = userStatus.isDeactivated()
 

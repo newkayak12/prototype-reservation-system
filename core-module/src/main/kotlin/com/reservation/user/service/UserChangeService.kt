@@ -12,7 +12,6 @@ class UserChangeService {
         target: T,
         email: String,
         mobile: String,
-    ): T =
-        target.apply { changeAttributes(email, mobile) }
+    ): T = target.apply { changePersonalAttributes(email, mobile) }
 
 }

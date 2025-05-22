@@ -2,7 +2,7 @@ package com.reservation.user.policy
 
 import com.reservation.user.widthdrawal.WithdrawalUser
 
-interface Withdrawable {
+interface UserWithdrawable {
 
     fun withdraw(): WithdrawalUser
 }

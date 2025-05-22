@@ -4,11 +4,11 @@ import com.reservation.shared.user.PersonalAttributes
 
 interface PersonalAttributesChangeable {
 
-    fun personalAttributes():PersonalAttributes
+    fun personalAttributes(): PersonalAttributes
     fun changePersonalAttributes(personalAttributes: PersonalAttributes)
 
-    fun changeAttributes(email: String, mobile: String){
-        changePersonalAttributes(personalAttributes().changePersonalAttributes(email, mobile))
+    fun changePersonalAttributes(email: String, mobile: String){
+        changePersonalAttributes(personalAttributes().updatePersonalAttributes(email, mobile))
     }
 
 }

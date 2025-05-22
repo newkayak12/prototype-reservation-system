@@ -29,8 +29,8 @@ class Authenticate(
             }
     }
 
-    private fun isFailCountLargerThan(limitCount: Int): Boolean =
-        lockState.isFailCountLargerThan(limitCount)
+    private fun hasExceededFailCount(limitCount: Int): Boolean =
+        lockState.hasExceededFailCount(limitCount)
 
     private fun isDeactivated(): Boolean = lockState.isDeactivated()
     private fun isActivated(): Boolean = lockState.isActivated()
@@ -43,7 +43,7 @@ class Authenticate(
             !isPasswordSame(rawPassword) ||
             (isDeactivated() && !isLockdownTimeOver(signInPolicy.interval(), signInPolicy.unit()))
         ) {
-            if (isFailCountLargerThan(signInPolicy.limitCount())) {
+            if (hasExceededFailCount(signInPolicy.limitCount())) {
                 lockState.deactivate()
             }
             return false

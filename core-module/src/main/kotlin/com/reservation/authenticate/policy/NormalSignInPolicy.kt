@@ -2,7 +2,7 @@ package com.reservation.authenticate.policy
 
 import java.time.temporal.TemporalUnit
 
-data class NormalSignInPolicyPolicy(
+data class NormalSignInPolicy(
     private val limitCount: Int,
     private val interval: Long,
     private val unit: TemporalUnit,
