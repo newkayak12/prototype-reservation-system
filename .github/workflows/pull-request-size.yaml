@@ -1,5 +1,10 @@
 name: "Label PR by Size"
 
+
+permissions:
+  contents: read
+  pull-requests: write
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -17,3 +22,5 @@ jobs:
             L=100..499
             XL=500..999
             XXL=1000..
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
