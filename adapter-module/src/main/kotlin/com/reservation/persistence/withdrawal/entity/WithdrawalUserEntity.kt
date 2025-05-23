@@ -7,7 +7,10 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.Comment
 
-@Table(name = "withdrawal_user")
+@Table(
+    catalog = "prototype_reservation",
+    name = "withdrawal_user",
+)
 @Entity
 class WithdrawalUserEntity(
     loginId: String,
@@ -28,22 +31,22 @@ class WithdrawalUserEntity(
         nullable = false,
         updatable = false,
     )
-    @Comment("식별키")
+    @Comment("사용자 아이디")
     val loginId: String = loginId
 
     @Column(name = "encrypted_email", columnDefinition = "VARCHAR(256)")
-    @Comment("휴대폰 번호")
+    @Comment("이메일")
     val encryptedEmail: String = encryptedEmail
 
     @Column(name = "encrypted_nickname", columnDefinition = "VARCHAR(256)")
-    @Comment("역할 (ROOT, SELLER, USER)")
+    @Comment("닉네임")
     val encryptedNickname: String = encryptedNickname
 
     @Column(name = "encrypted_mobile", columnDefinition = "VARCHAR(256)")
-    @Comment("로그인 실패 카운트")
+    @Comment("휴대폰 번호")
     val encryptedMobile: String = encryptedMobile
 
     @Column(name = "encrypted_role", columnDefinition = "VARCHAR(256)")
-    @Comment("접근 잠긴 날짜-시간")
+    @Comment("역할 ")
     val encryptedRole: String = encryptedRole
 }

@@ -4,13 +4,20 @@ import com.reservation.config.persistence.entity.TimeBasedUuidStrategy
 import com.reservation.enumeration.AccessStatus
 import jakarta.persistence.Column
 import jakarta.persistence.ConstraintMode
+import jakarta.persistence.Entity
 import jakarta.persistence.ForeignKey
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.Table
 import org.hibernate.annotations.Comment
 import java.time.LocalDateTime
 
+@Table(
+    catalog = "prototype_reservation",
+    name = "user_access_history",
+)
+@Entity
 class UserAccessHistoryEntity(
     userEntity: UserEntity,
     accessStatus: AccessStatus,
