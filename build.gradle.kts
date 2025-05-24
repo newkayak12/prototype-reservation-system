@@ -1,6 +1,6 @@
 plugins {
     id("org.springframework.boot") version "3.4.5" apply false
-    id("io.spring.dependency-management") version "1.1.7" apply false
+    id("io.spring.dependency-management") version "1.1.7"
     id("jacoco")
     kotlin("jvm") version "2.0.10"
     kotlin("plugin.spring") version "2.0.10" apply false
@@ -15,6 +15,7 @@ plugins {
     id("com.diffplug.spotless") version "6.25.0"
     id("com.github.ben-manes.versions") version "0.51.0"
 }
+
 
 java {
     toolchain {
@@ -88,7 +89,7 @@ tasks.test {
     finalizedBy(tasks.jacocoTestReport)
 }
 
-tasks.jacocoTestReport {
+tasks.named<JacocoReport>("jacocoTestReport") {
     dependsOn(tasks.test)
 
     reports {
@@ -118,6 +119,12 @@ tasks.jacocoTestReport {
     }
 }
 
+dependencyManagement {
+    imports {
+        mavenBom ("org.testcontainers:testcontainers-bom:1.21.0")
+    }
+}
+
 allprojects {
     group = "com.reservation"
     version = "0.0.1-SNAPSHOT"
@@ -128,11 +135,14 @@ allprojects {
 }
 
 subprojects {
+    apply(plugin = "io.spring.dependency-management")
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "org.jetbrains.kotlin.plugin.spring")
     apply(plugin = "org.springframework.boot")
-    apply(plugin = "io.spring.dependency-management")
     apply(plugin = "io.gitlab.arturbosch.detekt")
+
+
+
 
     detekt {
         config.setFrom(files("$rootDir/detekt.yaml"))
@@ -155,6 +165,8 @@ subprojects {
         testImplementation("io.kotest:kotest-property:5.9.0")
         testImplementation("io.mockk:mockk:1.13.10")
         testImplementation("io.mockk:mockk-agent:1.13.10")
+
+
     }
 
     extra["snippetsDir"] = file("build/generated-snippets")
@@ -200,6 +212,8 @@ project(":adapter-module") {
     apply(plugin = "org.jetbrains.kotlin.kapt")
     apply(plugin = "org.flywaydb.flyway")
 
+
+
     tasks.named("bootJar") { enabled = true }
     tasks.named("jar") { enabled = false }
 
@@ -225,5 +239,8 @@ project(":adapter-module") {
         testImplementation("com.navercorp.fixturemonkey:fixture-monkey-jakarta-validation:1.1.5")
         testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
         testImplementation("org.springframework.security:spring-security-test")
+        testImplementation("org.testcontainers:mysql")
+        testImplementation("org.springframework.boot:spring-boot-testcontainers")
+        testImplementation("org.testcontainers:junit-jupiter")
     }
 }
