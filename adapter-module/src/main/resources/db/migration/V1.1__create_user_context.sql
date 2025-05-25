@@ -12,8 +12,8 @@ CREATE TABLE prototype_reservation.`user`
     fail_count                TINYINT COMMENT '로그인 실패 카운트',
     locked_datetime           DATETIME COMMENT '접근 잠긴 날짜-시간',
     user_status               ENUM ('ACTIVATED', 'DEACTIVATED') COMMENT '사용자 상태 (ACTIVATE, DEACTIVATE)',
-    created_datetime          DATETIME COMMENT '생성 날짜-시간',
-    updated_datetime          DATETIME COMMENT '수정 날짜-시간',
+    created_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() COMMENT '생성 날짜-시간',
+    updated_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '수정 날짜-시간',
     PRIMARY KEY (id),
     index index_login_id_and_role (login_id, role)
 ) ENGINE = innodb
@@ -32,8 +32,8 @@ CREATE TABLE prototype_reservation.user_change_history
     role             ENUM ('ROOT', 'RESTAURANT_OWNER', 'USER') COMMENT '역할 (ROOT, SELLER, USER)',
     fail_count       TINYINT COMMENT '로그인 실패 카운트',
     locked_datetime  DATETIME COMMENT '접근 잠긴 날짜-시간',
-    created_datetime DATETIME COMMENT '생성 날짜-시간',
-    updated_datetime DATETIME COMMENT '수정 날짜-시간',
+    created_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() COMMENT '생성 날짜-시간',
+    updated_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '수정 날짜-시간',
     PRIMARY KEY (id)
 ) ENGINE = innodb
   DEFAULT CHARACTER SET 'utf8mb4'
@@ -45,7 +45,7 @@ CREATE TABLE prototype_reservation.user_access_history
     id              VARCHAR(128) COMMENT '식별키',
     user_id         VARCHAR(128) COMMENT '식별키',
     access_status   ENUM ('SUCCESS', 'FAILURE') COMMENT '상태(SUCCESS, FAILURE)',
-    access_datetime DATETIME COMMENT '요청 날짜-시간',
+    access_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() COMMENT '요청 날짜-시간',
     PRIMARY KEY (id)
 ) ENGINE = innodb
   DEFAULT CHARACTER SET 'utf8mb4'
@@ -60,7 +60,7 @@ CREATE TABLE prototype_reservation.withdrawal_user
     encrypted_nickname VARCHAR(256) COMMENT '닉네임',
     encrypted_mobile   VARCHAR(256) COMMENT '휴대폰 번호',
     encrypted_role     VARCHAR(256) COMMENT '역할 ',
-    created_datetime   DATETIME COMMENT '생성 날짜-시간',
+    created_datetime   DATETIME  DEFAULT CURRENT_TIMESTAMP() COMMENT '생성 날짜-시간',
     PRIMARY KEY (id)
 ) ENGINE = innodb
   DEFAULT CHARACTER SET 'utf8mb4'

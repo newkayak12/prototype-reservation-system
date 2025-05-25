@@ -1,5 +1,6 @@
 name: Conflict Label
 
+
 on:
   pull_request:
     types: [synchronize, opened]

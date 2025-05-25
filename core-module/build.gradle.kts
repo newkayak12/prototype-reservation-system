@@ -1,5 +1,12 @@
 import io.gitlab.arturbosch.detekt.Detekt
 
+extra["snippetsDir"] = file("build/generated-snippets")
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
+tasks.test {
+    outputs.dir(project.extra["snippetsDir"]!!)
+}
 
 tasks.named<Detekt>("detekt") {
     reports {
