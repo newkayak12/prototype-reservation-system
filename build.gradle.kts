@@ -165,6 +165,7 @@ subprojects {
         testImplementation("com.navercorp.fixturemonkey:fixture-monkey-kotest:1.1.11")
         testImplementation("io.mockk:mockk:1.13.10")
         testImplementation("io.mockk:mockk-agent:1.13.10")
+        testImplementation("org.assertj:assertj-core:3.24.2")
     }
 
 

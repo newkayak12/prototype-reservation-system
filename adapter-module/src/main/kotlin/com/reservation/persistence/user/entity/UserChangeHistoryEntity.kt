@@ -46,27 +46,27 @@ class UserChangeHistoryEntity(
     lateinit var userEntity: UserEntity
 
     @Column(name = "email", columnDefinition = "VARCHAR(32)")
-    @Comment("사용자 아이디")
+    @Comment("이메일")
     var email: String? = email
         protected set
 
     @Column(name = "nickname", columnDefinition = "VARCHAR(16)")
-    @Comment("이메일")
+    @Comment("닉네임")
     var nickname: String = nickname
         protected set
 
     @Column(name = "mobile", columnDefinition = "VARCHAR(13)")
-    @Comment("닉네임")
+    @Comment("휴대폰 번호")
     var mobile: String = mobile
         protected set
 
     @Column(name = "role", columnDefinition = "ENUM ('ROOT', 'RESTAURANT_OWNER', 'USER')")
     @Enumerated(value = EnumType.STRING)
-    @Comment("휴대폰 번호")
+    @Comment("역할 (ROOT, SELLER, USER)")
     val role: Role = role
 
     @Column(name = "fail_count", columnDefinition = "TINYINT")
-    @Comment("역할 (ROOT, SELLER, USER)")
+    @Comment("실패 횟수")
     var failCount: Int = 0
         protected set
 
