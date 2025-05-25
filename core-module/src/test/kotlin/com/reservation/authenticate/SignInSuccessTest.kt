@@ -19,6 +19,7 @@ import com.reservation.shared.user.Password
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import net.jqwik.api.Arbitraries
 import net.jqwik.api.arbitraries.StringArbitrary
 import java.time.LocalDateTime
 
@@ -43,9 +44,7 @@ class SignInSuccessTest : BehaviorSpec(
                     JqwikPlugin().javaTypeArbitraryGenerator(
                         object : JavaTypeArbitraryGenerator {
                             override fun strings(): StringArbitrary {
-                                return super.strings()
-                                    .ofMaxLength(18)
-                                    .ofMinLength(8)
+                                return Arbitraries.strings().ofLength(12)
                             }
                         },
                     )
