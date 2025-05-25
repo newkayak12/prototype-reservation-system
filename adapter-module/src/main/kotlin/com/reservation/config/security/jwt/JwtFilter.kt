@@ -1,6 +1,7 @@
 package com.reservation.config.security.jwt
 
 import com.reservation.config.security.jwt.properties.JwtWhitelist
+import com.reservation.jwt.provider.JWTProvider
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -11,7 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.OncePerRequestFilter
 
 class JwtFilter(
-    private val jwtProvider: JwtProvider,
+    private val jwtProvider: JWTProvider,
     private val jwtPath: JwtWhitelist?,
 ) : OncePerRequestFilter() {
     override fun doFilterInternal(
@@ -22,7 +23,14 @@ class JwtFilter(
         val bearerToken: String = request.getHeader(HttpHeaders.AUTHORIZATION)
 
         if (jwtProvider.validate(bearerToken)) {
-            val principal: TokenableAuthenticationDetails = jwtProvider.decrypt(bearerToken)
+            val record = jwtProvider.decrypt(bearerToken)
+            val principal =
+                TokenableAuthenticationDetails(
+                    record.id,
+                    record.username,
+                    "",
+                    record.securityRole,
+                )
             val authentication: Authentication =
                 UsernamePasswordAuthenticationToken(
                     principal,

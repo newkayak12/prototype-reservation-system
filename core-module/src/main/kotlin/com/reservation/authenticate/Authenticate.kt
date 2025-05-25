@@ -2,6 +2,7 @@ package com.reservation.authenticate
 
 import com.reservation.authenticate.policy.SignInPolicy
 import com.reservation.encrypt.password.PasswordEncoderUtility
+import com.reservation.enumeration.Role
 import com.reservation.shared.user.LockState
 import com.reservation.shared.user.LoginId
 import com.reservation.shared.user.Password
@@ -12,6 +13,7 @@ class Authenticate(
     private val loginId: LoginId,
     private val password: Password,
     private val lockState: LockState,
+    val role: Role,
 ) {
     private val accessLog: MutableList<AccessHistory> = mutableListOf()
     var isSuccess: Boolean = false
@@ -64,14 +66,17 @@ class Authenticate(
         return
     }
 
-    private fun accessGranted(): AccessHistory = AccessHistory.success(id, loginId)
-
-    private fun accessDenied(): AccessHistory = AccessHistory.failure(id, loginId)
-
     fun writeAccessHistory() {
-        val history = if (isSuccess) accessGranted() else accessDenied()
+        val history =
+            if (isSuccess) {
+                AccessHistory.success(id, loginId)
+            } else {
+                AccessHistory.failure(id, loginId)
+            }
         accessLog.add(history)
     }
 
     fun accessHistories(): List<AccessHistory> = accessLog.toList()
+
+    fun loginId(): String = loginId.loginId
 }

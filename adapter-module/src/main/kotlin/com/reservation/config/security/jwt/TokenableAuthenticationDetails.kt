@@ -1,6 +1,8 @@
 package com.reservation.config.security.jwt
 
+import com.reservation.enumeration.SecurityRole
 import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
 data class TokenableAuthenticationDetails(
@@ -8,12 +10,9 @@ data class TokenableAuthenticationDetails(
     private val username: String,
     private val password: String,
     private val securityRole: SecurityRole,
-) : UserDetails, Tokenable {
-    override fun identity(): String = id
-
-    override fun role(): String = securityRole.name
-
-    override fun getAuthorities(): Collection<GrantedAuthority> = setOf(securityRole)
+) : UserDetails {
+    override fun getAuthorities(): Collection<GrantedAuthority> =
+        setOf(SimpleGrantedAuthority(securityRole.name))
 
     override fun getPassword(): String = password
 

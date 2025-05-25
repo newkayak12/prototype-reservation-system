@@ -1,4 +1,4 @@
-package com.reservation.user.general
+package com.reservation.user
 
 import com.reservation.enumeration.Role
 import com.reservation.shared.user.LoginId

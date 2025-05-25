@@ -20,7 +20,7 @@ import net.jqwik.api.Arbitraries
 import net.jqwik.api.arbitraries.StringArbitrary
 import java.time.LocalDateTime
 
-class SignInSuccessTest : BehaviorSpec(
+class SignInFailureTest : BehaviorSpec(
     {
         val fixtureMonkey =
             FixtureMonkey.builder()
@@ -67,21 +67,21 @@ class SignInSuccessTest : BehaviorSpec(
                         ),
                     ).sample()
 
-            When("로그인 요청을 한다.") {
+            When("잘못된 비밀번호로 로그인 요청을 한다.") {
                 val actual =
                     authenticateSignInService.signIn(
                         authenticate,
-                        rawPassword,
+                        rawPassword + "1",
                     )
 
-                Then("성공 플래그 true가 된다.") {
-                    actual.isSuccess shouldBe true
+                Then("성공 플래그 false 된다.") {
+                    actual.isSuccess shouldBe false
                 }
 
-                Then("로그인 성공 히스토리 1개 생성이 된다.") {
+                Then("로그인 실패 히스토리 1개 생성이 된다.") {
                     actual.accessHistories() shouldHaveSize 1
                     actual.accessHistories()[0].accessDetails.accessStatus shouldBe
-                        AccessStatus.SUCCESS
+                        AccessStatus.FAILURE
                 }
             }
         }

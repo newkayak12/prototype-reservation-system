@@ -1,10 +1,11 @@
 spring:
-    activate:
-        on-profile: stage
+  activate:
+    on-profile: stage
 
 security:
-    jwt:
-        properties:
-            expire-time: 300000
-            secret: HELLO
-            issuer: HELLO
+  jwt:
+    properties:
+      expire-time: 300000
+      secret: HELLO
+      issuer: HELLO
+      version: v1

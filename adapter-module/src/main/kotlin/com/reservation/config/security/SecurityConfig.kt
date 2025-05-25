@@ -1,18 +1,18 @@
 package com.reservation.config.security
 
 import com.reservation.config.security.jwt.JwtFilter
-import com.reservation.config.security.jwt.JwtProvider
-import com.reservation.config.security.jwt.SecurityRole
-import com.reservation.config.security.jwt.properties.JwtProperties
 import com.reservation.config.security.jwt.properties.JwtWhitelist
 import com.reservation.config.security.xss.CrossSiteScriptFilter
 import com.reservation.config.security.xss.properties.XssBlacklist
 import com.reservation.encrypt.password.PasswordEncoderUtility
+import com.reservation.enumeration.SecurityRole
+import com.reservation.jwt.provider.JWTProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Profile
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.AuthenticationEntryPoint
@@ -27,8 +27,7 @@ class SecurityConfig(
     private val xssPath: XssBlacklist,
     private val customAccessDeniedHandler: AccessDeniedHandler,
     private val customAuthenticationEntryPoint: AuthenticationEntryPoint,
-    private val jwtProperties: JwtProperties,
-    private val provider: JwtProvider = JwtProvider(jwtProperties),
+    private var jwtProvider: JWTProvider,
 ) {
     @Bean
     fun passwordEncoder(): PasswordEncoder = PasswordEncoderUtility.getInstance()
@@ -38,10 +37,10 @@ class SecurityConfig(
         GrantedAuthoritiesMapper { authorities ->
             val mapped = authorities.toMutableList()
             if (authorities.any { it.authority == SecurityRole.ROLE_ADMIN.name }) {
-                mapped.add(SecurityRole.ROLE_MANAGER)
+                mapped.add(SimpleGrantedAuthority(SecurityRole.ROLE_MANAGER.name))
             }
             if (authorities.any { it.authority == SecurityRole.ROLE_MANAGER.name }) {
-                mapped.add(SecurityRole.ROLE_USER)
+                mapped.add(SimpleGrantedAuthority(SecurityRole.ROLE_USER.name))
             }
             mapped
         }
@@ -63,7 +62,7 @@ class SecurityConfig(
                 it.anyRequest().authenticated()
             }
             .addFilterBefore(
-                JwtFilter(provider, jwtPath),
+                JwtFilter(jwtProvider, jwtPath),
                 UsernamePasswordAuthenticationFilter::class.java,
             )
             .addFilterAfter(CrossSiteScriptFilter(xssPath), RequestCacheAwareFilter::class.java)

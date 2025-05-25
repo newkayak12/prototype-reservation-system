@@ -34,7 +34,6 @@ tasks.named<Detekt>("detekt") {
 }
 
 dependencies {
-    implementation("io.jsonwebtoken:jjwt:0.12.6")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0")
 
     add("asciidoctorExt", "org.springframework.restdocs:spring-restdocs-asciidoctor")

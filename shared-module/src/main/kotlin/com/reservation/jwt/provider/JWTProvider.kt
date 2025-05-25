@@ -1,6 +1,8 @@
-package com.reservation.config.security.jwt
+package com.reservation.jwt.provider
 
-import com.reservation.config.security.jwt.properties.JwtProperties
+import com.reservation.enumeration.JWTType
+import com.reservation.enumeration.JWTVersion
+import com.reservation.enumeration.SecurityRole
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jws
 import io.jsonwebtoken.JwtParser
@@ -13,19 +15,27 @@ import java.time.temporal.ChronoUnit
 import java.util.Base64
 import java.util.Date
 
-class JwtProvider(properties: JwtProperties) : TokenProvider<TokenableAuthenticationDetails> {
-    private val prefix: String = "Bearer"
-    private val expireTime: Long = properties.expireTime
+class JWTProvider(
+    secret: String,
+    private val duration: Long,
+    private val issuer: String,
+    private val version: JWTVersion,
+) : TokenProvider<JWTRecord> {
+    companion object {
+        private const val PREFIX = "Bearer"
+        private const val ID = "id"
+        private const val ROLE = "role"
+        private const val VERSION = "version"
+        private const val TYPE = "type"
+    }
+
     private val signingKey: SecretKey =
         Keys.hmacShaKeyFor(
-            Base64.getEncoder().encode(properties.secret.toByteArray(Charsets.UTF_8)),
+            Base64.getEncoder().encode(secret.toByteArray(Charsets.UTF_8)),
         )
-    private val issuer: String = properties.issuer
-    private val id: String = "id"
-    private val role: String = "role"
 
     private fun removeBearer(bearerToken: String): String =
-        bearerToken.replace(prefix, "").trim { it <= ' ' }
+        bearerToken.replace(PREFIX, "").trim { it <= ' ' }
 
     private fun parse(bearerToken: String): Claims {
         val token = removeBearer(bearerToken)
@@ -35,46 +45,58 @@ class JwtProvider(properties: JwtProperties) : TokenProvider<TokenableAuthentica
         return jws.payload
     }
 
-    override fun tokenize(tokenable: TokenableAuthenticationDetails): String {
+    override fun tokenize(
+        tokenable: JWTRecord,
+        type: JWTType,
+    ): String {
         val now = LocalDateTime.now()
-        return prefix +
+        return PREFIX +
             Jwts.builder()
                 .id(tokenable.identity())
                 .issuer(issuer)
                 .issuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
                 .expiration(
                     Date.from(
-                        now.plus(expireTime, ChronoUnit.MILLIS).atZone(ZoneId.systemDefault())
+                        now.plus(duration, ChronoUnit.MILLIS).atZone(ZoneId.systemDefault())
                             .toInstant(),
                     ),
                 )
                 .claims(
                     mapOf(
-                        Pair(id, tokenable.username),
-                        Pair(role, tokenable.role()),
+                        Pair(ID, tokenable.username()),
+                        Pair(ROLE, tokenable.securityRole.name),
+                        Pair(VERSION, version.name),
+                        Pair(TYPE, type.title),
                     ),
                 )
                 .signWith(signingKey)
                 .compact()
     }
 
-    override fun validate(token: String): Boolean {
+    override fun validate(
+        token: String,
+        type: JWTType,
+    ): Boolean {
         val claims: Claims = parse(token)
         val expireDate: Date = claims.expiration
         val now = LocalDateTime.now()
         val expireLocalDateTime = LocalDateTime.from(expireDate.toInstant())
+        val version = claims.get(VERSION, String::class.java)
+        val type = claims.get(TYPE, String::class.java)
 
         return now.isBefore(expireLocalDateTime)
     }
 
-    override fun decrypt(token: String): TokenableAuthenticationDetails {
+    override fun decrypt(
+        token: String,
+        type: JWTType,
+    ): JWTRecord {
         val claims: Claims = parse(token)
 
-        return TokenableAuthenticationDetails(
+        return JWTRecord(
             claims.id,
-            claims[id] as String,
-            "",
-            claims[role] as SecurityRole,
+            claims[ID] as String,
+            claims[ROLE] as SecurityRole,
         )
     }
 }

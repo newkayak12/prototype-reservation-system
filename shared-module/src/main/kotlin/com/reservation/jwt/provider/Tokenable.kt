@@ -1,9 +1,9 @@
-package com.reservation.config.security.jwt
+package com.reservation.jwt.provider
 
 interface Tokenable {
     fun identity(): String
 
     fun role(): String
 
-    fun getUsername(): String
+    fun username(): String
 }
