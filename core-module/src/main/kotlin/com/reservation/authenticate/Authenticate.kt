@@ -14,18 +14,15 @@ class Authenticate(
     private val lockState: LockState,
 ) {
     private val accessLog: MutableList<AccessHistory> = mutableListOf()
-
-    fun addHistory(history: AccessHistory) {
-        accessLog.add(history)
-    }
+    var isSuccess: Boolean = false
+        private set
 
     private fun isPasswordSame(rawPassword: String): Boolean {
-        return PasswordEncoderUtility.matches(rawPassword, password.encodedPassword)
-            .also {
-                if (!it) {
-                    lockState.addFailureCount()
-                }
+        return PasswordEncoderUtility.matches(rawPassword, password.encodedPassword).also {
+            if (!it) {
+                lockState.addFailureCount()
             }
+        }
     }
 
     private fun hasExceededFailCount(limitCount: Int): Boolean =
@@ -43,25 +40,38 @@ class Authenticate(
     fun canISignIn(
         rawPassword: String,
         signInPolicy: SignInPolicy,
-    ): Boolean {
-        if (
-            !isPasswordSame(rawPassword) ||
-            (isDeactivated() && !isLockdownTimeOver(signInPolicy.interval(), signInPolicy.unit()))
+    ) {
+        if (!isPasswordSame(rawPassword) || (
+                isDeactivated() &&
+                    !isLockdownTimeOver(
+                        signInPolicy.interval(),
+                        signInPolicy.unit(),
+                    )
+            )
         ) {
             if (hasExceededFailCount(signInPolicy.limitCount())) {
                 lockState.deactivate()
             }
-            return false
+            isSuccess = false
+            return
         }
 
         if (isActivated()) {
             lockState.activate()
         }
 
-        return true
+        isSuccess = true
+        return
     }
 
-    fun accessGranted(): AccessHistory = AccessHistory.success(id, loginId)
+    private fun accessGranted(): AccessHistory = AccessHistory.success(id, loginId)
 
-    fun accessDenied(): AccessHistory = AccessHistory.failure(id, loginId)
+    private fun accessDenied(): AccessHistory = AccessHistory.failure(id, loginId)
+
+    fun writeAccessHistory() {
+        val history = if (isSuccess) accessGranted() else accessDenied()
+        accessLog.add(history)
+    }
+
+    fun accessHistories(): List<AccessHistory> = accessLog.toList()
 }

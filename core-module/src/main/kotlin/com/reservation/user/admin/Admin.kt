@@ -1,6 +1,5 @@
 package com.reservation.user.admin
 
-import com.reservation.encrypt.aes.AESUtility
 import com.reservation.enumeration.Role
 import com.reservation.shared.user.LoginId
 import com.reservation.shared.user.Password
@@ -16,16 +15,19 @@ class Admin(
     private var password: Password,
     private val role: Role = Role.ROOT,
 ) : UserWithdrawable, PasswordChangeable {
-    override fun withdraw(): WithdrawalUser {
+    override fun email(): String = ""
+
+    override fun mobile(): String = ""
+
+    override fun nickname(): String = ""
+
+    override fun role(): Role = role
+
+    override fun withdraw(encryptedAttributes: EncryptedAttributes): WithdrawalUser {
         return WithdrawalUser(
             id,
             loginId,
-            EncryptedAttributes(
-                AESUtility.encrypt(loginId.loginId),
-                AESUtility.encrypt("root"),
-                AESUtility.encrypt(""),
-                AESUtility.encrypt(role.name),
-            ),
+            encryptedAttributes,
             LocalDateTime.now(),
         )
     }

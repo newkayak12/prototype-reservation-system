@@ -32,7 +32,8 @@ kotlin {
 spotless {
     kotlin {
         target("**/*.kt")
-        ktlint("1.2.1") // 원하는 ktlint 버전 지정
+        targetExclude("**/build/**")
+        ktlint("1.2.1")
         trimTrailingWhitespace()
         indentWithSpaces(4)
         endWithNewline()
@@ -84,11 +85,6 @@ tasks.named("gitPreCommitHook") {
     }
 }
 
-tasks.test {
-    useJUnitPlatform()
-    finalizedBy(tasks.jacocoTestReport)
-}
-
 tasks.named<JacocoReport>("jacocoTestReport") {
     dependsOn(tasks.test)
 
@@ -121,7 +117,7 @@ tasks.named<JacocoReport>("jacocoTestReport") {
 
 dependencyManagement {
     imports {
-        mavenBom ("org.testcontainers:testcontainers-bom:1.21.0")
+        mavenBom("org.testcontainers:testcontainers-bom:1.21.0")
     }
 }
 
@@ -140,6 +136,7 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlin.plugin.spring")
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.gitlab.arturbosch.detekt")
+    apply(plugin = "jacoco")
 
 
 
@@ -163,19 +160,27 @@ subprojects {
         testImplementation("io.kotest:kotest-framework-engine:5.9.0")
         testImplementation("io.kotest:kotest-assertions-core:5.9.0")
         testImplementation("io.kotest:kotest-property:5.9.0")
+        testImplementation("io.kotest:kotest-runner-junit5:5.9.0")
+        testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.11")
+        testImplementation("com.navercorp.fixturemonkey:fixture-monkey-kotlin:1.1.11")
         testImplementation("io.mockk:mockk:1.13.10")
         testImplementation("io.mockk:mockk-agent:1.13.10")
-
-
     }
 
-    extra["snippetsDir"] = file("build/generated-snippets")
 
+
+
+
+    extra["snippetsDir"] = file("build/generated-snippets")
     tasks.withType<Test> {
         useJUnitPlatform()
     }
     tasks.test {
         outputs.dir(project.extra["snippetsDir"]!!)
+    }
+    tasks.test {
+        useJUnitPlatform()
+        finalizedBy(tasks.jacocoTestReport)
     }
 }
 
@@ -214,6 +219,7 @@ project(":adapter-module") {
 
 
 
+
     tasks.named("bootJar") { enabled = true }
     tasks.named("jar") { enabled = false }
 
@@ -235,8 +241,6 @@ project(":adapter-module") {
         add("kapt", "jakarta.persistence:jakarta.persistence-api")
 
         developmentOnly("org.springframework.boot:spring-boot-docker-compose")
-        testImplementation("com.navercorp.fixturemonkey:fixture-monkey:1.1.8")
-        testImplementation("com.navercorp.fixturemonkey:fixture-monkey-jakarta-validation:1.1.5")
         testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
         testImplementation("org.springframework.security:spring-security-test")
         testImplementation("org.testcontainers:mysql")

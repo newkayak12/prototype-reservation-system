@@ -1,6 +1,5 @@
 package com.reservation.user.owner
 
-import com.reservation.encrypt.aes.AESUtility
 import com.reservation.enumeration.Role
 import com.reservation.shared.user.LoginId
 import com.reservation.shared.user.Password
@@ -22,16 +21,19 @@ class RestaurantOwner(
 ) : UserWithdrawable, PasswordChangeable, PersonalAttributesChangeable {
     private var userAttributes: UserAttribute = UserAttribute(nickname, Role.RESTAURANT_OWNER)
 
-    override fun withdraw(): WithdrawalUser {
+    override fun email(): String = personalAttributes.email
+
+    override fun mobile(): String = personalAttributes.mobile
+
+    override fun nickname(): String = userAttributes.nickname
+
+    override fun role(): Role = userAttributes.role
+
+    override fun withdraw(encryptedAttributes: EncryptedAttributes): WithdrawalUser {
         return WithdrawalUser(
             id,
             loginId,
-            EncryptedAttributes(
-                AESUtility.encrypt(personalAttributes.email),
-                AESUtility.encrypt(userAttributes.nickname),
-                AESUtility.encrypt(personalAttributes.mobile),
-                AESUtility.encrypt(userAttributes.role.name),
-            ),
+            encryptedAttributes,
             LocalDateTime.now(),
         )
     }

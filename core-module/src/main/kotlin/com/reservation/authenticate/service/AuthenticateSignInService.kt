@@ -16,17 +16,8 @@ class AuthenticateSignInService {
     ): Authenticate {
         val signInPolicy =
             NormalSignInPolicy(SIGN_IN_ATTEMPT_LIMIT, SIGN_IN_INTERVAL_MINUTES, ChronoUnit.MINUTES)
-        val isSucceed = authenticate.canISignIn(rawPassword, signInPolicy)
-
-        val history =
-            if (isSucceed) {
-                authenticate.accessGranted()
-            } else {
-                authenticate.accessDenied()
-            }
-
-        authenticate.addHistory(history)
-
+        authenticate.canISignIn(rawPassword, signInPolicy)
+        authenticate.writeAccessHistory()
         return authenticate
     }
 }
