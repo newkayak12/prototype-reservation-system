@@ -11,7 +11,6 @@ import com.navercorp.fixturemonkey.api.jqwik.JavaTypeArbitraryGenerator
 import com.navercorp.fixturemonkey.api.jqwik.JqwikPlugin
 import com.navercorp.fixturemonkey.kotlin.KotlinPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
-import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.authenticate.service.AuthenticateSignInService
 import com.reservation.encrypt.password.PasswordEncoderUtility
 import com.reservation.enumeration.AccessStatus
@@ -54,8 +53,7 @@ class SignInSuccessTest : BehaviorSpec(
         val authenticateSignInService = AuthenticateSignInService()
 
         Given("올바른 Authenticate와 사용자가 입력한 패스워드를 제공 받고") {
-            val rawPassword: String = fixtureMonkey.giveMeOne()
-            println(rawPassword)
+            val rawPassword: String = Arbitraries.strings().ofMinLength(8).ofMaxLength(12).sample()
             val arbitraryBuilder: ArbitraryBuilder<Authenticate> = fixtureMonkey.giveMeBuilder()
             val authenticate: Authenticate =
                 arbitraryBuilder
