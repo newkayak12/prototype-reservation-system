@@ -32,17 +32,19 @@ kotlin {
 spotless {
     kotlin {
         target("**/*.kt")
-        targetExclude("**/build/**")
+
+
+
         ktlint("1.2.1")
         trimTrailingWhitespace()
         indentWithSpaces(4)
         endWithNewline()
     }
 
-    kotlinGradle {
-        target("**/*.kts")
-        ktlint("1.2.1")
-    }
+//    kotlinGradle {
+//        target("**/*.kts")
+//        ktlint("1.2.1")
+//    }
 }
 
 jacoco {
