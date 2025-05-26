@@ -1,7 +1,6 @@
 package com.reservation.user.self.port.input
 
-import com.reservation.enumeration.Role
-import com.reservation.user.self.port.output.AuthenticateGeneralUser
+import com.reservation.user.self.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserInquiry
 
 interface AuthenticateGeneralUserQuery {
     fun execute(request: GeneralUserQueryDto): AuthenticateGeneralUserQueryResult
@@ -10,10 +9,8 @@ interface AuthenticateGeneralUserQuery {
         val loginId: String,
         val password: String,
     ) {
-        val role = Role.USER
-
-        fun toInquiry(): AuthenticateGeneralUser.AuthenticateGeneralUserInquiry {
-            return AuthenticateGeneralUser.AuthenticateGeneralUserInquiry(
+        fun toInquiry(): AuthenticateGeneralUserInquiry {
+            return AuthenticateGeneralUserInquiry(
                 loginId,
                 password,
             )
