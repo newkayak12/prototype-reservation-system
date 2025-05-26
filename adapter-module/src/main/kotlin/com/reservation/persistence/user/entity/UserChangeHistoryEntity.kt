@@ -4,15 +4,11 @@ import com.reservation.config.persistence.entity.TimeBasedUuidStrategy
 import com.reservation.enumeration.Role
 import com.reservation.persistence.common.AuditDateTime
 import jakarta.persistence.Column
-import jakarta.persistence.ConstraintMode
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import jakarta.persistence.ForeignKey
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.Comment
 import java.time.LocalDateTime
@@ -23,11 +19,11 @@ import java.time.LocalDateTime
 )
 @Entity
 class UserChangeHistoryEntity(
-    password: String,
     email: String,
     nickname: String,
     mobile: String,
     role: Role,
+    userId: String,
 ) {
     @Id
     @TimeBasedUuidStrategy
@@ -35,15 +31,9 @@ class UserChangeHistoryEntity(
     @Comment("식별키")
     val id: String? = null
 
-    @ManyToOne(targetEntity = UserEntity::class)
-    @JoinColumn(
-        updatable = false,
-        name = "user_id",
-        columnDefinition = "VARCHAR(128)",
-        foreignKey = ForeignKey(ConstraintMode.NO_CONSTRAINT),
-    )
+    @Column(name = "user_id", columnDefinition = "VARCHAR(128)")
     @Comment("식별키")
-    lateinit var userEntity: UserEntity
+    val userId: String = userId
 
     @Column(name = "email", columnDefinition = "VARCHAR(32)")
     @Comment("이메일")
@@ -76,6 +66,6 @@ class UserChangeHistoryEntity(
         protected set
 
     @Embedded
-    var auditDateTime: AuditDateTime = AuditDateTime()
+    var auditDateTime = AuditDateTime()
         protected set
 }

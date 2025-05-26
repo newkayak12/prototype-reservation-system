@@ -1,7 +1,7 @@
-package com.reservation.user.port.input
+package com.reservation.user.self.port.input
 
 import com.reservation.enumeration.Role
-import com.reservation.user.port.output.AuthenticateGeneralUser
+import com.reservation.user.self.port.output.AuthenticateGeneralUser
 
 interface AuthenticateGeneralUserQuery {
     fun execute(request: GeneralUserQueryDto): AuthenticateGeneralUserQueryResult

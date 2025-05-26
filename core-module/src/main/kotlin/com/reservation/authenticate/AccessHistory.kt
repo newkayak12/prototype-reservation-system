@@ -1,7 +1,9 @@
 package com.reservation.authenticate
 
 import com.reservation.authenticate.vo.AccessDetails
+import com.reservation.enumeration.AccessStatus
 import com.reservation.shared.user.LoginId
+import java.time.LocalDateTime
 
 class AccessHistory(
     val authenticateId: String,
@@ -19,4 +21,8 @@ class AccessHistory(
             loginId: LoginId,
         ): AccessHistory = AccessHistory(id, loginId, AccessDetails.accessDenied())
     }
+
+    fun accessStatus(): AccessStatus = accessDetails.accessStatus
+
+    fun accessDateTime(): LocalDateTime = accessDetails.accessDateTime
 }

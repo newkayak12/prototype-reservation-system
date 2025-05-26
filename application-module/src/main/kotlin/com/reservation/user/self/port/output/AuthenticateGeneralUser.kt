@@ -1,4 +1,4 @@
-package com.reservation.user.port.output
+package com.reservation.user.self.port.output
 
 import com.reservation.authenticate.Authenticate
 import com.reservation.enumeration.Role
@@ -9,7 +9,7 @@ import com.reservation.shared.user.Password
 import java.time.LocalDateTime
 
 interface AuthenticateGeneralUser {
-    fun query(request: AuthenticateGeneralUserInquiry): AuthenticateGeneralUserResult
+    fun query(request: AuthenticateGeneralUserInquiry): AuthenticateGeneralUserResult?
 
     data class AuthenticateGeneralUserInquiry(
         val loginId: String,

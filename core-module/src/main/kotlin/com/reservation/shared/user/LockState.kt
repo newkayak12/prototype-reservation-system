@@ -5,9 +5,9 @@ import java.time.LocalDateTime
 import java.time.temporal.TemporalUnit
 
 data class LockState(
-    private val failCount: Int,
-    private var lockedDateTime: LocalDateTime?,
-    private val userStatus: UserStatus,
+    val failCount: Int,
+    var lockedDateTime: LocalDateTime?,
+    val userStatus: UserStatus,
 ) {
     fun hasExceededFailCount(limit: Int): Boolean = failCount >= limit
 

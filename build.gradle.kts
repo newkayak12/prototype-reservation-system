@@ -207,7 +207,8 @@ project(":application-module") {
     tasks.named("bootJar") { enabled = false }
     tasks.named("jar") { enabled = true }
     dependencies {
-        implementation("org.springframework.security:spring-security-core:6.3.5")
+//        implementation("org.springframework.security:spring-security-core:6.3.5")
+        implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     }
 }
 

@@ -3,9 +3,11 @@ package com.reservation.authenticate
 import com.reservation.authenticate.policy.SignInPolicy
 import com.reservation.encrypt.password.PasswordEncoderUtility
 import com.reservation.enumeration.Role
+import com.reservation.enumeration.UserStatus
 import com.reservation.shared.user.LockState
 import com.reservation.shared.user.LoginId
 import com.reservation.shared.user.Password
+import java.time.LocalDateTime
 import java.time.temporal.TemporalUnit
 
 class Authenticate(
@@ -19,6 +21,21 @@ class Authenticate(
     var isSuccess: Boolean = false
         private set
 
+    private val isDeactivated: Boolean
+        get() = lockState.isDeactivated()
+
+    private val isActivated: Boolean
+        get() = lockState.isActivated()
+
+    val failCount: Int
+        get() = lockState.failCount
+
+    val lockedDateTime: LocalDateTime?
+        get() = lockState.lockedDateTime
+
+    val userStatus: UserStatus
+        get() = lockState.userStatus
+
     private fun isPasswordSame(rawPassword: String): Boolean {
         return PasswordEncoderUtility.matches(rawPassword, password.encodedPassword).also {
             if (!it) {
@@ -30,10 +47,6 @@ class Authenticate(
     private fun hasExceededFailCount(limitCount: Int): Boolean =
         lockState.hasExceededFailCount(limitCount)
 
-    private fun isDeactivated(): Boolean = lockState.isDeactivated()
-
-    private fun isActivated(): Boolean = lockState.isActivated()
-
     private fun isLockdownTimeOver(
         interval: Long,
         unit: TemporalUnit,
@@ -44,7 +57,7 @@ class Authenticate(
         signInPolicy: SignInPolicy,
     ) {
         if (!isPasswordSame(rawPassword) || (
-                isDeactivated() &&
+                isDeactivated &&
                     !isLockdownTimeOver(
                         signInPolicy.interval(),
                         signInPolicy.unit(),
@@ -58,7 +71,7 @@ class Authenticate(
             return
         }
 
-        if (isActivated()) {
+        if (isActivated) {
             lockState.activate()
         }
 
