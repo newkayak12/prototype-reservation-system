@@ -1,7 +1,7 @@
 package com.reservation.config.security.jwt
 
 import com.reservation.config.security.jwt.properties.JwtWhitelist
-import com.reservation.jwt.provider.JWTProvider
+import com.reservation.utilities.provider.JWTProvider
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse

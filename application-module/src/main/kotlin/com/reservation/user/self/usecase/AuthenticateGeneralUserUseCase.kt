@@ -5,8 +5,7 @@ import com.reservation.authenticate.Authenticate
 import com.reservation.authenticate.service.AuthenticateSignInService
 import com.reservation.config.annotations.UseCase
 import com.reservation.enumeration.JWTType
-import com.reservation.jwt.provider.JWTRecord
-import com.reservation.jwt.provider.TokenProvider
+import com.reservation.user.exceptions.NoSuchDatabaseElementException
 import com.reservation.user.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
 import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand.CreateUserHistoryCommandDto
@@ -16,6 +15,8 @@ import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.General
 import com.reservation.user.self.port.output.AuthenticateGeneralUser
 import com.reservation.user.self.port.output.UpdateAuthenticateResult
 import com.reservation.user.self.port.output.UpdateAuthenticateResult.UpdateAuthenticateResultDto
+import com.reservation.utilities.provider.JWTRecord
+import com.reservation.utilities.provider.TokenProvider
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
@@ -31,7 +32,7 @@ class AuthenticateGeneralUserUseCase(
         val authenticate =
             authenticateGeneralUser.query(request.toInquiry())?.toDomain()
                 ?: run {
-                    throw NoSuchElementException()
+                    throw NoSuchDatabaseElementException()
                 }
 
         val authenticated = authenticateSignInService.signIn(authenticate, request.password)

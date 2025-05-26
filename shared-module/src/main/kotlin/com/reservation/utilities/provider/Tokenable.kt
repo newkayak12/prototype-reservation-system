@@ -1,4 +1,4 @@
-package com.reservation.jwt.provider
+package com.reservation.utilities.provider
 
 interface Tokenable {
     fun identity(): String

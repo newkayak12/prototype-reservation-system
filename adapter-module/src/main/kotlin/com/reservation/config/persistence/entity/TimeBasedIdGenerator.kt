@@ -1,6 +1,6 @@
 package com.reservation.config.persistence.entity
 
-import com.reservation.generator.uuid.UuidGenerator
+import com.reservation.utilities.uuid.UuidGenerator
 import org.hibernate.engine.spi.SharedSessionContractImplementor
 import org.hibernate.id.IdentifierGenerator
 

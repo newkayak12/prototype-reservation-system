@@ -1,4 +1,4 @@
-package com.reservation.encrypt.aes
+package com.reservation.utilities.encrypt.aes
 
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec

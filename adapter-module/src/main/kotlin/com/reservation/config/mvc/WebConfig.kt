@@ -1,4 +1,4 @@
-package com.reservation.config
+package com.reservation.config.mvc
 
 import com.reservation.config.i18n.HttpHeaderLocaleResolver
 import org.springframework.context.annotation.Bean

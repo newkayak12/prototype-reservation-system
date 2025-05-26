@@ -1,4 +1,4 @@
-package com.reservation.jwt.provider
+package com.reservation.utilities.provider
 
 import com.reservation.enumeration.JWTType
 import com.reservation.enumeration.JWTVersion

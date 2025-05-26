@@ -4,9 +4,9 @@ import com.reservation.config.security.jwt.JwtFilter
 import com.reservation.config.security.jwt.properties.JwtWhitelist
 import com.reservation.config.security.xss.CrossSiteScriptFilter
 import com.reservation.config.security.xss.properties.XssBlacklist
-import com.reservation.encrypt.password.PasswordEncoderUtility
 import com.reservation.enumeration.SecurityRole
-import com.reservation.jwt.provider.JWTProvider
+import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
+import com.reservation.utilities.provider.JWTProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Profile
 import org.springframework.security.config.annotation.web.builders.HttpSecurity

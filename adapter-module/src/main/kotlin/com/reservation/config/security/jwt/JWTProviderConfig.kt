@@ -1,7 +1,7 @@
 package com.reservation.config.security.jwt
 
 import com.reservation.config.security.jwt.properties.JwtProperties
-import com.reservation.jwt.provider.JWTProvider
+import com.reservation.utilities.provider.JWTProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 

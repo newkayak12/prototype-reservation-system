@@ -1,4 +1,4 @@
-package com.reservation.jwt.provider
+package com.reservation.utilities.provider
 
 import com.reservation.enumeration.Role
 import com.reservation.enumeration.SecurityRole
