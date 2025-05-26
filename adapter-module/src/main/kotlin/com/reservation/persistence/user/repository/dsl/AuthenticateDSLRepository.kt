@@ -1,8 +1,8 @@
 package com.reservation.persistence.user.repository.dsl
 
-import com.reservation.user.ports.output.AuthenticateGeneralUser
-import com.reservation.user.ports.output.AuthenticateGeneralUser.AuthenticateGeneralUserInquiry
-import com.reservation.user.ports.output.AuthenticateGeneralUser.AuthenticateGeneralUserResult
+import com.reservation.user.self.port.output.AuthenticateGeneralUser
+import com.reservation.user.self.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserInquiry
+import com.reservation.user.self.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserResult
 import org.springframework.stereotype.Component
 
 @Component
