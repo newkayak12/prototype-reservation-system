@@ -98,4 +98,14 @@ class UserEntity(
     @Embedded
     var auditDateTime: AuditDateTime = AuditDateTime()
         protected set
+
+    fun updateAuthenticateResult(
+        failCount: Int,
+        lockedDateTime: LocalDateTime?,
+        userStatus: UserStatus,
+    ) {
+        this.failCount = failCount
+        this.lockedDatetime = lockedDateTime
+        this.userStatus = userStatus
+    }
 }

@@ -22,11 +22,11 @@ interface AuthenticateGeneralUser {
         val id: String,
         val loginId: String,
         val password: String,
-        val oldEncodedPassword: String,
-        val changedDateTime: LocalDateTime,
+        val oldEncodedPassword: String?,
+        val changedDateTime: LocalDateTime?,
         val failCount: Int,
         val userStatus: UserStatus,
-        val lockedDatetime: LocalDateTime,
+        val lockedDatetime: LocalDateTime?,
     ) {
         private val role = Role.USER
 

@@ -1,5 +1,7 @@
 package com.reservation.user.self.usecase
 
+import com.reservation.authenticate.AccessHistory
+import com.reservation.authenticate.Authenticate
 import com.reservation.authenticate.service.AuthenticateSignInService
 import com.reservation.config.annotations.UseCase
 import com.reservation.enumeration.JWTType
@@ -35,8 +37,16 @@ class AuthenticateGeneralUserUseCase(
         val authenticated = authenticateSignInService.signIn(authenticate, request.password)
 
         // histories 저장
+        createAccessHistory(authenticated.accessHistories())
+
+        updateAuthenticateResult(authenticated)
+
+        return tokenize(authenticated)
+    }
+
+    private fun createAccessHistory(accessHistories: List<AccessHistory>) {
         createUserHistoriesCommand.execute(
-            authenticated.accessHistories().map {
+            accessHistories.map {
                 CreateUserHistoryCommandDto(
                     it.authenticateId,
                     it.loginId,
@@ -45,7 +55,9 @@ class AuthenticateGeneralUserUseCase(
                 )
             },
         )
+    }
 
+    private fun updateAuthenticateResult(authenticated: Authenticate) {
         if (!authenticated.isSuccess) {
             // authenticated.
             updateAuthenticateResult.save(
@@ -58,7 +70,9 @@ class AuthenticateGeneralUserUseCase(
             )
             throw WrongThreadException()
         }
+    }
 
+    private fun tokenize(authenticated: Authenticate): AuthenticateGeneralUserQueryResult {
         val record =
             JWTRecord(
                 authenticated.id,

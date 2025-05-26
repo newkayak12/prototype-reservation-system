@@ -17,6 +17,7 @@ import java.time.LocalDateTime
 class UserAccessHistoryEntity(
     userId: String,
     accessStatus: AccessStatus,
+    accessDatetime: LocalDateTime,
 ) {
     @Id
     @TimeBasedUuidStrategy
@@ -34,5 +35,5 @@ class UserAccessHistoryEntity(
 
     @Column(name = "access_datetime", columnDefinition = "DATETIME")
     @Comment("요청 날짜-시간")
-    val accessDatetime: LocalDateTime = LocalDateTime.now()
+    val accessDatetime: LocalDateTime = accessDatetime
 }
