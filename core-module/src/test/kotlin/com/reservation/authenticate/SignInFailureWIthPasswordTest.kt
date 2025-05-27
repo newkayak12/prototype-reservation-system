@@ -16,7 +16,7 @@ import net.jqwik.api.Arbitraries
 import net.jqwik.api.arbitraries.StringArbitrary
 import java.time.LocalDateTime
 
-class SignInFailureTest : BehaviorSpec(
+class SignInFailureWIthPasswordTest : BehaviorSpec(
     {
         val fixtureMonkey =
             FixtureMonkeyFactory.giveMePureMonkey()
