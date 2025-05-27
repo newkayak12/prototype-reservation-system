@@ -14,7 +14,7 @@ class Authenticate(
     val id: String,
     private val loginId: LoginId,
     private val password: Password,
-    private val lockState: LockState,
+    private var lockState: LockState,
     val role: Role,
 ) {
     private val accessLog: MutableList<AccessHistory> = mutableListOf()
@@ -43,7 +43,7 @@ class Authenticate(
     private fun isPasswordSame(rawPassword: String): Boolean {
         return PasswordEncoderUtility.matches(rawPassword, password.encodedPassword).also {
             if (!it) {
-                lockState.addFailureCount()
+                lockState = lockState.addFailureCount()
             }
         }
     }
@@ -61,20 +61,19 @@ class Authenticate(
         signInPolicy: SignInPolicy,
     ) {
         passwordCheckSuccess = isPasswordSame(rawPassword)
-        lockCheckSuccess =
-            isActivated && !isLockdownTimeOver(signInPolicy.interval(), signInPolicy.unit())
+        lockCheckSuccess = isLockdownTimeOver(signInPolicy.interval(), signInPolicy.unit())
 
-        writeAccessHistory()
+        if (passwordCheckSuccess && lockCheckSuccess) {
+            lockState = lockState.activate()
+            return
+        }
 
         if (hasExceededFailCount(signInPolicy.limitCount())) {
-            lockState.deactivate()
+            lockState = lockState.deactivate()
+            lockCheckSuccess = false
         }
 
-        if (isActivated) {
-            lockState.activate()
-        }
-
-        return
+        writeAccessHistory()
     }
 
     fun writeAccessHistory() {

@@ -18,7 +18,7 @@ data class LockState(
     fun isLockdownTimeOver(
         interval: Long,
         unit: TemporalUnit,
-    ): Boolean = lockedDateTime?.plus(interval, unit)?.isBefore(LocalDateTime.now()) ?: false
+    ): Boolean = lockedDateTime?.plus(interval, unit)?.isBefore(LocalDateTime.now()) ?: true
 
     fun deactivate(): LockState = LockState(failCount, LocalDateTime.now(), UserStatus.DEACTIVATED)
 

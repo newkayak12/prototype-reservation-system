@@ -46,11 +46,11 @@ class AuthenticateGeneralUserUseCase(
         createAccessHistory(authenticated.accessHistories())
         updateAuthenticateResult(authenticated)
 
-        if (!authenticated.passwordCheckSuccess) {
-            throw WrongLoginIdOrPasswordException()
-        }
         if (!authenticated.lockCheckSuccess) {
             throw AccessFailureCountHasExceedException()
+        }
+        if (!authenticated.passwordCheckSuccess) {
+            throw WrongLoginIdOrPasswordException()
         }
 
         return tokenize(authenticated)
