@@ -39,6 +39,7 @@ dependencies {
     add("asciidoctorExt", "org.springframework.restdocs:spring-restdocs-asciidoctor")
     testImplementation("com.epages:restdocs-api-spec-mockmvc:0.19.4")
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
+    testImplementation(project(":test-module"))
 }
 
 dependencies {

@@ -6,6 +6,6 @@ security:
   jwt:
     properties:
       expire-time: 300000
-      secret: HELLO
+      secret: af869782f3abde439def4230f2b05bd701f1ab047ec80808d3b84f1c8923506a
       issuer: HELLO
       version: v1

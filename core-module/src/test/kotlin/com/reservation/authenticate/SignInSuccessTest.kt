@@ -1,16 +1,12 @@
 package com.reservation.authenticate
 
 import com.navercorp.fixturemonkey.ArbitraryBuilder
-import com.navercorp.fixturemonkey.FixtureMonkey
-import com.navercorp.fixturemonkey.api.introspector.BuilderArbitraryIntrospector
-import com.navercorp.fixturemonkey.api.introspector.ConstructorPropertiesArbitraryIntrospector
-import com.navercorp.fixturemonkey.api.introspector.FailoverIntrospector
 import com.navercorp.fixturemonkey.api.jqwik.JavaTypeArbitraryGenerator
 import com.navercorp.fixturemonkey.api.jqwik.JqwikPlugin
-import com.navercorp.fixturemonkey.kotlin.KotlinPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.reservation.authenticate.service.AuthenticateSignInService
 import com.reservation.enumeration.AccessStatus
+import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.shared.user.Password
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import io.kotest.core.spec.style.BehaviorSpec
@@ -23,19 +19,8 @@ import java.time.LocalDateTime
 class SignInSuccessTest : BehaviorSpec(
     {
         val fixtureMonkey =
-            FixtureMonkey.builder()
-                .enableLoggingFail(false)
-                .defaultNotNull(true)
-                .objectIntrospector(
-                    FailoverIntrospector(
-                        listOf(
-                            ConstructorPropertiesArbitraryIntrospector.INSTANCE,
-                            BuilderArbitraryIntrospector.INSTANCE,
-                        ),
-                    ),
-                )
+            FixtureMonkeyFactory.giveMePureMonkey()
                 .plugin {
-                    KotlinPlugin()
                     JqwikPlugin().javaTypeArbitraryGenerator(
                         object : JavaTypeArbitraryGenerator {
                             override fun strings(): StringArbitrary {

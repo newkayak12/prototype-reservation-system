@@ -18,8 +18,12 @@ class Authenticate(
     val role: Role,
 ) {
     private val accessLog: MutableList<AccessHistory> = mutableListOf()
-    var isSuccess: Boolean = false
+    var passwordCheckSuccess: Boolean = false
         private set
+    var lockCheckSuccess: Boolean = false
+        private set
+    val isSuccess: Boolean
+        get() = passwordCheckSuccess && lockCheckSuccess
 
     private val isDeactivated: Boolean
         get() = lockState.isDeactivated()
@@ -56,32 +60,26 @@ class Authenticate(
         rawPassword: String,
         signInPolicy: SignInPolicy,
     ) {
-        if (!isPasswordSame(rawPassword) || (
-                isDeactivated &&
-                    !isLockdownTimeOver(
-                        signInPolicy.interval(),
-                        signInPolicy.unit(),
-                    )
-            )
-        ) {
-            if (hasExceededFailCount(signInPolicy.limitCount())) {
-                lockState.deactivate()
-            }
-            isSuccess = false
-            return
+        passwordCheckSuccess = isPasswordSame(rawPassword)
+        lockCheckSuccess =
+            isActivated && !isLockdownTimeOver(signInPolicy.interval(), signInPolicy.unit())
+
+        writeAccessHistory()
+
+        if (hasExceededFailCount(signInPolicy.limitCount())) {
+            lockState.deactivate()
         }
 
         if (isActivated) {
             lockState.activate()
         }
 
-        isSuccess = true
         return
     }
 
     fun writeAccessHistory() {
         val history =
-            if (isSuccess) {
+            if (passwordCheckSuccess && lockCheckSuccess) {
                 AccessHistory.success(id, loginId)
             } else {
                 AccessHistory.failure(id, loginId)

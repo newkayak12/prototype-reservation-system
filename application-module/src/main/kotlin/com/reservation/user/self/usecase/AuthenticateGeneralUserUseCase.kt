@@ -3,9 +3,10 @@ package com.reservation.user.self.usecase
 import com.reservation.authenticate.AccessHistory
 import com.reservation.authenticate.Authenticate
 import com.reservation.authenticate.service.AuthenticateSignInService
+import com.reservation.common.exceptions.NoSuchDatabaseElementException
 import com.reservation.config.annotations.UseCase
 import com.reservation.enumeration.JWTType
-import com.reservation.user.exceptions.NoSuchDatabaseElementException
+import com.reservation.user.exceptions.AccessFailureCountHasExceedException
 import com.reservation.user.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
 import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand.CreateUserHistoryCommandDto
@@ -27,7 +28,11 @@ class AuthenticateGeneralUserUseCase(
     val updateAuthenticateResult: UpdateAuthenticateResult,
     val tokenProvider: TokenProvider<JWTRecord>,
 ) : AuthenticateGeneralUserQuery {
-    @Transactional(noRollbackFor = [WrongLoginIdOrPasswordException::class])
+    @Transactional(
+        noRollbackFor = [
+            WrongLoginIdOrPasswordException::class, AccessFailureCountHasExceedException::class,
+        ],
+    )
     override fun execute(request: GeneralUserQueryDto): AuthenticateGeneralUserQueryResult {
         val authenticate =
             authenticateGeneralUser.query(request.toInquiry())?.toDomain()
@@ -39,8 +44,14 @@ class AuthenticateGeneralUserUseCase(
 
         // histories 저장
         createAccessHistory(authenticated.accessHistories())
-
         updateAuthenticateResult(authenticated)
+
+        if (!authenticated.passwordCheckSuccess) {
+            throw WrongLoginIdOrPasswordException()
+        }
+        if (!authenticated.lockCheckSuccess) {
+            throw AccessFailureCountHasExceedException()
+        }
 
         return tokenize(authenticated)
     }
@@ -59,18 +70,15 @@ class AuthenticateGeneralUserUseCase(
     }
 
     private fun updateAuthenticateResult(authenticated: Authenticate) {
-        if (!authenticated.isSuccess) {
-            // authenticated.
-            updateAuthenticateResult.save(
-                UpdateAuthenticateResultDto(
-                    authenticated.id,
-                    authenticated.failCount,
-                    authenticated.lockedDateTime,
-                    authenticated.userStatus,
-                ),
-            )
-            throw WrongThreadException()
-        }
+        // authenticated.
+        updateAuthenticateResult.save(
+            UpdateAuthenticateResultDto(
+                authenticated.id,
+                authenticated.failCount,
+                authenticated.lockedDateTime,
+                authenticated.userStatus,
+            ),
+        )
     }
 
     private fun tokenize(authenticated: Authenticate): AuthenticateGeneralUserQueryResult {

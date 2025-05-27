@@ -165,6 +165,7 @@ subprojects {
         testImplementation("io.kotest:kotest-runner-junit5:5.9.0")
         testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter-kotlin:1.1.11")
         testImplementation("com.navercorp.fixturemonkey:fixture-monkey-kotest:1.1.11")
+        testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
         testImplementation("io.mockk:mockk:1.13.10")
         testImplementation("io.mockk:mockk-agent:1.13.10")
         testImplementation("org.assertj:assertj-core:3.24.2")
@@ -188,6 +189,12 @@ subprojects {
 }
 
 val queryDslVersion = "5.1.0"
+
+project(":test-module") {
+    tasks.named("bootJar") { enabled = false }
+    tasks.named("jar") { enabled = true }
+
+}
 
 project(":shared-module") {
     tasks.named("bootJar") { enabled = false }
