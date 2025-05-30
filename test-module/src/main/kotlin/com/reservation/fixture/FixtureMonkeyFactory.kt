@@ -17,8 +17,8 @@ object FixtureMonkeyFactory {
             .objectIntrospector(
                 FailoverIntrospector(
                     listOf(
-                        ConstructorPropertiesArbitraryIntrospector.INSTANCE,
                         FieldReflectionArbitraryIntrospector.INSTANCE,
+                        ConstructorPropertiesArbitraryIntrospector.INSTANCE,
                     ),
                 ),
             )

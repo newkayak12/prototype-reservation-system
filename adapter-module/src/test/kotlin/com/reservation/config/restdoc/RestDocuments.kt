@@ -103,7 +103,7 @@ class RestDocuments(
             summary = summary,
             requestPreprocessor = preprocessRequest(prettyPrint()),
             responsePreprocessor = preprocessResponse(prettyPrint()),
-            snippets = *snippets.toTypedArray(),
+            snippets = snippets.toTypedArray(),
         )
     }
 }
