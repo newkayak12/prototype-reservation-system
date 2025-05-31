@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 class GeneralUserSignInController(
     val authenticateGeneralUserQuery: AuthenticateGeneralUserQuery,
 ) {
-    @PutMapping(GeneralUserUrl.GENERAL_USER_LOGIN)
+    @PutMapping(GeneralUserUrl.GENERAL_USER_SIGN_IN)
     fun signIn(
         @Valid @RequestBody request: GeneralUserLoginRequest,
         httpServletResponse: HttpServletResponse,

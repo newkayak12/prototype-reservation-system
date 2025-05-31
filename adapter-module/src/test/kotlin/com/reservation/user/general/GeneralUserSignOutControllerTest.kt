@@ -58,7 +58,7 @@ class GeneralUserSignOutControllerTest(
 
         test("로그아웃을 시도함에 따라 refresh 토큰이 제거된다.") {
             mockMvc.perform(
-                patch(GeneralUserUrl.GENERAL_USER_LOGOUT)
+                patch(GeneralUserUrl.GENERAL_USER_SIGN_OUT)
                     .header(HttpHeaders.AUTHORIZATION, accessToken)
                     .cookie(refreshCookie),
             )
@@ -85,7 +85,7 @@ class GeneralUserSignOutControllerTest(
                 )
                 .andDo(
                     RestDocuments(
-                        identifier = "logOut",
+                        identifier = "signOut",
                         documentTags = listOf("general_user"),
                         summary = "일반 회원 로그아웃",
                     )

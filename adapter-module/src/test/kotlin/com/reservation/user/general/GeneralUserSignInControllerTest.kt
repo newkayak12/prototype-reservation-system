@@ -62,7 +62,7 @@ class GeneralUserSignInControllerTest(
                         .sample()
 
                 mockMvc.perform(
-                    put(GeneralUserUrl.GENERAL_USER_LOGIN)
+                    put(GeneralUserUrl.GENERAL_USER_SIGN_IN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)),
                 )
@@ -84,7 +84,7 @@ class GeneralUserSignInControllerTest(
             } returns jakartaMonkey.giveMeOne<AuthenticateGeneralUserQueryResult>()
 
             mockMvc.perform(
-                put(GeneralUserUrl.GENERAL_USER_LOGIN)
+                put(GeneralUserUrl.GENERAL_USER_SIGN_IN)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)),
             )
