@@ -1,13 +1,13 @@
-package com.reservation.user.policy
+package com.reservation.user.policy.availables
 
 import com.reservation.shared.user.Password
 
 interface PasswordChangeable {
     fun changePassword(password: Password)
 
-    fun password(): Password
+    val userPasswordSet: Password
 
     fun changePassword(encodedNewPassword: String) {
-        changePassword(password().changePassword(encodedNewPassword))
+        changePassword(userPasswordSet.changePassword(encodedNewPassword))
     }
 }
