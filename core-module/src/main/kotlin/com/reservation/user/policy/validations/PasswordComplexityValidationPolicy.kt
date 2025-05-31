@@ -1,18 +1,16 @@
 package com.reservation.user.policy.validations
 
-@Suppress("MaxLineLength")
 class PasswordComplexityValidationPolicy : PasswordValidationPolicy {
     companion object {
+        @Suppress("MaxLineLength")
         val PASSWORD_COMPLEXITY_REG_EXP =
             Regex(
                 """
-                ^
-                (?=.*[a-z])
+                ^(?=.*[a-z])
                 (?=.*[A-Z])
                 (?=.*\d)
-                (?=.*[~!@#${'$'}%^&*()_+\-={}|[\]:;"'<>,.?/])
-                .{8,18}
-                $
+                (?=.*[~!@#${'$'}%^&*()_+\-={}|\[\]:;"'<>,.?/])
+                .{8,18}${'$'}
                 """.trimIndent().replace("\n", ""),
             )
     }

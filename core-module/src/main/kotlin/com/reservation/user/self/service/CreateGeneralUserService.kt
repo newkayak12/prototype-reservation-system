@@ -19,8 +19,8 @@ import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 class CreateGeneralUserService {
     private val loginIdValidationPolicy =
         listOf(
-            LoginIdAlphaNumericValidationPolicy(),
             LoginIdLengthValidationPolicy(),
+            LoginIdAlphaNumericValidationPolicy(),
         )
     private val passwordValidationPolicy =
         listOf(
