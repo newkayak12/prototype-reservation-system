@@ -3,6 +3,7 @@ package com.reservation.user.self.port.output
 import com.reservation.enumeration.UserStatus
 import java.time.LocalDateTime
 
+@FunctionalInterface
 interface UpdateAuthenticateResult {
     fun save(authenticateResult: UpdateAuthenticateResultDto)
 

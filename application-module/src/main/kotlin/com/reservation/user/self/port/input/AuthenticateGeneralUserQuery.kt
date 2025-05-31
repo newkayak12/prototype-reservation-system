@@ -2,6 +2,7 @@ package com.reservation.user.self.port.input
 
 import com.reservation.user.self.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserInquiry
 
+@FunctionalInterface
 interface AuthenticateGeneralUserQuery {
     fun execute(request: GeneralUserQueryDto): AuthenticateGeneralUserQueryResult
 
