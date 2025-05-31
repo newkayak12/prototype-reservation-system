@@ -81,10 +81,12 @@ class JWTProvider(
         val expireDate: Date = claims.expiration
         val now = LocalDateTime.now()
         val expireLocalDateTime = LocalDateTime.from(expireDate.toInstant())
-        val version = claims.get(VERSION, String::class.java)
-        val type = claims.get(TYPE, String::class.java)
+        val jwtVersion = claims.get(VERSION, String::class.java)
+        val jwtType = claims.get(TYPE, String::class.java)
 
-        return now.isBefore(expireLocalDateTime)
+        return now.isBefore(expireLocalDateTime) &&
+            type.title == jwtType &&
+            version.name == jwtVersion
     }
 
     override fun decrypt(
