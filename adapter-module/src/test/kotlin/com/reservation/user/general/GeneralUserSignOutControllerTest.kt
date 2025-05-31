@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.util.Base64
 
 @AutoConfigureRestDocs
 @ActiveProfiles(value = ["test"])
@@ -34,11 +35,22 @@ class GeneralUserSignOutControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     init {
+        val encoder = Base64.getEncoder()
         val accessToken =
-            "Bearer ${Arbitraries.strings().ofMinLength(10).ofMaxLength(255).ascii().sample()}"
+            "Bearer ${
+                encoder.encode(
+                    Arbitraries.strings().ofMinLength(10).ofMaxLength(255).ascii().sample()
+                        .toByteArray(),
+                )
+            }"
 
         val refreshToken =
-            "Bearer ${Arbitraries.strings().ofMinLength(10).ofMaxLength(255).ascii().sample()}"
+            "Bearer ${
+                encoder.encode(
+                    Arbitraries.strings().ofMinLength(10).ofMaxLength(255).ascii().sample()
+                        .toByteArray(),
+                )
+            }"
         val refreshCookie = Cookie(RefreshTokenDefinitions.REFRESH_TOKEN_KEY, refreshToken)
         refreshCookie.path = RefreshTokenDefinitions.REFRESH_TOKEN_PATH
         refreshCookie.secure = RefreshTokenDefinitions.SECURE
