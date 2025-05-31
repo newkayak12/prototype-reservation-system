@@ -1,20 +1,15 @@
 package com.reservation.authenticate
 
-import com.navercorp.fixturemonkey.ArbitraryBuilder
-import com.navercorp.fixturemonkey.FixtureMonkey
-import com.navercorp.fixturemonkey.api.introspector.BeanArbitraryIntrospector
-import com.navercorp.fixturemonkey.api.introspector.BuilderArbitraryIntrospector
-import com.navercorp.fixturemonkey.api.introspector.ConstructorPropertiesArbitraryIntrospector
-import com.navercorp.fixturemonkey.api.introspector.FailoverIntrospector
-import com.navercorp.fixturemonkey.api.introspector.FieldReflectionArbitraryIntrospector
 import com.navercorp.fixturemonkey.api.jqwik.JavaTypeArbitraryGenerator
 import com.navercorp.fixturemonkey.api.jqwik.JqwikPlugin
-import com.navercorp.fixturemonkey.kotlin.KotlinPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.reservation.authenticate.service.AuthenticateSignInService
-import com.reservation.encrypt.password.PasswordEncoderUtility
 import com.reservation.enumeration.AccessStatus
+import com.reservation.enumeration.UserStatus.ACTIVATED
+import com.reservation.fixture.FixtureMonkeyFactory
+import com.reservation.shared.user.LockState
 import com.reservation.shared.user.Password
+import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -25,21 +20,8 @@ import java.time.LocalDateTime
 class SignInSuccessTest : BehaviorSpec(
     {
         val fixtureMonkey =
-            FixtureMonkey.builder()
-                .enableLoggingFail(false)
-                .defaultNotNull(true)
-                .objectIntrospector(
-                    FailoverIntrospector(
-                        listOf(
-                            ConstructorPropertiesArbitraryIntrospector.INSTANCE,
-                            BuilderArbitraryIntrospector.INSTANCE,
-                            FieldReflectionArbitraryIntrospector.INSTANCE,
-                            BeanArbitraryIntrospector.INSTANCE,
-                        ),
-                    ),
-                )
+            FixtureMonkeyFactory.giveMePureMonkey()
                 .plugin {
-                    KotlinPlugin()
                     JqwikPlugin().javaTypeArbitraryGenerator(
                         object : JavaTypeArbitraryGenerator {
                             override fun strings(): StringArbitrary {
@@ -53,10 +35,20 @@ class SignInSuccessTest : BehaviorSpec(
         val authenticateSignInService = AuthenticateSignInService()
 
         Given("올바른 Authenticate와 사용자가 입력한 패스워드를 제공 받고") {
-            val rawPassword: String = Arbitraries.strings().ofMinLength(8).ofMaxLength(12).sample()
-            val arbitraryBuilder: ArbitraryBuilder<Authenticate> = fixtureMonkey.giveMeBuilder()
+            var rawPassword: String =
+                Arbitraries.strings()
+                    .ofMinLength(8)
+                    .ofMaxLength(12)
+                    .ascii()
+                    .sample()
+
+            if (rawPassword.toByteArray().size >= 72) {
+                rawPassword = rawPassword.slice(IntRange(0, 7))
+            }
+
             val authenticate: Authenticate =
-                arbitraryBuilder
+                FixtureMonkeyFactory.giveMePureMonkey().build()
+                    .giveMeBuilder<Authenticate>()
                     .set(
                         "password",
                         Password(
@@ -64,20 +56,20 @@ class SignInSuccessTest : BehaviorSpec(
                             null,
                             LocalDateTime.now(),
                         ),
-                    ).sample()
+                    )
+                    .set("lockState", LockState(0, null, ACTIVATED))
+                    .sample()
 
             When("로그인 요청을 한다.") {
-                val actual =
-                    authenticateSignInService.signIn(
-                        authenticate,
-                        rawPassword,
-                    )
+                val actual = authenticateSignInService.signIn(authenticate, rawPassword)
 
-                Then("성공 플래그 true, 로그인 히스토리 1개 생성") {
-
+                Then("성공 플래그 true가 된다.") {
                     actual.isSuccess shouldBe true
-                    actual.accessHistories() shouldHaveSize 1
-                    actual.accessHistories()[0].accessDetails.accessStatus shouldBe
+                }
+
+                Then("로그인 성공 히스토리 1개 생성이 된다.") {
+                    actual.accessHistories shouldHaveSize 1
+                    actual.accessHistories[0].accessDetails.accessStatus shouldBe
                         AccessStatus.SUCCESS
                 }
             }

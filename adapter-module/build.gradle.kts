@@ -33,13 +33,57 @@ tasks.named<Detekt>("detekt") {
     }
 }
 
+val apiSpec = file("/api-spec/openapi3.yaml")
+val reservation = "reservation"
+openapi3 {
+    setServer("http://localhost:8080")
+    title = reservation
+    description = "$reservation-API"
+    version = "1.0.0"
+    format = "yaml"
+}
+
+swaggerSources {
+    create(reservation) {
+        setInputFile(apiSpec)
+    }
+}
+
+tasks.register("swagger") {
+    dependsOn("openapi3")
+    doFirst {
+        val swaggerUIFile = file("${project.buildDir}/api-spec/openapi3.yaml")
+
+        val securitySchemesContent = """
+            securitySchemes:
+              APIKey:
+                type: apiKey
+                name: Authorization
+                `in`: header
+            security:
+              - APIKey: []  # Apply the security scheme here
+        """.trimIndent()
+
+        swaggerUIFile.appendText("\n$securitySchemesContent")
+        println("Append Security Settings")
+    }
+
+    doLast {
+        copy {
+            from("${layout.buildDirectory.get()}/api-spec/openapi3.yaml")
+            into("${layout.buildDirectory.get()}/resources/main/static/docs")
+        }
+        println("Copy yaml")
+    }
+}
+
 dependencies {
-    implementation("io.jsonwebtoken:jjwt:0.12.6")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0")
 
     add("asciidoctorExt", "org.springframework.restdocs:spring-restdocs-asciidoctor")
     testImplementation("com.epages:restdocs-api-spec-mockmvc:0.19.4")
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
+    testImplementation(project(":test-module"))
 }
 
 dependencies {

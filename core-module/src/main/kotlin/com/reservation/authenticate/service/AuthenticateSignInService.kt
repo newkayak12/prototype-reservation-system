@@ -17,7 +17,6 @@ class AuthenticateSignInService {
         val signInPolicy =
             NormalSignInPolicy(SIGN_IN_ATTEMPT_LIMIT, SIGN_IN_INTERVAL_MINUTES, ChronoUnit.MINUTES)
         authenticate.canISignIn(rawPassword, signInPolicy)
-        authenticate.writeAccessHistory()
         return authenticate
     }
 }

@@ -21,3 +21,7 @@ tasks.named<Detekt>("detekt") {
 dependencies {
     implementation(project(":shared-module"))
 }
+
+dependencies {
+    testImplementation(project(":test-module"))
+}

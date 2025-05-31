@@ -3,12 +3,8 @@ package com.reservation.persistence.user.entity
 import com.reservation.config.persistence.entity.TimeBasedUuidStrategy
 import com.reservation.enumeration.AccessStatus
 import jakarta.persistence.Column
-import jakarta.persistence.ConstraintMode
 import jakarta.persistence.Entity
-import jakarta.persistence.ForeignKey
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.Comment
 import java.time.LocalDateTime
@@ -19,8 +15,9 @@ import java.time.LocalDateTime
 )
 @Entity
 class UserAccessHistoryEntity(
-    userEntity: UserEntity,
+    userId: String,
     accessStatus: AccessStatus,
+    accessDatetime: LocalDateTime,
 ) {
     @Id
     @TimeBasedUuidStrategy
@@ -28,15 +25,9 @@ class UserAccessHistoryEntity(
     @Comment("식별키")
     val id: String? = null
 
-    @ManyToOne(targetEntity = UserEntity::class)
-    @JoinColumn(
-        updatable = false,
-        name = "user_id",
-        columnDefinition = "VARCHAR(128)",
-        foreignKey = ForeignKey(ConstraintMode.NO_CONSTRAINT),
-    )
+    @Column(name = "user_id", columnDefinition = "VARCHAR(128)")
     @Comment("식별키")
-    val userEntity: UserEntity = userEntity
+    val userId: String = userId
 
     @Column(name = "access_status", columnDefinition = "ENUM ('SUCCESS', 'FAILURE')")
     @Comment("상태(SUCCESS, FAILURE)")
@@ -44,5 +35,5 @@ class UserAccessHistoryEntity(
 
     @Column(name = "access_datetime", columnDefinition = "DATETIME")
     @Comment("요청 날짜-시간")
-    val accessDatetime: LocalDateTime = LocalDateTime.now()
+    val accessDatetime: LocalDateTime = accessDatetime
 }

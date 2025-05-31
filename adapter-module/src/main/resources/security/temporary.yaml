@@ -1,12 +1,13 @@
 spring:
-    activate:
-        on-profile: temporary
+  activate:
+    on-profile: temporary
 
 security:
-    jwt:
-        properties:
-            expire-time: 300000
-            secret: HELLO
-            issuer: HELLO
-        allowed:
-            path: /**
+  jwt:
+    properties:
+      expire-time: 300000
+      secret: af869782f3abde439def4230f2b05bd701f1ab047ec80808d3b84f1c8923506a
+      issuer: HELLO
+      version: v1
+    allowed:
+      path: /**

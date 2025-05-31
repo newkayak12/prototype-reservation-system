@@ -92,28 +92,16 @@ tasks.named<JacocoReport>("jacocoTestReport") {
 
     reports {
         xml.required.set(false)
-        html.required.set(true)
-        tasks.jacocoTestReport {
-            dependsOn(tasks.test)
-
-            reports {
-                xml.required.set(false)
-                csv.required.set(false)
-                html.required.set(true)
-
-                html.outputLocation.set(
-                    layout.buildDirectory.dir(
-                        "$rootDir/build/reports/jacoco/${project.name}/jacocoTestReport.html",
-                    ),
-                )
-            }
-        }
-
         csv.required.set(false)
+        html.required.set(true)
+
 
         // ✅ 커스텀 리포트 경로
-        xml.outputLocation.set(layout.buildDirectory.file("custom-reports/jacoco/report.xml"))
-        html.outputLocation.set(layout.buildDirectory.dir("custom-reports/jacoco/html"))
+        html.outputLocation.set(
+            layout.buildDirectory.dir(
+                "$rootDir/build/reports/jacoco/${project.name}/jacocoTestReport.html",
+            ),
+        )
     }
 }
 
@@ -163,8 +151,11 @@ subprojects {
         testImplementation("io.kotest:kotest-assertions-core:5.9.0")
         testImplementation("io.kotest:kotest-property:5.9.0")
         testImplementation("io.kotest:kotest-runner-junit5:5.9.0")
+        testImplementation("io.kotest.extensions:kotest-extensions-spring:1.3.0")
+        testImplementation("com.ninja-squad:springmockk:4.0.2")
         testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter-kotlin:1.1.11")
         testImplementation("com.navercorp.fixturemonkey:fixture-monkey-kotest:1.1.11")
+        testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
         testImplementation("io.mockk:mockk:1.13.10")
         testImplementation("io.mockk:mockk-agent:1.13.10")
         testImplementation("org.assertj:assertj-core:3.24.2")
@@ -189,6 +180,12 @@ subprojects {
 
 val queryDslVersion = "5.1.0"
 
+project(":test-module") {
+    tasks.named("bootJar") { enabled = false }
+    tasks.named("jar") { enabled = true }
+
+}
+
 project(":shared-module") {
     tasks.named("bootJar") { enabled = false }
     tasks.named("jar") { enabled = true }
@@ -207,7 +204,8 @@ project(":application-module") {
     tasks.named("bootJar") { enabled = false }
     tasks.named("jar") { enabled = true }
     dependencies {
-        implementation("org.springframework.security:spring-security-core:6.3.5")
+//        implementation("org.springframework.security:spring-security-core:6.3.5")
+        implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     }
 }
 
@@ -242,7 +240,9 @@ project(":adapter-module") {
         add("kapt", "com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
         add("kapt", "jakarta.annotation:jakarta.annotation-api")
         add("kapt", "jakarta.persistence:jakarta.persistence-api")
+    }
 
+    dependencies {
         developmentOnly("org.springframework.boot:spring-boot-docker-compose")
         testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
         testImplementation("org.springframework.security:spring-security-test")
