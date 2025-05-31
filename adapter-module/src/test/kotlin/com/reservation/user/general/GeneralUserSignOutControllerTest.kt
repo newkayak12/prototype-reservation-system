@@ -66,6 +66,10 @@ class GeneralUserSignOutControllerTest(
                         RefreshTokenDefinitions.REFRESH_TOKEN_KEY,
                         RefreshTokenDefinitions.HTTP_ONLY,
                     ),
+                    cookie().maxAge(
+                        RefreshTokenDefinitions.REFRESH_TOKEN_KEY,
+                        RefreshTokenDefinitions.FLUSH_AGE,
+                    ),
                 )
                 .andDo(
                     RestDocuments(
