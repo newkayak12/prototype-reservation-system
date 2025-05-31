@@ -1,7 +1,7 @@
 package com.reservation.utilities.encrypt.bidirectional
 
 import javax.crypto.Cipher
-import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import java.util.Base64
 
@@ -15,7 +15,8 @@ class BidirectionalEncryptUtility(
         private const val AES_ALGORITHM = "AES"
         private const val AES_KEY_BYTE_SIZE = 32
         private const val HEX = 16
-        private const val CIPHER_ALGORITHM = "AES/CBC/PKCS5Padding"
+        private const val CIPHER_ALGORITHM = "AES/GCM/NoPadding"
+        private const val GCM_TAG_LENGTH = 128
 
         private fun hexToByteArray(hex: String): ByteArray {
             require(hex.length % 2 == 0) { "Hex key length must be even" }
@@ -33,14 +34,15 @@ class BidirectionalEncryptUtility(
         val ivBytes = keyBytes.sliceArray(0 until IV_LENGTH)
 
         val secretKey = SecretKeySpec(keyBytes, AES_ALGORITHM)
-        val ivParameterSpec = IvParameterSpec(ivBytes)
+        val gcmSpec = GCMParameterSpec(GCM_TAG_LENGTH, ivBytes)
+
         val encode =
             Cipher.getInstance(CIPHER_ALGORITHM).apply {
-                init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec)
+                init(Cipher.ENCRYPT_MODE, secretKey, gcmSpec)
             }
         val decode =
             Cipher.getInstance(CIPHER_ALGORITHM).apply {
-                init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec)
+                init(Cipher.DECRYPT_MODE, secretKey, gcmSpec)
             }
 
         cipher = Ciphers(encode, decode)
