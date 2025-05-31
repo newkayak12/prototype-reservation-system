@@ -105,7 +105,7 @@ class UserEntity(
         userStatus: UserStatus,
     ) {
         this.failCount = failCount
-        this.lockedDatetime = lockedDateTime
+        this.lockedDatetime = lockedDateTime ?: LocalDateTime.now()
         this.userStatus = userStatus
     }
 }

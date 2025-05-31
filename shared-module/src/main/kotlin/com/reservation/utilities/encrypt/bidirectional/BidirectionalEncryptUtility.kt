@@ -1,11 +1,11 @@
-package com.reservation.utilities.encrypt.aes
+package com.reservation.utilities.encrypt.bidirectional
 
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import java.util.Base64
 
-class AESUtility(
+class BidirectionalEncryptUtility(
     key: String,
 ) {
     private val cipher: Ciphers

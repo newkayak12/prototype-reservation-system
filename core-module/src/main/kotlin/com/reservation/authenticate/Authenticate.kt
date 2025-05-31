@@ -40,6 +40,9 @@ class Authenticate(
     val userStatus: UserStatus
         get() = lockState.userStatus
 
+    val accessHistories: List<AccessHistory>
+        get() = accessLog.toList()
+
     private fun isPasswordSame(rawPassword: String): Boolean {
         return PasswordEncoderUtility.matches(rawPassword, password.encodedPassword).also {
             if (!it) {
@@ -62,6 +65,7 @@ class Authenticate(
     ) {
         passwordCheckSuccess = isPasswordSame(rawPassword)
         lockCheckSuccess = isLockdownTimeOver(signInPolicy.interval(), signInPolicy.unit())
+        writeAccessHistory()
 
         if (passwordCheckSuccess && lockCheckSuccess) {
             lockState = lockState.activate()
@@ -72,21 +76,18 @@ class Authenticate(
             lockState = lockState.deactivate()
             lockCheckSuccess = false
         }
-
-        writeAccessHistory()
     }
 
-    fun writeAccessHistory() {
+    private fun writeAccessHistory() {
         val history =
             if (passwordCheckSuccess && lockCheckSuccess) {
                 AccessHistory.success(id, loginId)
             } else {
                 AccessHistory.failure(id, loginId)
             }
+
         accessLog.add(history)
     }
-
-    fun accessHistories(): List<AccessHistory> = accessLog.toList()
 
     fun loginId(): String = loginId.loginId
 }

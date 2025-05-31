@@ -1,6 +1,5 @@
 package com.reservation.authenticate
 
-import com.navercorp.fixturemonkey.ArbitraryBuilder
 import com.navercorp.fixturemonkey.api.jqwik.JavaTypeArbitraryGenerator
 import com.navercorp.fixturemonkey.api.jqwik.JqwikPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
@@ -34,15 +33,20 @@ class SignInFailureWIthPasswordTest : BehaviorSpec(
         val authenticateSignInService = AuthenticateSignInService()
 
         Given("올바른 Authenticate와 사용자가 입력한 패스워드를 제공 받고") {
-            val rawPassword: String =
+            var rawPassword: String =
                 Arbitraries.strings()
                     .ofMinLength(8)
                     .ofMaxLength(12)
                     .ascii()
                     .sample()
-            val arbitraryBuilder: ArbitraryBuilder<Authenticate> = fixtureMonkey.giveMeBuilder()
+
+            if (rawPassword.toByteArray().size >= 72) {
+                rawPassword = rawPassword.slice(IntRange(0, 7))
+            }
+
             val authenticate: Authenticate =
-                arbitraryBuilder
+                FixtureMonkeyFactory.giveMePureMonkey().build()
+                    .giveMeBuilder<Authenticate>()
                     .set(
                         "password",
                         Password(
@@ -64,8 +68,8 @@ class SignInFailureWIthPasswordTest : BehaviorSpec(
                 }
 
                 Then("로그인 실패 히스토리 1개 생성이 된다.") {
-                    actual.accessHistories() shouldHaveSize 1
-                    actual.accessHistories()[0].accessDetails.accessStatus shouldBe
+                    actual.accessHistories shouldHaveSize 1
+                    actual.accessHistories[0].accessDetails.accessStatus shouldBe
                         AccessStatus.FAILURE
                 }
             }

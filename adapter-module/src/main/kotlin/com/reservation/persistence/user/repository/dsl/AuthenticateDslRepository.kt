@@ -19,8 +19,6 @@ class AuthenticateDslRepository(
                 userEntity.id,
                 userEntity.loginId,
                 userEntity.password,
-                userEntity.oldPassword,
-                userEntity.passwordChangeDateTime,
                 userEntity.failCount,
                 userEntity.userStatus,
                 userEntity.lockedDatetime,

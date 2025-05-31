@@ -4,9 +4,9 @@ import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.General
 import jakarta.validation.constraints.NotEmpty
 
 data class GeneralUserLoginRequest(
-    @NotEmpty
+    @field:NotEmpty
     val loginId: String,
-    @NotEmpty
+    @field:NotEmpty
     val password: String,
 ) {
     fun toQuery(): GeneralUserQueryDto {

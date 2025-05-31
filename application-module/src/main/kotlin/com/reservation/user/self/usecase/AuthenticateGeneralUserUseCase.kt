@@ -3,7 +3,7 @@ package com.reservation.user.self.usecase
 import com.reservation.authenticate.AccessHistory
 import com.reservation.authenticate.Authenticate
 import com.reservation.authenticate.service.AuthenticateSignInService
-import com.reservation.common.exceptions.NoSuchDatabaseElementException
+import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.annotations.UseCase
 import com.reservation.enumeration.JWTType
 import com.reservation.user.exceptions.AccessFailureCountHasExceedException
@@ -37,21 +37,17 @@ class AuthenticateGeneralUserUseCase(
         val authenticate =
             authenticateGeneralUser.query(request.toInquiry())?.toDomain()
                 ?: run {
-                    throw NoSuchDatabaseElementException()
+                    throw NoSuchPersistedElementException()
                 }
 
         val authenticated = authenticateSignInService.signIn(authenticate, request.password)
 
         // histories 저장
-        createAccessHistory(authenticated.accessHistories())
+        createAccessHistory(authenticated.accessHistories)
         updateAuthenticateResult(authenticated)
 
-        if (!authenticated.lockCheckSuccess) {
-            throw AccessFailureCountHasExceedException()
-        }
-        if (!authenticated.passwordCheckSuccess) {
-            throw WrongLoginIdOrPasswordException()
-        }
+        checkUserWasLockedDown(authenticated)
+        checkUserPasswordMatchWasFailed(authenticated)
 
         return tokenize(authenticated)
     }
@@ -79,6 +75,18 @@ class AuthenticateGeneralUserUseCase(
                 authenticated.userStatus,
             ),
         )
+    }
+
+    private fun checkUserWasLockedDown(authenticated: Authenticate) {
+        if (!authenticated.lockCheckSuccess) {
+            throw AccessFailureCountHasExceedException()
+        }
+    }
+
+    private fun checkUserPasswordMatchWasFailed(authenticated: Authenticate) {
+        if (!authenticated.passwordCheckSuccess) {
+            throw WrongLoginIdOrPasswordException()
+        }
     }
 
     private fun tokenize(authenticated: Authenticate): AuthenticateGeneralUserQueryResult {

@@ -8,6 +8,7 @@ import com.reservation.enumeration.SecurityRole
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import com.reservation.utilities.provider.JWTProvider
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -16,12 +17,14 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.AuthenticationEntryPoint
+import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.security.web.savedrequest.RequestCacheAwareFilter
 
 @EnableWebSecurity
 @Profile(value = ["temporary", "local", "stage", "production"])
+@Configuration
 class SecurityConfig(
     private val jwtPath: JwtWhitelist,
     private val xssPath: XssBlacklist,
@@ -46,15 +49,15 @@ class SecurityConfig(
         }
 
     @Bean
-    fun filterChain(httpSecurity: HttpSecurity) {
-        httpSecurity
+    fun filterChain(httpSecurity: HttpSecurity): SecurityFilterChain {
+        return httpSecurity
             .cors { it.disable() }
             .exceptionHandling { it.disable() }
             .exceptionHandling {
                 it.authenticationEntryPoint(customAuthenticationEntryPoint)
                 it.accessDeniedHandler(customAccessDeniedHandler)
             }
-            .headers { it.frameOptions { it.sameOrigin() } }
+            .headers { it.frameOptions { i -> i.sameOrigin() } }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .formLogin { it.disable() }
             .authorizeHttpRequests {

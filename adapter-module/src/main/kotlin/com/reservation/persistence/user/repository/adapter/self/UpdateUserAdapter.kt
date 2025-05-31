@@ -1,6 +1,6 @@
 package com.reservation.persistence.user.repository.adapter.self
 
-import com.reservation.common.exceptions.NoSuchDatabaseElementException
+import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.persistence.user.entity.UserEntity
 import com.reservation.persistence.user.repository.jpa.UserJpaRepository
 import com.reservation.user.self.port.output.UpdateAuthenticateResult
@@ -15,7 +15,7 @@ class UpdateUserAdapter(
         val userEntity: UserEntity =
             userJpaRepository.findById(authenticateResult.id)
                 .orElseThrow {
-                    throw NoSuchDatabaseElementException()
+                    throw NoSuchPersistedElementException()
                 }
 
         userEntity.updateAuthenticateResult(

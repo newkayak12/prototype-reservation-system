@@ -4,11 +4,10 @@ import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.Authent
 
 data class GeneralUserLoginResponse(
     val accessToken: String,
-    val refreshToken: String,
 ) {
     companion object {
         fun from(result: AuthenticateGeneralUserQueryResult): GeneralUserLoginResponse {
-            return GeneralUserLoginResponse(result.accessToken, result.accessToken)
+            return GeneralUserLoginResponse(result.accessToken)
         }
     }
 }

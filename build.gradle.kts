@@ -92,28 +92,16 @@ tasks.named<JacocoReport>("jacocoTestReport") {
 
     reports {
         xml.required.set(false)
-        html.required.set(true)
-        tasks.jacocoTestReport {
-            dependsOn(tasks.test)
-
-            reports {
-                xml.required.set(false)
-                csv.required.set(false)
-                html.required.set(true)
-
-                html.outputLocation.set(
-                    layout.buildDirectory.dir(
-                        "$rootDir/build/reports/jacoco/${project.name}/jacocoTestReport.html",
-                    ),
-                )
-            }
-        }
-
         csv.required.set(false)
+        html.required.set(true)
+
 
         // ✅ 커스텀 리포트 경로
-        xml.outputLocation.set(layout.buildDirectory.file("custom-reports/jacoco/report.xml"))
-        html.outputLocation.set(layout.buildDirectory.dir("custom-reports/jacoco/html"))
+        html.outputLocation.set(
+            layout.buildDirectory.dir(
+                "$rootDir/build/reports/jacoco/${project.name}/jacocoTestReport.html",
+            ),
+        )
     }
 }
 
@@ -252,7 +240,9 @@ project(":adapter-module") {
         add("kapt", "com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
         add("kapt", "jakarta.annotation:jakarta.annotation-api")
         add("kapt", "jakarta.persistence:jakarta.persistence-api")
+    }
 
+    dependencies {
         developmentOnly("org.springframework.boot:spring-boot-docker-compose")
         testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
         testImplementation("org.springframework.security:spring-security-test")
