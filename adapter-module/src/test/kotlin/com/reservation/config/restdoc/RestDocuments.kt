@@ -3,9 +3,9 @@ package com.reservation.config.restdoc
 import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document
 import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.resourceDetails
 import com.epages.restdocs.apispec.ResourceSnippetDetails
+import org.springframework.http.HttpHeaders
 import org.springframework.restdocs.headers.HeaderDescriptor
 import org.springframework.restdocs.headers.HeaderDocumentation.requestHeaders
-import org.springframework.restdocs.headers.HeaderDocumentation.responseHeaders
 import org.springframework.restdocs.mockmvc.RestDocumentationResultHandler
 import org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest
 import org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse
@@ -28,7 +28,7 @@ class RestDocuments(
     private val description: String? = null,
     private val requestBody: Array<Body>? = null,
     private val responseBody: Array<Body>? = null,
-    private val requestHeader: Array<Header>? = null,
+    private var requestHeader: Array<Header>? = null,
     private val responseHeader: Array<Header>? = null,
     private val query: Array<Query>? = null,
     private val pathParameter: Array<PathParameter>? = null,
@@ -41,11 +41,20 @@ class RestDocuments(
         parser: (T) -> Any,
         builder: (List<Any>) -> R,
     ) {
-        data?.takeIf { it.isNotEmpty() }
-            ?.let { list ->
-                val descriptor = list.map { parser(it) }
-                add(builder(descriptor))
-            }
+        data?.takeIf { it.isNotEmpty() }?.let { list ->
+            val descriptor = list.map { parser(it) }
+            add(builder(descriptor))
+        }
+    }
+
+    fun authorizedRequestHeader(): RestDocuments {
+        val appendableHeader = requestHeader?.toMutableList() ?: mutableListOf<Header>()
+
+        appendableHeader.add(
+            Header(HttpHeaders.AUTHORIZATION, false, "AccessToken"),
+        )
+        requestHeader = appendableHeader.toTypedArray()
+        return this
     }
 
     fun create(): RestDocumentationResultHandler {
@@ -55,16 +64,20 @@ class RestDocuments(
         tags.description(description)
         tags.tags(*(documentTags ?: listOf("api")).toTypedArray())
 
+        if (requestHeader?.isNotEmpty() == true) {
+            requestHeader = requestHeader?.distinctBy { it.name }?.toTypedArray()
+        }
+
         snippets.addIfNotNullOrEmpty(
             requestHeader,
-            { it.parse() as HeaderDescriptor },
+            { it.parse() },
             { requestHeaders(it as List<HeaderDescriptor>) },
         )
 
         snippets.addIfNotNullOrEmpty(
             responseHeader,
-            { it.parse() as HeaderDescriptor },
-            { responseHeaders(it as List<HeaderDescriptor>) },
+            { it.parse() },
+            { requestHeaders(it as List<HeaderDescriptor>) },
         )
 
         snippets.addIfNotNullOrEmpty(

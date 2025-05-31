@@ -16,16 +16,17 @@ class GeneralUserSignInController(
     val authenticateGeneralUserQuery: AuthenticateGeneralUserQuery,
 ) {
     @PutMapping(GeneralUserUrl.GENERAL_USER_LOGIN)
-    fun login(
+    fun signIn(
         @Valid @RequestBody request: GeneralUserLoginRequest,
         httpServletResponse: HttpServletResponse,
     ): GeneralUserLoginResponse {
         val result = authenticateGeneralUserQuery.execute(request.toQuery())
 
-        val refreshTokenCookie = Cookie(Sign.REFRESH_TOKEN_KEY, result.refreshToken)
-        refreshTokenCookie.path = Sign.REFRESH_TOKEN_PATH
-        refreshTokenCookie.secure = true
-        refreshTokenCookie.isHttpOnly = true
+        val refreshTokenCookie =
+            Cookie(RefreshTokenDefinitions.REFRESH_TOKEN_KEY, result.refreshToken)
+        refreshTokenCookie.path = RefreshTokenDefinitions.REFRESH_TOKEN_PATH
+        refreshTokenCookie.secure = RefreshTokenDefinitions.SECURE
+        refreshTokenCookie.isHttpOnly = RefreshTokenDefinitions.HTTP_ONLY
         httpServletResponse.addCookie(refreshTokenCookie)
 
         return GeneralUserLoginResponse.from(result)

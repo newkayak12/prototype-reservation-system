@@ -94,7 +94,7 @@ class GeneralUserSignInControllerTest(
                 .andDo(print())
                 .andDo(
                     RestDocuments(
-                        identifier = "login",
+                        identifier = "signIn",
                         documentTags = listOf("general_user"),
                         summary = "일반 회원 로그인",
                         requestBody =

@@ -1,18 +1,18 @@
 spring:
-    activate:
-        on-profile: temporary
+  activate:
+    on-profile: temporary
 
 springdoc:
-    swagger-ui:
-        path: /swagger-ui.html
-        tags-sorter: alpha
-        operations-sorter: alpha
-        disable-swagger-default-url: true
-        display-request-duration: true
-        display-operation-id: false
-        enabled: true
-        url: /docs/openapi3.yaml
-    default-consumes-media-type: application/json;charset=UTF-8
-    default-produces-media-type: application/json;charset=UTF-8
-    enable-javadoc: true
-    show-actuator: true
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    disable-swagger-default-url: true
+    display-request-duration: true
+    display-operation-id: false
+    enabled: true
+    url: /api-spec/openapi3.yaml
+  default-consumes-media-type: application/json;charset=UTF-8
+  default-produces-media-type: application/json;charset=UTF-8
+  enable-javadoc: true
+  show-actuator: true
