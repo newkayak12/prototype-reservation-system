@@ -85,7 +85,7 @@ class GeneralUserSignOutControllerTest(
                 )
                 .andDo(
                     RestDocuments(
-                        identifier = "logOut",
+                        identifier = "signOut",
                         documentTags = listOf("general_user"),
                         summary = "일반 회원 로그아웃",
                     )
