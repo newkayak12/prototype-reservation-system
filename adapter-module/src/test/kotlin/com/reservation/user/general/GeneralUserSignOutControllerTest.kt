@@ -20,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @AutoConfigureRestDocs
@@ -53,6 +54,18 @@ class GeneralUserSignOutControllerTest(
                 .andExpectAll(
                     status().is2xxSuccessful,
                     content().string(""),
+                    cookie().path(
+                        RefreshTokenDefinitions.REFRESH_TOKEN_KEY,
+                        RefreshTokenDefinitions.REFRESH_TOKEN_PATH,
+                    ),
+                    cookie().secure(
+                        RefreshTokenDefinitions.REFRESH_TOKEN_KEY,
+                        RefreshTokenDefinitions.SECURE,
+                    ),
+                    cookie().httpOnly(
+                        RefreshTokenDefinitions.REFRESH_TOKEN_KEY,
+                        RefreshTokenDefinitions.HTTP_ONLY,
+                    ),
                 )
                 .andDo(
                     RestDocuments(
