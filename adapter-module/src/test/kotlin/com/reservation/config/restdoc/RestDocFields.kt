@@ -1,9 +1,9 @@
 package com.reservation.config.restdoc
 
-import com.epages.restdocs.apispec.HeaderDescriptorWithType
 import com.epages.restdocs.apispec.ParameterDescriptorWithType
-import com.epages.restdocs.apispec.ResourceDocumentation.headerWithName
 import com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName
+import org.springframework.restdocs.headers.HeaderDescriptor
+import org.springframework.restdocs.headers.HeaderDocumentation
 import org.springframework.restdocs.payload.FieldDescriptor
 import org.springframework.restdocs.payload.JsonFieldType
 import org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath
@@ -30,8 +30,8 @@ data class Header(
     val optional: Boolean = false,
     val description: String = "",
 ) {
-    fun parse(): HeaderDescriptorWithType =
-        headerWithName(name)
+    fun parse(): HeaderDescriptor =
+        HeaderDocumentation.headerWithName(name)
             .also {
                 if (optional) it.optional()
                 if (description.isNotEmpty()) it.description(description)
