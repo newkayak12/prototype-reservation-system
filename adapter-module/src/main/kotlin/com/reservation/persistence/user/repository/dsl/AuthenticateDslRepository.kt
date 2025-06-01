@@ -26,8 +26,8 @@ class AuthenticateDslRepository(
         )
             .from(userEntity)
             .where(
-                AuthenticateQuerySpec.loginIdEq(request.loginId),
-                AuthenticateQuerySpec.roleIsUser(request.role),
+                UserQuerySpec.loginIdEq(request.loginId),
+                UserQuerySpec.roleIsUser(request.role),
             )
             .fetchOne()
     }

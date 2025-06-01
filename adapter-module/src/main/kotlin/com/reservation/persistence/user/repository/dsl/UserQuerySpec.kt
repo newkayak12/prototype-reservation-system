@@ -5,7 +5,7 @@ import com.querydsl.core.types.dsl.Expressions
 import com.reservation.enumeration.Role
 import com.reservation.persistence.user.entity.QUserEntity.userEntity
 
-object AuthenticateQuerySpec {
+object UserQuerySpec {
     fun loginIdEq(loginId: String?): BooleanExpression? {
         return loginId.let {
             userEntity.loginId.eq(loginId)
