@@ -1,5 +1,6 @@
 package com.reservation.user.self.usecase
 
+import com.reservation.user.self.port.output.CheckGeneralUserDuplicated
 import com.reservation.user.self.port.output.CreateGeneralUser
 import com.reservation.user.self.service.CreateGeneralUserService
 import io.mockk.impl.annotations.InjectMockKs
@@ -12,6 +13,9 @@ import org.junit.jupiter.api.extension.ExtendWith
 class CreateGeneralUserUseCaseTest {
     @MockK
     private lateinit var createGeneralUser: CreateGeneralUser
+
+    @MockK
+    private lateinit var checkGeneralUserDuplicated: CheckGeneralUserDuplicated
 
     @SpyK
     private val createGeneralUserService = CreateGeneralUserService()
