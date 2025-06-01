@@ -1,4 +1,4 @@
-package com.reservation.user.policy
+package com.reservation.user.policy.availables
 
 import com.reservation.shared.user.PersonalAttributes
 

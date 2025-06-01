@@ -1,4 +1,4 @@
-package com.reservation.user.widthdrawal
+package com.reservation.user.resign
 
 data class EncryptedAttributes(
     private val encryptedEmail: String,

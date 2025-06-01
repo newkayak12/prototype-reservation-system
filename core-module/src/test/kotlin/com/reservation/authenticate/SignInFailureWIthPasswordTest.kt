@@ -1,7 +1,5 @@
 package com.reservation.authenticate
 
-import com.navercorp.fixturemonkey.api.jqwik.JavaTypeArbitraryGenerator
-import com.navercorp.fixturemonkey.api.jqwik.JqwikPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.reservation.authenticate.service.AuthenticateSignInService
 import com.reservation.enumeration.AccessStatus
@@ -12,24 +10,10 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import net.jqwik.api.Arbitraries
-import net.jqwik.api.arbitraries.StringArbitrary
 import java.time.LocalDateTime
 
 class SignInFailureWIthPasswordTest : BehaviorSpec(
     {
-        val fixtureMonkey =
-            FixtureMonkeyFactory.giveMePureMonkey()
-                .plugin {
-                    JqwikPlugin().javaTypeArbitraryGenerator(
-                        object : JavaTypeArbitraryGenerator {
-                            override fun strings(): StringArbitrary {
-                                return Arbitraries.strings().ofLength(12)
-                            }
-                        },
-                    )
-                }
-                .build()
-
         val authenticateSignInService = AuthenticateSignInService()
 
         Given("올바른 Authenticate와 사용자가 입력한 패스워드를 제공 받고") {

@@ -1,4 +1,4 @@
-package com.reservation.user.owner
+package com.reservation.user.self
 
 import com.reservation.enumeration.Role
 import com.reservation.shared.user.LoginId
@@ -11,17 +11,22 @@ import com.reservation.user.resign.EncryptedAttributes
 import com.reservation.user.resign.ResignedUser
 import java.time.LocalDateTime
 
-class RestaurantOwner(
+class User(
     private val id: String? = null,
     private val loginId: LoginId,
     private var password: Password,
     private var personalAttributes: PersonalAttributes,
     nickname: String,
 ) : ServiceUser {
-    private var userAttributes: UserAttribute = UserAttribute(nickname, Role.RESTAURANT_OWNER)
+    private var userAttributes: UserAttribute = UserAttribute(nickname, Role.USER)
 
     override val identifier: String?
         get() = id
+    val userLoginId: String
+        get() = loginId.loginId
+
+    val userEncodedPassword: String
+        get() = userPasswordSet.encodedPassword
     override val userEmail: String
         get() = personalAttributes.email
     override val userMobile: String
@@ -33,11 +38,12 @@ class RestaurantOwner(
     override val userPasswordSet: Password
         get() = password
 
+    override fun personalAttributes(): PersonalAttributes = personalAttributes
+
     override fun resign(encryptedAttributes: EncryptedAttributes): ResignedUser {
         if (id == null) {
             throw ResignWithoutIdException()
         }
-
         return ResignedUser(
             id,
             loginId,
@@ -49,8 +55,6 @@ class RestaurantOwner(
     override fun changePassword(password: Password) {
         this.password = password
     }
-
-    override fun personalAttributes(): PersonalAttributes = personalAttributes
 
     override fun changePersonalAttributes(personalAttributes: PersonalAttributes) {
         this.personalAttributes = personalAttributes

@@ -3,10 +3,10 @@ package com.reservation.user.admin
 import com.reservation.enumeration.Role
 import com.reservation.shared.user.LoginId
 import com.reservation.shared.user.Password
-import com.reservation.user.policy.PasswordChangeable
-import com.reservation.user.policy.UserWithdrawable
-import com.reservation.user.widthdrawal.EncryptedAttributes
-import com.reservation.user.widthdrawal.WithdrawalUser
+import com.reservation.user.policy.availables.PasswordChangeable
+import com.reservation.user.policy.availables.UserResignable
+import com.reservation.user.resign.EncryptedAttributes
+import com.reservation.user.resign.ResignedUser
 import java.time.LocalDateTime
 
 class Admin(
@@ -14,25 +14,26 @@ class Admin(
     private val loginId: LoginId,
     private var password: Password,
     private val role: Role = Role.ROOT,
-) : UserWithdrawable, PasswordChangeable {
-    override fun email(): String = ""
+) : UserResignable, PasswordChangeable {
+    override val userEmail: String
+        get() = ""
+    override val userMobile: String
+        get() = ""
+    override val userNickname: String
+        get() = ""
+    override val userRole: Role
+        get() = role
+    override val userPasswordSet: Password
+        get() = password
 
-    override fun mobile(): String = ""
-
-    override fun nickname(): String = ""
-
-    override fun role(): Role = role
-
-    override fun withdraw(encryptedAttributes: EncryptedAttributes): WithdrawalUser {
-        return WithdrawalUser(
+    override fun resign(encryptedAttributes: EncryptedAttributes): ResignedUser {
+        return ResignedUser(
             id,
             loginId,
             encryptedAttributes,
             LocalDateTime.now(),
         )
     }
-
-    override fun password(): Password = password
 
     override fun changePassword(password: Password) {
         this.password = password
