@@ -22,8 +22,6 @@ class CreateGeneralUserServiceTest : BehaviorSpec(
                     nickname = CommonlyUsedArbitraries.nicknameArbitrary.sample(),
                 )
 
-            println(createUserForm)
-
             When("Form을 바탕으로 회원을 만들어달라고 요청한다.") {
                 val actual = createGeneralUserService.createGeneralUser(createUserForm)
 
@@ -38,7 +36,7 @@ class CreateGeneralUserServiceTest : BehaviorSpec(
                 Then("그외 입력한 필드는 empty가 아니다.") {
                     actual.userEmail.isNotEmpty() shouldBe true
                     actual.userMobile.isNotEmpty() shouldBe true
-                    actual.userMobile.isNotEmpty() shouldBe true
+                    actual.userNickname.isNotEmpty() shouldBe true
                 }
             }
         }

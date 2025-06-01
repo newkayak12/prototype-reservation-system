@@ -5,10 +5,10 @@ import com.reservation.shared.user.LoginId
 import com.reservation.shared.user.Password
 import com.reservation.shared.user.PersonalAttributes
 import com.reservation.shared.user.UserAttribute
-import com.reservation.user.common.exceptions.WithdrawalIdHaveNoIdException
+import com.reservation.user.common.exceptions.ResignWithoutIdException
 import com.reservation.user.policy.formats.ServiceUser
-import com.reservation.user.widthdrawal.EncryptedAttributes
-import com.reservation.user.widthdrawal.WithdrawalUser
+import com.reservation.user.resign.EncryptedAttributes
+import com.reservation.user.resign.ResignedUser
 import java.time.LocalDateTime
 
 class User(
@@ -40,11 +40,11 @@ class User(
 
     override fun personalAttributes(): PersonalAttributes = personalAttributes
 
-    override fun withdraw(encryptedAttributes: EncryptedAttributes): WithdrawalUser {
+    override fun resign(encryptedAttributes: EncryptedAttributes): ResignedUser {
         if (id == null) {
-            throw WithdrawalIdHaveNoIdException()
+            throw ResignWithoutIdException()
         }
-        return WithdrawalUser(
+        return ResignedUser(
             id,
             loginId,
             encryptedAttributes,

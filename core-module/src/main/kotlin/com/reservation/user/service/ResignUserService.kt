@@ -1,14 +1,14 @@
 package com.reservation.user.service
 
-import com.reservation.user.policy.availables.UserWithdrawable
-import com.reservation.user.widthdrawal.EncryptedAttributes
-import com.reservation.user.widthdrawal.WithdrawalUser
+import com.reservation.user.policy.availables.UserResignable
+import com.reservation.user.resign.EncryptedAttributes
+import com.reservation.user.resign.ResignedUser
 import com.reservation.utilities.encrypt.bidirectional.BidirectionalEncryptUtility
 
-class WithdrawUserService(
+class ResignUserService(
     private val bidirectionalEncryptUtility: BidirectionalEncryptUtility,
 ) {
-    fun <T : UserWithdrawable> withdraw(target: T): WithdrawalUser {
+    fun <T : UserResignable> withdraw(target: T): ResignedUser {
         val encryptedAttributes: EncryptedAttributes =
             EncryptedAttributes(
                 bidirectionalEncryptUtility.encrypt(target.userEmail),
@@ -17,6 +17,6 @@ class WithdrawUserService(
                 bidirectionalEncryptUtility.encrypt(target.userRole.name),
             )
 
-        return target.withdraw(encryptedAttributes)
+        return target.resign(encryptedAttributes)
     }
 }
