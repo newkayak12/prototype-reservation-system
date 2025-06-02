@@ -20,8 +20,10 @@
 
 ## 🧐 Considerations
 
-1. Domain Driven Design에 맞춰서 도메인 로직과 서비스 로직이 분리된 플리케이션을 개발한다.
-2. Hexagonal Architecture에 맞춰서 변화에 유연한 애플리케이션을 개발한다.
-3. Over engineering을 하며 할 수 있는 가장 엄격하며 풍부한 방법으로 애플리케이션을 개발한다.
+1. Domain Driven Design에 맞춰서 도메인 로직과 서비스 로직이 분리된 애플리케이션을 개발.
+2. Hexagonal Architecture에 맞춰서 변화에 유연한 애플리케이션을 개발.
+3. OverEngineering 해서 할 수 있는 가장 엄격하고 풍부한 방법으로 애플리케이션을 개발.
 
-## 🙂‍ Non-considerations 
+## 🙂‍ Non-considerations
+
+1. 디테일하게 완벽하게 모든 서비스를 구현하는 것

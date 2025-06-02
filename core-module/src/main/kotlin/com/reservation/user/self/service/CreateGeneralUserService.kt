@@ -31,7 +31,7 @@ class CreateGeneralUserService {
     private val mobilePhoneValidationPolicy = listOf(MobilePhoneFormatValidationPolicy())
     private val nicknameValidationPolicy = listOf(NicknameLengthValidationPolicy())
 
-    private inline fun <T : UserUnifiedValidationPolicy> List<T>.validatePolicies(target: String) {
+    private fun <T : UserUnifiedValidationPolicy> List<T>.validatePolicies(target: String) {
         firstOrNull { !it.validate(target) }
             ?.let { throw InvalidateUserElementException(it.reason) }
     }
