@@ -1,6 +1,7 @@
 package com.reservation.user.config
 
 import com.reservation.user.self.service.CreateGeneralUserService
+import com.reservation.user.service.ChangeGeneralUserPasswordService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -8,4 +9,8 @@ import org.springframework.context.annotation.Configuration
 class GeneralUserServiceFactory {
     @Bean
     fun createGeneralUserService(): CreateGeneralUserService = CreateGeneralUserService()
+
+    @Bean
+    fun changeGeneralUserPasswordService(): ChangeGeneralUserPasswordService =
+        ChangeGeneralUserPasswordService()
 }

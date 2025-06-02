@@ -27,6 +27,11 @@ class User(
 
     val userEncodedPassword: String
         get() = userPasswordSet.encodedPassword
+    val userOldEncodedPassword: String?
+        get() = userPasswordSet.oldEncodedPassword
+    val userPasswordChangedDatetime: LocalDateTime?
+        get() = userPasswordSet.changedDatetime
+
     override val userEmail: String
         get() = personalAttributes.email
     override val userMobile: String
