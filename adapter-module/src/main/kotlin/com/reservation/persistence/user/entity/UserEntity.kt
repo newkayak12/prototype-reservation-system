@@ -63,7 +63,7 @@ class UserEntity(
 
     @Column(name = "email", columnDefinition = "VARCHAR(32)")
     @Comment("휴대폰 번호")
-    var email: String? = email
+    var email: String = email
         protected set
 
     @Column(name = "nickname", columnDefinition = "VARCHAR(16)")
@@ -107,5 +107,15 @@ class UserEntity(
         this.failCount = failCount
         this.lockedDatetime = lockedDateTime ?: LocalDateTime.now()
         this.userStatus = userStatus
+    }
+
+    fun changePassword(
+        password: String,
+        oldPassword: String,
+        passwordChangeDateTime: LocalDateTime,
+    ) {
+        this.password = password
+        this.oldPassword = oldPassword
+        this.passwordChangeDateTime = passwordChangeDateTime
     }
 }
