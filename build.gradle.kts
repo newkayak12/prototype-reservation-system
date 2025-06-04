@@ -87,33 +87,6 @@ tasks.named("gitPreCommitHook") {
     }
 }
 
-tasks.named<JacocoReport>("jacocoTestReport") {
-    dependsOn(tasks.test)
-
-    reports {
-        xml.required.set(false)
-        csv.required.set(false)
-        html.required.set(true)
-
-
-        // ✅ 커스텀 리포트 경로
-        html.outputLocation.set(
-            layout.buildDirectory.dir(
-                "$rootDir/build/reports/jacoco/${project.name}/jacocoTestReport.html",
-            ),
-        )
-    }
-
-    // 🧼 중복 방지
-    classDirectories.setFrom(
-        files(
-            fileTree("${project.layout.buildDirectory}/classes/kotlin/main") {
-                exclude("**/*\$*") // object, companion 등 내부 클래스 전체 제거
-            }
-        )
-    )
-}
-
 dependencyManagement {
     imports {
         mavenBom("org.testcontainers:testcontainers-bom:1.21.0")
@@ -184,6 +157,34 @@ subprojects {
     tasks.test {
         useJUnitPlatform()
         finalizedBy(tasks.jacocoTestReport)
+    }
+
+    tasks.withType<JacocoReport>().configureEach {
+        dependsOn(tasks.test)
+
+        reports {
+            xml.required.set(true)
+            xml.outputLocation.set(
+                rootProject.layout.buildDirectory.file("reports/jacoco/${project.name}/jacocoTestReport.xml")
+            )
+            html.required.set(true)
+            html.outputLocation.set(
+                rootProject.layout.buildDirectory.dir("reports/jacoco/${project.name}/html")
+            )
+        }
+
+        classDirectories.setFrom(
+            fileTree(layout.buildDirectory.dir("classes/kotlin/main")) {
+                exclude("**/*\$*") // object/class 중복 방지
+            }
+        )
+
+        sourceDirectories.setFrom(files("src/main/kotlin"))
+        executionData.setFrom(
+            fileTree(layout.buildDirectory.get().asFile) {
+                include("jacoco/test.exec")
+            }
+        )
     }
 }
 
