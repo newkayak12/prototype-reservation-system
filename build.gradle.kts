@@ -55,19 +55,18 @@ sonarqube {
     properties {
         property("sonar.projectKey", "newkayak12_prototype-reservation-system")
         property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.login", System.getenv("Sanghyeon Kim"))
-        property("sonar.organization")
+        property("sonar.login", System.getenv("SONAR_TOKEN"))
+        property("sonar.organization", "newkayak-reservation")
 
         property("sonar.sourceEncoding", "UTF-8")
         property("sonar.language", "kotlin")
-        property("sonar.modules", "adapter-module,application-module,core-module")
 
         property(
             "sonar.coverage.jacoco.xmlReportPaths",
             listOf(
-                "build/adapter-module/reports/jacoco/jacocoTestReport/jacocoTestReport.xml",
-                "build/application-module/reports/jacoco/jacocoTestReport/jacocoTestReport.xml",
-                "build/core-module/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
+                "adapter-module/build/reports/jacoco/test/jacocoTestReport.xml",
+                "application-module/build/reports/jacoco/test/jacocoTestReport.xml",
+                "core-module/build/reports/jacoco/test/jacocoTestReport.xml"
             ).joinToString(",")
         )
     }

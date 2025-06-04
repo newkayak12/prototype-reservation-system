@@ -52,7 +52,8 @@ swaggerSources {
 tasks.register("swagger") {
     dependsOn("openapi3")
     doFirst {
-        val swaggerUIFile = file("${project.buildDir}/api-spec/openapi3.yaml")
+
+        val swaggerUIFile = file(layout.buildDirectory.dir("/api-spec/openapi3.yaml"))
 
         val securitySchemesContent = """
             securitySchemes:

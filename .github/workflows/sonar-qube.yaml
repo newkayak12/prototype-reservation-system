@@ -9,7 +9,10 @@ jobs:
   sonarcloud:
     name: SonarCloud Scan
     runs-on: ubuntu-latest
-
+    needs:
+      - adapter-module-test
+      - application-module-test
+      - core-module-test
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -17,23 +20,31 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: 17
-          distribution: temurin
+          java-version: 21
+          distribution: corretto
 
-      - name: Cache Gradle
-        uses: actions/cache@v3
+      - name: Download adapter jacoco
+        uses: actions/download-artifact@v3
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
-
-      - name: Grant permission
-        run: chmod +x ./gradlew
-
-      - name: Build and analyze
-        run: ./gradlew clean build sonar
+          name: adapter-jacoco
+          path: jacoco/adapter
+      - name: Download application jacoco
+        uses: actions/download-artifact@v3
+        with:
+          name: application-jacoco
+          path: jacoco/application
+      - name: Download core jacoco
+        uses: actions/download-artifact@v3
+        with:
+          name: core-jacoco
+          path: jacoco/core
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v2
+        with:
+          args: >
+            -Dsonar.projectKey=your_project_key
+            -Dsonar.organization=your_org
+            -Dsonar.sources=.
+            -Dsonar.coverage.jacoco.xmlReportPaths=jacoco/adapter/jacocoTestReport.xml,jacoco/application/jacocoTestReport.xml,jacoco/core/jacocoTestReport.xml
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
