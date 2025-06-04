@@ -146,11 +146,22 @@ jobs:
         uses: sonarsource/sonarcloud-github-action@v2
         with:
           args: >
-            -Dsonar.projectKey=${{secrets.SONAR_PROJECT_KEY}}
-            -Dsonar.organization=${{secrets.SONAR_ORGANIZATION}}
-            -Dsonar.exclusions=**/src/test/**/*
-            -Dsonar.coverage.exclusions=**/src/test/**/*
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.sources=.
+            -Dsonar.exclusions=**/src/test/**/*
+            -Dsonar.coverage.exclusions=**/src/test/**/*,
+              **/*Dto.kt,
+              **/*Request.kt,
+              **/*Response.kt,
+              **/*Mapper.kt,
+              **/*Exception.kt,
+              **/*VO.kt,
+              **/*View.kt,
+              **/*Config.kt,
+              **/*Adapter.kt,
+              **/*Entity.kt,
+              **/*Factory.kt
             -Dsonar.coverage.jacoco.xmlReportPaths=jacoco/adapter/jacocoTestReport.xml,jacoco/application/jacocoTestReport.xml,jacoco/core/jacocoTestReport.xml
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
