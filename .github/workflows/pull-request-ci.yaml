@@ -115,6 +115,7 @@ jobs:
     needs:
       - adapter-module-test
       - application-module-test
+      - core-module-test
     steps:
       - name: Checkout
         uses: actions/checkout@v4
