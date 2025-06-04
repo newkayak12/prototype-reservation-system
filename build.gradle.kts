@@ -7,7 +7,7 @@ plugins {
     kotlin("plugin.jpa") version "2.0.10" apply false
     kotlin("kapt") version "2.0.10" apply false
     id("org.flywaydb.flyway") version "10.20.1" apply false
-
+    id("org.sonarqube") version "4.4.1.3373"
     id("org.asciidoctor.jvm.convert") version "3.3.2" apply false
     id("com.epages.restdocs-api-spec") version "0.19.4" apply false
     id("org.hidetake.swagger.generator") version "2.18.2" apply false
@@ -49,6 +49,28 @@ spotless {
 
 jacoco {
     toolVersion = "0.8.11" // 원하는 버전 명시
+}
+
+sonarqube {
+    properties {
+        property("sonar.projectKey", "newkayak12_prototype-reservation-system")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.login", System.getenv("Sanghyeon Kim"))
+        property("sonar.organization")
+
+        property("sonar.sourceEncoding", "UTF-8")
+        property("sonar.language", "kotlin")
+        property("sonar.modules", "adapter-module,application-module,core-module")
+
+        property(
+            "sonar.coverage.jacoco.xmlReportPaths",
+            listOf(
+                "build/adapter-module/reports/jacoco/jacocoTestReport/jacocoTestReport.xml",
+                "build/application-module/reports/jacoco/jacocoTestReport/jacocoTestReport.xml",
+                "build/core-module/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
+            ).joinToString(",")
+        )
+    }
 }
 
 tasks.register("gitPreCommitHook") {
@@ -164,17 +186,11 @@ subprojects {
 
         reports {
             xml.required.set(true)
-            xml.outputLocation.set(
-                rootProject.layout.buildDirectory.file("reports/jacoco/${project.name}/jacocoTestReport.xml")
-            )
             html.required.set(true)
-            html.outputLocation.set(
-                rootProject.layout.buildDirectory.dir("reports/jacoco/${project.name}/html")
-            )
         }
 
         classDirectories.setFrom(
-            fileTree(layout.buildDirectory.dir("classes/kotlin/main")) {
+            fileTree(layout.buildDirectory.dir("classes")) {
                 exclude("**/*\$*") // object/class 중복 방지
             }
         )
