@@ -148,6 +148,8 @@ jobs:
           args: >
             -Dsonar.projectKey=${{secrets.SONAR_PROJECT_KEY}}
             -Dsonar.organization=${{secrets.SONAR_ORGANIZATION}}
+            -Dsonar.exclusions=**/src/test/**/*
+            -Dsonar.coverage.exclusions=**/src/test/**/*
             -Dsonar.sources=.
             -Dsonar.coverage.jacoco.xmlReportPaths=jacoco/adapter/jacocoTestReport.xml,jacoco/application/jacocoTestReport.xml,jacoco/core/jacocoTestReport.xml
         env:
