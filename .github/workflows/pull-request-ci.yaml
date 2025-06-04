@@ -128,17 +128,17 @@ jobs:
           distribution: corretto
 
       - name: Download adapter jacoco
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: adapter-jacoco
           path: jacoco/adapter
       - name: Download application jacoco
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: application-jacoco
           path: jacoco/application
       - name: Download core jacoco
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: core-jacoco
           path: jacoco/core
