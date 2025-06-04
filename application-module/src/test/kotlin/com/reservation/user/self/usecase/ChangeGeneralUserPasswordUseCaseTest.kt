@@ -75,7 +75,7 @@ class ChangeGeneralUserPasswordUseCaseTest {
                         Password(
                             encodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
                             oldEncodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
-                            changedDatetime = LocalDateTime.now(),
+                            changedDateTime = LocalDateTime.now(),
                         ),
                     personalAttributes =
                         PersonalAttributes(
@@ -115,7 +115,7 @@ class ChangeGeneralUserPasswordUseCaseTest {
                         Password(
                             encodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
                             oldEncodedPassword = null,
-                            changedDatetime = LocalDateTime.now(),
+                            changedDateTime = LocalDateTime.now(),
                         ),
                     personalAttributes =
                         PersonalAttributes(
@@ -155,7 +155,7 @@ class ChangeGeneralUserPasswordUseCaseTest {
                         Password(
                             encodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
                             oldEncodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
-                            changedDatetime = null,
+                            changedDateTime = null,
                         ),
                     personalAttributes =
                         PersonalAttributes(
@@ -200,7 +200,7 @@ class ChangeGeneralUserPasswordUseCaseTest {
                         Password(
                             encodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
                             oldEncodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
-                            changedDatetime = LocalDateTime.now(),
+                            changedDateTime = LocalDateTime.now(),
                         ),
                     personalAttributes =
                         PersonalAttributes(

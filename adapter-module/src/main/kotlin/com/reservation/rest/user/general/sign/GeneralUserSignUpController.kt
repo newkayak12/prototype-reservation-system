@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 class GeneralUserSignUpController(
     val createGeneralUserCommand: CreateGeneralUserCommand,
 ) {
-    @PostMapping(GeneralUserUrl.GENERAL_USER_SIGN_UP)
+    @PostMapping(GeneralUserUrl.USER_SIGN_UP)
     fun signUp(
         @Valid @RequestBody request: GeneralUserSignUpRequest,
     ): BooleanResponse =

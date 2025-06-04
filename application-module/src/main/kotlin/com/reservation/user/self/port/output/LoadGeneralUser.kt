@@ -27,7 +27,7 @@ interface LoadGeneralUser {
                     Password(
                         encodedPassword = encodedPassword,
                         oldEncodedPassword = oldEncodedPassword,
-                        changedDatetime = changedDateTime,
+                        changedDateTime = changedDateTime,
                     ),
                 personalAttributes =
                     PersonalAttributes(

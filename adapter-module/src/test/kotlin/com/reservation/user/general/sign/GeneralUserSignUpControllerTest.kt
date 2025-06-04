@@ -1,4 +1,4 @@
-package com.reservation.user.general
+package com.reservation.user.general.sign
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean

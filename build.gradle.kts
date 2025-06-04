@@ -103,6 +103,15 @@ tasks.named<JacocoReport>("jacocoTestReport") {
             ),
         )
     }
+
+    // 🧼 중복 방지
+    classDirectories.setFrom(
+        files(
+            fileTree("${project.layout.buildDirectory}/classes/kotlin/main") {
+                exclude("**/*\$*") // object, companion 등 내부 클래스 전체 제거
+            }
+        )
+    )
 }
 
 dependencyManagement {

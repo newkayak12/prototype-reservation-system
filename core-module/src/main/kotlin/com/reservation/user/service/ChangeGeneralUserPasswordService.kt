@@ -5,7 +5,6 @@ import com.reservation.user.policy.availables.PasswordChangeable
 import com.reservation.user.policy.validations.PasswordComplexityValidationPolicy
 import com.reservation.user.policy.validations.PasswordLengthValidationPolicy
 import com.reservation.user.policy.validations.UserUnifiedValidationPolicy
-import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 
 class ChangeGeneralUserPasswordService {
     private val passwordPolicy =
@@ -26,7 +25,7 @@ class ChangeGeneralUserPasswordService {
         validatePassword(rawPassword)
 
         return target.apply {
-            changePassword(PasswordEncoderUtility.encode(rawPassword))
+            changePassword(rawPassword)
         }
     }
 

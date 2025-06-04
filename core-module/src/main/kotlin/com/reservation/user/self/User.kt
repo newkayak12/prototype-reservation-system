@@ -30,7 +30,7 @@ class User(
     val userOldEncodedPassword: String?
         get() = userPasswordSet.oldEncodedPassword
     val userPasswordChangedDatetime: LocalDateTime?
-        get() = userPasswordSet.changedDatetime
+        get() = userPasswordSet.changedDateTime
 
     override val userEmail: String
         get() = personalAttributes.email

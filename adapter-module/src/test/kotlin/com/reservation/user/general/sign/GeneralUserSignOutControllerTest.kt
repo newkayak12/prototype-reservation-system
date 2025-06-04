@@ -1,4 +1,4 @@
-package com.reservation.user.general
+package com.reservation.user.general.sign
 
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
