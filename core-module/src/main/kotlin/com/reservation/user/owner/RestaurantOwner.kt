@@ -52,7 +52,13 @@ class RestaurantOwner(
 
     override fun personalAttributes(): PersonalAttributes = personalAttributes
 
+    override fun userAttributes(): UserAttribute = userAttributes
+
     override fun changePersonalAttributes(personalAttributes: PersonalAttributes) {
         this.personalAttributes = personalAttributes
+    }
+
+    override fun changeUserNickname(userAttributes: UserAttribute) {
+        this.userAttributes = userAttributes
     }
 }
