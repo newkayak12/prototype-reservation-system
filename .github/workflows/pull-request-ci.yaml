@@ -35,8 +35,8 @@ jobs:
 
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
-      - name: test adapter-module with Gradle Wrapper
-        run: ./gradlew :adapter-module:test :adapter-module:jacocoTestReport
+      - name: Run tests and coverage
+        run: ./gradlew :application-module:test :application-module:jacocoTestReport
       - name: Upload adapter-module Jacoco
         uses: actions/upload-artifact@v4
         with:
@@ -67,8 +67,6 @@ jobs:
 
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
-      - name: test application-module with Gradle Wrapper
-        run: ./gradlew :application-module:test :application-module:jacocoTestReport
       - name: Run tests and coverage
         run: ./gradlew :application-module:test :application-module:jacocoTestReport
       - name: Upload application-module Jacoco
@@ -101,8 +99,6 @@ jobs:
 
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
-      - name: test core-module with Gradle Wrapper
-        run: ./gradlew :core-module:test :core-module:jacocoTestReport
       - name: Run tests and coverage
         run: ./gradlew :core-module:test :core-module:jacocoTestReport
       - name: Upload core-module Jacoco
@@ -151,7 +147,7 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.exclusions=**/src/test/**/*
             -Dsonar.coverage.exclusions=**/src/**/config/**/*.kt,**/src/**/dto/**/*.kt,**/src/**/exception/**/*.kt,**/src/**/mapper/**/*.kt,**/src/**/factory/**/*.kt,**/src/**/entity/**/*.kt,**/src/**/adapter/**/*.kt,**/*Config.kt,**/*Dto.kt,**/*Request.kt,**/*Response.kt,**/*Exception.kt,**/*Factory.kt,**/*Entity.kt,**/*Adapter.kt,**/*.sql,**/*.gradle.kts
-            -Dsonar.coverage.jacoco.xmlReportPaths=adapter-module/build/reports/jacoco/test/jacocoTestReport.xml,application-module/build/reports/jacoco/test/jacocoTestReport.xml,core-module/build/reports/jacoco/test/jacocoTestReport.xml
+            -Dsonar.coverage.jacoco.xmlReportPaths=jacoco/adapter/jacocoTestReport.xml,jacoco/application/jacocoTestReport.xml,jacoco/core/jacocoTestReport.xml
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   build:
