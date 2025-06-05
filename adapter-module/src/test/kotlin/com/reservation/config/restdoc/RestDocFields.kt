@@ -1,13 +1,12 @@
 package com.reservation.config.restdoc
 
-import com.epages.restdocs.apispec.ParameterDescriptorWithType
-import com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName
 import org.springframework.restdocs.headers.HeaderDescriptor
 import org.springframework.restdocs.headers.HeaderDocumentation
 import org.springframework.restdocs.payload.FieldDescriptor
 import org.springframework.restdocs.payload.JsonFieldType
 import org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath
-import org.springframework.restdocs.request.RequestDocumentation.partWithName
+import org.springframework.restdocs.request.ParameterDescriptor
+import org.springframework.restdocs.request.RequestDocumentation
 import org.springframework.restdocs.request.RequestPartDescriptor
 
 data class Body(
@@ -43,8 +42,8 @@ data class Query(
     val optional: Boolean = false,
     val description: String = "",
 ) {
-    fun parse(): ParameterDescriptorWithType =
-        parameterWithName(name)
+    fun parse(): ParameterDescriptor =
+        RequestDocumentation.parameterWithName(name)
             .also {
                 if (optional) it.optional()
                 if (description.isNotEmpty()) it.description(description)
@@ -56,8 +55,8 @@ data class PathParameter(
     val optional: Boolean = false,
     val description: String = "",
 ) {
-    fun parse(): ParameterDescriptorWithType =
-        parameterWithName(name)
+    fun parse(): ParameterDescriptor =
+        RequestDocumentation.parameterWithName(name)
             .also {
                 if (optional) it.optional()
                 if (description.isNotEmpty()) it.description(description)
@@ -70,7 +69,7 @@ data class Part(
     val description: String = "",
 ) {
     fun parse(): RequestPartDescriptor =
-        partWithName(name)
+        RequestDocumentation.partWithName(name)
             .also {
                 if (optional) it.optional()
                 if (description.isNotEmpty()) it.description(description)

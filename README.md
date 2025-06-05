@@ -10,3 +10,8 @@
 ---
 #### ~ 2025.05.17 요구 사항 및 이벤트 스토밍 정리
 ![eventstoming.excalidraw.svg](img/eventStorming.excalidraw.svg)
+
+
+------
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=newkayak12_prototype-reservation-system&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=newkayak12_prototype-reservation-system)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=newkayak12_prototype-reservation-system&metric=coverage)](https://sonarcloud.io/summary/new_code?id=newkayak12_prototype-reservation-system)

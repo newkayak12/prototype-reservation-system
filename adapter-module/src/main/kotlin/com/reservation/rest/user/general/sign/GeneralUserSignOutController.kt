@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class GeneralUserSignOutController {
-    @PatchMapping(GeneralUserUrl.GENERAL_USER_SIGN_OUT)
+    @PatchMapping(GeneralUserUrl.USER_SIGN_OUT)
     fun signOut(httpServletResponse: HttpServletResponse) {
         val refreshTokenCookie = Cookie(RefreshTokenDefinitions.REFRESH_TOKEN_KEY, null)
 

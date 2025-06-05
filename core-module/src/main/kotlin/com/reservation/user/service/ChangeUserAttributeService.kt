@@ -1,14 +1,8 @@
 package com.reservation.user.service
 
-import com.reservation.user.policy.availables.PasswordChangeable
 import com.reservation.user.policy.availables.PersonalAttributesChangeable
 
-class ChangeUserService {
-    fun <T : PasswordChangeable> changePassword(
-        target: T,
-        encodedPassword: String,
-    ): T = target.apply { changePassword(encodedPassword) }
-
+class ChangeUserAttributeService {
     fun <T : PersonalAttributesChangeable> changePersonalAttributes(
         target: T,
         email: String,

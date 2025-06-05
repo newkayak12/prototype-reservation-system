@@ -1,7 +1,6 @@
-package com.reservation.user.general
+package com.reservation.user.general.sign
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.ninjasquad.springmockk.MockkBean
 import com.reservation.config.restdoc.Body
@@ -18,6 +17,7 @@ import io.kotest.data.forAll
 import io.kotest.data.row
 import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
+import net.jqwik.api.Arbitraries
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -57,9 +57,10 @@ class GeneralUserSignInControllerTest(
             ) { emptyParameter ->
 
                 val request =
-                    pureMonkey.giveMeBuilder<GeneralUserLoginRequest>()
-                        .set(emptyParameter, "")
-                        .sample()
+                    GeneralUserLoginRequest(
+                        if (emptyParameter == "loginId") "" else Arbitraries.strings().sample(),
+                        if (emptyParameter == "password") "" else Arbitraries.strings().sample(),
+                    )
 
                 mockMvc.perform(
                     put(GeneralUserUrl.USER_SIGN_IN)

@@ -7,7 +7,7 @@ plugins {
     kotlin("plugin.jpa") version "2.0.10" apply false
     kotlin("kapt") version "2.0.10" apply false
     id("org.flywaydb.flyway") version "10.20.1" apply false
-
+//    id("org.sonarqube") version "4.4.1.3373"
     id("org.asciidoctor.jvm.convert") version "3.3.2" apply false
     id("com.epages.restdocs-api-spec") version "0.19.4" apply false
     id("org.hidetake.swagger.generator") version "2.18.2" apply false
@@ -51,6 +51,27 @@ jacoco {
     toolVersion = "0.8.11" // 원하는 버전 명시
 }
 
+//sonarqube {
+//    properties {
+//        property("sonar.projectKey", "newkayak12_prototype-reservation-system")
+//        property("sonar.host.url", "https://sonarcloud.io")
+//        property("sonar.login", System.getenv("SONAR_TOKEN"))
+//        property("sonar.organization", "newkayak-reservation")
+//
+//        property("sonar.sourceEncoding", "UTF-8")
+//        property("sonar.language", "kotlin")
+//
+//        property(
+//            "sonar.coverage.jacoco.xmlReportPaths",
+//            listOf(
+//                "adapter-module/build/reports/jacoco/test/jacocoTestReport.xml",
+//                "application-module/build/reports/jacoco/test/jacocoTestReport.xml",
+//                "core-module/build/reports/jacoco/test/jacocoTestReport.xml"
+//            ).joinToString(",")
+//        )
+//    }
+//}
+
 tasks.register("gitPreCommitHook") {
     doLast {
         println("Running spotlessKotlinGradleApply before commit...")
@@ -84,24 +105,6 @@ tasks.named("gitPreCommitHook") {
             hookFile.setExecutable(true)
             println("Git pre-commit hook set up successfully!")
         }
-    }
-}
-
-tasks.named<JacocoReport>("jacocoTestReport") {
-    dependsOn(tasks.test)
-
-    reports {
-        xml.required.set(false)
-        csv.required.set(false)
-        html.required.set(true)
-
-
-        // ✅ 커스텀 리포트 경로
-        html.outputLocation.set(
-            layout.buildDirectory.dir(
-                "$rootDir/build/reports/jacoco/${project.name}/jacocoTestReport.html",
-            ),
-        )
     }
 }
 
@@ -175,6 +178,28 @@ subprojects {
     tasks.test {
         useJUnitPlatform()
         finalizedBy(tasks.jacocoTestReport)
+    }
+
+    tasks.withType<JacocoReport>().configureEach {
+        dependsOn(tasks.test)
+
+        reports {
+            xml.required.set(true)
+            html.required.set(true)
+        }
+
+        classDirectories.setFrom(
+            fileTree(layout.buildDirectory.dir("classes")) {
+                exclude("**/*\$*") // object/class 중복 방지
+            }
+        )
+
+        sourceDirectories.setFrom(files("src/main/kotlin"))
+        executionData.setFrom(
+            fileTree(layout.buildDirectory.get().asFile) {
+                include("jacoco/test.exec")
+            }
+        )
     }
 }
 
