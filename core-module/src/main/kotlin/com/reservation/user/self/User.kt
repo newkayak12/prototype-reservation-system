@@ -45,8 +45,6 @@ class User(
 
     override fun personalAttributes(): PersonalAttributes = personalAttributes
 
-    override fun userAttributes(): UserAttribute = userAttributes
-
     override fun resign(encryptedAttributes: EncryptedAttributes): ResignedUser {
         if (id == null) {
             throw ResignWithoutIdException()
@@ -57,10 +55,6 @@ class User(
             encryptedAttributes,
             LocalDateTime.now(),
         )
-    }
-
-    override fun changeUserNickname(userAttributes: UserAttribute) {
-        this.userAttributes = userAttributes
     }
 
     override fun changePassword(password: Password) {
