@@ -35,7 +35,7 @@ jobs:
 
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
-      - name: test adapter-module with Gradle Wrapper
+      - name: Run tests and coverage
         run: ./gradlew :adapter-module:test :adapter-module:jacocoTestReport
       - name: Upload adapter-module Jacoco
         uses: actions/upload-artifact@v4
@@ -67,8 +67,6 @@ jobs:
 
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
-      - name: test application-module with Gradle Wrapper
-        run: ./gradlew :application-module:test :application-module:jacocoTestReport
       - name: Run tests and coverage
         run: ./gradlew :application-module:test :application-module:jacocoTestReport
       - name: Upload application-module Jacoco
@@ -101,8 +99,6 @@ jobs:
 
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
-      - name: test core-module with Gradle Wrapper
-        run: ./gradlew :core-module:test :core-module:jacocoTestReport
       - name: Run tests and coverage
         run: ./gradlew :core-module:test :core-module:jacocoTestReport
       - name: Upload core-module Jacoco
