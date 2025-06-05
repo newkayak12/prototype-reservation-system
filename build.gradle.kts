@@ -51,27 +51,6 @@ jacoco {
     toolVersion = "0.8.11" // 원하는 버전 명시
 }
 
-//sonarqube {
-//    properties {
-//        property("sonar.projectKey", "newkayak12_prototype-reservation-system")
-//        property("sonar.host.url", "https://sonarcloud.io")
-//        property("sonar.login", System.getenv("SONAR_TOKEN"))
-//        property("sonar.organization", "newkayak-reservation")
-//
-//        property("sonar.sourceEncoding", "UTF-8")
-//        property("sonar.language", "kotlin")
-//
-//        property(
-//            "sonar.coverage.jacoco.xmlReportPaths",
-//            listOf(
-//                "adapter-module/build/reports/jacoco/test/jacocoTestReport.xml",
-//                "application-module/build/reports/jacoco/test/jacocoTestReport.xml",
-//                "core-module/build/reports/jacoco/test/jacocoTestReport.xml"
-//            ).joinToString(",")
-//        )
-//    }
-//}
-
 tasks.register("gitPreCommitHook") {
     doLast {
         println("Running spotlessKotlinGradleApply before commit...")
