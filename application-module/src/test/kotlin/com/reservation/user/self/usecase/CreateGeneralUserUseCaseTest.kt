@@ -3,8 +3,8 @@ package com.reservation.user.self.usecase
 import com.reservation.common.exceptions.AlreadyPersistedException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.user.self.port.input.CreateGeneralUserCommand.CreateGeneralUserCommandDto
-import com.reservation.user.self.port.output.CheckGeneralUserDuplicated
-import com.reservation.user.self.port.output.CheckGeneralUserDuplicated.CheckGeneralUserDuplicatedInquiry
+import com.reservation.user.self.port.output.CheckGeneralUserLoginIdDuplicated
+import com.reservation.user.self.port.output.CheckGeneralUserLoginIdDuplicated.CheckGeneralUserDuplicatedInquiry
 import com.reservation.user.self.port.output.CreateGeneralUser
 import com.reservation.user.self.port.output.CreateGeneralUser.CreateGeneralUserInquiry
 import com.reservation.user.self.service.CreateGeneralUserService
@@ -25,7 +25,7 @@ class CreateGeneralUserUseCaseTest {
     private lateinit var createGeneralUser: CreateGeneralUser
 
     @MockK
-    private lateinit var checkGeneralUserDuplicated: CheckGeneralUserDuplicated
+    private lateinit var checkGeneralUserLoginIdDuplicated: CheckGeneralUserLoginIdDuplicated
 
     @SpyK
     private var createGeneralUserService = CreateGeneralUserService()
@@ -46,7 +46,7 @@ class CreateGeneralUserUseCaseTest {
             )
 
         every {
-            checkGeneralUserDuplicated.isDuplicated(any<CheckGeneralUserDuplicatedInquiry>())
+            checkGeneralUserLoginIdDuplicated.isDuplicated(any<CheckGeneralUserDuplicatedInquiry>())
         } returns true
 
         assertThrows<AlreadyPersistedException> {
@@ -68,7 +68,7 @@ class CreateGeneralUserUseCaseTest {
         val expected = true
 
         every {
-            checkGeneralUserDuplicated.isDuplicated(any<CheckGeneralUserDuplicatedInquiry>())
+            checkGeneralUserLoginIdDuplicated.isDuplicated(any<CheckGeneralUserDuplicatedInquiry>())
         } returns false
 
         every {

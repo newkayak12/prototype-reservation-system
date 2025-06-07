@@ -2,7 +2,7 @@ package com.reservation.user.self.port.output
 
 import com.reservation.enumeration.Role
 
-interface CheckGeneralUserDuplicated {
+interface CheckGeneralUserLoginIdDuplicated {
     fun isDuplicated(inquiry: CheckGeneralUserDuplicatedInquiry): Boolean
 
     data class CheckGeneralUserDuplicatedInquiry(
