@@ -8,7 +8,6 @@ interface ChangeGeneralUserNicknameCommand {
     data class ChangeGeneralUserNicknameCommandDto(
         val id: String,
         val nickname: String,
-    ) {
-        val role = Role.USER
-    }
+        val role: Role = Role.USER,
+    )
 }
