@@ -6,9 +6,9 @@ import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.PathParameter
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
-import com.reservation.rest.user.general.attribute.GeneralUserChangePasswordController
-import com.reservation.rest.user.general.request.GeneralUserChangePasswordRequest
-import com.reservation.user.self.port.input.ChangeGeneralUserPasswordCommand
+import com.reservation.rest.user.general.attribute.GeneralUserChangeNicknameController
+import com.reservation.rest.user.general.request.GeneralUserChangeNicknameRequest
+import com.reservation.user.self.port.input.ChangeGeneralUserNicknameCommand
 import com.reservation.utilities.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
@@ -32,29 +32,29 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @AutoConfigureRestDocs
 @ActiveProfiles(value = ["test"])
 @Import(value = [TestSecurity::class])
-@WebMvcTest(GeneralUserChangePasswordController::class)
+@WebMvcTest(GeneralUserChangeNicknameController::class)
 @ExtendWith(RestDocumentationExtension::class)
-class GeneralUserChangePasswordControllerTest(
+class GeneralUserChangeNicknameControllerTest(
     private val mockMvc: MockMvc,
     private val objectMapper: ObjectMapper,
 ) : FunSpec() {
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var changeGeneralUserPasswordCommand: ChangeGeneralUserPasswordCommand
+    private lateinit var changeGeneralUserNicknameCommand: ChangeGeneralUserNicknameCommand
 
     init {
 
-        test("비밀번호 변경 조건에 맞는 요청으로 비밀번호가 변경된다.") {
-            val url = "/api/v1/user/{id}/password"
+        test("닉네임 변경 조건에 부합하여 닉네임이 변경된다.") {
+            val url = "/api/v1/user/{id}/nickname"
 
             val request =
-                GeneralUserChangePasswordRequest(
-                    "1234",
+                GeneralUserChangeNicknameRequest(
+                    "new_nickname",
                 )
 
             every {
-                changeGeneralUserPasswordCommand.execute(any())
+                changeGeneralUserNicknameCommand.execute(any())
             } returns true
 
             mockMvc.perform(
@@ -68,15 +68,15 @@ class GeneralUserChangePasswordControllerTest(
             )
                 .andDo(print())
                 .andExpectAll(
-                    status().isOk,
+                    status().isResetContent,
                     jsonPath("$.result").isBoolean,
                     jsonPath("$.result", equalTo(true)),
                 )
                 .andDo(
                     RestDocuments(
-                        identifier = "changePassword",
+                        identifier = "changeNickname",
                         documentTags = listOf("general_user"),
-                        summary = "비밀번호 변경",
+                        summary = "닉네임 변경",
                         pathParameter =
                             arrayOf(
                                 PathParameter(
@@ -88,10 +88,10 @@ class GeneralUserChangePasswordControllerTest(
                         requestBody =
                             arrayOf(
                                 Body(
-                                    name = "encodedPassword",
+                                    name = "nickname",
                                     jsonType = JsonFieldType.STRING,
                                     optional = false,
-                                    description = "변경할 비밀번호",
+                                    description = "변경할 닉네임",
                                 ),
                             ),
                         responseBody =

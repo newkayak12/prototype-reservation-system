@@ -118,4 +118,8 @@ class UserEntity(
         this.oldPassword = oldPassword
         this.passwordChangeDateTime = passwordChangeDateTime
     }
+
+    fun changeNickname(nickname: String) {
+        this.nickname = nickname
+    }
 }

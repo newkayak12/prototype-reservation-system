@@ -12,6 +12,12 @@ object UserQuerySpec {
         } ?: null
     }
 
+    fun nicknameEq(nickname: String?): BooleanExpression? {
+        return nickname.let {
+            userEntity.nickname.eq(nickname)
+        } ?: null
+    }
+
     fun roleIsUser(role: Role?): BooleanExpression? {
         return role.let {
             userEntity.role.eq(role)

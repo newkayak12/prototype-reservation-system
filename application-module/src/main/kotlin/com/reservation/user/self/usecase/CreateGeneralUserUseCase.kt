@@ -6,8 +6,8 @@ import com.reservation.enumeration.Role.USER
 import com.reservation.user.policy.formats.CreateGeneralUserForm
 import com.reservation.user.self.port.input.CreateGeneralUserCommand
 import com.reservation.user.self.port.input.CreateGeneralUserCommand.CreateGeneralUserCommandDto
-import com.reservation.user.self.port.output.CheckGeneralUserDuplicated
-import com.reservation.user.self.port.output.CheckGeneralUserDuplicated.CheckGeneralUserDuplicatedInquiry
+import com.reservation.user.self.port.output.CheckGeneralUserLoginIdDuplicated
+import com.reservation.user.self.port.output.CheckGeneralUserLoginIdDuplicated.CheckGeneralUserDuplicatedInquiry
 import com.reservation.user.self.port.output.CreateGeneralUser
 import com.reservation.user.self.port.output.CreateGeneralUser.CreateGeneralUserInquiry
 import com.reservation.user.self.service.CreateGeneralUserService
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional
 class CreateGeneralUserUseCase(
     val createGeneralUserService: CreateGeneralUserService,
     val createGeneralUser: CreateGeneralUser,
-    val checkGeneralUserDuplicated: CheckGeneralUserDuplicated,
+    val checkGeneralUserDuplicated: CheckGeneralUserLoginIdDuplicated,
 ) : CreateGeneralUserCommand {
     @Transactional
     override fun execute(command: CreateGeneralUserCommandDto): Boolean {
