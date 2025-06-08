@@ -146,7 +146,7 @@ jobs:
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.sources=.
             -Dsonar.exclusions=**/src/test/**/*
-            -Dsonar.coverage.exclusions=**/src/**/config/**/*.kt,**/src/**/dto/**/*.kt,**/src/**/exception/**/*.kt,**/src/**/mapper/**/*.kt,**/src/**/factory/**/*.kt,**/src/**/entity/**/*.kt,**/src/**/adapter/**/*.kt,**/*Config.kt,**/*Dto.kt,**/*Request.kt,**/*Response.kt,**/*Exception.kt,**/*Factory.kt,**/*Entity.kt,**/*Adapter.kt,**/*.sql,**/*.gradle.kts
+            -Dsonar.coverage.exclusions=**/src/**/config/**/*.kt,**/src/**/dto/**/*.kt,**/src/**/exception/**/*.kt,**/src/**/mapper/**/*.kt,**/src/**/factory/**/*.kt,**/src/**/entity/**/*.kt,**/src/**/adapter/**/*.kt,**/*Config.kt,**/*Dto.kt,**/*Request.kt,**/*Response.kt,**/*Exception.kt,**/*Factory.kt,**/*Entity.kt,**/*Adapter.kt,**/*Repository.kt,**/*.sql,**/*.gradle.kts
             -Dsonar.coverage.jacoco.xmlReportPaths=jacoco/adapter/jacocoTestReport.xml,jacoco/application/jacocoTestReport.xml,jacoco/core/jacocoTestReport.xml
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
