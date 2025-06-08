@@ -6,6 +6,7 @@ import com.reservation.rest.user.general.request.GeneralUserChangeNicknameReques
 import com.reservation.user.self.port.input.ChangeGeneralUserNicknameCommand
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -15,7 +16,7 @@ class GeneralUserChangeNicknameController(
     @PatchMapping(GeneralUserUrl.CHANGE_NICKNAME)
     fun changeNickname(
         @PathVariable id: String,
-        request: GeneralUserChangeNicknameRequest,
+        @RequestBody request: GeneralUserChangeNicknameRequest,
     ): BooleanResponse =
         BooleanResponse.resetContents(
             changeGeneralUserNicknameCommand.execute(request.toCommand(id)),

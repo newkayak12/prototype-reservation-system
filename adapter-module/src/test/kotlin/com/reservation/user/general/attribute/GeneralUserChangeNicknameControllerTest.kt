@@ -50,7 +50,7 @@ class GeneralUserChangeNicknameControllerTest(
 
             val request =
                 GeneralUserChangeNicknameRequest(
-                    "nickname",
+                    "new_nickname",
                 )
 
             every {
@@ -68,7 +68,7 @@ class GeneralUserChangeNicknameControllerTest(
             )
                 .andDo(print())
                 .andExpectAll(
-                    status().isOk,
+                    status().isResetContent,
                     jsonPath("$.result").isBoolean,
                     jsonPath("$.result", equalTo(true)),
                 )
