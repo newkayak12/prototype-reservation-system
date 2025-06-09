@@ -1,14 +1,14 @@
 package com.reservation.user.self.port.input
 
-import com.reservation.user.self.port.output.FindGeneralUserId.FindGeneralUserIdInquiry
+import com.reservation.user.self.port.output.FindGeneralUserIds.FindGeneralUserIdInquiry
 
-interface FindGeneralUserIdQuery {
+interface FindGeneralUserIdsQuery {
     fun execute(query: FindGeneralUserIdQueryDto): List<FindGeneralUserIdQueryResult>
 
     data class FindGeneralUserIdQueryDto(
         val email: String,
     ) {
-        public fun toInquiry(): FindGeneralUserIdInquiry = FindGeneralUserIdInquiry(email)
+        fun toInquiry(): FindGeneralUserIdInquiry = FindGeneralUserIdInquiry(email)
     }
 
     data class FindGeneralUserIdQueryResult(

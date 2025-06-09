@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class GeneralUserSignInController(
-    val authenticateGeneralUserQuery: AuthenticateGeneralUserQuery,
+    private val authenticateGeneralUserQuery: AuthenticateGeneralUserQuery,
 ) {
     @PutMapping(GeneralUserUrl.USER_SIGN_IN)
     fun signIn(

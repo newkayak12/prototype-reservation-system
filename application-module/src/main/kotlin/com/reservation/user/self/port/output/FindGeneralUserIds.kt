@@ -1,6 +1,6 @@
 package com.reservation.user.self.port.output
 
-interface FindGeneralUserId {
+interface FindGeneralUserIds {
     fun findGeneralUserId(inquiry: FindGeneralUserIdInquiry): List<FindGeneralUserIdResult>
 
     data class FindGeneralUserIdInquiry(

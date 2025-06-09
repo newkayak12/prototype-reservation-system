@@ -22,11 +22,11 @@ import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class AuthenticateGeneralUserUseCase(
-    val authenticateSignInService: AuthenticateSignInService,
-    val authenticateGeneralUser: AuthenticateGeneralUser,
-    val createUserHistoriesCommand: CreateUserAccessHistoriesCommand,
-    val updateAuthenticateResult: UpdateAuthenticateResult,
-    val tokenProvider: TokenProvider<JWTRecord>,
+    private val authenticateSignInService: AuthenticateSignInService,
+    private val authenticateGeneralUser: AuthenticateGeneralUser,
+    private val createUserHistoriesCommand: CreateUserAccessHistoriesCommand,
+    private val updateAuthenticateResult: UpdateAuthenticateResult,
+    private val tokenProvider: TokenProvider<JWTRecord>,
 ) : AuthenticateGeneralUserQuery {
     @Transactional(
         noRollbackFor = [

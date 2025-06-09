@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class GeneralUserSignUpController(
-    val createGeneralUserCommand: CreateGeneralUserCommand,
+    private val createGeneralUserCommand: CreateGeneralUserCommand,
 ) {
     @PostMapping(GeneralUserUrl.USER_SIGN_UP)
     fun signUp(

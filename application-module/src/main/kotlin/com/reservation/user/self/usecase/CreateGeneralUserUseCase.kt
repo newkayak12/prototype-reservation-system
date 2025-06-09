@@ -15,9 +15,9 @@ import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class CreateGeneralUserUseCase(
-    val createGeneralUserService: CreateGeneralUserService,
-    val createGeneralUser: CreateGeneralUser,
-    val checkGeneralUserDuplicated: CheckGeneralUserLoginIdDuplicated,
+    private val createGeneralUserService: CreateGeneralUserService,
+    private val createGeneralUser: CreateGeneralUser,
+    private val checkGeneralUserDuplicated: CheckGeneralUserLoginIdDuplicated,
 ) : CreateGeneralUserCommand {
     @Transactional
     override fun execute(command: CreateGeneralUserCommandDto): Boolean {
