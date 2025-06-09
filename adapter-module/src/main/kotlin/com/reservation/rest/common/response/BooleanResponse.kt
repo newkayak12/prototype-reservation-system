@@ -7,8 +7,8 @@ import org.springframework.http.ResponseEntity
 data class BooleanResponse private constructor(
     val result: Boolean,
     val httpStatus: HttpStatus,
-) : ResponseEntity<ResultContainer>(ResultContainer(result), httpStatus) {
-    data class ResultContainer(
+) : ResponseEntity<ResultContainer<Any?>>(ResultContainer(result), httpStatus) {
+    data class ResultContainer<T>(
         val result: Boolean,
     )
 
