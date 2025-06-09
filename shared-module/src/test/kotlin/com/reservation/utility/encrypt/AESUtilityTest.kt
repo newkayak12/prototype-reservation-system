@@ -1,4 +1,4 @@
-package com.reservation.encrypt.aes
+package com.reservation.utility.encrypt
 
 import com.reservation.utilities.encrypt.bidirectional.BidirectionalEncryptUtility
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
