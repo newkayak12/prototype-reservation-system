@@ -9,7 +9,7 @@ import com.reservation.config.security.TestSecurity
 import com.reservation.rest.user.general.attribute.GeneralUserChangePasswordController
 import com.reservation.rest.user.general.request.GeneralUserChangePasswordRequest
 import com.reservation.user.self.port.input.ChangeGeneralUserPasswordCommand
-import com.reservation.utilities.uuid.UuidGenerator
+import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
