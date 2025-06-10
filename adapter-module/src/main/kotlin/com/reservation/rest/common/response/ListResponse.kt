@@ -4,9 +4,9 @@ import com.reservation.rest.common.response.ListResponse.ListResultContainer
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 
-data class ListResponse<E> private constructor(
-    val body: ListResultContainer<E>,
-    val httpStatus: HttpStatus,
+class ListResponse<E> private constructor(
+    private val body: ListResultContainer<E>,
+    private val httpStatus: HttpStatus,
 ) : ResponseEntity<ListResultContainer<E>>(
         body,
         httpStatus,
