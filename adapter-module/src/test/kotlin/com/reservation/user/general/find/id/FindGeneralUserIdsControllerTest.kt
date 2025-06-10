@@ -76,7 +76,7 @@ class FindGeneralUserIdsControllerTest(
                 findGeneralUserIdsQuery.execute(any())
             } returns
                 pureMonkey.giveMeBuilder<FindGeneralUserIdQueryResult>()
-                    .set("email", CommonlyUsedArbitraries.loginIdArbitrary.sample())
+                    .set("userId", CommonlyUsedArbitraries.loginIdArbitrary.sample())
                     .sampleList(2)
 
             mockMvc.perform(
