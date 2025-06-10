@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class AuthenticateDslRepository(
-    val query: JPAQueryFactory,
+    private val query: JPAQueryFactory,
 ) : AuthenticateGeneralUser {
     override fun query(request: AuthenticateGeneralUserInquiry): AuthenticateGeneralUserResult? {
         return query.select(

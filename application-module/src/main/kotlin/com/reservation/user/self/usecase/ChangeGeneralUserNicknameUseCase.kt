@@ -16,10 +16,10 @@ import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class ChangeGeneralUserNicknameUseCase(
-    val changeGeneralUserNickname: ChangeGeneralUserNickname,
-    val checkGeneralUserNicknameDuplicated: CheckGeneralUserNicknameDuplicated,
-    val changeUserNicknameService: ChangeUserNicknameService,
-    val loadGeneralUser: LoadGeneralUser,
+    private val changeGeneralUserNickname: ChangeGeneralUserNickname,
+    private val checkGeneralUserNicknameDuplicated: CheckGeneralUserNicknameDuplicated,
+    private val changeUserNicknameService: ChangeUserNicknameService,
+    private val loadGeneralUser: LoadGeneralUser,
 ) : ChangeGeneralUserNicknameCommand {
     @Transactional
     override fun execute(command: ChangeGeneralUserNicknameCommandDto): Boolean {

@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class ChangeGeneralUserPasswordUseCase(
-    val changeGeneralUserPasswordService: ChangeGeneralUserPasswordService,
-    val changeGeneralUserPassword: ChangeGeneralUserPassword,
-    val loadGeneralUser: LoadGeneralUser,
+    private val changeGeneralUserPasswordService: ChangeGeneralUserPasswordService,
+    private val changeGeneralUserPassword: ChangeGeneralUserPassword,
+    private val loadGeneralUser: LoadGeneralUser,
 ) : ChangeGeneralUserPasswordCommand {
     @Transactional
     override fun execute(command: ChangeGeneralUserPasswordCommandDto): Boolean {

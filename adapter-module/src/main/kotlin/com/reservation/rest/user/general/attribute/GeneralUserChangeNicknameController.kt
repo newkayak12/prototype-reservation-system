@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class GeneralUserChangeNicknameController(
-    val changeGeneralUserNicknameCommand: ChangeGeneralUserNicknameCommand,
+    private val changeGeneralUserNicknameCommand: ChangeGeneralUserNicknameCommand,
 ) {
     @PatchMapping(GeneralUserUrl.CHANGE_NICKNAME)
     fun changeNickname(

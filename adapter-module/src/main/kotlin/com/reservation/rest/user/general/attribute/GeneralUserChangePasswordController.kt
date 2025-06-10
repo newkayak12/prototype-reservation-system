@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class GeneralUserChangePasswordController(
-    val changeGeneralUserPasswordCommand: ChangeGeneralUserPasswordCommand,
+    private val changeGeneralUserPasswordCommand: ChangeGeneralUserPasswordCommand,
 ) {
     @PatchMapping(GeneralUserUrl.CHANGE_PASSWORD)
     fun changePassword(

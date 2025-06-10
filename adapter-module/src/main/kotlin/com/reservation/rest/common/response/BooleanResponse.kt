@@ -4,11 +4,11 @@ import com.reservation.rest.common.response.BooleanResponse.ResultContainer
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 
-data class BooleanResponse private constructor(
-    val result: Boolean,
-    val httpStatus: HttpStatus,
-) : ResponseEntity<ResultContainer>(ResultContainer(result), httpStatus) {
-    data class ResultContainer(
+class BooleanResponse private constructor(
+    private val result: Boolean,
+    private val httpStatus: HttpStatus,
+) : ResponseEntity<ResultContainer<Boolean>>(ResultContainer(result), httpStatus) {
+    data class ResultContainer<T>(
         val result: Boolean,
     )
 
