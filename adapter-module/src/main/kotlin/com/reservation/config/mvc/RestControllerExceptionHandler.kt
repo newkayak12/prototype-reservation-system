@@ -6,7 +6,6 @@ import com.reservation.utilities.logger.loggerFactory
 import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
 import org.springframework.http.HttpStatus
-import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -24,7 +23,7 @@ class RestControllerExceptionHandler : EnvironmentAware {
         }
     }
 
-    @ExceptionHandler(exception = [ClientException::class, MethodArgumentNotValidException::class])
+    @ExceptionHandler(exception = [ClientException::class])
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun clientException(exception: ClientException) = logger(exception)
 
