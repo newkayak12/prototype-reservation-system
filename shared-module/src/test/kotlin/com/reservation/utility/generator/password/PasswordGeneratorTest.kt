@@ -10,7 +10,14 @@ class PasswordGeneratorTest {
     @Test
     fun `is valid password`() {
         val password = PasswordGenerator.createDefaultPassword()
-
+        /*
+         * 패스워드 조건:
+         * - 최소 1개의 소문자
+         * - 최소 1개의 대문자
+         * - 최소 1개의 숫자
+         * - 최소 1개의 특수 문자
+         * - 길이: 8~18자
+         */
         val regExp =
             Regex(
                 """
