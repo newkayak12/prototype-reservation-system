@@ -4,7 +4,7 @@ import com.reservation.enumeration.JWTVersion
 import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(value = "security.jwt.properties")
-data class JwtProperties(
+data class JWTProperties(
     val expireTime: Long,
     val secret: String,
     val issuer: String,

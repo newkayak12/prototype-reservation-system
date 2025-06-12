@@ -15,7 +15,11 @@ class AuthenticateSignInService {
         rawPassword: String,
     ): Authenticate {
         val signInPolicy =
-            NormalSignInPolicy(SIGN_IN_ATTEMPT_LIMIT, SIGN_IN_INTERVAL_MINUTES, ChronoUnit.MINUTES)
+            NormalSignInPolicy(
+                SIGN_IN_ATTEMPT_LIMIT,
+                SIGN_IN_INTERVAL_MINUTES,
+                ChronoUnit.MINUTES,
+            )
         authenticate.canISignIn(rawPassword, signInPolicy)
         return authenticate
     }
