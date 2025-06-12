@@ -3,10 +3,14 @@ package com.reservation.fixture
 import net.jqwik.api.Arbitraries
 import net.jqwik.api.Arbitrary
 import net.jqwik.api.Combinators
+import java.nio.charset.Charset
 import java.text.DecimalFormat
+import java.util.Base64
 
 @SuppressWarnings("MagicNumber")
 object CommonlyUsedArbitraries {
+    private val decimalFormat = DecimalFormat("00000000")
+
     val loginIdArbitrary: Arbitrary<String> =
         Arbitraries.strings()
             .withCharRange('a', 'z')
@@ -41,7 +45,6 @@ object CommonlyUsedArbitraries {
                 }
             }
 
-    private val decimalFormat = DecimalFormat("00000000")
     val phoneNumberArbitrary: Arbitrary<String> =
         Arbitraries.longs().between(10000000L, 99999999L)
             .map { decimalFormat.format(it) }
@@ -53,4 +56,16 @@ object CommonlyUsedArbitraries {
             .withCharRange('A', 'Z')
             .ofMinLength(5)
             .ofMaxLength(12)
+
+    val bearerTokenArbitrary: Arbitrary<String> =
+        Arbitraries.strings()
+            .withCharRange('a', 'z')
+            .withCharRange('A', 'Z')
+            .ofMinLength(25)
+            .ofMaxLength(50)
+            .map {
+                "Bearer ${Base64.getEncoder().encodeToString(
+                    it.toByteArray(Charset.defaultCharset()),
+                )}"
+            }
 }
