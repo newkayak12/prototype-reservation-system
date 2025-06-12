@@ -7,8 +7,9 @@ interface UpdateGeneralUserTemporaryPassword {
 
     data class UpdateGeneralUserPasswordInquiry(
         val id: String,
-        val newPassword: String,
+        val newEncodedPassword: String,
         val oldEncodedPassword: String,
         val changedDateTime: LocalDateTime,
+        val isNeedToChangePassword: Boolean = true,
     )
 }
