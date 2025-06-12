@@ -16,7 +16,6 @@ import com.reservation.user.self.port.input.FindGeneralUserIdsQuery.FindGeneralU
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
-import net.jqwik.api.Arbitraries
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -57,7 +56,7 @@ class FindGeneralUserIdsControllerTest(
                 get(GeneralUserUrl.FIND_LOST_LOGIN_ID)
                     .header(
                         HttpHeaders.AUTHORIZATION,
-                        "Bearer ${Arbitraries.strings().ascii().sample()}",
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
                     )
                     .queryParam("email", CommonlyUsedArbitraries.emailArbitrary.sample()),
             )
@@ -83,7 +82,7 @@ class FindGeneralUserIdsControllerTest(
                 get(GeneralUserUrl.FIND_LOST_LOGIN_ID)
                     .header(
                         HttpHeaders.AUTHORIZATION,
-                        "Bearer ${Arbitraries.strings().ascii().sample()}",
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
                     )
                     .queryParam("email", CommonlyUsedArbitraries.emailArbitrary.sample()),
             )

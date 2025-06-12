@@ -6,6 +6,7 @@ import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.PathParameter
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
+import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.rest.user.general.attribute.GeneralUserChangeNicknameController
 import com.reservation.rest.user.general.request.GeneralUserChangeNicknameRequest
 import com.reservation.user.self.port.input.ChangeGeneralUserNicknameCommand
@@ -61,7 +62,7 @@ class GeneralUserChangeNicknameControllerTest(
                 patch(url, UuidGenerator.generate())
                     .header(
                         HttpHeaders.AUTHORIZATION,
-                        "Bearer accessToken",
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
                     )
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(objectMapper.writeValueAsString(request)),
