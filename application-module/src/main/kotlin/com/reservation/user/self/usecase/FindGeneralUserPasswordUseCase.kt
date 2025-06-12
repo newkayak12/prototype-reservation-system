@@ -13,6 +13,7 @@ import com.reservation.user.self.port.output.UpdateGeneralUserTemporaryPassword
 import com.reservation.user.self.port.output.UpdateGeneralUserTemporaryPassword.UpdateGeneralUserPasswordInquiry
 import com.reservation.user.service.ChangeGeneralUserPasswordService
 import com.reservation.utilities.generator.password.PasswordGenerator
+import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class FindGeneralUserPasswordUseCase(
@@ -54,6 +55,7 @@ class FindGeneralUserPasswordUseCase(
         )
     }
 
+    @Transactional
     override fun execute(command: FindGeneralUserPasswordCommandDto): Boolean {
         val rawPassword = PasswordGenerator.createDefaultPassword()
         val user =

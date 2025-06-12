@@ -9,7 +9,7 @@ import com.reservation.user.self.port.output.AuthenticateGeneralUser.Authenticat
 import org.springframework.stereotype.Component
 
 @Component
-class AuthenticateDslRepository(
+class AuthenticateRepository(
     private val query: JPAQueryFactory,
 ) : AuthenticateGeneralUser {
     override fun query(request: AuthenticateGeneralUserInquiry): AuthenticateGeneralUserResult? {
