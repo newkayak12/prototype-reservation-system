@@ -3,11 +3,19 @@ package com.reservation.utilities.provider
 import com.reservation.enumeration.JWTType
 import com.reservation.enumeration.JWTVersion
 import com.reservation.enumeration.SecurityRole
+import com.reservation.exceptions.UnAuthorizedException
 import io.jsonwebtoken.Claims
+import io.jsonwebtoken.ExpiredJwtException
+import io.jsonwebtoken.IncorrectClaimException
 import io.jsonwebtoken.Jws
 import io.jsonwebtoken.JwtParser
 import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.MalformedJwtException
+import io.jsonwebtoken.MissingClaimException
+import io.jsonwebtoken.PrematureJwtException
+import io.jsonwebtoken.UnsupportedJwtException
 import io.jsonwebtoken.security.Keys
+import io.jsonwebtoken.security.SecurityException
 import javax.crypto.SecretKey
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -77,16 +85,36 @@ class JWTProvider(
         token: String,
         type: JWTType,
     ): Boolean {
-        val claims: Claims = parse(token)
-        val expireDate: Date = claims.expiration
-        val now = LocalDateTime.now()
-        val expireLocalDateTime = LocalDateTime.from(expireDate.toInstant())
-        val jwtVersion = claims.get(VERSION, String::class.java)
-        val jwtType = claims.get(TYPE, String::class.java)
+        try {
+            val claims: Claims = parse(token)
+            val expireDate: Date = claims.expiration
+            val now = LocalDateTime.now()
+            val expireLocalDateTime =
+                LocalDateTime.ofInstant(
+                    expireDate.toInstant(),
+                    ZoneId.systemDefault(),
+                )
+            val jwtVersion = claims.get(VERSION, String::class.java)
+            val jwtType = claims.get(TYPE, String::class.java)
 
-        return now.isBefore(expireLocalDateTime) &&
-            type.title == jwtType &&
-            version.name == jwtVersion
+            return now.isBefore(expireLocalDateTime) &&
+                type.title == jwtType &&
+                version.name == jwtVersion
+        } catch (
+            e: SecurityException,
+        ) {
+            when (e) {
+                is ExpiredJwtException,
+                is MalformedJwtException,
+                is UnsupportedJwtException,
+                is PrematureJwtException,
+                is MissingClaimException,
+                is IncorrectClaimException,
+                -> throw UnAuthorizedException()
+            }
+        }
+
+        return false
     }
 
     override fun decrypt(
@@ -98,7 +126,7 @@ class JWTProvider(
         return JWTRecord(
             claims.id,
             claims[ID] as String,
-            claims[ROLE] as SecurityRole,
+            SecurityRole.valueOf(claims[ROLE] as String),
         )
     }
 }
