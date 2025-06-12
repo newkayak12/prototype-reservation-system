@@ -1,12 +1,12 @@
 package com.reservation.rest.user.general.request
 
 import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
-import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotBlank
 
 data class GeneralUserLoginRequest(
-    @field:NotEmpty
+    @field:NotBlank
     val loginId: String,
-    @field:NotEmpty
+    @field:NotBlank
     val password: String,
 ) {
     fun toQuery(): GeneralUserQueryDto {

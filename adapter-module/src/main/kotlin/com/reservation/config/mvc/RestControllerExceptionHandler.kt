@@ -24,10 +24,7 @@ class RestControllerExceptionHandler : EnvironmentAware {
         }
     }
 
-    @ExceptionHandler(exception = [MethodArgumentNotValidException::class])
-    fun argumentNotValidException(exception: MethodArgumentNotValidException) = logger(exception)
-
-    @ExceptionHandler(exception = [ClientException::class])
+    @ExceptionHandler(exception = [ClientException::class, MethodArgumentNotValidException::class])
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun clientException(exception: ClientException) = logger(exception)
 
