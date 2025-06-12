@@ -23,6 +23,7 @@ class ChangeGeneralUserPasswordService {
     fun <T : PasswordChangeable> changePassword(
         target: T,
         rawPassword: String,
+        isNeedToChangePassword: Boolean = false,
     ): T {
         validatePassword(rawPassword)
 
@@ -31,7 +32,10 @@ class ChangeGeneralUserPasswordService {
         validateAlreadyUsedPassword(rawPassword, currentPassword)
 
         return target.apply {
-            changePassword(PasswordEncoderUtility.encode(rawPassword))
+            changePassword(
+                PasswordEncoderUtility.encode(rawPassword),
+                isNeedToChangePassword,
+            )
         }
     }
 

@@ -7,7 +7,10 @@ interface PasswordChangeable {
 
     val userPasswordSet: Password
 
-    fun changePassword(rawNewPassword: String) {
-        changePassword(userPasswordSet.changePassword(rawNewPassword))
+    fun changePassword(
+        rawNewPassword: String,
+        isNeedToChangePassword: Boolean,
+    ) {
+        changePassword(userPasswordSet.changePassword(rawNewPassword, isNeedToChangePassword))
     }
 }

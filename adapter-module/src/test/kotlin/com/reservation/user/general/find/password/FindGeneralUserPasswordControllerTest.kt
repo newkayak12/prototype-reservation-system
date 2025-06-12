@@ -1,16 +1,18 @@
-package com.reservation.user.general.attribute
+package com.reservation.user.general.find.password
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.ninjasquad.springmockk.MockkBean
 import com.reservation.config.restdoc.Body
-import com.reservation.config.restdoc.PathParameter
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
-import com.reservation.rest.user.general.attribute.GeneralUserChangePasswordController
-import com.reservation.rest.user.general.request.GeneralUserChangePasswordRequest
-import com.reservation.user.self.port.input.ChangeGeneralUserPasswordCommand
-import com.reservation.utilities.generator.uuid.UuidGenerator
+import com.reservation.fixture.FixtureMonkeyFactory
+import com.reservation.rest.user.general.GeneralUserUrl
+import com.reservation.rest.user.general.request.FindGeneralUserPasswordRequest
+import com.reservation.rest.user.general.sign.find.password.FindGeneralUserPasswordController
+import com.reservation.user.exceptions.NoSuchDatabaseElementException
+import com.reservation.user.self.port.input.FindGeneralUserPasswordCommand
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
@@ -22,10 +24,11 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.restdocs.RestDocumentationExtension
-import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.patch
-import org.springframework.restdocs.payload.JsonFieldType
+import org.springframework.restdocs.payload.JsonFieldType.BOOLEAN
+import org.springframework.restdocs.payload.JsonFieldType.STRING
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -33,33 +36,52 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @AutoConfigureRestDocs
 @ActiveProfiles(value = ["test"])
 @Import(value = [TestSecurity::class])
-@WebMvcTest(GeneralUserChangePasswordController::class)
+@WebMvcTest(FindGeneralUserPasswordController::class)
 @ExtendWith(RestDocumentationExtension::class)
-class GeneralUserChangePasswordControllerTest(
+class FindGeneralUserPasswordControllerTest(
     private val mockMvc: MockMvc,
     private val objectMapper: ObjectMapper,
 ) : FunSpec() {
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var changeGeneralUserPasswordCommand: ChangeGeneralUserPasswordCommand
+    private lateinit var findGeneralUserPasswordCommand: FindGeneralUserPasswordCommand
 
     init {
 
-        test("비밀번호 변경 조건에 맞는 요청으로 비밀번호가 변경된다.") {
-            val url = "/api/v1/user/{id}/password"
-
-            val request =
-                GeneralUserChangePasswordRequest(
-                    "1234",
-                )
+        test("올바르지 않은 아이디, 이메일을 입력하여 아이디를 찾을 수 없다.") {
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val request = pureMonkey.giveMeOne<FindGeneralUserPasswordRequest>()
 
             every {
-                changeGeneralUserPasswordCommand.execute(any())
+                findGeneralUserPasswordCommand.execute(any())
+            } throws NoSuchDatabaseElementException()
+
+            mockMvc.perform(
+                patch(GeneralUserUrl.FIND_LOST_PASSWORD)
+                    .header(
+                        HttpHeaders.AUTHORIZATION,
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                    )
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content(objectMapper.writeValueAsString(request)),
+            )
+                .andDo(print())
+                .andExpectAll(
+                    status().isBadRequest,
+                )
+        }
+
+        test("비밀번호를 변경하고 이메일을 발송한다.") {
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val request = pureMonkey.giveMeOne<FindGeneralUserPasswordRequest>()
+
+            every {
+                findGeneralUserPasswordCommand.execute(any())
             } returns true
 
             mockMvc.perform(
-                patch(url, UuidGenerator.generate())
+                patch(GeneralUserUrl.FIND_LOST_PASSWORD)
                     .header(
                         HttpHeaders.AUTHORIZATION,
                         CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
@@ -75,33 +97,21 @@ class GeneralUserChangePasswordControllerTest(
                 )
                 .andDo(
                     RestDocuments(
-                        identifier = "changePassword",
+                        identifier = "findLostPassword",
                         documentTags = listOf("general_user"),
-                        summary = "비밀번호 변경",
-                        pathParameter =
-                            arrayOf(
-                                PathParameter(
-                                    name = "id",
-                                    optional = false,
-                                    description = "사용자 ID",
-                                ),
-                            ),
+                        summary = "일반 회원 비밀번호 찾기",
                         requestBody =
                             arrayOf(
-                                Body(
-                                    name = "encodedPassword",
-                                    jsonType = JsonFieldType.STRING,
-                                    optional = false,
-                                    description = "변경할 비밀번호",
-                                ),
+                                Body("loginId", STRING, false, "아이디"),
+                                Body("email", STRING, false, "이메일"),
                             ),
                         responseBody =
                             arrayOf(
                                 Body(
-                                    name = "result",
-                                    jsonType = JsonFieldType.BOOLEAN,
-                                    optional = false,
-                                    description = "결과",
+                                    "result",
+                                    BOOLEAN,
+                                    false,
+                                    "비밀번호 찾기 결과",
                                 ),
                             ),
                     )

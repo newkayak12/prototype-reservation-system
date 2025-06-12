@@ -61,6 +61,11 @@ class UserEntity(
     var passwordChangeDateTime: LocalDateTime? = null
         protected set
 
+    @Column(name = "is_need_to_change_password", columnDefinition = "TINYINT(1)")
+    @Comment("비밀번호 변경 필요 여부")
+    var isNeedToChangePassword: Boolean = false
+        protected set
+
     @Column(name = "email", columnDefinition = "VARCHAR(32)")
     @Comment("휴대폰 번호")
     var email: String = email
@@ -113,10 +118,12 @@ class UserEntity(
         password: String,
         oldPassword: String,
         passwordChangeDateTime: LocalDateTime,
+        isNeedToChangePassword: Boolean = false,
     ) {
         this.password = password
         this.oldPassword = oldPassword
         this.passwordChangeDateTime = passwordChangeDateTime
+        this.isNeedToChangePassword = isNeedToChangePassword
     }
 
     fun changeNickname(nickname: String) {

@@ -17,7 +17,7 @@ class GeneralUserSignInController(
 ) {
     @PutMapping(GeneralUserUrl.USER_SIGN_IN)
     fun signIn(
-        @Valid @RequestBody request: GeneralUserLoginRequest,
+        @RequestBody @Valid request: GeneralUserLoginRequest,
         httpServletResponse: HttpServletResponse,
     ): GeneralUserLoginResponse {
         val result = authenticateGeneralUserQuery.execute(request.toQuery())

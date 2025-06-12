@@ -6,10 +6,11 @@ import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.PathParameter
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
+import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.rest.user.general.attribute.GeneralUserChangeNicknameController
 import com.reservation.rest.user.general.request.GeneralUserChangeNicknameRequest
 import com.reservation.user.self.port.input.ChangeGeneralUserNicknameCommand
-import com.reservation.utilities.uuid.UuidGenerator
+import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
@@ -61,7 +62,7 @@ class GeneralUserChangeNicknameControllerTest(
                 patch(url, UuidGenerator.generate())
                     .header(
                         HttpHeaders.AUTHORIZATION,
-                        "Bearer accessToken",
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
                     )
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content(objectMapper.writeValueAsString(request)),

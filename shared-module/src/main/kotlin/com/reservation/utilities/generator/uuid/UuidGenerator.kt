@@ -1,4 +1,4 @@
-package com.reservation.utilities.uuid
+package com.reservation.utilities.generator.uuid
 
 import com.fasterxml.uuid.Generators
 
