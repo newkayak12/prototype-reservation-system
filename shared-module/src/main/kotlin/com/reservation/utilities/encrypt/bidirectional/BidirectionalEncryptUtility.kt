@@ -15,6 +15,8 @@ class BidirectionalEncryptUtility(
         private const val AES_ALGORITHM = "AES"
         private const val AES_KEY_BYTE_SIZE = 32
         private const val HEX = 16
+
+        @Suppress("java:S5542")
         private const val CIPHER_ALGORITHM = "AES/CBC/PKCS5Padding"
 
         private fun hexToByteArray(hex: String): ByteArray {
