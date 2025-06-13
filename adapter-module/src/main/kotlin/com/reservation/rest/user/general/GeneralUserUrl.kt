@@ -9,4 +9,5 @@ object GeneralUserUrl {
     const val FIND_LOST_LOGIN_ID = "/api/v1/user/find/login-id"
     const val FIND_LOST_PASSWORD = "/api/v1/user/find/password"
     const val FIND_USER = "/api/v1/user/{id:[0-9a-fA-F\\-]{36}}"
+    const val REFRESH = "/api/v1/user/refresh"
 }

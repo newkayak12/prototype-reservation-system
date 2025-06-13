@@ -2,7 +2,7 @@ package com.reservation.rest.user.general.sign
 
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.request.GeneralUserLoginRequest
-import com.reservation.rest.user.general.response.GeneralUserLoginResponse
+import com.reservation.rest.user.general.response.LoginGeneralUserResponse
 import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
@@ -19,7 +19,7 @@ class GeneralUserSignInController(
     fun signIn(
         @RequestBody @Valid request: GeneralUserLoginRequest,
         httpServletResponse: HttpServletResponse,
-    ): GeneralUserLoginResponse {
+    ): LoginGeneralUserResponse {
         val result = authenticateGeneralUserQuery.execute(request.toQuery())
 
         val refreshTokenCookie =
@@ -29,6 +29,6 @@ class GeneralUserSignInController(
         refreshTokenCookie.isHttpOnly = RefreshTokenDefinitions.HTTP_ONLY
         httpServletResponse.addCookie(refreshTokenCookie)
 
-        return GeneralUserLoginResponse.from(result)
+        return LoginGeneralUserResponse.from(result)
     }
 }
