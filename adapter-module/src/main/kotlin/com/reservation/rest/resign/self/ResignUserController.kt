@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RestController
 class ResignUserController(
     val resignUserCommand: ResignUserCommand,
 ) {
-
     @DeleteMapping(ResignUrl.RESIGN)
-    fun resign(@PathVariable id: String): BooleanResponse =
-        BooleanResponse.resetContents(resignUserCommand.execute(id))
+    fun resign(
+        @PathVariable id: String,
+    ): BooleanResponse = BooleanResponse.resetContents(resignUserCommand.execute(id))
 }

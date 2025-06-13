@@ -43,7 +43,6 @@ class ResignUserControllerTest(
     @MockkBean
     private lateinit var resignUserCommand: ResignUserCommand
 
-
     init {
 
         test("사용자가 탈퇴한다.") {
@@ -58,14 +57,14 @@ class ResignUserControllerTest(
                 delete(ResignUrl.RESIGN, id)
                     .header(
                         HttpHeaders.AUTHORIZATION,
-                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample()
-                    )
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                    ),
             )
                 .andDo(print())
                 .andExpectAll(
                     status().isResetContent,
                     jsonPath("$.result").isBoolean,
-                    jsonPath("$.result", equalTo(true))
+                    jsonPath("$.result", equalTo(true)),
                 )
                 .andDo(
                     RestDocuments(
@@ -73,22 +72,22 @@ class ResignUserControllerTest(
                         documentTags = listOf("resign_user"),
                         summary = "탈퇴",
                         pathParameter =
-                        arrayOf(
-                            PathParameter(
-                                name = "id",
-                                optional = false,
-                                description = "사용자 ID",
+                            arrayOf(
+                                PathParameter(
+                                    name = "id",
+                                    optional = false,
+                                    description = "사용자 ID",
+                                ),
                             ),
-                        ),
                         responseBody =
-                        arrayOf(
-                            Body(
-                                name = "result",
-                                jsonType = JsonFieldType.BOOLEAN,
-                                optional = false,
-                                description = "결과",
+                            arrayOf(
+                                Body(
+                                    name = "result",
+                                    jsonType = JsonFieldType.BOOLEAN,
+                                    optional = false,
+                                    description = "결과",
+                                ),
                             ),
-                        ),
                     )
                         .authorizedRequestHeader()
                         .create(),
