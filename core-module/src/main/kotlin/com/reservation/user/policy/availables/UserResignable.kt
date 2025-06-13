@@ -1,8 +1,8 @@
 package com.reservation.user.policy.availables
 
 import com.reservation.enumeration.Role
-import com.reservation.user.resign.EncryptedAttributes
-import com.reservation.user.resign.ResignedUser
+import com.reservation.resign.self.EncryptedAttributes
+import com.reservation.resign.self.ResignedUser
 
 interface UserResignable {
     val userEmail: String
