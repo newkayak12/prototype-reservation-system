@@ -3,7 +3,8 @@ package com.reservation.utilities.provider
 import com.reservation.enumeration.JWTType
 import com.reservation.enumeration.JWTVersion
 import com.reservation.enumeration.SecurityRole
-import com.reservation.exceptions.UnAuthorizedException
+import com.reservation.exceptions.AlreadyExpiredException
+import com.reservation.exceptions.InvalidTokenException
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.IncorrectClaimException
@@ -104,13 +105,13 @@ class JWTProvider(
             e: SecurityException,
         ) {
             when (e) {
-                is ExpiredJwtException,
+                is ExpiredJwtException -> throw AlreadyExpiredException()
+                is PrematureJwtException,
                 is MalformedJwtException,
                 is UnsupportedJwtException,
-                is PrematureJwtException,
                 is MissingClaimException,
                 is IncorrectClaimException,
-                -> throw UnAuthorizedException()
+                -> throw InvalidTokenException()
             }
         }
 

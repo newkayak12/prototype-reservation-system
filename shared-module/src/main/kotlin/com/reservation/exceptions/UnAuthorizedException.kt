@@ -1,3 +1,3 @@
 package com.reservation.exceptions
 
-class UnAuthorizedException(message: String = "UNAUTHORIZED!") : RuntimeException(message)
+open class UnAuthorizedException(message: String = "UNAUTHORIZED!") : RuntimeException(message)
