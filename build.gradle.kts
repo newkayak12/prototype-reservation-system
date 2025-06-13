@@ -63,10 +63,10 @@ tasks.register("gitPreCommitHook") {
             commandLine("bash", "./gradlew", "detekt")
         }
 
-        // 변경된 파일을 git에 다시 stage
-        exec {
-            commandLine("git", "add", ".")
-        }
+//        // 변경된 파일을 git에 다시 stage
+//        exec {
+//            commandLine("git", "add", ".")
+//        }
     }
 }
 
