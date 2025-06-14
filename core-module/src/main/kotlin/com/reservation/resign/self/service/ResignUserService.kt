@@ -1,15 +1,15 @@
-package com.reservation.user.service
+package com.reservation.resign.self.service
 
+import com.reservation.resign.self.EncryptedAttributes
+import com.reservation.resign.self.ResignedUser
 import com.reservation.user.policy.availables.UserResignable
-import com.reservation.user.resign.EncryptedAttributes
-import com.reservation.user.resign.ResignedUser
 import com.reservation.utilities.encrypt.bidirectional.BidirectionalEncryptUtility
 
 class ResignUserService(
     private val bidirectionalEncryptUtility: BidirectionalEncryptUtility,
 ) {
-    fun <T : UserResignable> withdraw(target: T): ResignedUser {
-        val encryptedAttributes: EncryptedAttributes =
+    fun <T : UserResignable> resign(target: T): ResignedUser {
+        val encryptedAttributes =
             EncryptedAttributes(
                 bidirectionalEncryptUtility.encrypt(target.userEmail),
                 bidirectionalEncryptUtility.encrypt(target.userNickname),

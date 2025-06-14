@@ -9,7 +9,7 @@ class BooleanResponse private constructor(
     private val httpStatus: HttpStatus,
 ) : ResponseEntity<ResultContainer<Boolean>>(ResultContainer(result), httpStatus) {
     data class ResultContainer<T>(
-        val result: Boolean,
+        val result: T,
     )
 
     companion object {

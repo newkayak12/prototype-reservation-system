@@ -56,3 +56,7 @@ decorator:
   datasource:
     p6spy:
       enable-logging: true
+
+key:
+  bidirectional:
+    secret: d6fe589c69bf2edfb795b1a37e977dd7e98ce3c3aff17b095b4129588d994f02
