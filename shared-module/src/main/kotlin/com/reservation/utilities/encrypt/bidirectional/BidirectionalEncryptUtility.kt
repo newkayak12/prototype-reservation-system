@@ -16,7 +16,7 @@ class BidirectionalEncryptUtility(
         private const val AES_KEY_BYTE_SIZE = 32
         private const val HEX = 16
 
-        private const val CIPHER_ALGORITHM = "AES/CBC/PKCS5Padding" // NOSONAR
+        private const val CIPHER_ALGORITHM = "AES/CTR/NoPadding" // NOSONAR
 
         private fun hexToByteArray(hex: String): ByteArray {
             require(hex.length % 2 == 0) { "Hex key length must be even" }
