@@ -1,0 +1,7 @@
+coverage:
+  ignore:
+    - "**/entity/**"
+    - "**/repository/**"
+    - "**/persistence/**"
+    - "**/jpa/**"
+    - "**/config/**"
