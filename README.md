@@ -14,4 +14,4 @@
 
 ------
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=newkayak12_prototype-reservation-system&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=newkayak12_prototype-reservation-system)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=newkayak12_prototype-reservation-system&metric=coverage)](https://sonarcloud.io/summary/new_code?id=newkayak12_prototype-reservation-system)
+[![codecov](https://codecov.io/gh/newkayak12/prototype-reservation-system/graph/badge.svg?token=WRBBA0LNL4)](https://codecov.io/gh/newkayak12/prototype-reservation-system)
