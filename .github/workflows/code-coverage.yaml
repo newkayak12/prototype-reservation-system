@@ -39,16 +39,13 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run all tests & generate coverage
-        run: ./gradlew test jacocoTestReport
+        run: ./gradlew jacocoTestReport
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}  # 프라이빗 repo만 필요
-          files: |
-            adapter-module/build/reports/jacoco/test/jacocoTestReport.xml
-            application-module/build/reports/jacoco/test/jacocoTestReport.xml
-            core-module/build/reports/jacoco/test/jacocoTestReport.xml
+          files: **/jacocoTestReport.xml
           flags: all-modules
           name: codecov-master
           fail_ci_if_error: true
