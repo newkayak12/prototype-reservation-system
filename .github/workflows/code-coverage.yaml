@@ -45,7 +45,8 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}  # 프라이빗 repo만 필요
-          files: **/jacocoTestReport.xml
+          files: |
+            **/jacocoTestReport.xml
           flags: all-modules
           name: codecov-master
           fail_ci_if_error: true
