@@ -39,10 +39,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run all tests & generate coverage
-        run: |
-          ./gradlew :adapter-module:jacocoTestReport \
-                     :application-module:jacocoTestReport \
-                     :core-module:jacocoTestReport
+        run: ./gradlew test jacocoTestReport
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@v3
