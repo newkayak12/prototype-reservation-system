@@ -6,6 +6,7 @@ import com.reservation.shared.user.PersonalAttributes
 import com.reservation.user.self.User
 import java.time.LocalDateTime
 
+@FunctionalInterface
 interface LoadGeneralUser {
     fun load(id: String): LoadGeneralUserResult?
 

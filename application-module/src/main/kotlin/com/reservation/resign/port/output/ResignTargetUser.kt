@@ -4,6 +4,7 @@ import com.reservation.resign.self.EncryptedAttributes
 import com.reservation.shared.user.LoginId
 import java.time.LocalDateTime
 
+@FunctionalInterface
 interface ResignTargetUser {
     fun resign(inquiry: ResignInquiry): Boolean
 

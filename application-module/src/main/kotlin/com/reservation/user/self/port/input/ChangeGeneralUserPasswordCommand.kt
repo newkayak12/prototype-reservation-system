@@ -1,5 +1,6 @@
 package com.reservation.user.self.port.input
 
+@FunctionalInterface
 interface ChangeGeneralUserPasswordCommand {
     fun execute(command: ChangeGeneralUserPasswordCommandDto): Boolean
 
