@@ -2,6 +2,7 @@ package com.reservation.user.self.port.input
 
 import com.reservation.user.self.port.output.FindGeneralUserIds.FindGeneralUserIdInquiry
 
+@FunctionalInterface
 interface FindGeneralUserIdsQuery {
     fun execute(query: FindGeneralUserIdQueryDto): List<FindGeneralUserIdQueryResult>
 

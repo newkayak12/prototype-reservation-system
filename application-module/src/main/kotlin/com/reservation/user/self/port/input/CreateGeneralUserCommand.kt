@@ -1,5 +1,6 @@
 package com.reservation.user.self.port.input
 
+@FunctionalInterface
 interface CreateGeneralUserCommand {
     fun execute(command: CreateGeneralUserCommandDto): Boolean
 
