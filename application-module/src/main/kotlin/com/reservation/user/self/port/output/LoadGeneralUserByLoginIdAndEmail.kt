@@ -33,17 +33,17 @@ interface LoadGeneralUserByLoginIdAndEmail {
                 id = id,
                 loginId = LoginId(loginId),
                 password =
-                Password(
-                    encodedPassword = encodedPassword,
-                    oldEncodedPassword = oldEncodedPassword,
-                    changedDateTime = changedDateTime,
-                    isNeedToChangePassword = isNeedToChangePassword,
-                ),
+                    Password(
+                        encodedPassword = encodedPassword,
+                        oldEncodedPassword = oldEncodedPassword,
+                        changedDateTime = changedDateTime,
+                        isNeedToChangePassword = isNeedToChangePassword,
+                    ),
                 personalAttributes =
-                PersonalAttributes(
-                    email = email,
-                    mobile = mobile,
-                ),
+                    PersonalAttributes(
+                        email = email,
+                        mobile = mobile,
+                    ),
                 nickname = nickname,
             )
     }

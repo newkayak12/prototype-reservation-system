@@ -25,16 +25,16 @@ interface LoadGeneralUser {
                 id = id,
                 loginId = LoginId(loginId),
                 password =
-                Password(
-                    encodedPassword = encodedPassword,
-                    oldEncodedPassword = oldEncodedPassword,
-                    changedDateTime = changedDateTime,
-                ),
+                    Password(
+                        encodedPassword = encodedPassword,
+                        oldEncodedPassword = oldEncodedPassword,
+                        changedDateTime = changedDateTime,
+                    ),
                 personalAttributes =
-                PersonalAttributes(
-                    email = email,
-                    mobile = mobile,
-                ),
+                    PersonalAttributes(
+                        email = email,
+                        mobile = mobile,
+                    ),
                 nickname = nickname,
             )
     }
