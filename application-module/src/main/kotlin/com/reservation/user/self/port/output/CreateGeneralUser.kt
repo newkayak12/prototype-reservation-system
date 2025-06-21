@@ -2,6 +2,7 @@ package com.reservation.user.self.port.output
 
 import com.reservation.enumeration.Role
 
+@FunctionalInterface
 interface CreateGeneralUser {
     fun save(inquiry: CreateGeneralUserInquiry): Boolean
 

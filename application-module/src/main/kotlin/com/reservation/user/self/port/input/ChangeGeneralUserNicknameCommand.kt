@@ -2,6 +2,7 @@ package com.reservation.user.self.port.input
 
 import com.reservation.enumeration.Role
 
+@FunctionalInterface
 interface ChangeGeneralUserNicknameCommand {
     fun execute(command: ChangeGeneralUserNicknameCommandDto): Boolean
 

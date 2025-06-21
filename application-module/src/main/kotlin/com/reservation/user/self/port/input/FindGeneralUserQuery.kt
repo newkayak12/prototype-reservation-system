@@ -2,6 +2,7 @@ package com.reservation.user.self.port.input
 
 import com.reservation.enumeration.UserStatus
 
+@FunctionalInterface
 interface FindGeneralUserQuery {
     fun execute(id: String): FindGeneralUserQueryResult
 
