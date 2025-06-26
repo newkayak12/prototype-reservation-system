@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional
 class CreateGeneralUserChangeHistoryUseCase(
     val createGeneralUserChangeHistory: CreateGeneralUserChangeHistory,
 ) : CreateGeneralUserChangeHistoryCommand {
-
     @Transactional
     override fun execute(command: CreateGeneralUserChangeHistoryCommandDto) {
         createGeneralUserChangeHistory.save(command.toInquiry())
