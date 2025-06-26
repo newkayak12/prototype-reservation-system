@@ -52,27 +52,36 @@ jacoco {
 }
 
 fun String.runCommand(): String =
-    ProcessBuilder(*split(" ").toTypedArray()).redirectErrorStream(true).start().inputStream.bufferedReader().readText()
+    ProcessBuilder(*split(" ").toTypedArray())
+        .redirectErrorStream(true)
+        .start()
+        .inputStream
+        .bufferedReader()
+        .readText()
+
+tasks.register<Exec>("preCommitApplySpotless") {
+    commandLine("bash", "./gradlew", "spotlessKotlinApply")
+}
+
+tasks.register<Exec>("preCommitDetekt") {
+    commandLine("bash", "./gradlew", "detekt")
+    mustRunAfter("preCommitApplySpotless")
+}
+
+tasks.register<Exec>("preCommitAddCommit") {
+    val stagedFiles = "git diff --cached --name-only".runCommand().lines().filter { it.isNotBlank() }
+    if (stagedFiles.isNotEmpty()) {
+        commandLine(listOf("git", "add") + stagedFiles)
+    } else {
+        commandLine("echo", "No staged files to add.")
+    }
+    mustRunAfter("preCommitDetekt")
+}
 
 tasks.register("gitPreCommitHook") {
+    dependsOn("preCommitApplySpotless", "preCommitDetekt", "preCommitAddCommit")
     doLast {
-        println("Running spotlessKotlinGradleApply before commit...")
-
-        // spotlessKotlinGradleApply 작업 실행 (gradlew를 통해 실행)
-        exec {
-            commandLine("bash", "./gradlew", "spotlessKotlinApply")
-        }
-        exec {
-            commandLine("bash", "./gradlew", "detekt")
-        }
-
-// 이미 staged된 파일만 다시 add
-        val stagedFiles = "git diff --cached --name-only".runCommand().lines().filter { it.isNotBlank() }
-        stagedFiles.forEach {
-            exec {
-                commandLine("git", "add", it)
-            }
-        }
+        println("Running spotlessKotlinGradleApply and detekt before commit...")
     }
 }
 
