@@ -2,6 +2,7 @@ package com.reservation.user.history.change.port.input
 
 import com.reservation.enumeration.Role
 import com.reservation.enumeration.Role.USER
+import com.reservation.user.history.change.port.output.CreateGeneralUserChangeHistory.CreateGeneralUserChangeHistoryInquiry
 
 interface CreateGeneralUserChangeHistoryCommand {
     fun execute(command: CreateGeneralUserChangeHistoryCommandDto)
@@ -13,5 +14,16 @@ interface CreateGeneralUserChangeHistoryCommand {
         val nickname: String,
         val mobile: String,
         val role: Role = USER,
-    )
+    ) {
+        fun toInquiry(): CreateGeneralUserChangeHistoryInquiry {
+            return CreateGeneralUserChangeHistoryInquiry(
+                uuid,
+                userId,
+                email,
+                nickname,
+                mobile,
+                role,
+            )
+        }
+    }
 }
