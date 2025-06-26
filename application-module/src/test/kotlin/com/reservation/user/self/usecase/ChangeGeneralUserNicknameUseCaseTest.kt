@@ -31,7 +31,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.kotlin.doNothing
 import java.time.LocalDateTime
 
 @ExtendWith(MockKExtension::class)
@@ -131,8 +130,7 @@ class ChangeGeneralUserNicknameUseCaseTest {
 
             every {
                 createGeneralUserChangeHistoryCommand.execute(any())
-            } just  Runs
-
+            } just Runs
 
             every {
                 changeUserNicknameService.changePersonalAttributes(any(), any())
@@ -186,7 +184,7 @@ class ChangeGeneralUserNicknameUseCaseTest {
 
             every {
                 createGeneralUserChangeHistoryCommand.execute(any())
-            } just  Runs
+            } just Runs
 
             every {
                 changeUserNicknameService.changePersonalAttributes(any(), any())
