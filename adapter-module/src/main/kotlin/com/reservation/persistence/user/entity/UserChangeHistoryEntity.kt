@@ -19,11 +19,11 @@ import org.hibernate.annotations.Comment
 @Entity
 class UserChangeHistoryEntity(
     uuid: String,
+    userId: String,
     email: String,
     nickname: String,
     mobile: String,
     role: Role,
-    userId: String,
 ) {
     @Id
     @TimeBasedUuidStrategy
