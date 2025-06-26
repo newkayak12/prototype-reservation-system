@@ -9,6 +9,7 @@ import com.reservation.shared.user.LoginId
 import com.reservation.shared.user.Password
 import com.reservation.shared.user.PersonalAttributes
 import com.reservation.user.exceptions.NoSuchDatabaseElementException
+import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryCommand
 import com.reservation.user.self.User
 import com.reservation.user.self.port.input.ChangeGeneralUserNicknameCommand.ChangeGeneralUserNicknameCommandDto
 import com.reservation.user.self.port.output.ChangeGeneralUserNickname
@@ -16,11 +17,13 @@ import com.reservation.user.self.port.output.CheckGeneralUserNicknameDuplicated
 import com.reservation.user.self.port.output.LoadGeneralUser
 import com.reservation.user.self.port.output.LoadGeneralUser.LoadGeneralUserResult
 import com.reservation.user.service.ChangeUserNicknameService
+import io.mockk.Runs
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.SpyK
 import io.mockk.junit5.MockKExtension
+import io.mockk.just
 import net.jqwik.api.Arbitraries
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DisplayName
@@ -40,6 +43,10 @@ class ChangeGeneralUserNicknameUseCaseTest {
 
     @MockK
     private lateinit var loadGeneralUser: LoadGeneralUser
+
+    @MockK
+    private lateinit var createGeneralUserChangeHistoryCommand:
+        CreateGeneralUserChangeHistoryCommand
 
     @SpyK
     private var changeUserNicknameService = ChangeUserNicknameService()
@@ -122,6 +129,10 @@ class ChangeGeneralUserNicknameUseCaseTest {
             } returns loadResult
 
             every {
+                createGeneralUserChangeHistoryCommand.execute(any())
+            } just Runs
+
+            every {
                 changeUserNicknameService.changePersonalAttributes(any(), any())
             } returns invalidUser
 
@@ -170,6 +181,10 @@ class ChangeGeneralUserNicknameUseCaseTest {
             every {
                 loadGeneralUser.load(any())
             } returns loadResult
+
+            every {
+                createGeneralUserChangeHistoryCommand.execute(any())
+            } just Runs
 
             every {
                 changeUserNicknameService.changePersonalAttributes(any(), any())

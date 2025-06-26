@@ -51,22 +51,37 @@ jacoco {
     toolVersion = "0.8.11" // 원하는 버전 명시
 }
 
+fun String.runCommand(): String =
+    ProcessBuilder(*split(" ").toTypedArray())
+        .redirectErrorStream(true)
+        .start()
+        .inputStream
+        .bufferedReader()
+        .readText()
+
+tasks.register<Exec>("preCommitApplySpotless") {
+    commandLine("bash", "./gradlew", "spotlessKotlinApply")
+}
+
+tasks.register<Exec>("preCommitDetekt") {
+    commandLine("bash", "./gradlew", "detekt")
+    mustRunAfter("preCommitApplySpotless")
+}
+
+tasks.register<Exec>("preCommitAddCommit") {
+    val stagedFiles = "git diff --cached --name-only".runCommand().lines().filter { it.isNotBlank() }
+    if (stagedFiles.isNotEmpty()) {
+        commandLine(listOf("git", "add") + stagedFiles)
+    } else {
+        commandLine("echo", "No staged files to add.")
+    }
+    mustRunAfter("preCommitDetekt")
+}
+
 tasks.register("gitPreCommitHook") {
+    dependsOn("preCommitApplySpotless", "preCommitDetekt", "preCommitAddCommit")
     doLast {
-        println("Running spotlessKotlinGradleApply before commit...")
-
-        // spotlessKotlinGradleApply 작업 실행 (gradlew를 통해 실행)
-        exec {
-            commandLine("bash", "./gradlew", "spotlessKotlinApply")
-        }
-        exec {
-            commandLine("bash", "./gradlew", "detekt")
-        }
-
-//        // 변경된 파일을 git에 다시 stage
-//        exec {
-//            commandLine("git", "add", ".")
-//        }
+        println("Running spotlessKotlinGradleApply and detekt before commit...")
     }
 }
 

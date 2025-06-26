@@ -11,7 +11,6 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.Comment
-import java.time.LocalDateTime
 
 @Table(
     catalog = "prototype_reservation",
@@ -19,17 +18,27 @@ import java.time.LocalDateTime
 )
 @Entity
 class UserChangeHistoryEntity(
+    uuid: String,
+    userId: String,
     email: String,
     nickname: String,
     mobile: String,
     role: Role,
-    userId: String,
 ) {
     @Id
     @TimeBasedUuidStrategy
     @Column(name = "id", columnDefinition = "VARCHAR(128)", nullable = false, updatable = false)
     @Comment("식별키")
     val id: String? = null
+
+    @Column(
+        name = "user_uuid",
+        columnDefinition = "VARCHAR(128)",
+        nullable = false,
+        updatable = false,
+    )
+    @Comment("식별키")
+    val userUuid: String = uuid
 
     @Column(name = "user_id", columnDefinition = "VARCHAR(128)")
     @Comment("식별키")
@@ -54,16 +63,6 @@ class UserChangeHistoryEntity(
     @Enumerated(value = EnumType.STRING)
     @Comment("역할 (ROOT, SELLER, USER)")
     val role: Role = role
-
-    @Column(name = "fail_count", columnDefinition = "TINYINT")
-    @Comment("실패 횟수")
-    var failCount: Int = 0
-        protected set
-
-    @Column(name = "locked_datetime", columnDefinition = "DATETIME")
-    @Comment("로그인 실패 카운트")
-    var lockedDatetime: LocalDateTime? = null
-        protected set
 
     @Embedded
     var auditDateTime = AuditDateTime()
