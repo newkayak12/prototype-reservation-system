@@ -51,6 +51,9 @@ jacoco {
     toolVersion = "0.8.11" // 원하는 버전 명시
 }
 
+fun String.runCommand(): String =
+    ProcessBuilder(*split(" ").toTypedArray()).redirectErrorStream(true).start().inputStream.bufferedReader().readText()
+
 tasks.register("gitPreCommitHook") {
     doLast {
         println("Running spotlessKotlinGradleApply before commit...")
@@ -63,10 +66,13 @@ tasks.register("gitPreCommitHook") {
             commandLine("bash", "./gradlew", "detekt")
         }
 
-//        // 변경된 파일을 git에 다시 stage
-//        exec {
-//            commandLine("git", "add", ".")
-//        }
+// 이미 staged된 파일만 다시 add
+        val stagedFiles = "git diff --cached --name-only".runCommand().lines().filter { it.isNotBlank() }
+        stagedFiles.forEach {
+            exec {
+                commandLine("git", "add", it)
+            }
+        }
     }
 }
 
