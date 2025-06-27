@@ -109,7 +109,7 @@ class RefreshGeneralUserUseCaseTest {
 
         @DisplayName("잘못 캐싱된 refresh token. - refresh token, redis의 refresh token이 달라서 실패한다.")
         @Test
-        fun `redis refresh token - not same`() {
+        fun `redis refresh token - not same as cached`() {
             val record = JWTRecord(UuidGenerator.generate(), "test", USER)
             val refresh = tokenProvider.tokenize(record, REFRESH_TOKEN)
 
