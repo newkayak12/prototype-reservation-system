@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 class CreateGeneralUserAdapter(
     val jpaRepository: UserJpaRepository,
 ) : CreateGeneralUser {
-    override fun save(inquiry: CreateGeneralUserInquiry): Boolean {
+    override fun command(inquiry: CreateGeneralUserInquiry): Boolean {
         val entity =
             jpaRepository.save(
                 UserEntity(

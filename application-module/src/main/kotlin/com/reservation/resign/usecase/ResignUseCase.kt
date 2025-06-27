@@ -30,6 +30,6 @@ class ResignUseCase(
                 resignUser.encryptedAttributes,
                 resignUser.withdrawalDateTime,
             )
-        return resignTargetUser.resign(resignTarget)
+        return resignTargetUser.command(resignTarget)
     }
 }

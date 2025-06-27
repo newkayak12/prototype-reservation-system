@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 class ChangeGeneralUserNicknameAdapter(
     val jpaRepository: UserJpaRepository,
 ) : ChangeGeneralUserNickname {
-    override fun changeGeneralUserNickname(inquiry: ChangeGeneralUserNicknameDto): Boolean {
+    override fun command(inquiry: ChangeGeneralUserNicknameDto): Boolean {
         val userEntity = jpaRepository.findById(inquiry.id)
         var result = false
 

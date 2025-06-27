@@ -33,14 +33,14 @@ class CreateGeneralUserUseCase(
             )
 
         if (
-            checkGeneralUserDuplicated.isDuplicated(
+            checkGeneralUserDuplicated.query(
                 CheckGeneralUserDuplicatedInquiry(command.loginId, USER),
             )
         ) {
             throw AlreadyPersistedException()
         }
 
-        return createGeneralUser.save(
+        return createGeneralUser.command(
             CreateGeneralUserInquiry(
                 loginId = user.userLoginId,
                 password = user.userEncodedPassword,

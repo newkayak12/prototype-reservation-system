@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 class CheckDuplicatedGeneralUserLoginIdRepository(
     private val query: JPAQueryFactory,
 ) : CheckGeneralUserLoginIdDuplicated {
-    override fun isDuplicated(inquiry: CheckGeneralUserDuplicatedInquiry): Boolean {
+    override fun query(inquiry: CheckGeneralUserDuplicatedInquiry): Boolean {
         return query.select(
             userEntity.id,
         )

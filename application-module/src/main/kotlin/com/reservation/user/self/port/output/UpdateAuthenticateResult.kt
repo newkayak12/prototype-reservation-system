@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 
 @FunctionalInterface
 interface UpdateAuthenticateResult {
-    fun save(authenticateResult: UpdateAuthenticateResultDto)
+    fun command(authenticateResult: UpdateAuthenticateResultDto)
 
     data class UpdateAuthenticateResultDto(
         val id: String,

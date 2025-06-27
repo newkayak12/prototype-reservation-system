@@ -78,7 +78,7 @@ class AuthenticateGeneralUserUseCase(
 
     private fun updateAuthenticateResult(authenticated: Authenticate) {
         // authenticated.
-        updateAuthenticateResult.save(
+        updateAuthenticateResult.command(
             UpdateAuthenticateResultDto(
                 authenticated.id,
                 authenticated.failCount,

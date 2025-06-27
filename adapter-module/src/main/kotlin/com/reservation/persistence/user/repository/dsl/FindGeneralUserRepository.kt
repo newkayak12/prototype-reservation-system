@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 class FindGeneralUserRepository(
     private val query: JPAQueryFactory,
 ) : FindGeneralUser {
-    override fun findUserBy(inquiry: FindGeneralUserInquiry): FindGeneralUserResult? {
+    override fun query(inquiry: FindGeneralUserInquiry): FindGeneralUserResult? {
         return query
             .select(
                 Projections.constructor(

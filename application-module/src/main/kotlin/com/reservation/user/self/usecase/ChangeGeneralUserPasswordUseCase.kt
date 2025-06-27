@@ -27,7 +27,7 @@ class ChangeGeneralUserPasswordUseCase(
                 )
             } ?: run { throw NoSuchDatabaseElementException() }
 
-        return changeGeneralUserPassword.changeGeneralUserPassword(
+        return changeGeneralUserPassword.command(
             ChangeGeneralUserPasswordInquiry(
                 user.identifier ?: run { throw InvalidSituationException() },
                 user.userEncodedPassword,

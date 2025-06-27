@@ -53,7 +53,7 @@ class ChangeGeneralUserNicknameUseCase(
      */
     @Transactional
     override fun execute(command: ChangeGeneralUserNicknameCommandDto): Boolean {
-        checkGeneralUserNicknameDuplicated.isDuplicated(
+        checkGeneralUserNicknameDuplicated.query(
             CheckGeneralUserNicknameDuplicatedInquiry(command.nickname, command.role),
         ).run {
             if (this) {
@@ -69,7 +69,7 @@ class ChangeGeneralUserNicknameUseCase(
                 }
                 ?: run { throw NoSuchDatabaseElementException() }
 
-        return changeGeneralUserNickname.changeGeneralUserNickname(
+        return changeGeneralUserNickname.command(
             ChangeGeneralUserNicknameDto(
                 user.identifier ?: run { throw InvalidSituationException() },
                 user.userNickname,

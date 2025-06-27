@@ -14,7 +14,7 @@ class FindGeneralUserUseCase(
 ) : FindGeneralUserQuery {
     @Transactional(readOnly = true)
     override fun execute(id: String): FindGeneralUserQueryResult {
-        return findGeneralUser.findUserBy(FindGeneralUserInquiry(id))
+        return findGeneralUser.query(FindGeneralUserInquiry(id))
             ?.let { it.toQuery() }
             ?: throw NoSuchDatabaseElementException()
     }

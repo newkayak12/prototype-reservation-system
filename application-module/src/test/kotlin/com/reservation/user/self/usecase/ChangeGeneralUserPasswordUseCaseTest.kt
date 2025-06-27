@@ -219,7 +219,7 @@ class ChangeGeneralUserPasswordUseCaseTest {
             } returns changePasswordResult
 
             every {
-                changeGeneralUserPassword.changeGeneralUserPassword(any())
+                changeGeneralUserPassword.command(any())
             } returns true
 
             val actual = useCase.execute(command)

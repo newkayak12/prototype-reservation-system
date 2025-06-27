@@ -45,7 +45,7 @@ class FindGeneralUserPasswordUseCase(
 
     private fun updatePassword(user: User): Boolean {
         checkRequiredElement(user)
-        return updateGeneralUserTemporaryPassword.updateGeneralUserPassword(
+        return updateGeneralUserTemporaryPassword.command(
             UpdateGeneralUserPasswordInquiry(
                 user.identifier!!,
                 user.userEncodedPassword,

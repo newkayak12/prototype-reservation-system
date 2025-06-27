@@ -4,7 +4,7 @@ import com.reservation.enumeration.Role
 
 @FunctionalInterface
 interface CreateGeneralUser {
-    fun save(inquiry: CreateGeneralUserInquiry): Boolean
+    fun command(inquiry: CreateGeneralUserInquiry): Boolean
 
     data class CreateGeneralUserInquiry(
         val loginId: String,
