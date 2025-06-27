@@ -2,7 +2,7 @@ package com.reservation.config.mvc
 
 import com.reservation.exceptions.ClientException
 import com.reservation.exceptions.InvalidSituationException
-import com.reservation.exceptions.UnAuthorizedException
+import com.reservation.exceptions.UnauthorizedException
 import com.reservation.utilities.logger.loggerFactory
 import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
@@ -25,8 +25,8 @@ class RestControllerExceptionHandler : EnvironmentAware {
         }
     }
 
-    @ExceptionHandler(exception = [UnAuthorizedException::class])
-    fun unAuthorizedExceptionHandler(exception: UnAuthorizedException): ResponseEntity<String> {
+    @ExceptionHandler(exception = [UnauthorizedException::class])
+    fun unAuthorizedExceptionHandler(exception: UnauthorizedException): ResponseEntity<String> {
         return ResponseEntity("Unauthorized: ${exception.message}", HttpStatus.UNAUTHORIZED)
     }
 

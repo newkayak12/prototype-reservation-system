@@ -4,7 +4,7 @@ import com.reservation.enumeration.JWTType.ACCESS_TOKEN
 import com.reservation.enumeration.JWTType.REFRESH_TOKEN
 import com.reservation.enumeration.JWTVersion
 import com.reservation.enumeration.Role.USER
-import com.reservation.exceptions.UnAuthorizedException
+import com.reservation.exceptions.UnauthorizedException
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import com.reservation.utilities.provider.JWTProvider
 import com.reservation.utilities.provider.JWTRecord
@@ -61,7 +61,7 @@ class RefreshGeneralUserUseCaseTest {
         fun `empty refresh token`() {
             val refresh = ""
 
-            assertThrows<UnAuthorizedException> {
+            assertThrows<UnauthorizedException> {
                 useCase.refresh(refresh)
             }
         }
@@ -72,7 +72,7 @@ class RefreshGeneralUserUseCaseTest {
             val record = JWTRecord(UuidGenerator.generate(), "test", USER)
             val refresh = tokenProvider.tokenize(record, REFRESH_TOKEN) + "1"
 
-            assertThrows<UnAuthorizedException> {
+            assertThrows<UnauthorizedException> {
                 useCase.refresh(refresh)
             }
         }
@@ -83,7 +83,7 @@ class RefreshGeneralUserUseCaseTest {
             val record = JWTRecord(UuidGenerator.generate(), "test", USER)
             val refresh = tokenProvider.tokenize(record, ACCESS_TOKEN)
 
-            assertThrows<UnAuthorizedException> {
+            assertThrows<UnauthorizedException> {
                 useCase.refresh(refresh)
             }
         }
