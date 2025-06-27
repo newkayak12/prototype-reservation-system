@@ -5,12 +5,13 @@ import com.ninjasquad.springmockk.MockkBean
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
-import com.reservation.exceptions.UnAuthorizedException
+import com.reservation.exceptions.UnauthorizedException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.sign.RefreshGeneralUserController
 import com.reservation.rest.user.general.sign.RefreshTokenDefinitions
 import com.reservation.user.self.port.input.RefreshAccessTokenQuery
+import com.reservation.user.self.port.input.RefreshAccessTokenQuery.RefreshResult
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
@@ -47,7 +48,7 @@ class RefreshGeneralUserControllerTest(
 
             every {
                 refreshAccessTokenQuery.refresh(any())
-            } throws UnAuthorizedException()
+            } throws UnauthorizedException()
 
             mockMvc.perform(
                 get(GeneralUserUrl.REFRESH)
@@ -65,7 +66,11 @@ class RefreshGeneralUserControllerTest(
 
             every {
                 refreshAccessTokenQuery.refresh(any())
-            } returns CommonlyUsedArbitraries.bearerTokenArbitrary.sample()
+            } returns
+                RefreshResult(
+                    CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                    CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                )
 
             mockMvc.perform(
                 get(GeneralUserUrl.REFRESH)
