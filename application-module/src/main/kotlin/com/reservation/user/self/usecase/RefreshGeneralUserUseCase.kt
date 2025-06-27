@@ -60,7 +60,7 @@ class RefreshGeneralUserUseCase(
             SaveRefreshTokenInquiry(
                 record.id,
                 latestRefreshToken,
-                tokenProvider.duration(),
+                tokenProvider.duration,
             ),
         )
 

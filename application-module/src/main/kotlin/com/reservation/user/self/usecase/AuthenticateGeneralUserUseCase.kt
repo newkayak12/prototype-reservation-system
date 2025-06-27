@@ -108,7 +108,7 @@ class AuthenticateGeneralUserUseCase(
                 authenticated.role,
             )
 
-        val refreshDuration = tokenProvider.duration()
+        val refreshDuration = tokenProvider.duration
         val accessToken = tokenProvider.tokenize(record)
         val refreshToken = tokenProvider.tokenize(record, JWTType.REFRESH_TOKEN)
         return AuthenticateGeneralUserQueryResult(
