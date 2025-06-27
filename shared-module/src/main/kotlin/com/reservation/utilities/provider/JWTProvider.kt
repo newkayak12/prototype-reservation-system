@@ -26,9 +26,9 @@ import java.util.Date
 
 class JWTProvider(
     secret: String,
-    private val duration: Long,
     private val issuer: String,
     private val version: JWTVersion,
+    override val duration: Long,
 ) : TokenProvider<JWTRecord> {
     companion object {
         private const val PREFIX = "Bearer"
@@ -59,7 +59,7 @@ class JWTProvider(
         type: JWTType,
     ): String {
         val now = LocalDateTime.now()
-        return PREFIX +
+        return "$PREFIX " +
             Jwts.builder()
                 .id(tokenable.identity())
                 .issuer(issuer)

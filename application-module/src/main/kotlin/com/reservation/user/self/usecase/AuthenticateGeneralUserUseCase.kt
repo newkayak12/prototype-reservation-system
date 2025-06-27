@@ -14,6 +14,8 @@ import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery
 import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.AuthenticateGeneralUserQueryResult
 import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
 import com.reservation.user.self.port.output.AuthenticateGeneralUser
+import com.reservation.user.self.port.output.SaveRefreshToken
+import com.reservation.user.self.port.output.SaveRefreshToken.SaveRefreshTokenInquiry
 import com.reservation.user.self.port.output.UpdateAuthenticateResult
 import com.reservation.user.self.port.output.UpdateAuthenticateResult.UpdateAuthenticateResultDto
 import com.reservation.utilities.provider.JWTRecord
@@ -27,6 +29,7 @@ class AuthenticateGeneralUserUseCase(
     private val createUserHistoriesCommand: CreateUserAccessHistoriesCommand,
     private val updateAuthenticateResult: UpdateAuthenticateResult,
     private val tokenProvider: TokenProvider<JWTRecord>,
+    private val saveRefreshToken: SaveRefreshToken,
 ) : AuthenticateGeneralUserQuery {
     @Transactional(
         noRollbackFor = [
@@ -48,8 +51,16 @@ class AuthenticateGeneralUserUseCase(
 
         checkUserWasLockedDown(authenticated)
         checkUserPasswordMatchWasFailed(authenticated)
+        val result = tokenize(authenticated)
 
-        return tokenize(authenticated)
+        saveRefreshToken.command(
+            SaveRefreshTokenInquiry(
+                authenticated.id,
+                result.refreshToken,
+                result.refreshTokenExpiresIn,
+            ),
+        )
+        return result
     }
 
     private fun createAccessHistory(accessHistories: List<AccessHistory>) {
@@ -96,8 +107,14 @@ class AuthenticateGeneralUserUseCase(
                 authenticated.loginId(),
                 authenticated.role,
             )
+
+        val refreshDuration = tokenProvider.duration
         val accessToken = tokenProvider.tokenize(record)
         val refreshToken = tokenProvider.tokenize(record, JWTType.REFRESH_TOKEN)
-        return AuthenticateGeneralUserQueryResult(accessToken, refreshToken)
+        return AuthenticateGeneralUserQueryResult(
+            accessToken,
+            refreshToken,
+            refreshDuration,
+        )
     }
 }

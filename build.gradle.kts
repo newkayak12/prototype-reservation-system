@@ -69,7 +69,10 @@ tasks.register<Exec>("preCommitDetekt") {
 }
 
 tasks.register<Exec>("preCommitAddCommit") {
-    val stagedFiles = "git diff --cached --name-only".runCommand().lines().filter { it.isNotBlank() }
+    val stagedFiles = "git diff --cached --name-only"
+        .runCommand()
+        .lines()
+        .filter { it.isNotBlank() && File(project.rootDir, it).exists() }
     if (stagedFiles.isNotEmpty()) {
         commandLine(listOf("git", "add") + stagedFiles)
     } else {

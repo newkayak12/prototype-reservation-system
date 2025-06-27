@@ -5,6 +5,7 @@ import com.reservation.rest.user.general.response.RefreshGeneralUserResponse
 import com.reservation.user.self.port.input.RefreshAccessTokenQuery
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -16,8 +17,20 @@ class RefreshGeneralUserController(
         cookies.firstOrNull { it.name == RefreshTokenDefinitions.REFRESH_TOKEN_KEY }?.value ?: ""
 
     @GetMapping(GeneralUserUrl.REFRESH)
-    fun refresh(httpServletRequest: HttpServletRequest): RefreshGeneralUserResponse {
+    fun refresh(
+        httpServletRequest: HttpServletRequest,
+        httpServletResponse: HttpServletResponse,
+    ): RefreshGeneralUserResponse {
         val refreshToken = extractRefreshTokenFrom(httpServletRequest.cookies)
-        return RefreshGeneralUserResponse.from(refreshAccessTokenQuery.refresh(refreshToken))
+        val renewedToken = refreshAccessTokenQuery.refresh(refreshToken)
+
+        val refreshTokenCookie =
+            Cookie(RefreshTokenDefinitions.REFRESH_TOKEN_KEY, renewedToken.refreshToken)
+        refreshTokenCookie.path = RefreshTokenDefinitions.REFRESH_TOKEN_PATH
+        refreshTokenCookie.secure = RefreshTokenDefinitions.SECURE
+        refreshTokenCookie.isHttpOnly = RefreshTokenDefinitions.HTTP_ONLY
+        httpServletResponse.addCookie(refreshTokenCookie)
+
+        return RefreshGeneralUserResponse.from(renewedToken.accessToken)
     }
 }
