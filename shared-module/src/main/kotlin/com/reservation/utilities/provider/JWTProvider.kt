@@ -59,7 +59,7 @@ class JWTProvider(
         type: JWTType,
     ): String {
         val now = LocalDateTime.now()
-        return PREFIX +
+        return "$PREFIX " +
             Jwts.builder()
                 .id(tokenable.identity())
                 .issuer(issuer)
