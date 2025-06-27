@@ -10,9 +10,9 @@ class JWTProviderConfig {
     @Bean
     fun jwtProvider(jwtProperties: JWTProperties): JWTProvider =
         JWTProvider(
-            jwtProperties.secret,
-            jwtProperties.expireTime,
-            jwtProperties.issuer,
-            jwtProperties.version,
+            secret = jwtProperties.secret,
+            issuer = jwtProperties.issuer,
+            version = jwtProperties.version,
+            duration = jwtProperties.expireTime,
         )
 }
