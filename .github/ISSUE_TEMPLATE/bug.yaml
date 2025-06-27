@@ -19,7 +19,7 @@ body:
     - type: markdown
       attributes:
         value: |
-          ## 🧩 Acceptance Criteria(BDD)
+          ### 🧩 Acceptance Criteria(BDD)
           - Acceptance Criteria(BDD) :
             - Scenario: 
                 - Given : 

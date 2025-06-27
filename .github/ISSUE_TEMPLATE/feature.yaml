@@ -28,7 +28,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        ## 👤 UserStory
+        ### 👤 UserStory
         - 역할(As a) :
         - 목적(I want to) :
         - 이유(So that) :
