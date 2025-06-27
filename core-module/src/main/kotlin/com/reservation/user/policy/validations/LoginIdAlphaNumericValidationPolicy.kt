@@ -1,5 +1,8 @@
 package com.reservation.user.policy.validations
 
+/**
+ * 아이디가 영문 대소문자, 숫자로 이루어져 있는지 검사하는 정책입니다.
+ */
 class LoginIdAlphaNumericValidationPolicy : LoginIdValidationPolicy {
     companion object {
         val LOG_IN_ID_REG_EXP =

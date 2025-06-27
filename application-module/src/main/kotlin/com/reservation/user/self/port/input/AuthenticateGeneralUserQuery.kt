@@ -2,6 +2,9 @@ package com.reservation.user.self.port.input
 
 import com.reservation.user.self.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserInquiry
 
+/**
+ * 로그인을 위한 사용자를 조회합니다.
+ */
 @FunctionalInterface
 interface AuthenticateGeneralUserQuery {
     fun execute(request: GeneralUserQueryDto): AuthenticateGeneralUserQueryResult

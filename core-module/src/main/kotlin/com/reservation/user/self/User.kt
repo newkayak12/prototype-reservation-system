@@ -11,6 +11,9 @@ import com.reservation.user.common.exceptions.ResignWithoutIdException
 import com.reservation.user.policy.formats.ServiceUser
 import java.time.LocalDateTime
 
+/**
+ * 일반 사용자를 표현합니다.
+ */
 class User(
     private val id: String? = null,
     private val loginId: LoginId,

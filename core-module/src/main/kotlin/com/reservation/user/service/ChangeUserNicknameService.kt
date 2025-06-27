@@ -15,10 +15,21 @@ class ChangeUserNicknameService {
             ?.let { throw InvalidateUserElementException(it.reason) }
     }
 
+    /**
+     * 닉네임 조건을 검증합니다.
+     * [NicknameValidationPolicy]를 기반으로 작성됩니다.
+     * 1. [NicknameLengthValidationPolicy]: 닉네임 길이에 대해서 검증합니다.
+     */
     private fun validateNickname(nickname: String) {
         nicknameValidationPolicy.validatePolicies(nickname)
     }
 
+    /**
+     * @param target 대상
+     * @param nickname 변경할 닉네임
+     *
+     * 닉네임을 변경합니다.
+     */
     fun <T : UserAttributeChangeable> changePersonalAttributes(
         target: T,
         nickname: String,

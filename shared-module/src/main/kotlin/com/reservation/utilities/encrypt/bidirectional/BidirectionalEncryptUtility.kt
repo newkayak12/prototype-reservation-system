@@ -47,11 +47,17 @@ class BidirectionalEncryptUtility(
         cipher = Ciphers(encode, decode)
     }
 
+    /**
+     * PlainText를 입력 받고 암호문를 반환합니다.
+     */
     fun encrypt(plainText: String): String {
         return cipher.encode.doFinal(plainText.toByteArray(Charsets.UTF_8))
             .let { Base64.getEncoder().encodeToString(it) }
     }
 
+    /**
+     * 암호문을 입력 받고 평문을 반환합니다.
+     */
     fun decrypt(encrypted: String): String {
         return Base64.getDecoder().decode(encrypted)
             .let { cipher.decode.doFinal(it) }
