@@ -4,6 +4,8 @@ import com.reservation.enumeration.JWTType.ACCESS_TOKEN
 import com.reservation.enumeration.JWTType.REFRESH_TOKEN
 import com.reservation.enumeration.JWTVersion
 import com.reservation.enumeration.Role.USER
+import com.reservation.exceptions.AlreadyExpiredException
+import com.reservation.exceptions.InvalidTokenException
 import com.reservation.exceptions.UnauthorizedException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.user.self.port.output.FindRefreshToken
@@ -117,7 +119,7 @@ class RefreshGeneralUserUseCaseTest {
 
             every { saveRefreshToken.command(any()) } just runs
 
-            assertThrows<UnauthorizedException> {
+            assertThrows<InvalidTokenException> {
                 useCase.refresh(refresh)
             }
         }
@@ -134,7 +136,7 @@ class RefreshGeneralUserUseCaseTest {
 
             every { saveRefreshToken.command(any()) } just runs
 
-            assertThrows<UnauthorizedException> {
+            assertThrows<AlreadyExpiredException> {
                 useCase.refresh(refresh)
             }
         }
