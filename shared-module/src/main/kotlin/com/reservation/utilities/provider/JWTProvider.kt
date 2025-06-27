@@ -130,4 +130,6 @@ class JWTProvider(
             SecurityRole.valueOf(claims[ROLE] as String),
         )
     }
+
+    override fun duration(): Long = duration
 }

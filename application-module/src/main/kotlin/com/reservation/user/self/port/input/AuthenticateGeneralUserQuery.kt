@@ -21,5 +21,6 @@ interface AuthenticateGeneralUserQuery {
     data class AuthenticateGeneralUserQueryResult(
         val accessToken: String,
         val refreshToken: String,
+        val refreshTokenExpiresIn: Long,
     )
 }

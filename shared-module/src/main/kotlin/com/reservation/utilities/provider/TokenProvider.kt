@@ -17,4 +17,6 @@ interface TokenProvider<E : Tokenable> {
         token: String,
         type: JWTType = JWTType.ACCESS_TOKEN,
     ): E
+
+    fun duration(): Long
 }

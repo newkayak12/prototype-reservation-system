@@ -14,6 +14,7 @@ import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesC
 import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
 import com.reservation.user.self.port.output.AuthenticateGeneralUser
 import com.reservation.user.self.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserResult
+import com.reservation.user.self.port.output.SaveRefreshToken
 import com.reservation.user.self.port.output.UpdateAuthenticateResult
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import com.reservation.utilities.provider.JWTProvider
@@ -24,6 +25,8 @@ import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.SpyK
 import io.mockk.junit5.MockKExtension
+import io.mockk.just
+import io.mockk.runs
 import net.jqwik.api.Arbitraries
 import net.jqwik.api.arbitraries.StringArbitrary
 import org.assertj.core.api.Assertions.assertThat
@@ -43,6 +46,9 @@ class AuthenticateGeneralUserUseCaseTest {
 
     @MockK
     private lateinit var createUserHistoriesCommand: CreateUserAccessHistoriesCommand
+
+    @MockK
+    private lateinit var saveRefreshToken: SaveRefreshToken
 
     @MockK
     private lateinit var updateAuthenticateResult: UpdateAuthenticateResult
@@ -259,6 +265,7 @@ class AuthenticateGeneralUserUseCaseTest {
             createUserHistoriesCommand.execute(any())
             updateAuthenticateResult.save(any())
         } returns Unit
+        every { saveRefreshToken.command(any(), any()) } just runs
         every { tokenProvider.tokenize(any(), any()) } answers { callOriginal() }
 
         val result = useCase.execute(query)
