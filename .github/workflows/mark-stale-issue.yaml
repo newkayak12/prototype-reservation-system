@@ -2,6 +2,9 @@ name: Mark stale issues and PRs
 on:
   schedule:
     - cron: '0 0 * * *'  # 매일 자정
+permissions:
+  contents: read
+  issues: write
 
 jobs:
   stale:
