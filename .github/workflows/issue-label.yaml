@@ -17,7 +17,7 @@ jobs:
             const title = context.payload.issue.title;
             const labels = [];
             if (title.startsWith('bug:')) labels.push('bug');
-            else if (title.startsWith('feat:')) labels.push('feature');
+            else if (title.startsWith('feat:')) labels.push('feat');
             else if (title.startsWith('chore:')) labels.push('chore');
             if (labels.length) {
               await github.rest.issues.addLabels({
