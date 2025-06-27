@@ -30,7 +30,7 @@ class FindGeneralUserUseCaseTest {
         val uuid = UuidGenerator.generate()
 
         every {
-            findGeneralUser.findUserBy(any())
+            findGeneralUser.query(any())
         } returns null
 
         assertThrows<NoSuchDatabaseElementException> {
@@ -49,7 +49,7 @@ class FindGeneralUserUseCaseTest {
                 .sample()
 
         every {
-            findGeneralUser.findUserBy(any())
+            findGeneralUser.query(any())
         } returns dbResult
 
         assertEquals(uuid, useCase.execute(uuid).id)

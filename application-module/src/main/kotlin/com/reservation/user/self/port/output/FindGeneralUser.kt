@@ -8,7 +8,7 @@ import com.reservation.user.self.port.input.FindGeneralUserQuery.FindGeneralUser
 
 @FunctionalInterface
 interface FindGeneralUser {
-    fun findUserBy(inquiry: FindGeneralUserInquiry): FindGeneralUserResult?
+    fun query(inquiry: FindGeneralUserInquiry): FindGeneralUserResult?
 
     data class FindGeneralUserInquiry(
         val id: String,

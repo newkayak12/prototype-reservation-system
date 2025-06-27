@@ -104,7 +104,7 @@ class AuthenticateGeneralUserUseCaseTest {
         every { authenticateSignInService.signIn(any(), any()) } answers { callOriginal() }
         every {
             createUserHistoriesCommand.execute(any())
-            updateAuthenticateResult.save(any())
+            updateAuthenticateResult.command(any())
         } returns Unit
 
         assertThatThrownBy {
@@ -154,7 +154,7 @@ class AuthenticateGeneralUserUseCaseTest {
         every { authenticateSignInService.signIn(any(), any()) } answers { callOriginal() }
         every {
             createUserHistoriesCommand.execute(any())
-            updateAuthenticateResult.save(any())
+            updateAuthenticateResult.command(any())
         } returns Unit
 
         assertThatThrownBy {
@@ -204,7 +204,7 @@ class AuthenticateGeneralUserUseCaseTest {
         every { authenticateSignInService.signIn(any(), any()) } answers { callOriginal() }
         every {
             createUserHistoriesCommand.execute(any())
-            updateAuthenticateResult.save(any())
+            updateAuthenticateResult.command(any())
         } returns Unit
 
         assertThatThrownBy {
@@ -257,7 +257,7 @@ class AuthenticateGeneralUserUseCaseTest {
         every { authenticateSignInService.signIn(any(), any()) } answers { callOriginal() }
         every {
             createUserHistoriesCommand.execute(any())
-            updateAuthenticateResult.save(any())
+            updateAuthenticateResult.command(any())
         } returns Unit
         every { tokenProvider.tokenize(any(), any()) } answers { callOriginal() }
 

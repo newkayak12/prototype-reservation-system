@@ -12,7 +12,7 @@ class ResignTargetUserAdapter(
     val jpaRepository: WithdrawalJpaRepository,
     val userJpaRepository: UserJpaRepository,
 ) : ResignTargetUser {
-    override fun resign(inquiry: ResignInquiry): Boolean {
+    override fun command(inquiry: ResignInquiry): Boolean {
         val withdrawal =
             WithdrawalUserEntity(
                 inquiry.userLoginId,

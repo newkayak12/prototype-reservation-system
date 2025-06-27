@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 @FunctionalInterface
 interface ResignTargetUser {
-    fun resign(inquiry: ResignInquiry): Boolean
+    fun command(inquiry: ResignInquiry): Boolean
 
     data class ResignInquiry(
         val id: String,

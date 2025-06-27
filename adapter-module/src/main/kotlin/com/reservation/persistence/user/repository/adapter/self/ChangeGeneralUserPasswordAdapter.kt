@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 class ChangeGeneralUserPasswordAdapter(
     val jpaRepository: UserJpaRepository,
 ) : ChangeGeneralUserPassword {
-    override fun changeGeneralUserPassword(inquiry: ChangeGeneralUserPasswordInquiry): Boolean {
+    override fun command(inquiry: ChangeGeneralUserPasswordInquiry): Boolean {
         val userEntity = jpaRepository.findById(inquiry.id)
         var result = false
 

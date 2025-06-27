@@ -2,7 +2,7 @@ package com.reservation.user.self.port.output
 
 @FunctionalInterface
 interface ChangeGeneralUserNickname {
-    fun changeGeneralUserNickname(inquiry: ChangeGeneralUserNicknameDto): Boolean
+    fun command(inquiry: ChangeGeneralUserNicknameDto): Boolean
 
     data class ChangeGeneralUserNicknameDto(
         val id: String,

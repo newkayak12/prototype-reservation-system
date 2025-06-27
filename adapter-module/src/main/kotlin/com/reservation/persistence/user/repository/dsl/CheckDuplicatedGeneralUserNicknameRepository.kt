@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 class CheckDuplicatedGeneralUserNicknameRepository(
     private val query: JPAQueryFactory,
 ) : CheckGeneralUserNicknameDuplicated {
-    override fun isDuplicated(inquiry: CheckGeneralUserNicknameDuplicatedInquiry): Boolean {
+    override fun query(inquiry: CheckGeneralUserNicknameDuplicatedInquiry): Boolean {
         return query.select(
             userEntity.id,
         )

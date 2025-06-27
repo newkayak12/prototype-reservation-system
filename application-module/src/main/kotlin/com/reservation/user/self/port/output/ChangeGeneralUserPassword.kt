@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 
 @FunctionalInterface
 interface ChangeGeneralUserPassword {
-    fun changeGeneralUserPassword(inquiry: ChangeGeneralUserPasswordInquiry): Boolean
+    fun command(inquiry: ChangeGeneralUserPasswordInquiry): Boolean
 
     data class ChangeGeneralUserPasswordInquiry(
         val id: String,

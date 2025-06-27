@@ -12,9 +12,7 @@ import org.springframework.stereotype.Component
 class FindGeneralUserIdsRepository(
     private val query: JPAQueryFactory,
 ) : FindGeneralUserIds {
-    override fun findGeneralUserId(
-        inquiry: FindGeneralUserIdInquiry,
-    ): List<FindGeneralUserIdResult> =
+    override fun query(inquiry: FindGeneralUserIdInquiry): List<FindGeneralUserIdResult> =
         query.select(
             Projections.constructor(
                 FindGeneralUserIdResult::class.java,

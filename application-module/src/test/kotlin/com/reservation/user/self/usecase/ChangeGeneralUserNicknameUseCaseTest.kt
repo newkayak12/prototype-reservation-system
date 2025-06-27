@@ -65,7 +65,7 @@ class ChangeGeneralUserNicknameUseCaseTest {
             val command = pureMonkey.giveMeOne<ChangeGeneralUserNicknameCommandDto>()
 
             every {
-                checkGeneralUserNicknameDuplicated.isDuplicated(any())
+                checkGeneralUserNicknameDuplicated.query(any())
             } returns true
 
             assertThrows<AlreadyPersistedException> {
@@ -81,7 +81,7 @@ class ChangeGeneralUserNicknameUseCaseTest {
             val command = pureMonkey.giveMeOne<ChangeGeneralUserNicknameCommandDto>()
 
             every {
-                checkGeneralUserNicknameDuplicated.isDuplicated(any())
+                checkGeneralUserNicknameDuplicated.query(any())
             } returns false
 
             every {
@@ -121,7 +121,7 @@ class ChangeGeneralUserNicknameUseCaseTest {
                     nickname = pureMonkey.giveMeOne(),
                 )
             every {
-                checkGeneralUserNicknameDuplicated.isDuplicated(any())
+                checkGeneralUserNicknameDuplicated.query(any())
             } returns false
 
             every {
@@ -175,7 +175,7 @@ class ChangeGeneralUserNicknameUseCaseTest {
             val expected = true
 
             every {
-                checkGeneralUserNicknameDuplicated.isDuplicated(any())
+                checkGeneralUserNicknameDuplicated.query(any())
             } returns false
 
             every {
@@ -191,7 +191,7 @@ class ChangeGeneralUserNicknameUseCaseTest {
             } returns validUser
 
             every {
-                changeGeneralUserNickname.changeGeneralUserNickname(any())
+                changeGeneralUserNickname.command(any())
             } returns true
 
             assertEquals(expected, useCase.execute(command))

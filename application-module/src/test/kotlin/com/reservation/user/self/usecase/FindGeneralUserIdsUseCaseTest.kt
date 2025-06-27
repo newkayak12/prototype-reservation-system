@@ -30,7 +30,7 @@ class FindGeneralUserIdsUseCaseTest {
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
         val query = pureMonkey.giveMeOne<FindGeneralUserIdQueryDto>()
 
-        every { findGeneralUserIds.findGeneralUserId(any()) } returns emptyList()
+        every { findGeneralUserIds.query(any()) } returns emptyList()
 
         val actual = useCase.execute(query)
 
@@ -46,7 +46,7 @@ class FindGeneralUserIdsUseCaseTest {
         val query = pureMonkey.giveMeOne<FindGeneralUserIdQueryDto>()
 
         every {
-            findGeneralUserIds.findGeneralUserId(any())
+            findGeneralUserIds.query(any())
         } returns
             pureMonkey.giveMeBuilder<FindGeneralUserIdResult>()
                 .set("userId", Arbitraries.strings().ofMinLength(8))

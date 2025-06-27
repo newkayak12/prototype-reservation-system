@@ -46,7 +46,7 @@ class CreateGeneralUserUseCaseTest {
             )
 
         every {
-            checkGeneralUserLoginIdDuplicated.isDuplicated(any<CheckGeneralUserDuplicatedInquiry>())
+            checkGeneralUserLoginIdDuplicated.query(any<CheckGeneralUserDuplicatedInquiry>())
         } returns true
 
         assertThrows<AlreadyPersistedException> {
@@ -68,11 +68,11 @@ class CreateGeneralUserUseCaseTest {
         val expected = true
 
         every {
-            checkGeneralUserLoginIdDuplicated.isDuplicated(any<CheckGeneralUserDuplicatedInquiry>())
+            checkGeneralUserLoginIdDuplicated.query(any<CheckGeneralUserDuplicatedInquiry>())
         } returns false
 
         every {
-            createGeneralUser.save(any<CreateGeneralUserInquiry>())
+            createGeneralUser.command(any<CreateGeneralUserInquiry>())
         } returns true
 
         val result = useCase.execute(command)

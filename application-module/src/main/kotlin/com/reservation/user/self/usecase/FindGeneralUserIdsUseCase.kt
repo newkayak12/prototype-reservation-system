@@ -14,7 +14,7 @@ class FindGeneralUserIdsUseCase(
 ) : FindGeneralUserIdsQuery {
     @Transactional(readOnly = true)
     override fun execute(query: FindGeneralUserIdQueryDto): List<FindGeneralUserIdQueryResult> {
-        return findGeneralUserIds.findGeneralUserId(query.toInquiry())
+        return findGeneralUserIds.query(query.toInquiry())
             .map {
                 FindGeneralUserIdQueryResult(MaskingUtility.manipulate(it.userId))
             }

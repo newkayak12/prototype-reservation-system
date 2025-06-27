@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 class UpdateUserAdapter(
     private val userJpaRepository: UserJpaRepository,
 ) : UpdateAuthenticateResult {
-    override fun save(authenticateResult: UpdateAuthenticateResultDto) {
+    override fun command(authenticateResult: UpdateAuthenticateResultDto) {
         val userEntity: UserEntity =
             userJpaRepository.findById(authenticateResult.id)
                 .orElseThrow {

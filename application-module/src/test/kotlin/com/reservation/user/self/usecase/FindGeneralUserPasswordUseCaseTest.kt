@@ -217,7 +217,7 @@ class FindGeneralUserPasswordUseCaseTest {
             } returns changePasswordResult
 
             every {
-                updateGeneralUserTemporaryPassword.updateGeneralUserPassword(
+                updateGeneralUserTemporaryPassword.command(
                     any(),
                 )
             } returns false
@@ -265,7 +265,7 @@ class FindGeneralUserPasswordUseCaseTest {
             } returns changePasswordResult
 
             every {
-                updateGeneralUserTemporaryPassword.updateGeneralUserPassword(
+                updateGeneralUserTemporaryPassword.command(
                     any(),
                 )
             } returns true

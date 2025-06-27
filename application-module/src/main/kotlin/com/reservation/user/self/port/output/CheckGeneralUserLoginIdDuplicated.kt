@@ -4,7 +4,7 @@ import com.reservation.enumeration.Role
 
 @FunctionalInterface
 interface CheckGeneralUserLoginIdDuplicated {
-    fun isDuplicated(inquiry: CheckGeneralUserDuplicatedInquiry): Boolean
+    fun query(inquiry: CheckGeneralUserDuplicatedInquiry): Boolean
 
     data class CheckGeneralUserDuplicatedInquiry(
         val loginId: String,
