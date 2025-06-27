@@ -3,6 +3,8 @@ package com.reservation.user.self.usecase
 import com.reservation.config.annotations.UseCase
 import com.reservation.enumeration.JWTType.ACCESS_TOKEN
 import com.reservation.enumeration.JWTType.REFRESH_TOKEN
+import com.reservation.exceptions.AlreadyExpiredException
+import com.reservation.exceptions.InvalidTokenException
 import com.reservation.exceptions.UnauthorizedException
 import com.reservation.user.self.port.input.RefreshAccessTokenQuery
 import com.reservation.user.self.port.input.RefreshAccessTokenQuery.RefreshResult
@@ -34,10 +36,10 @@ class RefreshGeneralUserUseCase(
     ) {
         val persistedToken =
             findRefreshToken.query(FindRefreshTokenInquiry(uuid))
-                ?: throw UnauthorizedException()
+                ?: throw AlreadyExpiredException()
 
         if (persistedToken != refreshToken) {
-            throw UnauthorizedException()
+            throw InvalidTokenException()
         }
     }
 
