@@ -5,12 +5,19 @@ import com.reservation.enumeration.JWTType.REFRESH_TOKEN
 import com.reservation.enumeration.JWTVersion
 import com.reservation.enumeration.Role.USER
 import com.reservation.exceptions.UnauthorizedException
+import com.reservation.fixture.CommonlyUsedArbitraries
+import com.reservation.user.self.port.output.FindRefreshToken
+import com.reservation.user.self.port.output.SaveRefreshToken
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import com.reservation.utilities.provider.JWTProvider
 import com.reservation.utilities.provider.JWTRecord
+import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
+import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.SpyK
 import io.mockk.junit5.MockKExtension
+import io.mockk.just
+import io.mockk.runs
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -34,6 +41,12 @@ class RefreshGeneralUserUseCaseTest {
             version = version,
         )
 
+    @MockK
+    private lateinit var findRefreshToken: FindRefreshToken
+
+    @MockK
+    private lateinit var saveRefreshToken: SaveRefreshToken
+
     @InjectMockKs
     private lateinit var useCase: RefreshGeneralUserUseCase
 
@@ -46,10 +59,14 @@ class RefreshGeneralUserUseCaseTest {
             val record = JWTRecord(UuidGenerator.generate(), "test", USER)
             val refresh = tokenProvider.tokenize(record, REFRESH_TOKEN)
 
-            val accessToken = useCase.refresh(refresh)
+            every { findRefreshToken.query(any()) } returns refresh
+            every { saveRefreshToken.command(any()) } just runs
 
-            assertThat(accessToken).isNotEmpty()
-            assertThat(tokenProvider.validate(accessToken, ACCESS_TOKEN)).isTrue()
+            val tokenSets = useCase.refresh(refresh)
+
+            assertThat(tokenSets).isNotNull()
+            assertThat(tokenProvider.validate(tokenSets.accessToken, ACCESS_TOKEN)).isTrue()
+            assertThat(tokenProvider.validate(tokenSets.refreshToken, REFRESH_TOKEN)).isTrue()
         }
     }
 
@@ -82,6 +99,40 @@ class RefreshGeneralUserUseCaseTest {
         fun `invalid refresh token - not refresh`() {
             val record = JWTRecord(UuidGenerator.generate(), "test", USER)
             val refresh = tokenProvider.tokenize(record, ACCESS_TOKEN)
+
+            assertThrows<UnauthorizedException> {
+                useCase.refresh(refresh)
+            }
+        }
+
+        @DisplayName("잘못 캐싱된 refresh token. - refresh token, redis의 refresh token이 달라서 실패한다.")
+        @Test
+        fun `redis refresh token - not same`() {
+            val record = JWTRecord(UuidGenerator.generate(), "test", USER)
+            val refresh = tokenProvider.tokenize(record, REFRESH_TOKEN)
+
+            every {
+                findRefreshToken.query(any())
+            } returns CommonlyUsedArbitraries.bearerTokenArbitrary.sample()
+
+            every { saveRefreshToken.command(any()) } just runs
+
+            assertThrows<UnauthorizedException> {
+                useCase.refresh(refresh)
+            }
+        }
+
+        @DisplayName("캐싱되지 않은 refresh token. - redis의 결과가 존재하지 않는다.")
+        @Test
+        fun `redis refresh token - redis is empty`() {
+            val record = JWTRecord(UuidGenerator.generate(), "test", USER)
+            val refresh = tokenProvider.tokenize(record, REFRESH_TOKEN)
+
+            every {
+                findRefreshToken.query(any())
+            } returns null
+
+            every { saveRefreshToken.command(any()) } just runs
 
             assertThrows<UnauthorizedException> {
                 useCase.refresh(refresh)
