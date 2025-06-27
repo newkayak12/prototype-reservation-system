@@ -8,6 +8,9 @@ object PasswordGenerator {
     private val special = listOf('!', '@', '#', '$', '%', '^', '&', '*', '(', ')')
     private val all = lowerCase + upperCase + special + digits
 
+    /**
+     * 영문 대문자, 소문자, 숫자, 특수문자를 포함한 18자의 임의의 비밀번호를 생성합니다.
+     */
     fun createDefaultPassword(): String {
         val required =
             listOf(

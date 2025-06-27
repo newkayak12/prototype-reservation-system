@@ -1,5 +1,8 @@
 package com.reservation.user.policy.validations
 
+/**
+ * 휴대폰 번호에 대한 정책을 표현합니다.
+ */
 class MobilePhoneFormatValidationPolicy : MobilePhoneValidationPolicy {
     companion object {
         val MOBILE_FORMAT_REG_EXP =

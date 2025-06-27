@@ -1,5 +1,8 @@
 package com.reservation.user.policy.validations
 
+/**
+ * 전형적인 이메일 형식에 대한 검사 정책을 표현합니다.
+ */
 class EmailFormatValidationPolicy : EmailValidationPolicy {
     companion object {
         val EMAIL_FORMAT_REG_EXP =

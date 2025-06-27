@@ -1,5 +1,8 @@
 package com.reservation.user.policy.validations
 
+/**
+ * 비밀번호 길이에 대한 정책을 표현합니다. 8 ~ 18글자 입니다.
+ */
 class PasswordLengthValidationPolicy : PasswordValidationPolicy {
     companion object {
         const val MINIMUM_PASSWORD_LENGTH = 8

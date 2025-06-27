@@ -7,14 +7,9 @@ import com.reservation.exceptions.AlreadyExpiredException
 import com.reservation.exceptions.InvalidTokenException
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.ExpiredJwtException
-import io.jsonwebtoken.IncorrectClaimException
 import io.jsonwebtoken.Jws
 import io.jsonwebtoken.JwtParser
 import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.MalformedJwtException
-import io.jsonwebtoken.MissingClaimException
-import io.jsonwebtoken.PrematureJwtException
-import io.jsonwebtoken.UnsupportedJwtException
 import io.jsonwebtoken.security.Keys
 import io.jsonwebtoken.security.SecurityException
 import javax.crypto.SecretKey
@@ -106,16 +101,9 @@ class JWTProvider(
         ) {
             when (e) {
                 is ExpiredJwtException -> throw AlreadyExpiredException()
-                is PrematureJwtException,
-                is MalformedJwtException,
-                is UnsupportedJwtException,
-                is MissingClaimException,
-                is IncorrectClaimException,
-                -> throw InvalidTokenException()
+                else -> throw InvalidTokenException()
             }
         }
-
-        return false
     }
 
     override fun decrypt(
