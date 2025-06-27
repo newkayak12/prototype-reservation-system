@@ -265,7 +265,7 @@ class AuthenticateGeneralUserUseCaseTest {
             createUserHistoriesCommand.execute(any())
             updateAuthenticateResult.save(any())
         } returns Unit
-        every { saveRefreshToken.command(any(), any()) } just runs
+        every { saveRefreshToken.command(any()) } just runs
         every { tokenProvider.tokenize(any(), any()) } answers { callOriginal() }
 
         val result = useCase.execute(query)

@@ -15,6 +15,7 @@ import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.Authent
 import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
 import com.reservation.user.self.port.output.AuthenticateGeneralUser
 import com.reservation.user.self.port.output.SaveRefreshToken
+import com.reservation.user.self.port.output.SaveRefreshToken.SaveRefreshTokenInquiry
 import com.reservation.user.self.port.output.UpdateAuthenticateResult
 import com.reservation.user.self.port.output.UpdateAuthenticateResult.UpdateAuthenticateResultDto
 import com.reservation.utilities.provider.JWTRecord
@@ -52,7 +53,13 @@ class AuthenticateGeneralUserUseCase(
         checkUserPasswordMatchWasFailed(authenticated)
         val result = tokenize(authenticated)
 
-        saveRefreshToken.command(result.refreshToken, result.refreshTokenExpiresIn)
+        saveRefreshToken.command(
+            SaveRefreshTokenInquiry(
+                authenticated.id,
+                result.refreshToken,
+                result.refreshTokenExpiresIn,
+            ),
+        )
         return result
     }
 
