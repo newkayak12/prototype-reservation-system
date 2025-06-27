@@ -16,6 +16,15 @@ body:
           placeholder: 최대한 세분화 해서 적어주세요!
       validations:
           required: true
+    - type: markdown
+      attributes:
+        value: |
+          ## 🧩 Acceptance Criteria(BDD)
+          - Acceptance Criteria(BDD) :
+            - Scenario: 
+                - Given : 
+                - When : 
+                - Then :
     - type: textarea
       attributes:
           label: 🙋🏻 참고 자료
