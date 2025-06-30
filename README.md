@@ -12,8 +12,9 @@
 
 ## 3. [프로젝트 목표](/.github/PROJECT.md)
 ## 4. [코드 퀄리티를 위한 도구 도입](.github/CODE_STYLE.md)
-## 5. 프로젝트 진행을 위한 방법 
-
+## 5. [테스트 전략 수립](.github/teststrategy/TestStrategy.md)
+## 6. [기술적인 고민](.github/technical/index.md)
+## 7. [비개발적인 부분에 대한 고민](.github/non-technical/index.md)
 
 ---
 
