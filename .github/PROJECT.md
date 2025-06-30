@@ -11,6 +11,47 @@
 - `shared-module`: 공통 유틸 및 설정 -> 이것 저것 담는 모듈이 되지 않도록 경계한다.
 - `test-module`: 테스트에서 공통으로 사용하는 유틸리티를 모아둔다.
 
+```mermaid
+graph LR
+    
+    subgraph adapter-module
+        Controller
+        Security
+        Persistent
+        JpaEntity
+    end
+    subgraph application-module
+        InputPort
+        OutputPort
+        UseCase
+    end
+    subgraph core-module
+        DomainEntity
+        DomainService
+    end
+    subgraph shared-module
+        Enumerations
+        AbstractExceptions
+        Utilities
+    end
+
+    Controller --use--> InputPort
+    InputPort --implemented--> UseCase
+    UseCase --use--> DomainService
+    DomainService --use--> DomainEntity
+    UseCase --use--> OutputPort
+    Persistent -.-> OutputPort
+    UseCase --use--> Utilities
+    DomainService --use--> Utilities
+    JpaEntity --> Enumerations
+    DomainEntity --> Enumerations
+    Persistent --contain-->JpaEntity
+    AbstractExceptions --extended-->DomainService
+    AbstractExceptions --extended-->UseCase
+```
+
+
+
 ## 🧪 품질 정책
 
 - pre-commit hook으로  `spotlessApply` 적용
