@@ -1,4 +1,4 @@
-package com.reservation.redis.token.user.repository.template
+package com.reservation.redis.token.user.template
 
 import com.reservation.enumeration.Role
 import com.reservation.redis.RedisKey

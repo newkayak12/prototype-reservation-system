@@ -3,6 +3,8 @@ package com.reservation.user.general.sign
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.ninjasquad.springmockk.MockkBean
+import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery
+import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery.AuthenticateGeneralUserQueryResult
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
@@ -10,8 +12,6 @@ import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.request.GeneralUserLoginRequest
 import com.reservation.rest.user.general.sign.GeneralUserSignInController
-import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery
-import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.AuthenticateGeneralUserQueryResult
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.data.forAll
 import io.kotest.data.row

@@ -1,4 +1,4 @@
-package com.reservation.user.self.port.output
+package com.reservation.authenticate.port.output
 
 import com.reservation.authenticate.Authenticate
 import com.reservation.enumeration.Role
@@ -8,18 +8,21 @@ import com.reservation.shared.user.LoginId
 import com.reservation.shared.user.Password
 import java.time.LocalDateTime
 
+/**
+ * loginId, password, Role.RESTAURANT_OWNER로 쿼리하여 결과를 가지고 옵니다.ㅁ
+ */
 @FunctionalInterface
-interface AuthenticateGeneralUser {
-    fun query(request: AuthenticateGeneralUserInquiry): AuthenticateGeneralUserResult?
+interface AuthenticateSellerUser {
+    fun query(request: AuthenticateSellerUserInquiry): AuthenticateSellerUserResult?
 
-    data class AuthenticateGeneralUserInquiry(
+    data class AuthenticateSellerUserInquiry(
         val loginId: String,
         val password: String,
     ) {
-        val role = Role.USER
+        val role = Role.RESTAURANT_OWNER
     }
 
-    data class AuthenticateGeneralUserResult(
+    data class AuthenticateSellerUserResult(
         private val id: String,
         private val loginId: String,
         private val password: String,

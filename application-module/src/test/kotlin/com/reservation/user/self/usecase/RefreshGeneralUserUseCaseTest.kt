@@ -1,5 +1,6 @@
 package com.reservation.user.self.usecase
 
+import com.reservation.authenticate.port.output.SaveGeneralUserRefreshToken
 import com.reservation.enumeration.JWTType.ACCESS_TOKEN
 import com.reservation.enumeration.JWTType.REFRESH_TOKEN
 import com.reservation.enumeration.JWTVersion
@@ -9,7 +10,6 @@ import com.reservation.exceptions.InvalidTokenException
 import com.reservation.exceptions.UnauthorizedException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.user.self.port.output.FindGeneralUserRefreshToken
-import com.reservation.user.self.port.output.SaveGeneralUserRefreshToken
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import com.reservation.utilities.provider.JWTProvider
 import com.reservation.utilities.provider.JWTRecord

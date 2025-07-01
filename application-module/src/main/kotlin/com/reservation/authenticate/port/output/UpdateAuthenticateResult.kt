@@ -1,13 +1,13 @@
-package com.reservation.seller.self.port.output
+package com.reservation.authenticate.port.output
 
 import com.reservation.enumeration.UserStatus
 import java.time.LocalDateTime
 
 @FunctionalInterface
-interface UpdateSellerUserAuthenticateResult {
-    fun command(authenticateResult: UpdateSellerUserAuthenticateResultDto)
+interface UpdateAuthenticateResult {
+    fun command(authenticateResult: UpdateAuthenticateResultDto)
 
-    data class UpdateSellerUserAuthenticateResultDto(
+    data class UpdateAuthenticateResultDto(
         val id: String,
         val failCount: Int,
         var lockedDateTime: LocalDateTime?,

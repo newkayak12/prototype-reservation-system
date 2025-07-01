@@ -1,4 +1,4 @@
-package com.reservation.seller.self.port.output
+package com.reservation.authenticate.port.output
 
 interface SaveSellerUserRefreshToken {
     fun command(inquiry: SaveSellerUserRefreshTokenInquiry)

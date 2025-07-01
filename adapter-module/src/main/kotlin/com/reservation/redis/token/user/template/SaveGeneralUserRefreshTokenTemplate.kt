@@ -1,15 +1,15 @@
-package com.reservation.redis.token.user.repository.template
+package com.reservation.redis.token.user.template
 
+import com.reservation.authenticate.port.output.SaveGeneralUserRefreshToken
+import com.reservation.authenticate.port.output.SaveGeneralUserRefreshToken.SaveRefreshTokenInquiry
 import com.reservation.enumeration.Role
 import com.reservation.redis.RedisKey
-import com.reservation.user.self.port.output.SaveGeneralUserRefreshToken
-import com.reservation.user.self.port.output.SaveGeneralUserRefreshToken.SaveRefreshTokenInquiry
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Component
 import java.time.Duration
 
 @Component
-class SaveGeneralUserRefreshTokenAdapter(
+class SaveGeneralUserRefreshTokenTemplate(
     val redisTemplate: RedisTemplate<String, String>,
 ) : SaveGeneralUserRefreshToken {
     override fun command(inquiry: SaveRefreshTokenInquiry) {

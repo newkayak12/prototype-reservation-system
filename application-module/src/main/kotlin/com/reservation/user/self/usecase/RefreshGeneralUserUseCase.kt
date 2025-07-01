@@ -1,5 +1,7 @@
 package com.reservation.user.self.usecase
 
+import com.reservation.authenticate.port.output.SaveGeneralUserRefreshToken
+import com.reservation.authenticate.port.output.SaveGeneralUserRefreshToken.SaveRefreshTokenInquiry
 import com.reservation.config.annotations.UseCase
 import com.reservation.enumeration.JWTType.ACCESS_TOKEN
 import com.reservation.enumeration.JWTType.REFRESH_TOKEN
@@ -10,8 +12,6 @@ import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenQuery
 import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenQuery.RefreshResult
 import com.reservation.user.self.port.output.FindGeneralUserRefreshToken
 import com.reservation.user.self.port.output.FindGeneralUserRefreshToken.FindRefreshTokenInquiry
-import com.reservation.user.self.port.output.SaveGeneralUserRefreshToken
-import com.reservation.user.self.port.output.SaveGeneralUserRefreshToken.SaveRefreshTokenInquiry
 import com.reservation.utilities.provider.JWTRecord
 import com.reservation.utilities.provider.TokenProvider
 

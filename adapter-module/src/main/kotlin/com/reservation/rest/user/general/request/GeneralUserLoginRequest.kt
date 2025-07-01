@@ -1,6 +1,6 @@
 package com.reservation.rest.user.general.request
 
-import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
+import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
 import jakarta.validation.constraints.NotBlank
 
 data class GeneralUserLoginRequest(

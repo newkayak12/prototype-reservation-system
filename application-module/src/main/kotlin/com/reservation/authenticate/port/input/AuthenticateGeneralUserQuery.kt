@@ -1,6 +1,6 @@
-package com.reservation.user.self.port.input
+package com.reservation.authenticate.port.input
 
-import com.reservation.user.self.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserInquiry
+import com.reservation.authenticate.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserInquiry
 
 /**
  * 로그인을 위한 사용자를 조회합니다.

@@ -1,7 +1,12 @@
-package com.reservation.seller.self.useacase
+package com.reservation.authenticate.usecase
 
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
+import com.reservation.authenticate.port.input.AuthenticateSellerUserQuery.SellerUserQueryDto
+import com.reservation.authenticate.port.output.AuthenticateSellerUser
+import com.reservation.authenticate.port.output.AuthenticateSellerUser.AuthenticateSellerUserResult
+import com.reservation.authenticate.port.output.SaveSellerUserRefreshToken
+import com.reservation.authenticate.port.output.UpdateAuthenticateResult
 import com.reservation.authenticate.service.AuthenticateSignInService
 import com.reservation.common.exceptions.AccessFailureCountHasExceedException
 import com.reservation.common.exceptions.NoSuchPersistedElementException
@@ -10,13 +15,8 @@ import com.reservation.enumeration.JWTVersion.V1
 import com.reservation.enumeration.UserStatus
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.seller.self.port.input.AuthenticateSellerUserQuery.SellerUserQueryDto
-import com.reservation.seller.self.port.output.AuthenticateSellerUser
-import com.reservation.seller.self.port.output.AuthenticateSellerUser.AuthenticateSellerUserResult
-import com.reservation.seller.self.port.output.CreateSellerUserAccessHistoriesCommand
-import com.reservation.seller.self.port.output.SaveSellerUserRefreshToken
-import com.reservation.seller.self.port.output.UpdateSellerUserAuthenticateResult
 import com.reservation.seller.self.usecase.AuthenticateSellerUserUseCase
+import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import com.reservation.utilities.provider.JWTProvider
 import com.reservation.utilities.provider.JWTRecord
@@ -47,11 +47,10 @@ class AuthenticateSellerUserUseCaseTest {
     private lateinit var authenticateSellerUser: AuthenticateSellerUser
 
     @MockK
-    private lateinit var createSellerUserAccessHistoriesCommand:
-        CreateSellerUserAccessHistoriesCommand
+    private lateinit var createSellerUserAccessHistoriesCommand: CreateUserAccessHistoriesCommand
 
     @MockK
-    private lateinit var updateSellerUserAuthenticateResult: UpdateSellerUserAuthenticateResult
+    private lateinit var updateSellerUserAuthenticateResult: UpdateAuthenticateResult
 
     @SpyK
     private var tokenProvider: TokenProvider<JWTRecord> =

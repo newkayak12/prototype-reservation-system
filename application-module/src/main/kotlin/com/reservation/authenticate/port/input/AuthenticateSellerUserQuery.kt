@@ -1,6 +1,6 @@
-package com.reservation.seller.self.port.input
+package com.reservation.authenticate.port.input
 
-import com.reservation.seller.self.port.output.AuthenticateSellerUser.AuthenticateSellerUserInquiry
+import com.reservation.authenticate.port.output.AuthenticateSellerUser.AuthenticateSellerUserInquiry
 
 /**
  * 아이디, 비밀번호로 Seller에 대한
