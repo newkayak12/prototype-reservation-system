@@ -7,8 +7,8 @@ import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
 import com.reservation.exceptions.UnauthorizedException
 import com.reservation.fixture.CommonlyUsedArbitraries
+import com.reservation.rest.user.RefreshTokenDefinitions
 import com.reservation.rest.user.general.GeneralUserUrl
-import com.reservation.rest.user.general.RefreshTokenDefinitions
 import com.reservation.rest.user.general.sign.RefreshGeneralUserController
 import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenQuery
 import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenQuery.RefreshResult

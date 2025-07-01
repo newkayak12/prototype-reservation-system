@@ -1,10 +1,10 @@
-package com.reservation.user.general.sign
+package com.reservation.user.seller.sign
 
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
 import com.reservation.rest.user.RefreshTokenDefinitions
-import com.reservation.rest.user.general.GeneralUserUrl
-import com.reservation.rest.user.general.sign.GeneralUserSignOutController
+import com.reservation.rest.user.seller.SellerUserUrl
+import com.reservation.rest.user.seller.sign.SellerUserSignOutController
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
 import jakarta.servlet.http.Cookie
@@ -27,9 +27,9 @@ import java.util.Base64
 @AutoConfigureRestDocs
 @ActiveProfiles(value = ["test"])
 @Import(value = [TestSecurity::class])
-@WebMvcTest(GeneralUserSignOutController::class)
+@WebMvcTest(SellerUserSignOutController::class)
 @ExtendWith(RestDocumentationExtension::class)
-class GeneralUserSignOutControllerTest(
+class SellerUserSignOutControllerTest(
     private val mockMvc: MockMvc,
 ) : FunSpec() {
     override fun extensions() = listOf(SpringExtension)
@@ -58,7 +58,7 @@ class GeneralUserSignOutControllerTest(
 
         test("로그아웃을 시도함에 따라 refresh 토큰이 제거된다.") {
             mockMvc.perform(
-                patch(GeneralUserUrl.USER_SIGN_OUT)
+                patch(SellerUserUrl.USER_SIGN_OUT)
                     .header(HttpHeaders.AUTHORIZATION, accessToken)
                     .cookie(refreshCookie),
             )

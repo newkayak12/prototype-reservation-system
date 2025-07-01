@@ -1,8 +1,8 @@
 package com.reservation.rest.user.general.sign
 
 import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery
+import com.reservation.rest.user.RefreshTokenDefinitions
 import com.reservation.rest.user.general.GeneralUserUrl
-import com.reservation.rest.user.general.RefreshTokenDefinitions
 import com.reservation.rest.user.general.request.GeneralUserLoginRequest
 import com.reservation.rest.user.general.response.LoginGeneralUserResponse
 import jakarta.servlet.http.Cookie
