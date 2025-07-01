@@ -21,7 +21,7 @@ body:
         - Story
         - Task
         - Sub-task
-      default: 0
+      default: 2
   - type: textarea
     attributes:
       label: 📄 설명
@@ -29,6 +29,25 @@ body:
       placeholder: 자세히 적을수록 좋습니다!
     validations:
       required: true
+  - type: textarea
+    attributes:
+      label: ✅ 작업할 내용
+      description: 할 일을 체크박스 형태로 작성해주세요.
+      placeholder: 최대한 세분화 해서 적어주세요!
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        ### 👤 UserStory
+        - 역할(As a) :
+        - 목적(I want to) :
+        - 이유(So that) :
+        - Acceptance Criteria(BDD) :
+          - Scenario: 
+              - Given : 
+              - When : 
+              - Then :
   - type: textarea
     attributes:
       label: 🙋🏻 참고 자료
