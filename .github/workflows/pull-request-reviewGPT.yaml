@@ -23,7 +23,7 @@ jobs:
                     LANGUAGE: Korean
                     PROMPT: ${{secrets.OPENAI_PROMPT}}
                     MODEL: gpt-4o-mini
-                    TEMPERATURE: 0.5
+                    TEMPERATURE: 0.3
                     MAX_TOKENS: 2048
                     IGNORE_PATTERNS: .github,.gradle/**/*,.gitignore,*.yaml,*.jar,.gitkeep
                     INCLUDE_PATTERNS: "*.kt,*.java"
