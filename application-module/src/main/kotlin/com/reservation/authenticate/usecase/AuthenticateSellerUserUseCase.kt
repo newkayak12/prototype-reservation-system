@@ -1,4 +1,4 @@
-package com.reservation.seller.self.usecase
+package com.reservation.authenticate.usecase
 
 import com.reservation.authenticate.AccessHistory
 import com.reservation.authenticate.Authenticate

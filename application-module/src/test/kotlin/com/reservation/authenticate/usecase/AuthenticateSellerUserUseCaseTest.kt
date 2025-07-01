@@ -15,7 +15,6 @@ import com.reservation.enumeration.JWTVersion.V1
 import com.reservation.enumeration.UserStatus
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.seller.self.usecase.AuthenticateSellerUserUseCase
 import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import com.reservation.utilities.provider.JWTProvider

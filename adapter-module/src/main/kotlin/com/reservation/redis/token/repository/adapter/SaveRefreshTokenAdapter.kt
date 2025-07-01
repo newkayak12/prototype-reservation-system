@@ -1,8 +1,6 @@
 package com.reservation.redis.token.repository.adapter
 
 import com.reservation.redis.RedisKey
-import com.reservation.user.self.port.output.SaveRefreshToken
-import com.reservation.user.self.port.output.SaveRefreshToken.SaveRefreshTokenInquiry
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Component
 import java.time.Duration
