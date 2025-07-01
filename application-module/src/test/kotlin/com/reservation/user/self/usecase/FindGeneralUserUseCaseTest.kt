@@ -1,7 +1,7 @@
 package com.reservation.user.self.usecase
 
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
-import com.reservation.common.exceptions.NoSuchDatabaseElementException
+import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.user.self.port.output.FindGeneralUser
 import com.reservation.user.self.port.output.FindGeneralUser.FindGeneralUserResult
@@ -33,7 +33,7 @@ class FindGeneralUserUseCaseTest {
             findGeneralUser.query(any())
         } returns null
 
-        assertThrows<NoSuchDatabaseElementException> {
+        assertThrows<NoSuchPersistedElementException> {
             useCase.execute(uuid)
         }
     }

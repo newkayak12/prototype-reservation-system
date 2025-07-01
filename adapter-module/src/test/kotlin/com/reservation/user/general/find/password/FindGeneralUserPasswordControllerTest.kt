@@ -3,7 +3,7 @@ package com.reservation.user.general.find.password
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.ninjasquad.springmockk.MockkBean
-import com.reservation.common.exceptions.NoSuchDatabaseElementException
+import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
@@ -55,7 +55,7 @@ class FindGeneralUserPasswordControllerTest(
 
             every {
                 findGeneralUserPasswordCommand.execute(any())
-            } throws NoSuchDatabaseElementException()
+            } throws NoSuchPersistedElementException()
 
             mockMvc.perform(
                 patch(GeneralUserUrl.FIND_LOST_PASSWORD)

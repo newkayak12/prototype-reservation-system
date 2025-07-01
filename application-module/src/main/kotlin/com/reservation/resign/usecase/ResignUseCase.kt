@@ -1,6 +1,6 @@
 package com.reservation.resign.usecase
 
-import com.reservation.common.exceptions.NoSuchDatabaseElementException
+import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.annotations.UseCase
 import com.reservation.resign.port.input.ResignUserCommand
 import com.reservation.resign.port.output.LoadResignTargetUser
@@ -20,7 +20,7 @@ class ResignUseCase(
         val user =
             loadResignTargetUser.load(id)
                 ?.let { it.toDomain() }
-                ?: throw NoSuchDatabaseElementException()
+                ?: throw NoSuchPersistedElementException()
 
         val resignUser = resignUserService.resign(user)
         val resignTarget =

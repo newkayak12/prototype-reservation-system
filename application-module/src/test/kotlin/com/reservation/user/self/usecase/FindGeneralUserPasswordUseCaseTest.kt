@@ -1,7 +1,7 @@
 package com.reservation.user.self.usecase
 
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
-import com.reservation.common.exceptions.NoSuchDatabaseElementException
+import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.exceptions.InvalidSituationException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
@@ -60,7 +60,7 @@ class FindGeneralUserPasswordUseCaseTest {
                 loadGeneralUserByLoginIdAndEmail.load(any())
             } returns null
 
-            assertThrows<NoSuchDatabaseElementException> {
+            assertThrows<NoSuchPersistedElementException> {
                 useCase.execute(command)
             }
         }

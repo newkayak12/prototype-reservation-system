@@ -1,6 +1,6 @@
 package com.reservation.user.self.usecase
 
-import com.reservation.common.exceptions.NoSuchDatabaseElementException
+import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.annotations.UseCase
 import com.reservation.exceptions.InvalidSituationException
 import com.reservation.user.self.port.input.ChangeGeneralUserPasswordCommand
@@ -25,7 +25,7 @@ class ChangeGeneralUserPasswordUseCase(
                     it.toDomain(),
                     command.encodedPassword,
                 )
-            } ?: run { throw NoSuchDatabaseElementException() }
+            } ?: run { throw NoSuchPersistedElementException() }
 
         return changeGeneralUserPassword.command(
             ChangeGeneralUserPasswordInquiry(

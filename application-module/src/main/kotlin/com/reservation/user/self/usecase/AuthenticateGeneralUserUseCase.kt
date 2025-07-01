@@ -3,11 +3,11 @@ package com.reservation.user.self.usecase
 import com.reservation.authenticate.AccessHistory
 import com.reservation.authenticate.Authenticate
 import com.reservation.authenticate.service.AuthenticateSignInService
+import com.reservation.common.exceptions.AccessFailureCountHasExceedException
 import com.reservation.common.exceptions.NoSuchPersistedElementException
+import com.reservation.common.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.config.annotations.UseCase
 import com.reservation.enumeration.JWTType
-import com.reservation.user.exceptions.AccessFailureCountHasExceedException
-import com.reservation.user.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
 import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand.CreateUserHistoryCommandDto
 import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery

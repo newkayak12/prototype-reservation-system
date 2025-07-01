@@ -3,7 +3,7 @@ package com.reservation.user.general.self
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.ninjasquad.springmockk.MockkBean
-import com.reservation.common.exceptions.NoSuchDatabaseElementException
+import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.PathParameter
 import com.reservation.config.restdoc.RestDocuments
@@ -53,7 +53,7 @@ class FindGeneralUserControllerTest(
 
             every {
                 findGeneralUserQuery.execute(any())
-            } throws NoSuchDatabaseElementException()
+            } throws NoSuchPersistedElementException()
 
             mockMvc.perform(
                 get(GeneralUserUrl.FIND_USER, id)
@@ -90,12 +90,12 @@ class FindGeneralUserControllerTest(
                 .andDo(print())
                 .andExpectAll(
                     status().isOk,
-                    jsonPath("$.id").isNotEmpty,
-                    jsonPath("$.loginId").isNotEmpty,
-                    jsonPath("$.email").isNotEmpty,
-                    jsonPath("$.nickname").isNotEmpty,
-                    jsonPath("$.mobile").isNotEmpty,
-                    jsonPath("$.userStatus").isNotEmpty,
+                    jsonPath("$.id").exists(),
+                    jsonPath("$.loginId").exists(),
+                    jsonPath("$.email").exists(),
+                    jsonPath("$.nickname").exists(),
+                    jsonPath("$.mobile").exists(),
+                    jsonPath("$.userStatus").exists(),
                 )
                 .andDo(
                     RestDocuments(

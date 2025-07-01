@@ -1,6 +1,6 @@
 package com.reservation.user.self.usecase
 
-import com.reservation.common.exceptions.NoSuchDatabaseElementException
+import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.annotations.UseCase
 import com.reservation.user.self.port.input.FindGeneralUserQuery
 import com.reservation.user.self.port.input.FindGeneralUserQuery.FindGeneralUserQueryResult
@@ -16,6 +16,6 @@ class FindGeneralUserUseCase(
     override fun execute(id: String): FindGeneralUserQueryResult {
         return findGeneralUser.query(FindGeneralUserInquiry(id))
             ?.let { it.toQuery() }
-            ?: throw NoSuchDatabaseElementException()
+            ?: throw NoSuchPersistedElementException()
     }
 }

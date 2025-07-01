@@ -5,11 +5,11 @@ import com.navercorp.fixturemonkey.api.jqwik.JqwikPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.authenticate.service.AuthenticateSignInService
+import com.reservation.common.exceptions.AccessFailureCountHasExceedException
+import com.reservation.common.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.enumeration.JWTVersion.V1
 import com.reservation.enumeration.UserStatus
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.user.exceptions.AccessFailureCountHasExceedException
-import com.reservation.user.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
 import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
 import com.reservation.user.self.port.output.AuthenticateGeneralUser

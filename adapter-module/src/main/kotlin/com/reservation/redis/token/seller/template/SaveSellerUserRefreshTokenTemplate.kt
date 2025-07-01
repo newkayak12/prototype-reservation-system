@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 import java.time.Duration
 
 @Component
-class SaveGeneralUserRefreshTokenTemplate(
+class SaveSellerUserRefreshTokenTemplate(
     val redisTemplate: RedisTemplate<String, String>,
 ) : SaveSellerUserRefreshToken {
     override fun command(inquiry: SaveSellerUserRefreshTokenInquiry) {

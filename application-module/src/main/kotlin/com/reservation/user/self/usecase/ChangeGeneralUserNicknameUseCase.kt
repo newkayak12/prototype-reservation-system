@@ -1,7 +1,7 @@
 package com.reservation.user.self.usecase
 
 import com.reservation.common.exceptions.AlreadyPersistedException
-import com.reservation.common.exceptions.NoSuchDatabaseElementException
+import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.annotations.UseCase
 import com.reservation.exceptions.InvalidSituationException
 import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryCommand
@@ -67,7 +67,7 @@ class ChangeGeneralUserNicknameUseCase(
                     writeChangeHistory(it)
                     return@let changePersonalAttribute(it, command.nickname)
                 }
-                ?: run { throw NoSuchDatabaseElementException() }
+                ?: run { throw NoSuchPersistedElementException() }
 
         return changeGeneralUserNickname.command(
             ChangeGeneralUserNicknameDto(
