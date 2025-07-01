@@ -1,4 +1,4 @@
-package com.reservation.user.self.usecase
+package com.reservation.seller.self.usecase
 
 import com.reservation.authenticate.AccessHistory
 import com.reservation.authenticate.Authenticate
@@ -8,53 +8,47 @@ import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.common.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.config.annotations.UseCase
 import com.reservation.enumeration.JWTType
-import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
-import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand.CreateUserHistoryCommandDto
-import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery
-import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.AuthenticateGeneralUserQueryResult
-import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
-import com.reservation.user.self.port.output.AuthenticateGeneralUser
-import com.reservation.user.self.port.output.SaveGeneralUserRefreshToken
-import com.reservation.user.self.port.output.SaveGeneralUserRefreshToken.SaveRefreshTokenInquiry
-import com.reservation.user.self.port.output.UpdateGeneralUserAuthenticateResult
-import com.reservation.user.self.port.output.UpdateGeneralUserAuthenticateResult.UpdateAuthenticateResultDto
+import com.reservation.seller.self.port.input.AuthenticateSellerUserQuery
+import com.reservation.seller.self.port.input.AuthenticateSellerUserQuery.AuthenticateSellerUserQueryResult
+import com.reservation.seller.self.port.input.AuthenticateSellerUserQuery.SellerUserQueryDto
+import com.reservation.seller.self.port.output.AuthenticateSellerUser
+import com.reservation.seller.self.port.output.CreateSellerUserAccessHistoriesCommand
+import com.reservation.seller.self.port.output.CreateSellerUserAccessHistoriesCommand.CreateSellerUserAccessHistoriesCommandDto
+import com.reservation.seller.self.port.output.SaveSellerUserRefreshToken
+import com.reservation.seller.self.port.output.SaveSellerUserRefreshToken.SaveSellerUserRefreshTokenInquiry
+import com.reservation.seller.self.port.output.UpdateSellerUserAuthenticateResult
+import com.reservation.seller.self.port.output.UpdateSellerUserAuthenticateResult.UpdateSellerUserAuthenticateResultDto
 import com.reservation.utilities.provider.JWTRecord
 import com.reservation.utilities.provider.TokenProvider
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
-class AuthenticateGeneralUserUseCase(
+class AuthenticateSellerUserUseCase(
     private val authenticateSignInService: AuthenticateSignInService,
-    private val authenticateGeneralUser: AuthenticateGeneralUser,
-    private val createUserHistoriesCommand: CreateUserAccessHistoriesCommand,
-    private val updateGeneralUserAuthenticateResult: UpdateGeneralUserAuthenticateResult,
+    private val authenticateSellerUser: AuthenticateSellerUser,
+    private val createSellerUserAccessHistoriesCommand: CreateSellerUserAccessHistoriesCommand,
+    private val updateSellerUserAuthenticateResult: UpdateSellerUserAuthenticateResult,
     private val tokenProvider: TokenProvider<JWTRecord>,
-    private val saveGeneralUserRefreshToken: SaveGeneralUserRefreshToken,
-) : AuthenticateGeneralUserQuery {
-    @Transactional(
-        noRollbackFor = [
-            WrongLoginIdOrPasswordException::class, AccessFailureCountHasExceedException::class,
-        ],
-    )
-    override fun execute(request: GeneralUserQueryDto): AuthenticateGeneralUserQueryResult {
+    private val saveSellerUserRefreshToken: SaveSellerUserRefreshToken,
+) : AuthenticateSellerUserQuery {
+    @Transactional
+    override fun execute(request: SellerUserQueryDto): AuthenticateSellerUserQueryResult {
         val authenticate =
-            authenticateGeneralUser.query(request.toInquiry())?.toDomain()
-                ?: run {
-                    throw NoSuchPersistedElementException()
-                }
+            authenticateSellerUser.query(request.toInquiry())
+                ?.toDomain()
+                ?: throw NoSuchPersistedElementException()
 
         val authenticated = authenticateSignInService.signIn(authenticate, request.password)
 
-        // histories 저장
         createAccessHistory(authenticated.accessHistories)
         updateAuthenticateResult(authenticated)
 
         checkUserWasLockedDown(authenticated)
         checkUserPasswordMatchWasFailed(authenticated)
-        val result = tokenize(authenticated)
 
-        saveGeneralUserRefreshToken.command(
-            SaveRefreshTokenInquiry(
+        val result = tokenize(authenticated)
+        saveSellerUserRefreshToken.command(
+            SaveSellerUserRefreshTokenInquiry(
                 authenticated.id,
                 result.refreshToken,
                 result.refreshTokenExpiresIn,
@@ -64,9 +58,9 @@ class AuthenticateGeneralUserUseCase(
     }
 
     private fun createAccessHistory(accessHistories: List<AccessHistory>) {
-        createUserHistoriesCommand.execute(
+        createSellerUserAccessHistoriesCommand.execute(
             accessHistories.map {
-                CreateUserHistoryCommandDto(
+                CreateSellerUserAccessHistoriesCommandDto(
                     it.authenticateId,
                     it.loginId,
                     it.accessStatus(),
@@ -77,9 +71,8 @@ class AuthenticateGeneralUserUseCase(
     }
 
     private fun updateAuthenticateResult(authenticated: Authenticate) {
-        // authenticated.
-        updateGeneralUserAuthenticateResult.command(
-            UpdateAuthenticateResultDto(
+        updateSellerUserAuthenticateResult.command(
+            UpdateSellerUserAuthenticateResultDto(
                 authenticated.id,
                 authenticated.failCount,
                 authenticated.lockedDateTime,
@@ -100,7 +93,7 @@ class AuthenticateGeneralUserUseCase(
         }
     }
 
-    private fun tokenize(authenticated: Authenticate): AuthenticateGeneralUserQueryResult {
+    private fun tokenize(authenticated: Authenticate): AuthenticateSellerUserQueryResult {
         val record =
             JWTRecord(
                 authenticated.id,
@@ -111,7 +104,7 @@ class AuthenticateGeneralUserUseCase(
         val refreshDuration = tokenProvider.duration
         val accessToken = tokenProvider.tokenize(record)
         val refreshToken = tokenProvider.tokenize(record, JWTType.REFRESH_TOKEN)
-        return AuthenticateGeneralUserQueryResult(
+        return AuthenticateSellerUserQueryResult(
             accessToken,
             refreshToken,
             refreshDuration,

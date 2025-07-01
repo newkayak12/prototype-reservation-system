@@ -2,13 +2,13 @@ package com.reservation.user.self.usecase
 
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.common.exceptions.AlreadyPersistedException
+import com.reservation.common.exceptions.NoSuchDatabaseElementException
 import com.reservation.exceptions.InvalidSituationException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.shared.user.LoginId
 import com.reservation.shared.user.Password
 import com.reservation.shared.user.PersonalAttributes
-import com.reservation.user.exceptions.NoSuchDatabaseElementException
 import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryCommand
 import com.reservation.user.self.User
 import com.reservation.user.self.port.input.ChangeGeneralUserNicknameCommand.ChangeGeneralUserNicknameCommandDto

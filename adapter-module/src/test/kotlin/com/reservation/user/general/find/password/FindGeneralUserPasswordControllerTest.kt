@@ -3,6 +3,7 @@ package com.reservation.user.general.find.password
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.ninjasquad.springmockk.MockkBean
+import com.reservation.common.exceptions.NoSuchDatabaseElementException
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
@@ -11,7 +12,6 @@ import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.request.FindGeneralUserPasswordRequest
 import com.reservation.rest.user.general.sign.find.password.FindGeneralUserPasswordController
-import com.reservation.user.exceptions.NoSuchDatabaseElementException
 import com.reservation.user.self.port.input.FindGeneralUserPasswordCommand
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension

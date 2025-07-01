@@ -3,6 +3,7 @@ package com.reservation.user.general.self
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.ninjasquad.springmockk.MockkBean
+import com.reservation.common.exceptions.NoSuchDatabaseElementException
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.PathParameter
 import com.reservation.config.restdoc.RestDocuments
@@ -11,7 +12,6 @@ import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.self.FindGeneralUserController
-import com.reservation.user.exceptions.NoSuchDatabaseElementException
 import com.reservation.user.self.port.input.FindGeneralUserQuery
 import com.reservation.user.self.port.input.FindGeneralUserQuery.FindGeneralUserQueryResult
 import com.reservation.utilities.generator.uuid.UuidGenerator

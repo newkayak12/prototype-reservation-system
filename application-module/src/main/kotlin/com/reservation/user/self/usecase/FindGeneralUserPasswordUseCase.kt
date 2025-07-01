@@ -1,8 +1,8 @@
 package com.reservation.user.self.usecase
 
+import com.reservation.common.exceptions.NoSuchDatabaseElementException
 import com.reservation.config.annotations.UseCase
 import com.reservation.exceptions.InvalidSituationException
-import com.reservation.user.exceptions.NoSuchDatabaseElementException
 import com.reservation.user.self.User
 import com.reservation.user.self.port.input.FindGeneralUserPasswordCommand
 import com.reservation.user.self.port.input.FindGeneralUserPasswordCommand.FindGeneralUserPasswordCommandDto

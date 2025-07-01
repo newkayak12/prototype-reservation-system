@@ -1,4 +1,4 @@
-package com.reservation.user.exceptions
+package com.reservation.common.exceptions
 
 import com.reservation.exceptions.ClientException
 

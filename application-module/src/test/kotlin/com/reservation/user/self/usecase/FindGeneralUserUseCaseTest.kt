@@ -1,8 +1,8 @@
 package com.reservation.user.self.usecase
 
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
+import com.reservation.common.exceptions.NoSuchDatabaseElementException
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.user.exceptions.NoSuchDatabaseElementException
 import com.reservation.user.self.port.output.FindGeneralUser
 import com.reservation.user.self.port.output.FindGeneralUser.FindGeneralUserResult
 import com.reservation.utilities.generator.uuid.UuidGenerator

@@ -1,9 +1,9 @@
 package com.reservation.user.self.usecase
 
 import com.reservation.common.exceptions.AlreadyPersistedException
+import com.reservation.common.exceptions.NoSuchDatabaseElementException
 import com.reservation.config.annotations.UseCase
 import com.reservation.exceptions.InvalidSituationException
-import com.reservation.user.exceptions.NoSuchDatabaseElementException
 import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryCommand
 import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryCommand.CreateGeneralUserChangeHistoryCommandDto
 import com.reservation.user.self.User

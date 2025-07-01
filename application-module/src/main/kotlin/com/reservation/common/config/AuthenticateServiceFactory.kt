@@ -1,4 +1,4 @@
-package com.reservation.user.config
+package com.reservation.common.config
 
 import com.reservation.authenticate.service.AuthenticateSignInService
 import org.springframework.context.annotation.Bean
