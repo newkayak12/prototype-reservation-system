@@ -5,6 +5,8 @@ import com.reservation.config.security.jwt.properties.JwtWhitelist
 import com.reservation.config.security.xss.CrossSiteScriptFilter
 import com.reservation.config.security.xss.properties.XssBlacklist
 import com.reservation.enumeration.SecurityRole
+import com.reservation.rest.resign.ResignUrl
+import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import com.reservation.utilities.provider.JWTProvider
 import org.springframework.context.annotation.Bean
@@ -32,6 +34,31 @@ class SecurityConfig(
     private val customAuthenticationEntryPoint: AuthenticationEntryPoint,
     private var jwtProvider: JWTProvider,
 ) {
+    companion object {
+        val COMMON_PATHS =
+            listOf<String>()
+                .map { "$it/**" }
+                .toTypedArray()
+
+        val USER_PATHS =
+            listOf<String>(
+                GeneralUserUrl.PREFIX,
+                ResignUrl.PREFIX,
+            )
+                .map { "$it/**" }
+                .toTypedArray()
+
+        val SELLER_PATHS =
+            listOf<String>()
+                .map { "$it/**" }
+                .toTypedArray()
+
+        val ADMIN_PATHS =
+            listOf<String>()
+                .map { "$it/**" }
+                .toTypedArray()
+    }
+
     @Bean
     fun passwordEncoder(): PasswordEncoder = PasswordEncoderUtility.getInstance()
 
@@ -61,7 +88,10 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .formLogin { it.disable() }
             .authorizeHttpRequests {
-                it.requestMatchers("/**").permitAll()
+                it.requestMatchers(*ADMIN_PATHS).hasRole(SecurityRole.ROLE_ADMIN.name)
+                it.requestMatchers(*SELLER_PATHS).hasRole(SecurityRole.ROLE_MANAGER.name)
+                it.requestMatchers(*USER_PATHS).hasRole(SecurityRole.ROLE_USER.name)
+                it.requestMatchers(*COMMON_PATHS).permitAll()
                 it.anyRequest().authenticated()
             }
             .addFilterBefore(
