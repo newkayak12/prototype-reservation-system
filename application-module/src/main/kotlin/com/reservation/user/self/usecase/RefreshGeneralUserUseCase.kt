@@ -6,21 +6,21 @@ import com.reservation.enumeration.JWTType.REFRESH_TOKEN
 import com.reservation.exceptions.AlreadyExpiredException
 import com.reservation.exceptions.InvalidTokenException
 import com.reservation.exceptions.UnauthorizedException
-import com.reservation.user.self.port.input.RefreshAccessTokenQuery
-import com.reservation.user.self.port.input.RefreshAccessTokenQuery.RefreshResult
-import com.reservation.user.self.port.output.FindRefreshToken
-import com.reservation.user.self.port.output.FindRefreshToken.FindRefreshTokenInquiry
-import com.reservation.user.self.port.output.SaveRefreshToken
-import com.reservation.user.self.port.output.SaveRefreshToken.SaveRefreshTokenInquiry
+import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenQuery
+import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenQuery.RefreshResult
+import com.reservation.user.self.port.output.FindGeneralUserRefreshToken
+import com.reservation.user.self.port.output.FindGeneralUserRefreshToken.FindRefreshTokenInquiry
+import com.reservation.user.self.port.output.SaveGeneralUserRefreshToken
+import com.reservation.user.self.port.output.SaveGeneralUserRefreshToken.SaveRefreshTokenInquiry
 import com.reservation.utilities.provider.JWTRecord
 import com.reservation.utilities.provider.TokenProvider
 
 @UseCase
 class RefreshGeneralUserUseCase(
     private val tokenProvider: TokenProvider<JWTRecord>,
-    private val findRefreshToken: FindRefreshToken,
-    private val saveRefreshToken: SaveRefreshToken,
-) : RefreshAccessTokenQuery {
+    private val findGeneralUserRefreshToken: FindGeneralUserRefreshToken,
+    private val saveGeneralUserRefreshToken: SaveGeneralUserRefreshToken,
+) : RefreshGeneralUserAccessTokenQuery {
     private fun validateJWTs(refreshToken: String) {
         if (
             refreshToken.isBlank() ||
@@ -35,7 +35,7 @@ class RefreshGeneralUserUseCase(
         refreshToken: String,
     ) {
         val persistedToken =
-            findRefreshToken.query(FindRefreshTokenInquiry(uuid))
+            findGeneralUserRefreshToken.query(FindRefreshTokenInquiry(uuid))
                 ?: throw AlreadyExpiredException()
 
         if (persistedToken != refreshToken) {
@@ -56,7 +56,7 @@ class RefreshGeneralUserUseCase(
         val latestAccessToken = tokenProvider.tokenize(record, ACCESS_TOKEN)
         val latestRefreshToken = tokenProvider.tokenize(record, REFRESH_TOKEN)
 
-        saveRefreshToken.command(
+        saveGeneralUserRefreshToken.command(
             SaveRefreshTokenInquiry(
                 record.id,
                 latestRefreshToken,

@@ -8,8 +8,8 @@ import com.reservation.exceptions.AlreadyExpiredException
 import com.reservation.exceptions.InvalidTokenException
 import com.reservation.exceptions.UnauthorizedException
 import com.reservation.fixture.CommonlyUsedArbitraries
-import com.reservation.user.self.port.output.FindRefreshToken
-import com.reservation.user.self.port.output.SaveRefreshToken
+import com.reservation.user.self.port.output.FindGeneralUserRefreshToken
+import com.reservation.user.self.port.output.SaveGeneralUserRefreshToken
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import com.reservation.utilities.provider.JWTProvider
 import com.reservation.utilities.provider.JWTRecord
@@ -44,10 +44,10 @@ class RefreshGeneralUserUseCaseTest {
         )
 
     @MockK
-    private lateinit var findRefreshToken: FindRefreshToken
+    private lateinit var findGeneralUserRefreshToken: FindGeneralUserRefreshToken
 
     @MockK
-    private lateinit var saveRefreshToken: SaveRefreshToken
+    private lateinit var saveGeneralUserRefreshToken: SaveGeneralUserRefreshToken
 
     @InjectMockKs
     private lateinit var useCase: RefreshGeneralUserUseCase
@@ -61,8 +61,8 @@ class RefreshGeneralUserUseCaseTest {
             val record = JWTRecord(UuidGenerator.generate(), "test", USER)
             val refresh = tokenProvider.tokenize(record, REFRESH_TOKEN)
 
-            every { findRefreshToken.query(any()) } returns refresh
-            every { saveRefreshToken.command(any()) } just runs
+            every { findGeneralUserRefreshToken.query(any()) } returns refresh
+            every { saveGeneralUserRefreshToken.command(any()) } just runs
 
             val tokenSets = useCase.refresh(refresh)
 
@@ -114,10 +114,10 @@ class RefreshGeneralUserUseCaseTest {
             val refresh = tokenProvider.tokenize(record, REFRESH_TOKEN)
 
             every {
-                findRefreshToken.query(any())
+                findGeneralUserRefreshToken.query(any())
             } returns CommonlyUsedArbitraries.bearerTokenArbitrary.sample()
 
-            every { saveRefreshToken.command(any()) } just runs
+            every { saveGeneralUserRefreshToken.command(any()) } just runs
 
             assertThrows<InvalidTokenException> {
                 useCase.refresh(refresh)
@@ -131,10 +131,10 @@ class RefreshGeneralUserUseCaseTest {
             val refresh = tokenProvider.tokenize(record, REFRESH_TOKEN)
 
             every {
-                findRefreshToken.query(any())
+                findGeneralUserRefreshToken.query(any())
             } returns null
 
-            every { saveRefreshToken.command(any()) } just runs
+            every { saveGeneralUserRefreshToken.command(any()) } just runs
 
             assertThrows<AlreadyExpiredException> {
                 useCase.refresh(refresh)
