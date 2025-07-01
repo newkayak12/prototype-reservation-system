@@ -49,8 +49,6 @@ class GeneralUserSignInControllerTest(
 
         test("로그인을 시도했으나 jakarta validation에 부합하지 않아 실패한다.") {
 
-            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-
             forAll(
                 row("loginId"),
                 row("password"),
