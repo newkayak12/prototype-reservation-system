@@ -11,7 +11,6 @@ import com.reservation.enumeration.JWTVersion.V1
 import com.reservation.enumeration.UserStatus
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
-import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
 import com.reservation.user.self.port.output.AuthenticateGeneralUser
 import com.reservation.user.self.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserResult
 import com.reservation.user.self.port.output.SaveRefreshToken
