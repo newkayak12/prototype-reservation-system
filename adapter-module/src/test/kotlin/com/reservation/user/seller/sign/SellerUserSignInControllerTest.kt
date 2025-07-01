@@ -17,7 +17,6 @@ import com.reservation.rest.user.seller.sign.SellerUserSignInController
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.data.row
 import io.kotest.extensions.spring.SpringExtension
-import io.kotest.property.forAll
 import io.mockk.every
 import net.jqwik.api.Arbitraries
 import org.junit.jupiter.api.extension.ExtendWith

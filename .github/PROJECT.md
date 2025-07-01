@@ -13,7 +13,6 @@
 
 ```mermaid
 graph LR
-    
     subgraph adapter-module
         Controller
         Security
@@ -35,22 +34,20 @@ graph LR
         Utilities
     end
 
-    Controller --use--> InputPort
-    InputPort --implemented--> UseCase
-    UseCase --use--> DomainService
-    DomainService --use--> DomainEntity
-    UseCase --use--> OutputPort
+    Controller -- use --> InputPort
+    InputPort -- implemented --> UseCase
+    UseCase -- use --> DomainService
+    DomainService -- use --> DomainEntity
+    UseCase -- use --> OutputPort
     Persistent -.-> OutputPort
-    UseCase --use--> Utilities
-    DomainService --use--> Utilities
+    UseCase -- use --> Utilities
+    DomainService -- use --> Utilities
     JpaEntity --> Enumerations
     DomainEntity --> Enumerations
-    Persistent --contain-->JpaEntity
-    AbstractExceptions --extended-->DomainService
-    AbstractExceptions --extended-->UseCase
+    Persistent -- contain --> JpaEntity
+    AbstractExceptions -- extended --> DomainService
+    AbstractExceptions -- extended --> UseCase
 ```
-
-
 
 ## 🧪 품질 정책
 
