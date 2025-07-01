@@ -14,8 +14,8 @@ import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesC
 import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
 import com.reservation.user.self.port.output.AuthenticateGeneralUser
 import com.reservation.user.self.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserResult
-import com.reservation.user.self.port.output.SaveRefreshToken
-import com.reservation.user.self.port.output.UpdateAuthenticateResult
+import com.reservation.user.self.port.output.SaveGeneralUserRefreshToken
+import com.reservation.user.self.port.output.UpdateGeneralUserAuthenticateResult
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import com.reservation.utilities.provider.JWTProvider
 import com.reservation.utilities.provider.JWTRecord
@@ -48,10 +48,10 @@ class AuthenticateGeneralUserUseCaseTest {
     private lateinit var createUserHistoriesCommand: CreateUserAccessHistoriesCommand
 
     @MockK
-    private lateinit var saveRefreshToken: SaveRefreshToken
+    private lateinit var saveGeneralUserRefreshToken: SaveGeneralUserRefreshToken
 
     @MockK
-    private lateinit var updateAuthenticateResult: UpdateAuthenticateResult
+    private lateinit var updateGeneralUserAuthenticateResult: UpdateGeneralUserAuthenticateResult
 
     @SpyK
     private var tokenProvider: TokenProvider<JWTRecord> =
@@ -110,7 +110,7 @@ class AuthenticateGeneralUserUseCaseTest {
         every { authenticateSignInService.signIn(any(), any()) } answers { callOriginal() }
         every {
             createUserHistoriesCommand.execute(any())
-            updateAuthenticateResult.command(any())
+            updateGeneralUserAuthenticateResult.command(any())
         } returns Unit
 
         assertThatThrownBy {
@@ -160,7 +160,7 @@ class AuthenticateGeneralUserUseCaseTest {
         every { authenticateSignInService.signIn(any(), any()) } answers { callOriginal() }
         every {
             createUserHistoriesCommand.execute(any())
-            updateAuthenticateResult.command(any())
+            updateGeneralUserAuthenticateResult.command(any())
         } returns Unit
 
         assertThatThrownBy {
@@ -210,7 +210,7 @@ class AuthenticateGeneralUserUseCaseTest {
         every { authenticateSignInService.signIn(any(), any()) } answers { callOriginal() }
         every {
             createUserHistoriesCommand.execute(any())
-            updateAuthenticateResult.command(any())
+            updateGeneralUserAuthenticateResult.command(any())
         } returns Unit
 
         assertThatThrownBy {
@@ -263,9 +263,9 @@ class AuthenticateGeneralUserUseCaseTest {
         every { authenticateSignInService.signIn(any(), any()) } answers { callOriginal() }
         every {
             createUserHistoriesCommand.execute(any())
-            updateAuthenticateResult.command(any())
+            updateGeneralUserAuthenticateResult.command(any())
         } returns Unit
-        every { saveRefreshToken.command(any()) } just runs
+        every { saveGeneralUserRefreshToken.command(any()) } just runs
         every { tokenProvider.tokenize(any(), any()) } answers { callOriginal() }
 
         val result = useCase.execute(query)

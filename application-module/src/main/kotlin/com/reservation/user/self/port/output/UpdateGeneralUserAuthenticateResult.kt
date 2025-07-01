@@ -4,7 +4,7 @@ import com.reservation.enumeration.UserStatus
 import java.time.LocalDateTime
 
 @FunctionalInterface
-interface UpdateAuthenticateResult {
+interface UpdateGeneralUserAuthenticateResult {
     fun command(authenticateResult: UpdateAuthenticateResultDto)
 
     data class UpdateAuthenticateResultDto(

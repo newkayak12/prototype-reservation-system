@@ -8,7 +8,7 @@ package com.reservation.user.self.port.input
  * 3. [com.reservation.exceptions.InvalidTokenException]: 보유하고 있는 토큰 정보와 상이할 경우
  */
 @FunctionalInterface
-interface RefreshAccessTokenQuery {
+interface RefreshGeneralUserAccessTokenQuery {
     fun refresh(refreshToken: String): RefreshResult
 
     data class RefreshResult(val accessToken: String, val refreshToken: String)

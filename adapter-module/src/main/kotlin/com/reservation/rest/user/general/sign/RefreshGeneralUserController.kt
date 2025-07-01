@@ -2,7 +2,7 @@ package com.reservation.rest.user.general.sign
 
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.response.RefreshGeneralUserResponse
-import com.reservation.user.self.port.input.RefreshAccessTokenQuery
+import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenQuery
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class RefreshGeneralUserController(
-    val refreshAccessTokenQuery: RefreshAccessTokenQuery,
+    val refreshGeneralUserAccessTokenQuery: RefreshGeneralUserAccessTokenQuery,
 ) {
     private fun extractRefreshTokenFrom(cookies: Array<Cookie>): String =
         cookies.firstOrNull { it.name == RefreshTokenDefinitions.REFRESH_TOKEN_KEY }?.value ?: ""
@@ -22,7 +22,7 @@ class RefreshGeneralUserController(
         httpServletResponse: HttpServletResponse,
     ): RefreshGeneralUserResponse {
         val refreshToken = extractRefreshTokenFrom(httpServletRequest.cookies)
-        val renewedToken = refreshAccessTokenQuery.refresh(refreshToken)
+        val renewedToken = refreshGeneralUserAccessTokenQuery.refresh(refreshToken)
 
         val refreshTokenCookie =
             Cookie(RefreshTokenDefinitions.REFRESH_TOKEN_KEY, renewedToken.refreshToken)

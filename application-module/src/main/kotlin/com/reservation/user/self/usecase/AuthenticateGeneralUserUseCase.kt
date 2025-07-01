@@ -14,10 +14,10 @@ import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery
 import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.AuthenticateGeneralUserQueryResult
 import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
 import com.reservation.user.self.port.output.AuthenticateGeneralUser
-import com.reservation.user.self.port.output.SaveRefreshToken
-import com.reservation.user.self.port.output.SaveRefreshToken.SaveRefreshTokenInquiry
-import com.reservation.user.self.port.output.UpdateAuthenticateResult
-import com.reservation.user.self.port.output.UpdateAuthenticateResult.UpdateAuthenticateResultDto
+import com.reservation.user.self.port.output.SaveGeneralUserRefreshToken
+import com.reservation.user.self.port.output.SaveGeneralUserRefreshToken.SaveRefreshTokenInquiry
+import com.reservation.user.self.port.output.UpdateGeneralUserAuthenticateResult
+import com.reservation.user.self.port.output.UpdateGeneralUserAuthenticateResult.UpdateAuthenticateResultDto
 import com.reservation.utilities.provider.JWTRecord
 import com.reservation.utilities.provider.TokenProvider
 import org.springframework.transaction.annotation.Transactional
@@ -27,9 +27,9 @@ class AuthenticateGeneralUserUseCase(
     private val authenticateSignInService: AuthenticateSignInService,
     private val authenticateGeneralUser: AuthenticateGeneralUser,
     private val createUserHistoriesCommand: CreateUserAccessHistoriesCommand,
-    private val updateAuthenticateResult: UpdateAuthenticateResult,
+    private val updateGeneralUserAuthenticateResult: UpdateGeneralUserAuthenticateResult,
     private val tokenProvider: TokenProvider<JWTRecord>,
-    private val saveRefreshToken: SaveRefreshToken,
+    private val saveGeneralUserRefreshToken: SaveGeneralUserRefreshToken,
 ) : AuthenticateGeneralUserQuery {
     @Transactional(
         noRollbackFor = [
@@ -53,7 +53,7 @@ class AuthenticateGeneralUserUseCase(
         checkUserPasswordMatchWasFailed(authenticated)
         val result = tokenize(authenticated)
 
-        saveRefreshToken.command(
+        saveGeneralUserRefreshToken.command(
             SaveRefreshTokenInquiry(
                 authenticated.id,
                 result.refreshToken,
@@ -78,7 +78,7 @@ class AuthenticateGeneralUserUseCase(
 
     private fun updateAuthenticateResult(authenticated: Authenticate) {
         // authenticated.
-        updateAuthenticateResult.command(
+        updateGeneralUserAuthenticateResult.command(
             UpdateAuthenticateResultDto(
                 authenticated.id,
                 authenticated.failCount,
