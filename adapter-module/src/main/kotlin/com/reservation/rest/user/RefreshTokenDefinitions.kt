@@ -1,4 +1,4 @@
-package com.reservation.rest.user.general
+package com.reservation.rest.user
 
 object RefreshTokenDefinitions {
     const val REFRESH_TOKEN_KEY = "refresh_token"

@@ -1,7 +1,7 @@
 package com.reservation.rest.user.seller.sign
 
 import com.reservation.authenticate.port.input.AuthenticateSellerUserQuery
-import com.reservation.rest.user.general.RefreshTokenDefinitions
+import com.reservation.rest.user.RefreshTokenDefinitions
 import com.reservation.rest.user.seller.SellerUserUrl
 import com.reservation.rest.user.seller.request.SellerUserLoginRequest
 import com.reservation.rest.user.seller.response.LoginSellerUserResponse
