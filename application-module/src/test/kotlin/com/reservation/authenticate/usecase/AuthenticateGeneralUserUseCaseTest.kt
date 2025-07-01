@@ -1,21 +1,21 @@
-package com.reservation.user.self.usecase
+package com.reservation.authenticate.usecase
 
 import com.navercorp.fixturemonkey.api.jqwik.JavaTypeArbitraryGenerator
 import com.navercorp.fixturemonkey.api.jqwik.JqwikPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
+import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
+import com.reservation.authenticate.port.output.AuthenticateGeneralUser
+import com.reservation.authenticate.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserResult
+import com.reservation.authenticate.port.output.SaveGeneralUserRefreshToken
+import com.reservation.authenticate.port.output.UpdateAuthenticateResult
 import com.reservation.authenticate.service.AuthenticateSignInService
+import com.reservation.common.exceptions.AccessFailureCountHasExceedException
+import com.reservation.common.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.enumeration.JWTVersion.V1
 import com.reservation.enumeration.UserStatus
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.user.exceptions.AccessFailureCountHasExceedException
-import com.reservation.user.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
-import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
-import com.reservation.user.self.port.output.AuthenticateGeneralUser
-import com.reservation.user.self.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserResult
-import com.reservation.user.self.port.output.SaveRefreshToken
-import com.reservation.user.self.port.output.UpdateAuthenticateResult
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import com.reservation.utilities.provider.JWTProvider
 import com.reservation.utilities.provider.JWTRecord
@@ -48,7 +48,7 @@ class AuthenticateGeneralUserUseCaseTest {
     private lateinit var createUserHistoriesCommand: CreateUserAccessHistoriesCommand
 
     @MockK
-    private lateinit var saveRefreshToken: SaveRefreshToken
+    private lateinit var saveGeneralUserRefreshToken: SaveGeneralUserRefreshToken
 
     @MockK
     private lateinit var updateAuthenticateResult: UpdateAuthenticateResult
@@ -265,7 +265,7 @@ class AuthenticateGeneralUserUseCaseTest {
             createUserHistoriesCommand.execute(any())
             updateAuthenticateResult.command(any())
         } returns Unit
-        every { saveRefreshToken.command(any()) } just runs
+        every { saveGeneralUserRefreshToken.command(any()) } just runs
         every { tokenProvider.tokenize(any(), any()) } answers { callOriginal() }
 
         val result = useCase.execute(query)

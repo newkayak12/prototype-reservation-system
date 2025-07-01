@@ -1,4 +1,4 @@
-package com.reservation.user.self.port.output
+package com.reservation.authenticate.port.output
 
 import com.reservation.authenticate.Authenticate
 import com.reservation.enumeration.Role

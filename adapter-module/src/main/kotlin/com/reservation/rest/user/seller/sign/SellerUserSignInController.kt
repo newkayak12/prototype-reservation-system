@@ -1,10 +1,10 @@
-package com.reservation.rest.user.general.sign
+package com.reservation.rest.user.seller.sign
 
-import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery
-import com.reservation.rest.user.general.GeneralUserUrl
+import com.reservation.authenticate.port.input.AuthenticateSellerUserQuery
 import com.reservation.rest.user.general.RefreshTokenDefinitions
-import com.reservation.rest.user.general.request.GeneralUserLoginRequest
-import com.reservation.rest.user.general.response.LoginGeneralUserResponse
+import com.reservation.rest.user.seller.SellerUserUrl
+import com.reservation.rest.user.seller.request.SellerUserLoginRequest
+import com.reservation.rest.user.seller.response.LoginSellerUserResponse
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
@@ -13,15 +13,15 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class GeneralUserSignInController(
-    private val authenticateGeneralUserQuery: AuthenticateGeneralUserQuery,
+class SellerUserSignInController(
+    private val authenticateSellerUserQuery: AuthenticateSellerUserQuery,
 ) {
-    @PutMapping(GeneralUserUrl.USER_SIGN_IN)
+    @PutMapping(SellerUserUrl.USER_SIGN_IN)
     fun signIn(
-        @RequestBody @Valid request: GeneralUserLoginRequest,
+        @RequestBody @Valid request: SellerUserLoginRequest,
         httpServletResponse: HttpServletResponse,
-    ): LoginGeneralUserResponse {
-        val result = authenticateGeneralUserQuery.execute(request.toQuery())
+    ): LoginSellerUserResponse {
+        val result = authenticateSellerUserQuery.execute(request.toQuery())
 
         val refreshTokenCookie =
             Cookie(RefreshTokenDefinitions.REFRESH_TOKEN_KEY, result.refreshToken)
@@ -30,6 +30,6 @@ class GeneralUserSignInController(
         refreshTokenCookie.isHttpOnly = RefreshTokenDefinitions.HTTP_ONLY
         httpServletResponse.addCookie(refreshTokenCookie)
 
-        return LoginGeneralUserResponse.from(result)
+        return LoginSellerUserResponse.from(result)
     }
 }

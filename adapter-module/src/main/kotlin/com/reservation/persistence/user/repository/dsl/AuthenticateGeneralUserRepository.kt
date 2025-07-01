@@ -2,14 +2,14 @@ package com.reservation.persistence.user.repository.dsl
 
 import com.querydsl.core.types.Projections
 import com.querydsl.jpa.impl.JPAQueryFactory
+import com.reservation.authenticate.port.output.AuthenticateGeneralUser
+import com.reservation.authenticate.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserInquiry
+import com.reservation.authenticate.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserResult
 import com.reservation.persistence.user.entity.QUserEntity.userEntity
-import com.reservation.user.self.port.output.AuthenticateGeneralUser
-import com.reservation.user.self.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserInquiry
-import com.reservation.user.self.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserResult
 import org.springframework.stereotype.Component
 
 @Component
-class AuthenticateRepository(
+class AuthenticateGeneralUserRepository(
     private val query: JPAQueryFactory,
 ) : AuthenticateGeneralUser {
     override fun query(request: AuthenticateGeneralUserInquiry): AuthenticateGeneralUserResult? {

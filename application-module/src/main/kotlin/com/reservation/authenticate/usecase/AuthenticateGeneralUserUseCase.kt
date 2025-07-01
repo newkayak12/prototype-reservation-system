@@ -1,23 +1,23 @@
-package com.reservation.user.self.usecase
+package com.reservation.authenticate.usecase
 
 import com.reservation.authenticate.AccessHistory
 import com.reservation.authenticate.Authenticate
+import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery
+import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery.AuthenticateGeneralUserQueryResult
+import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
+import com.reservation.authenticate.port.output.AuthenticateGeneralUser
+import com.reservation.authenticate.port.output.SaveGeneralUserRefreshToken
+import com.reservation.authenticate.port.output.SaveGeneralUserRefreshToken.SaveRefreshTokenInquiry
+import com.reservation.authenticate.port.output.UpdateAuthenticateResult
+import com.reservation.authenticate.port.output.UpdateAuthenticateResult.UpdateAuthenticateResultDto
 import com.reservation.authenticate.service.AuthenticateSignInService
+import com.reservation.common.exceptions.AccessFailureCountHasExceedException
 import com.reservation.common.exceptions.NoSuchPersistedElementException
+import com.reservation.common.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.config.annotations.UseCase
 import com.reservation.enumeration.JWTType
-import com.reservation.user.exceptions.AccessFailureCountHasExceedException
-import com.reservation.user.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
 import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand.CreateUserHistoryCommandDto
-import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery
-import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.AuthenticateGeneralUserQueryResult
-import com.reservation.user.self.port.input.AuthenticateGeneralUserQuery.GeneralUserQueryDto
-import com.reservation.user.self.port.output.AuthenticateGeneralUser
-import com.reservation.user.self.port.output.SaveRefreshToken
-import com.reservation.user.self.port.output.SaveRefreshToken.SaveRefreshTokenInquiry
-import com.reservation.user.self.port.output.UpdateAuthenticateResult
-import com.reservation.user.self.port.output.UpdateAuthenticateResult.UpdateAuthenticateResultDto
 import com.reservation.utilities.provider.JWTRecord
 import com.reservation.utilities.provider.TokenProvider
 import org.springframework.transaction.annotation.Transactional
@@ -27,9 +27,9 @@ class AuthenticateGeneralUserUseCase(
     private val authenticateSignInService: AuthenticateSignInService,
     private val authenticateGeneralUser: AuthenticateGeneralUser,
     private val createUserHistoriesCommand: CreateUserAccessHistoriesCommand,
-    private val updateAuthenticateResult: UpdateAuthenticateResult,
+    private val updateGeneralUserAuthenticateResult: UpdateAuthenticateResult,
     private val tokenProvider: TokenProvider<JWTRecord>,
-    private val saveRefreshToken: SaveRefreshToken,
+    private val saveGeneralUserRefreshToken: SaveGeneralUserRefreshToken,
 ) : AuthenticateGeneralUserQuery {
     @Transactional(
         noRollbackFor = [
@@ -53,7 +53,7 @@ class AuthenticateGeneralUserUseCase(
         checkUserPasswordMatchWasFailed(authenticated)
         val result = tokenize(authenticated)
 
-        saveRefreshToken.command(
+        saveGeneralUserRefreshToken.command(
             SaveRefreshTokenInquiry(
                 authenticated.id,
                 result.refreshToken,
@@ -78,7 +78,7 @@ class AuthenticateGeneralUserUseCase(
 
     private fun updateAuthenticateResult(authenticated: Authenticate) {
         // authenticated.
-        updateAuthenticateResult.command(
+        updateGeneralUserAuthenticateResult.command(
             UpdateAuthenticateResultDto(
                 authenticated.id,
                 authenticated.failCount,

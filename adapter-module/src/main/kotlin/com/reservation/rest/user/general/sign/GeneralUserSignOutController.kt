@@ -1,6 +1,7 @@
 package com.reservation.rest.user.general.sign
 
 import com.reservation.rest.user.general.GeneralUserUrl
+import com.reservation.rest.user.general.RefreshTokenDefinitions
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus

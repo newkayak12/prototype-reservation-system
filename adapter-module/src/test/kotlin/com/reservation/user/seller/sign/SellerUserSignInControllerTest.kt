@@ -1,19 +1,20 @@
-package com.reservation.user.general.sign
+package com.reservation.user.seller.sign
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.ninjasquad.springmockk.MockkBean
-import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery
-import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery.AuthenticateGeneralUserQueryResult
+import com.reservation.authenticate.port.input.AuthenticateSellerUserQuery
+import com.reservation.authenticate.port.input.AuthenticateSellerUserQuery.AuthenticateSellerUserQueryResult
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.request.GeneralUserLoginRequest
-import com.reservation.rest.user.general.sign.GeneralUserSignInController
+import com.reservation.rest.user.seller.SellerUserUrl
+import com.reservation.rest.user.seller.request.SellerUserLoginRequest
+import com.reservation.rest.user.seller.sign.SellerUserSignInController
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.data.forAll
 import io.kotest.data.row
 import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
@@ -28,28 +29,27 @@ import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put
 import org.springframework.restdocs.payload.JsonFieldType.STRING
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @AutoConfigureRestDocs
 @ActiveProfiles(value = ["test"])
 @Import(value = [TestSecurity::class])
-@WebMvcTest(GeneralUserSignInController::class)
+@WebMvcTest(SellerUserSignInController::class)
 @ExtendWith(RestDocumentationExtension::class)
-class GeneralUserSignInControllerTest(
+class SellerUserSignInControllerTest(
     private val mockMvc: MockMvc,
     private val objectMapper: ObjectMapper,
 ) : FunSpec() {
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var authenticateGeneralUserQuery: AuthenticateGeneralUserQuery
+    private lateinit var authenticateSellerUserQuery: AuthenticateSellerUserQuery
 
     init {
 
-        test("로그인을 시도했으나 jakarta validation에 부합하지 않아 실패한다.") {
-
-            forAll(
+        test("로그인 시도했으나 JakartaAnnotation에서 걸려 실패한다.") {
+            io.kotest.data.forAll(
                 row("loginId"),
                 row("password"),
             ) { emptyParameter ->
@@ -65,7 +65,7 @@ class GeneralUserSignInControllerTest(
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)),
                 )
-                    .andDo(print())
+                    .andDo(MockMvcResultHandlers.print())
                     .andExpectAll(
                         status().is4xxClientError,
                     )
@@ -76,26 +76,26 @@ class GeneralUserSignInControllerTest(
 
             val jakartaMonkey = FixtureMonkeyFactory.giveMeJakartaMonkey().build()
 
-            val request = jakartaMonkey.giveMeOne<GeneralUserLoginRequest>()
+            val request = jakartaMonkey.giveMeOne<SellerUserLoginRequest>()
 
             every {
-                authenticateGeneralUserQuery.execute(any())
-            } returns jakartaMonkey.giveMeOne<AuthenticateGeneralUserQueryResult>()
+                authenticateSellerUserQuery.execute(any())
+            } returns jakartaMonkey.giveMeOne<AuthenticateSellerUserQueryResult>()
 
             mockMvc.perform(
-                put(GeneralUserUrl.USER_SIGN_IN)
+                put(SellerUserUrl.USER_SIGN_IN)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)),
             )
                 .andExpectAll(
                     status().is2xxSuccessful,
                 )
-                .andDo(print())
+                .andDo(MockMvcResultHandlers.print())
                 .andDo(
                     RestDocuments(
                         identifier = "signIn",
-                        documentTags = listOf("general_user"),
-                        summary = "일반 회원 로그인",
+                        documentTags = listOf("seller_user"),
+                        summary = "매장 회원 로그인",
                         requestBody =
                             arrayOf(
                                 Body("loginId", STRING, false, "아이디"),

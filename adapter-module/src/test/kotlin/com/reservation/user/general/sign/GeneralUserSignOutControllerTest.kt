@@ -3,8 +3,8 @@ package com.reservation.user.general.sign
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
 import com.reservation.rest.user.general.GeneralUserUrl
+import com.reservation.rest.user.general.RefreshTokenDefinitions
 import com.reservation.rest.user.general.sign.GeneralUserSignOutController
-import com.reservation.rest.user.general.sign.RefreshTokenDefinitions
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
 import jakarta.servlet.http.Cookie
