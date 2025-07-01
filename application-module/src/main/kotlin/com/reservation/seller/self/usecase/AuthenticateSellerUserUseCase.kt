@@ -2,22 +2,22 @@ package com.reservation.seller.self.usecase
 
 import com.reservation.authenticate.AccessHistory
 import com.reservation.authenticate.Authenticate
+import com.reservation.authenticate.port.input.AuthenticateSellerUserQuery
+import com.reservation.authenticate.port.input.AuthenticateSellerUserQuery.AuthenticateSellerUserQueryResult
+import com.reservation.authenticate.port.input.AuthenticateSellerUserQuery.SellerUserQueryDto
+import com.reservation.authenticate.port.output.AuthenticateSellerUser
+import com.reservation.authenticate.port.output.SaveSellerUserRefreshToken
+import com.reservation.authenticate.port.output.SaveSellerUserRefreshToken.SaveSellerUserRefreshTokenInquiry
+import com.reservation.authenticate.port.output.UpdateAuthenticateResult
+import com.reservation.authenticate.port.output.UpdateAuthenticateResult.UpdateAuthenticateResultDto
 import com.reservation.authenticate.service.AuthenticateSignInService
 import com.reservation.common.exceptions.AccessFailureCountHasExceedException
 import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.common.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.config.annotations.UseCase
 import com.reservation.enumeration.JWTType
-import com.reservation.seller.self.port.input.AuthenticateSellerUserQuery
-import com.reservation.seller.self.port.input.AuthenticateSellerUserQuery.AuthenticateSellerUserQueryResult
-import com.reservation.seller.self.port.input.AuthenticateSellerUserQuery.SellerUserQueryDto
-import com.reservation.seller.self.port.output.AuthenticateSellerUser
-import com.reservation.seller.self.port.output.CreateSellerUserAccessHistoriesCommand
-import com.reservation.seller.self.port.output.CreateSellerUserAccessHistoriesCommand.CreateSellerUserAccessHistoriesCommandDto
-import com.reservation.seller.self.port.output.SaveSellerUserRefreshToken
-import com.reservation.seller.self.port.output.SaveSellerUserRefreshToken.SaveSellerUserRefreshTokenInquiry
-import com.reservation.seller.self.port.output.UpdateSellerUserAuthenticateResult
-import com.reservation.seller.self.port.output.UpdateSellerUserAuthenticateResult.UpdateSellerUserAuthenticateResultDto
+import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
+import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand.CreateUserHistoryCommandDto
 import com.reservation.utilities.provider.JWTRecord
 import com.reservation.utilities.provider.TokenProvider
 import org.springframework.transaction.annotation.Transactional
@@ -26,8 +26,8 @@ import org.springframework.transaction.annotation.Transactional
 class AuthenticateSellerUserUseCase(
     private val authenticateSignInService: AuthenticateSignInService,
     private val authenticateSellerUser: AuthenticateSellerUser,
-    private val createSellerUserAccessHistoriesCommand: CreateSellerUserAccessHistoriesCommand,
-    private val updateSellerUserAuthenticateResult: UpdateSellerUserAuthenticateResult,
+    private val createUserAccessHistoriesCommand: CreateUserAccessHistoriesCommand,
+    private val updateAuthenticateResult: UpdateAuthenticateResult,
     private val tokenProvider: TokenProvider<JWTRecord>,
     private val saveSellerUserRefreshToken: SaveSellerUserRefreshToken,
 ) : AuthenticateSellerUserQuery {
@@ -58,9 +58,9 @@ class AuthenticateSellerUserUseCase(
     }
 
     private fun createAccessHistory(accessHistories: List<AccessHistory>) {
-        createSellerUserAccessHistoriesCommand.execute(
+        createUserAccessHistoriesCommand.execute(
             accessHistories.map {
-                CreateSellerUserAccessHistoriesCommandDto(
+                CreateUserHistoryCommandDto(
                     it.authenticateId,
                     it.loginId,
                     it.accessStatus(),
@@ -71,8 +71,8 @@ class AuthenticateSellerUserUseCase(
     }
 
     private fun updateAuthenticateResult(authenticated: Authenticate) {
-        updateSellerUserAuthenticateResult.command(
-            UpdateSellerUserAuthenticateResultDto(
+        updateAuthenticateResult.command(
+            UpdateAuthenticateResultDto(
                 authenticated.id,
                 authenticated.failCount,
                 authenticated.lockedDateTime,
