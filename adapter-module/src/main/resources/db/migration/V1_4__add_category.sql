@@ -7,7 +7,7 @@ CREATE TABLE prototype_reservation.category
     is_deleted       TINYINT  DEFAULT 0 COMMENT '삭제 여부',
     created_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() COMMENT '생성 날짜-시간',
     updated_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '수정 날짜-시간',
-    PRIMARY KEY (id),
+    PRIMARY KEY AUTO_INCREMENT (id),
     index index_category_type (category_type, id)
 ) ENGINE = innodb
   DEFAULT CHARACTER SET 'utf8mb4'
