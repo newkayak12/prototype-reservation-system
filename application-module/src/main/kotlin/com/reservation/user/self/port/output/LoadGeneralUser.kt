@@ -1,9 +1,9 @@
 package com.reservation.user.self.port.output
 
+import com.reservation.user.self.User
 import com.reservation.user.shared.LoginId
 import com.reservation.user.shared.Password
 import com.reservation.user.shared.PersonalAttributes
-import com.reservation.user.self.User
 import java.time.LocalDateTime
 
 @FunctionalInterface

@@ -1,8 +1,8 @@
-package com.reservation.resign.self.service
+package com.reservation.user.resign.service
 
-import com.reservation.resign.self.EncryptedAttributes
-import com.reservation.resign.self.ResignedUser
 import com.reservation.user.policy.availables.UserResignable
+import com.reservation.user.resign.EncryptedAttributes
+import com.reservation.user.resign.ResignedUser
 import com.reservation.utilities.encrypt.bidirectional.BidirectionalEncryptUtility
 
 /**

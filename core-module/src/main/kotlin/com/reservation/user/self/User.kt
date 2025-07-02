@@ -2,14 +2,14 @@ package com.reservation.user.self
 
 import com.reservation.enumeration.Role
 import com.reservation.enumeration.Role.USER
-import com.reservation.resign.self.EncryptedAttributes
-import com.reservation.resign.self.ResignedUser
+import com.reservation.user.common.exceptions.ResignWithoutIdException
+import com.reservation.user.policy.formats.ServiceUser
+import com.reservation.user.resign.EncryptedAttributes
+import com.reservation.user.resign.ResignedUser
 import com.reservation.user.shared.LoginId
 import com.reservation.user.shared.Password
 import com.reservation.user.shared.PersonalAttributes
 import com.reservation.user.shared.UserAttribute
-import com.reservation.user.common.exceptions.ResignWithoutIdException
-import com.reservation.user.policy.formats.ServiceUser
 import java.time.LocalDateTime
 
 /**

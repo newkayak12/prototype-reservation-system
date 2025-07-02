@@ -1,4 +1,4 @@
-package com.reservation.resign.self
+package com.reservation.user.resign
 
 data class EncryptedAttributes(
     val encryptedEmail: String,

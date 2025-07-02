@@ -6,7 +6,7 @@ import com.reservation.resign.port.input.ResignUserCommand
 import com.reservation.resign.port.output.LoadResignTargetUser
 import com.reservation.resign.port.output.ResignTargetUser
 import com.reservation.resign.port.output.ResignTargetUser.ResignInquiry
-import com.reservation.resign.self.service.ResignUserService
+import com.reservation.user.resign.service.ResignUserService
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
