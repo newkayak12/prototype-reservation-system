@@ -1,5 +1,5 @@
-DROP TABLE IF EXISTS prototype_reservation.`nationality`;
-CREATE TABLE prototype_reservation.`nationality`
+DROP TABLE IF EXISTS prototype_reservation.category;
+CREATE TABLE prototype_reservation.category
 (
     id               BIGINT COMMENT '카테고리 식별키',
     title            VARCHAR(64) NOT NULL COMMENT '카테고리명',
