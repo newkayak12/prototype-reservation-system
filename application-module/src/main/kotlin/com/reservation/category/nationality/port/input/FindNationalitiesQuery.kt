@@ -7,7 +7,7 @@ fun interface FindNationalitiesQuery {
     fun execute(request: FindNationalitiesQueryDto): List<FindNationalitiesQueryResult>
 
     data class FindNationalitiesQueryDto(
-        val title: String,
+        val title: String?,
     ) {
         fun toInquiry() = FindNationalitiesInquiry(title)
     }
