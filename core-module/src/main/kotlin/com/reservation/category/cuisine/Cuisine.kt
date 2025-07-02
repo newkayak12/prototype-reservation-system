@@ -1,16 +1,16 @@
-package com.reservation.category.nationality
+package com.reservation.category.cuisine
 
 import com.reservation.category.shared.CategoryDetail
-import com.reservation.enumeration.CategoryType.NATIONALITY
+import com.reservation.enumeration.CategoryType.CUISINE
 
-class Nationality(
+class Cuisine(
     val id: Long,
     title: String,
 ) {
     private var categoryDetail: CategoryDetail =
         CategoryDetail(
             title,
-            NATIONALITY,
+            CUISINE,
         )
 
     val title: String
