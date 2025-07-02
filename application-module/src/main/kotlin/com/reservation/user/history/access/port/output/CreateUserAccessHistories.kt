@@ -1,7 +1,7 @@
 package com.reservation.user.history.access.port.output
 
 import com.reservation.enumeration.AccessStatus
-import com.reservation.shared.user.LoginId
+import com.reservation.user.shared.LoginId
 import java.time.LocalDateTime
 
 @FunctionalInterface

@@ -1,7 +1,7 @@
 package com.reservation.resign.port.output
 
 import com.reservation.resign.self.EncryptedAttributes
-import com.reservation.shared.user.LoginId
+import com.reservation.user.shared.LoginId
 import java.time.LocalDateTime
 
 @FunctionalInterface

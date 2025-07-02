@@ -1,4 +1,4 @@
-package com.reservation.shared.user
+package com.reservation.user.shared
 
 import java.time.LocalDateTime
 

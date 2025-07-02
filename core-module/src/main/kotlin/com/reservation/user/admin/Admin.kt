@@ -3,8 +3,8 @@ package com.reservation.user.admin
 import com.reservation.enumeration.Role
 import com.reservation.resign.self.EncryptedAttributes
 import com.reservation.resign.self.ResignedUser
-import com.reservation.shared.user.LoginId
-import com.reservation.shared.user.Password
+import com.reservation.user.shared.LoginId
+import com.reservation.user.shared.Password
 import com.reservation.user.policy.availables.PasswordChangeable
 import com.reservation.user.policy.availables.UserResignable
 import java.time.LocalDateTime

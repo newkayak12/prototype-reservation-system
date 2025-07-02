@@ -1,8 +1,8 @@
 package com.reservation.user.self.service
 
-import com.reservation.shared.user.LoginId
-import com.reservation.shared.user.Password
-import com.reservation.shared.user.PersonalAttributes
+import com.reservation.user.shared.LoginId
+import com.reservation.user.shared.Password
+import com.reservation.user.shared.PersonalAttributes
 import com.reservation.user.common.exceptions.InvalidateUserElementException
 import com.reservation.user.policy.formats.CreateUserFormats
 import com.reservation.user.policy.validations.EmailFormatValidationPolicy

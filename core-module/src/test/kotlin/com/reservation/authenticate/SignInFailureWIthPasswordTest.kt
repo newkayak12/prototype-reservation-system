@@ -4,7 +4,7 @@ import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.reservation.authenticate.service.AuthenticateSignInService
 import com.reservation.enumeration.AccessStatus
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.shared.user.Password
+import com.reservation.user.shared.Password
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldHaveSize

@@ -1,6 +1,6 @@
 package com.reservation.user.policy.availables
 
-import com.reservation.shared.user.UserAttribute
+import com.reservation.user.shared.UserAttribute
 
 interface UserAttributeChangeable {
     fun userAttributes(): UserAttribute

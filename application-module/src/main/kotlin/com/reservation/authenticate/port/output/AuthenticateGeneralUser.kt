@@ -3,9 +3,9 @@ package com.reservation.authenticate.port.output
 import com.reservation.authenticate.Authenticate
 import com.reservation.enumeration.Role
 import com.reservation.enumeration.UserStatus
-import com.reservation.shared.user.LockState
-import com.reservation.shared.user.LoginId
-import com.reservation.shared.user.Password
+import com.reservation.user.shared.LockState
+import com.reservation.user.shared.LoginId
+import com.reservation.user.shared.Password
 import java.time.LocalDateTime
 
 @FunctionalInterface
