@@ -6,6 +6,8 @@ import com.reservation.persistence.common.LogicalDelete
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -15,7 +17,7 @@ import org.hibernate.annotations.Comment
 
 @Table(
     catalog = "prototype_reservation",
-    name = "user",
+    name = "category",
     indexes = [
         Index(name = "index_category_type", columnList = "category_type, id"),
     ],
@@ -25,7 +27,6 @@ class CategoryEntity(
     title: String,
     categoryType: CategoryType,
 ) {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -38,19 +39,19 @@ class CategoryEntity(
         protected set
 
     @Column(name = "category_type", nullable = false)
+    @Enumerated(EnumType.STRING)
     val categoryType: CategoryType = categoryType
 
     @Embedded
-    var isDeleted: LogicalDelete = LogicalDelete()
+    var logicalDelete: LogicalDelete = LogicalDelete()
         protected set
 
     @Embedded
     var auditDateTime: AuditDateTime = AuditDateTime()
         protected set
 
-
     fun delete() {
-        isDeleted = LogicalDelete(true)
+        logicalDelete = LogicalDelete(true)
     }
 
     fun changeTitle(title: String) {
