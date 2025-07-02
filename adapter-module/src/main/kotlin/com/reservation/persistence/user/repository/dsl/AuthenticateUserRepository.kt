@@ -19,30 +19,32 @@ class AuthenticateUserRepository(
     private val query: JPAQueryFactory,
 ) : AuthenticateGeneralUser, AuthenticateSellerUser {
     override fun query(request: AuthenticateGeneralUserInquiry): AuthenticateGeneralUserResult? {
-        val inquiry = Inquiry(
-            request.loginId,
-            request.password,
-            request.role
-        )
+        val inquiry =
+            Inquiry(
+                request.loginId,
+                request.password,
+                request.role,
+            )
 
         return queryToDatabase(inquiry)?.let {
-                AuthenticateGeneralUserResult(
-                    it.id,
-                    it.loginId,
-                    it.password,
-                    it.failCount,
-                    it.userStatus,
-                    it.lockedDatetime,
-                )
-            }
+            AuthenticateGeneralUserResult(
+                it.id,
+                it.loginId,
+                it.password,
+                it.failCount,
+                it.userStatus,
+                it.lockedDatetime,
+            )
+        }
     }
 
     override fun query(request: AuthenticateSellerUserInquiry): AuthenticateSellerUserResult? {
-        val inquiry = Inquiry(
-            request.loginId,
-            request.password,
-            request.role
-        )
+        val inquiry =
+            Inquiry(
+                request.loginId,
+                request.password,
+                request.role,
+            )
         return queryToDatabase(inquiry)?.let {
             AuthenticateSellerUserResult(
                 it.id,
@@ -54,7 +56,6 @@ class AuthenticateUserRepository(
             )
         }
     }
-
 
     private fun queryToDatabase(inquiry: Inquiry): Result? {
         return query.select(
