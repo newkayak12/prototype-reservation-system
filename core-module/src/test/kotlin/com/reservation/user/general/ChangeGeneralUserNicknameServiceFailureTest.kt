@@ -3,12 +3,12 @@ package com.reservation.user.general
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.shared.user.LoginId
-import com.reservation.shared.user.Password
-import com.reservation.shared.user.PersonalAttributes
 import com.reservation.user.common.exceptions.InvalidateUserElementException
 import com.reservation.user.self.User
 import com.reservation.user.service.ChangeUserNicknameService
+import com.reservation.user.shared.LoginId
+import com.reservation.user.shared.Password
+import com.reservation.user.shared.PersonalAttributes
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 

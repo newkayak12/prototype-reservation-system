@@ -2,7 +2,7 @@ package com.reservation.user.history.change.port.output
 
 import com.reservation.enumeration.Role
 
-interface CreateGeneralUserChangeHistory {
+fun interface CreateGeneralUserChangeHistory {
     fun save(inquiry: CreateGeneralUserChangeHistoryInquiry)
 
     data class CreateGeneralUserChangeHistoryInquiry(

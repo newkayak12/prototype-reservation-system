@@ -1,7 +1,6 @@
 package com.reservation.user.self.port.output
 
-@FunctionalInterface
-interface SendFindGeneralUserPasswordAsEmail {
+fun interface SendFindGeneralUserPasswordAsEmail {
     fun execute(form: FindGeneralUserPasswordEmailForm)
 
     data class FindGeneralUserPasswordEmailForm(

@@ -1,14 +1,15 @@
 package com.reservation.user.owner
 
 import com.reservation.enumeration.Role
-import com.reservation.resign.self.EncryptedAttributes
-import com.reservation.resign.self.ResignedUser
-import com.reservation.shared.user.LoginId
-import com.reservation.shared.user.Password
-import com.reservation.shared.user.PersonalAttributes
-import com.reservation.shared.user.UserAttribute
+import com.reservation.enumeration.Role.RESTAURANT_OWNER
 import com.reservation.user.common.exceptions.ResignWithoutIdException
 import com.reservation.user.policy.formats.ServiceUser
+import com.reservation.user.resign.EncryptedAttributes
+import com.reservation.user.resign.ResignedUser
+import com.reservation.user.shared.LoginId
+import com.reservation.user.shared.Password
+import com.reservation.user.shared.PersonalAttributes
+import com.reservation.user.shared.UserAttribute
 import java.time.LocalDateTime
 
 class RestaurantOwner(
@@ -18,7 +19,7 @@ class RestaurantOwner(
     private var personalAttributes: PersonalAttributes,
     nickname: String,
 ) : ServiceUser {
-    private var userAttributes: UserAttribute = UserAttribute(nickname, Role.RESTAURANT_OWNER)
+    private var userAttributes: UserAttribute = UserAttribute(nickname, RESTAURANT_OWNER)
 
     override val identifier: String?
         get() = id

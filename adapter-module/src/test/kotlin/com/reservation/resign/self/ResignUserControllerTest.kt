@@ -7,9 +7,9 @@ import com.reservation.config.restdoc.PathParameter
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
-import com.reservation.resign.port.input.ResignUserCommand
 import com.reservation.rest.resign.ResignUrl
 import com.reservation.rest.resign.self.ResignUserController
+import com.reservation.user.resign.port.input.ResignUserCommand
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension

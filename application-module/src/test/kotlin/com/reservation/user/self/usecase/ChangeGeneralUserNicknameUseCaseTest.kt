@@ -6,9 +6,6 @@ import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.exceptions.InvalidSituationException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.shared.user.LoginId
-import com.reservation.shared.user.Password
-import com.reservation.shared.user.PersonalAttributes
 import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryCommand
 import com.reservation.user.self.User
 import com.reservation.user.self.port.input.ChangeGeneralUserNicknameCommand.ChangeGeneralUserNicknameCommandDto
@@ -17,6 +14,9 @@ import com.reservation.user.self.port.output.CheckGeneralUserNicknameDuplicated
 import com.reservation.user.self.port.output.LoadGeneralUser
 import com.reservation.user.self.port.output.LoadGeneralUser.LoadGeneralUserResult
 import com.reservation.user.service.ChangeUserNicknameService
+import com.reservation.user.shared.LoginId
+import com.reservation.user.shared.Password
+import com.reservation.user.shared.PersonalAttributes
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs

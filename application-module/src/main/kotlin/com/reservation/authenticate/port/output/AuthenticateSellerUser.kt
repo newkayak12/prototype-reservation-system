@@ -3,16 +3,15 @@ package com.reservation.authenticate.port.output
 import com.reservation.authenticate.Authenticate
 import com.reservation.enumeration.Role
 import com.reservation.enumeration.UserStatus
-import com.reservation.shared.user.LockState
-import com.reservation.shared.user.LoginId
-import com.reservation.shared.user.Password
+import com.reservation.user.shared.LockState
+import com.reservation.user.shared.LoginId
+import com.reservation.user.shared.Password
 import java.time.LocalDateTime
 
 /**
  * loginId, password, Role.RESTAURANT_OWNER로 쿼리하여 결과를 가지고 옵니다.ㅁ
  */
-@FunctionalInterface
-interface AuthenticateSellerUser {
+fun interface AuthenticateSellerUser {
     fun query(request: AuthenticateSellerUserInquiry): AuthenticateSellerUserResult?
 
     data class AuthenticateSellerUserInquiry(
