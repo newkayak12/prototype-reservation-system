@@ -1,5 +1,3 @@
-ALTER TABLE prototype_reservation.category
-MODIFY  COLUMN category_type ENUM('NATIONALITY', 'CUISINE');
 
 INSERT INTO prototype_reservation.category
     (title, category_type)
