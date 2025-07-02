@@ -13,7 +13,7 @@ class FindCuisineController(
     private val findCuisinesQuery: FindCuisinesQuery,
 ) {
     @GetMapping(CategoryUrl.CUISINE)
-    fun findNationalities(request: FindCuisineRequest): ListResponse<FindCuisineResponse> =
+    fun findCuisines(request: FindCuisineRequest): ListResponse<FindCuisineResponse> =
         ListResponse.ok(
             findCuisinesQuery.execute(request.toQuery())
                 .map {
