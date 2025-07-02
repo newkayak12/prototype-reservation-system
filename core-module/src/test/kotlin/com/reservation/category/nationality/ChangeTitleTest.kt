@@ -1,7 +1,5 @@
 package com.reservation.category.nationality
 
-import com.reservation.category.shared.CategoryDetail
-import com.reservation.enumeration.CategoryType.NATIONALITY
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.equals.shouldBeEqual
 import io.mockk.spyk
@@ -15,7 +13,7 @@ class ChangeTitleTest : FunSpec(
                 spyk(
                     Nationality(
                         0L,
-                        CategoryDetail("대한민국", NATIONALITY),
+                        "대한민국",
                     ),
                 )
             val target = "미국"
