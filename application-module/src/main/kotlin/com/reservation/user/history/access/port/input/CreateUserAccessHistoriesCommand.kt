@@ -5,8 +5,7 @@ import com.reservation.user.history.access.port.output.CreateUserAccessHistories
 import com.reservation.user.shared.LoginId
 import java.time.LocalDateTime
 
-@FunctionalInterface
-interface CreateUserAccessHistoriesCommand {
+fun interface CreateUserAccessHistoriesCommand {
     fun execute(histories: List<CreateUserHistoryCommandDto>)
 
     data class CreateUserHistoryCommandDto(

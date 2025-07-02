@@ -4,8 +4,7 @@ import com.reservation.enumeration.AccessStatus
 import com.reservation.user.shared.LoginId
 import java.time.LocalDateTime
 
-@FunctionalInterface
-interface CreateUserAccessHistories {
+fun interface CreateUserAccessHistories {
     fun saveAll(histories: List<CreateUserHistoryInquiry>)
 
     data class CreateUserHistoryInquiry(

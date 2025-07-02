@@ -5,8 +5,7 @@ import com.reservation.authenticate.port.output.AuthenticateGeneralUser.Authenti
 /**
  * 로그인을 위한 사용자를 조회합니다.
  */
-@FunctionalInterface
-interface AuthenticateGeneralUserQuery {
+fun interface AuthenticateGeneralUserQuery {
     fun execute(request: GeneralUserQueryDto): AuthenticateGeneralUserQueryResult
 
     data class GeneralUserQueryDto(

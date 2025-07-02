@@ -4,7 +4,7 @@ import com.reservation.enumeration.Role
 import com.reservation.enumeration.Role.USER
 import com.reservation.user.history.change.port.output.CreateGeneralUserChangeHistory.CreateGeneralUserChangeHistoryInquiry
 
-interface CreateGeneralUserChangeHistoryCommand {
+fun interface CreateGeneralUserChangeHistoryCommand {
     fun execute(command: CreateGeneralUserChangeHistoryCommandDto)
 
     data class CreateGeneralUserChangeHistoryCommandDto(

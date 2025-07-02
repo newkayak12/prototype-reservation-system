@@ -6,8 +6,7 @@ import com.reservation.user.shared.Password
 import com.reservation.user.shared.PersonalAttributes
 import java.time.LocalDateTime
 
-@FunctionalInterface
-interface LoadResignTargetUser {
+fun interface LoadResignTargetUser {
     fun load(id: String): LoadResignTargetResult?
 
     data class LoadResignTargetResult(

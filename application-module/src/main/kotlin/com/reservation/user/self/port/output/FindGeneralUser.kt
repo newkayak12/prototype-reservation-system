@@ -6,8 +6,7 @@ import com.reservation.enumeration.UserStatus
 import com.reservation.enumeration.UserStatus.ACTIVATED
 import com.reservation.user.self.port.input.FindGeneralUserQuery.FindGeneralUserQueryResult
 
-@FunctionalInterface
-interface FindGeneralUser {
+fun interface FindGeneralUser {
     fun query(inquiry: FindGeneralUserInquiry): FindGeneralUserResult?
 
     data class FindGeneralUserInquiry(

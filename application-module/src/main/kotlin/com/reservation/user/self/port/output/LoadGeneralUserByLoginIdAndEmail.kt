@@ -6,8 +6,7 @@ import com.reservation.user.shared.Password
 import com.reservation.user.shared.PersonalAttributes
 import java.time.LocalDateTime
 
-@FunctionalInterface
-interface LoadGeneralUserByLoginIdAndEmail {
+fun interface LoadGeneralUserByLoginIdAndEmail {
     fun load(
         inquiry: LoadGeneralUserByLoginIdAndEmailInquiry,
     ): LoadGeneralUserByLoginIdAndEmailResult?

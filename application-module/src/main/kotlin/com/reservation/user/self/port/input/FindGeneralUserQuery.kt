@@ -5,8 +5,7 @@ import com.reservation.enumeration.UserStatus
 /**
  * 일반 사용자의 정보 조회를 요구합니다.
  */
-@FunctionalInterface
-interface FindGeneralUserQuery {
+fun interface FindGeneralUserQuery {
     fun execute(id: String): FindGeneralUserQueryResult
 
     data class FindGeneralUserQueryResult(
