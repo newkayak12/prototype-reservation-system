@@ -36,7 +36,7 @@ body:
       placeholder: 최대한 세분화 해서 적어주세요!
     validations:
       required: true
-  - type: textarea
+  - type: markdown
     attributes:
       value: |
         ### 👤 UserStory
@@ -48,6 +48,10 @@ body:
               - Given : 
               - When : 
               - Then :
+  - type: textarea
+    attributes:
+      label: 👤 UserStory
+      placeholder: 위와 같은 형태로 작성해주세요.
   - type: textarea
     attributes:
       label: 🙋🏻 참고 자료
