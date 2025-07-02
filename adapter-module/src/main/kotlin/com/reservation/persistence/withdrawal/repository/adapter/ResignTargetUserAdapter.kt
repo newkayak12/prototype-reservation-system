@@ -3,8 +3,8 @@ package com.reservation.persistence.withdrawal.repository.adapter
 import com.reservation.persistence.user.repository.jpa.UserJpaRepository
 import com.reservation.persistence.withdrawal.entity.WithdrawalUserEntity
 import com.reservation.persistence.withdrawal.repository.jpa.WithdrawalJpaRepository
-import com.reservation.resign.port.output.ResignTargetUser
-import com.reservation.resign.port.output.ResignTargetUser.ResignInquiry
+import com.reservation.user.resign.port.output.ResignTargetUser
+import com.reservation.user.resign.port.output.ResignTargetUser.ResignInquiry
 import org.springframework.stereotype.Component
 
 @Component

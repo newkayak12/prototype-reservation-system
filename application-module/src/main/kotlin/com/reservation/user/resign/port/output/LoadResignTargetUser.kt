@@ -1,4 +1,4 @@
-package com.reservation.resign.port.output
+package com.reservation.user.resign.port.output
 
 import com.reservation.user.self.User
 import com.reservation.user.shared.LoginId

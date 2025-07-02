@@ -1,11 +1,11 @@
-package com.reservation.resign.usecase
+package com.reservation.user.resign.usecase
 
 import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.annotations.UseCase
-import com.reservation.resign.port.input.ResignUserCommand
-import com.reservation.resign.port.output.LoadResignTargetUser
-import com.reservation.resign.port.output.ResignTargetUser
-import com.reservation.resign.port.output.ResignTargetUser.ResignInquiry
+import com.reservation.user.resign.port.input.ResignUserCommand
+import com.reservation.user.resign.port.output.LoadResignTargetUser
+import com.reservation.user.resign.port.output.ResignTargetUser
+import com.reservation.user.resign.port.output.ResignTargetUser.ResignInquiry
 import com.reservation.user.resign.service.ResignUserService
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,8 +18,7 @@ class ResignUseCase(
     @Transactional
     override fun execute(id: String): Boolean {
         val user =
-            loadResignTargetUser.load(id)
-                ?.let { it.toDomain() }
+            loadResignTargetUser.load(id)?.toDomain()
                 ?: throw NoSuchPersistedElementException()
 
         val resignUser = resignUserService.resign(user)

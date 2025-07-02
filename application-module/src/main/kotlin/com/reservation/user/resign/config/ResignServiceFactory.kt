@@ -1,4 +1,4 @@
-package com.reservation.resign.config
+package com.reservation.user.resign.config
 
 import com.reservation.properties.BidirectionalEncryptProperties
 import com.reservation.user.resign.service.ResignUserService
