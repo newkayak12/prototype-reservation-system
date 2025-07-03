@@ -8,12 +8,17 @@ import com.reservation.company.vo.Representative
 
 class Company(
     val id: String,
-    var brand: Brand,
-    val business: Business,
-    var contact: Contact,
-    var address: Address,
-    var representative: Representative,
+    private var brand: Brand,
+    private val business: Business,
+    private var contact: Contact,
+    private var address: Address,
+    private var representative: Representative,
 ) {
+    val brandName: String
+        get() = brand.name
+    val brandUrl: String
+        get() = brand.url
+
     fun changeBrand(brand: Brand) {
         this.brand = brand
     }
