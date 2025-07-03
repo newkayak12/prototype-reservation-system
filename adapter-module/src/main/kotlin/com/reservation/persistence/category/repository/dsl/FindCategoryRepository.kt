@@ -8,6 +8,9 @@ import com.reservation.category.cuisine.port.output.FindCuisines.FindCuisinesRes
 import com.reservation.category.nationality.port.output.FindNationalities
 import com.reservation.category.nationality.port.output.FindNationalities.FindNationalitiesInquiry
 import com.reservation.category.nationality.port.output.FindNationalities.FindNationalitiesResult
+import com.reservation.category.tag.port.output.FindTags
+import com.reservation.category.tag.port.output.FindTags.FindTagsInquiry
+import com.reservation.category.tag.port.output.FindTags.FindTagsResult
 import com.reservation.enumeration.CategoryType
 import com.reservation.enumeration.CategoryType.NATIONALITY
 import com.reservation.persistence.category.entity.QCategoryEntity.categoryEntity
@@ -16,7 +19,7 @@ import org.springframework.stereotype.Component
 @Component
 class FindCategoryRepository(
     private val query: JPAQueryFactory,
-) : FindNationalities, FindCuisines {
+) : FindNationalities, FindCuisines, FindTags {
     override fun query(inquiry: FindNationalitiesInquiry): List<FindNationalitiesResult> {
         val databaseInquiry =
             Inquiry(
@@ -41,6 +44,22 @@ class FindCategoryRepository(
 
         return queryToDatabase(databaseInquiry).map {
             FindCuisinesResult(
+                it.id,
+                it.title,
+                it.categoryType,
+            )
+        }
+    }
+
+    override fun query(inquiry: FindTagsInquiry): List<FindTagsResult> {
+        val databaseInquiry =
+            Inquiry(
+                inquiry.title,
+                inquiry.categoryType,
+            )
+
+        return queryToDatabase(databaseInquiry).map {
+            FindTagsResult(
                 it.id,
                 it.title,
                 it.categoryType,

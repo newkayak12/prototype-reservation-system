@@ -1,12 +1,12 @@
-package com.reservation.category.nationality
+package com.reservation.category.tags
 
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
-import com.reservation.category.nationality.port.input.FindNationalitiesQuery.FindNationalitiesQueryDto
-import com.reservation.category.nationality.port.output.FindNationalities
-import com.reservation.category.nationality.port.output.FindNationalities.FindNationalitiesResult
-import com.reservation.category.nationality.usecase.FindNationalitiesUseCase
+import com.reservation.category.tag.port.input.FindTagsQuery.FindTagsQueryDto
+import com.reservation.category.tag.port.output.FindTags
+import com.reservation.category.tag.port.output.FindTags.FindTagsResult
+import com.reservation.category.tag.usecase.FindTagsUseCase
 import com.reservation.fixture.FixtureMonkeyFactory
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
@@ -20,23 +20,23 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(MockKExtension::class)
-class FindNationalityUseCaseTest {
+class FindTagsUseCaseTest {
     @MockK
-    private lateinit var findNationalities: FindNationalities
+    private lateinit var findTags: FindTags
 
     @InjectMockKs
-    private lateinit var useCase: FindNationalitiesUseCase
+    private lateinit var useCase: FindTagsUseCase
 
-    @DisplayName("카테고리 조회 요청을 진행하고 18건의 결과가 조회된다.")
+    @DisplayName("태그 조회 요청을 진행하고 18건의 결과가 조회된다.")
     @Test
-    fun findNationalities() {
+    fun findTags() {
         val size = 18
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-        val request = pureMonkey.giveMeOne<FindNationalitiesQueryDto>()
-        val resultList = pureMonkey.giveMe<FindNationalitiesResult>(size)
+        val request = pureMonkey.giveMeOne<FindTagsQueryDto>()
+        val resultList = pureMonkey.giveMe<FindTagsResult>(size)
 
         every {
-            findNationalities.query(any())
+            findTags.query(any())
         } returns resultList
 
         val result = useCase.execute(request)
@@ -44,23 +44,23 @@ class FindNationalityUseCaseTest {
         assertThat(result).hasSize(size)
 
         verify(exactly = 1) {
-            findNationalities.query(any())
+            findTags.query(any())
         }
     }
 
-    @DisplayName("title을 입력해서 카테고리 조회 요청을 진행하고 10건의 결과가 조회된다.")
+    @DisplayName("title을 입력해서 태그 조회 요청을 진행하고 10건의 결과가 조회된다.")
     @Test
-    fun findNationalitiesByTitle() {
+    fun findTagsByTitle() {
         val size = 10
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
         val request =
-            pureMonkey.giveMeBuilder<FindNationalitiesQueryDto>()
+            pureMonkey.giveMeBuilder<FindTagsQueryDto>()
                 .set("title", Arbitraries.strings().sample())
                 .sample()
-        val resultList = pureMonkey.giveMe<FindNationalitiesResult>(size)
+        val resultList = pureMonkey.giveMe<FindTagsResult>(size)
 
         every {
-            findNationalities.query(any())
+            findTags.query(any())
         } returns resultList
 
         val result = useCase.execute(request)
@@ -68,7 +68,7 @@ class FindNationalityUseCaseTest {
         assertThat(result).hasSize(size)
 
         verify(exactly = 1) {
-            findNationalities.query(any())
+            findTags.query(any())
         }
     }
 }
