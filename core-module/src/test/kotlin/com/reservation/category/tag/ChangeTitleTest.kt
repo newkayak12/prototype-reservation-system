@@ -9,7 +9,7 @@ class ChangeTitleTest : FunSpec(
     {
 
         test("새로운 태그 이름을 지정하고 변경한다.") {
-            val nationality =
+            val tag =
                 spyk(
                     Tag(
                         0L,
@@ -18,10 +18,10 @@ class ChangeTitleTest : FunSpec(
                 )
             val target = "#아늑함"
 
-            nationality.changeTitle(target)
+            tag.changeTitle(target)
 
-            nationality.title shouldBeEqual target
-            verify(exactly = 1) { nationality.changeTitle(any()) }
+            tag.title shouldBeEqual target
+            verify(exactly = 1) { tag.changeTitle(any()) }
         }
     },
 )
