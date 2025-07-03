@@ -7,11 +7,15 @@ class Cuisine(
     val id: Long,
     title: String,
 ) {
-    private var categoryDetail: CategoryDetail =
-        CategoryDetail(
-            title,
-            CUISINE,
-        )
+    private var categoryDetail: CategoryDetail
+
+    init {
+        categoryDetail =
+            CategoryDetail(
+                title,
+                CUISINE,
+            )
+    }
 
     val title: String
         get() = categoryDetail.title
