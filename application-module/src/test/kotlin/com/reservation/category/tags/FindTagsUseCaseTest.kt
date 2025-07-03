@@ -27,9 +27,9 @@ class FindTagsUseCaseTest {
     @InjectMockKs
     private lateinit var useCase: FindTagsUseCase
 
-    @DisplayName("태크 조회 요청을 진행하고 18건의 결과가 조회된다.")
+    @DisplayName("태그 조회 요청을 진행하고 18건의 결과가 조회된다.")
     @Test
-    fun findNationalities() {
+    fun findTags() {
         val size = 18
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
         val request = pureMonkey.giveMeOne<FindTagsQueryDto>()

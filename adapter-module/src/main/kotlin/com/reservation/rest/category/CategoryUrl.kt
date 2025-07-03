@@ -5,4 +5,5 @@ object CategoryUrl {
 
     const val NATIONALITIES = "$PREFIX/nationalities"
     const val CUISINE = "$PREFIX/cuisine"
+    const val TAGS = "$PREFIX/cuisine"
 }
