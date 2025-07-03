@@ -51,7 +51,7 @@ class FindNationalityUseCaseTest {
     @DisplayName("title을 입력해서 카테고리 조회 요청을 진행하고 10건의 결과가 조회된다.")
     @Test
     fun findNationalitiesByTitle() {
-        val size = 18
+        val size = 10
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
         val request =
             pureMonkey.giveMeBuilder<FindNationalitiesQueryDto>()
