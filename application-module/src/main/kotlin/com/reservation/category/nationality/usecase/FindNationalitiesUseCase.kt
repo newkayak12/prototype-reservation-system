@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class FindNationalitiesUseCase(
-    val findNationalities: FindNationalities,
+    private val findNationalities: FindNationalities,
 ) : FindNationalitiesQuery {
     @Transactional(readOnly = true)
     override fun execute(request: FindNationalitiesQueryDto): List<FindNationalitiesQueryResult> {

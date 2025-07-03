@@ -1,11 +1,18 @@
 package com.reservation.category.nationality
 
 import com.reservation.category.shared.CategoryDetail
+import com.reservation.enumeration.CategoryType.NATIONALITY
 
 class Nationality(
     val id: Long,
-    private var categoryDetail: CategoryDetail,
+    title: String,
 ) {
+    private var categoryDetail: CategoryDetail =
+        CategoryDetail(
+            title,
+            NATIONALITY,
+        )
+
     val title: String
         get() = categoryDetail.title
 
