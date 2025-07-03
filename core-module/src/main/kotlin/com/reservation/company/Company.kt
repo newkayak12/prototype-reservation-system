@@ -22,16 +22,4 @@ class Company(
     fun changeBrand(brand: Brand) {
         this.brand = brand
     }
-
-    fun changeContact(contact: Contact) {
-        this.contact = contact
-    }
-
-    fun changeAddress(address: Address) {
-        this.address = address
-    }
-
-    fun changeRepresentative(representative: Representative) {
-        this.representative = representative
-    }
 }
