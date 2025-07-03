@@ -6,10 +6,10 @@ import com.reservation.user.common.exceptions.ResignWithoutIdException
 import com.reservation.user.policy.formats.ServiceUser
 import com.reservation.user.resign.EncryptedAttributes
 import com.reservation.user.resign.ResignedUser
-import com.reservation.user.shared.LoginId
-import com.reservation.user.shared.Password
-import com.reservation.user.shared.PersonalAttributes
-import com.reservation.user.shared.UserAttribute
+import com.reservation.user.shared.vo.LoginId
+import com.reservation.user.shared.vo.Password
+import com.reservation.user.shared.vo.PersonalAttributes
+import com.reservation.user.shared.vo.UserAttribute
 import java.time.LocalDateTime
 
 class RestaurantOwner(

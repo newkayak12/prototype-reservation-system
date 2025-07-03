@@ -5,8 +5,8 @@ import com.reservation.user.policy.availables.PasswordChangeable
 import com.reservation.user.policy.availables.UserResignable
 import com.reservation.user.resign.EncryptedAttributes
 import com.reservation.user.resign.ResignedUser
-import com.reservation.user.shared.LoginId
-import com.reservation.user.shared.Password
+import com.reservation.user.shared.vo.LoginId
+import com.reservation.user.shared.vo.Password
 import java.time.LocalDateTime
 
 class Admin(

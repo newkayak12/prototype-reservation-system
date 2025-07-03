@@ -1,6 +1,6 @@
 package com.reservation.user.policy.availables
 
-import com.reservation.user.shared.Password
+import com.reservation.user.shared.vo.Password
 
 interface PasswordChangeable {
     fun changePassword(password: Password)

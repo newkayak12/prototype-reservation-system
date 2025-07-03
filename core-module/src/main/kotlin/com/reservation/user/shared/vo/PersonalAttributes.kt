@@ -1,4 +1,4 @@
-package com.reservation.user.shared
+package com.reservation.user.shared.vo
 
 data class PersonalAttributes(
     val email: String,

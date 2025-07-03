@@ -11,9 +11,9 @@ import com.reservation.user.self.port.output.LoadGeneralUserByLoginIdAndEmail
 import com.reservation.user.self.port.output.SendFindGeneralUserPasswordAsEmail
 import com.reservation.user.self.port.output.UpdateGeneralUserTemporaryPassword
 import com.reservation.user.service.ChangeGeneralUserPasswordService
-import com.reservation.user.shared.LoginId
-import com.reservation.user.shared.Password
-import com.reservation.user.shared.PersonalAttributes
+import com.reservation.user.shared.vo.LoginId
+import com.reservation.user.shared.vo.Password
+import com.reservation.user.shared.vo.PersonalAttributes
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.mockk.Runs
 import io.mockk.every

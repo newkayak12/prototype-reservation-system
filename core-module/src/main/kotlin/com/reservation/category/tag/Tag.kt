@@ -1,6 +1,6 @@
 package com.reservation.category.tag
 
-import com.reservation.category.shared.CategoryDetail
+import com.reservation.category.shared.vo.CategoryDetail
 import com.reservation.enumeration.CategoryType.TAG
 
 class Tag(

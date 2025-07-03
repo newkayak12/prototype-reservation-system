@@ -2,9 +2,9 @@ package com.reservation.user.owner.service
 
 import com.reservation.user.owner.RestaurantOwner
 import com.reservation.user.policy.formats.CreateUserFormats
-import com.reservation.user.shared.LoginId
-import com.reservation.user.shared.Password
-import com.reservation.user.shared.PersonalAttributes
+import com.reservation.user.shared.vo.LoginId
+import com.reservation.user.shared.vo.Password
+import com.reservation.user.shared.vo.PersonalAttributes
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import java.time.LocalDateTime
 

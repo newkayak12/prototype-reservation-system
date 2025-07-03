@@ -7,9 +7,9 @@ import com.reservation.user.common.exceptions.InvalidateUserElementException
 import com.reservation.user.common.exceptions.UseSamePasswordAsBeforeException
 import com.reservation.user.self.User
 import com.reservation.user.service.ChangeGeneralUserPasswordService
-import com.reservation.user.shared.LoginId
-import com.reservation.user.shared.Password
-import com.reservation.user.shared.PersonalAttributes
+import com.reservation.user.shared.vo.LoginId
+import com.reservation.user.shared.vo.Password
+import com.reservation.user.shared.vo.PersonalAttributes
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec

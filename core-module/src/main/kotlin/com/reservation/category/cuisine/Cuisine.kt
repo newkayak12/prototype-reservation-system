@@ -1,6 +1,6 @@
 package com.reservation.category.cuisine
 
-import com.reservation.category.shared.CategoryDetail
+import com.reservation.category.shared.vo.CategoryDetail
 import com.reservation.enumeration.CategoryType.CUISINE
 
 class Cuisine(

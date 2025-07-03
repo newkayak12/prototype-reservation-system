@@ -3,9 +3,9 @@ package com.reservation.authenticate.port.output
 import com.reservation.authenticate.Authenticate
 import com.reservation.enumeration.Role
 import com.reservation.enumeration.UserStatus
-import com.reservation.user.shared.LockState
-import com.reservation.user.shared.LoginId
-import com.reservation.user.shared.Password
+import com.reservation.user.shared.vo.LockState
+import com.reservation.user.shared.vo.LoginId
+import com.reservation.user.shared.vo.Password
 import java.time.LocalDateTime
 
 fun interface AuthenticateGeneralUser {

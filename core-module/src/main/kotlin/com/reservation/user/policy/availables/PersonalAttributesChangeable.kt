@@ -1,6 +1,6 @@
 package com.reservation.user.policy.availables
 
-import com.reservation.user.shared.PersonalAttributes
+import com.reservation.user.shared.vo.PersonalAttributes
 
 interface PersonalAttributesChangeable {
     fun personalAttributes(): PersonalAttributes

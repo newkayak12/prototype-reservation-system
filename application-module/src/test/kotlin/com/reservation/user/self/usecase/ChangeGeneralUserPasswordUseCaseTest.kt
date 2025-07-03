@@ -11,9 +11,9 @@ import com.reservation.user.self.port.output.ChangeGeneralUserPassword
 import com.reservation.user.self.port.output.LoadGeneralUser
 import com.reservation.user.self.port.output.LoadGeneralUser.LoadGeneralUserResult
 import com.reservation.user.service.ChangeGeneralUserPasswordService
-import com.reservation.user.shared.LoginId
-import com.reservation.user.shared.Password
-import com.reservation.user.shared.PersonalAttributes
+import com.reservation.user.shared.vo.LoginId
+import com.reservation.user.shared.vo.Password
+import com.reservation.user.shared.vo.PersonalAttributes
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
