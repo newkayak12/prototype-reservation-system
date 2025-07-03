@@ -236,7 +236,6 @@ project(":adapter-module") {
     apply(plugin = "org.asciidoctor.jvm.convert")
     apply(plugin = "com.epages.restdocs-api-spec")
     apply(plugin = "org.hidetake.swagger.generator")
-    apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
     apply(plugin = "org.jetbrains.kotlin.kapt")
     apply(plugin = "org.flywaydb.flyway")
 
