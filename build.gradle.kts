@@ -60,15 +60,24 @@ fun String.runCommand(): String =
         .readText()
 
 tasks.register<Exec>("preCommitApplySpotless") {
+    description = "Pre-commit code applying spotless."
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+
     commandLine("bash", "./gradlew", "spotlessKotlinApply")
 }
 
 tasks.register<Exec>("preCommitDetekt") {
+    description = "Pre-commit code applying detekt."
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+
     commandLine("bash", "./gradlew", "detekt")
     mustRunAfter("preCommitApplySpotless")
 }
 
 tasks.register<Exec>("preCommitAddCommit") {
+    description = "Pre-commit code adding commit."
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+
     val stagedFiles = "git diff --cached --name-only"
         .runCommand()
         .lines()
@@ -82,6 +91,9 @@ tasks.register<Exec>("preCommitAddCommit") {
 }
 
 tasks.register("gitPreCommitHook") {
+    description = "Git hook commit."
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+
     dependsOn("preCommitApplySpotless", "preCommitDetekt", "preCommitAddCommit")
     doLast {
         println("Running spotlessKotlinGradleApply and detekt before commit...")
