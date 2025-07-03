@@ -11,9 +11,9 @@ import com.reservation.user.policy.validations.PasswordComplexityValidationPolic
 import com.reservation.user.policy.validations.PasswordLengthValidationPolicy
 import com.reservation.user.policy.validations.UserUnifiedValidationPolicy
 import com.reservation.user.self.User
-import com.reservation.user.shared.LoginId
-import com.reservation.user.shared.Password
-import com.reservation.user.shared.PersonalAttributes
+import com.reservation.user.shared.vo.LoginId
+import com.reservation.user.shared.vo.Password
+import com.reservation.user.shared.vo.PersonalAttributes
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 
 /**

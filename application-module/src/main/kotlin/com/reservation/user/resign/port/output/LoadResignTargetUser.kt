@@ -1,9 +1,9 @@
 package com.reservation.user.resign.port.output
 
 import com.reservation.user.self.User
-import com.reservation.user.shared.LoginId
-import com.reservation.user.shared.Password
-import com.reservation.user.shared.PersonalAttributes
+import com.reservation.user.shared.vo.LoginId
+import com.reservation.user.shared.vo.Password
+import com.reservation.user.shared.vo.PersonalAttributes
 import java.time.LocalDateTime
 
 fun interface LoadResignTargetUser {

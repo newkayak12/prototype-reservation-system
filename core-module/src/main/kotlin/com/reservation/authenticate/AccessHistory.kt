@@ -2,7 +2,7 @@ package com.reservation.authenticate
 
 import com.reservation.authenticate.vo.AccessDetails
 import com.reservation.enumeration.AccessStatus
-import com.reservation.user.shared.LoginId
+import com.reservation.user.shared.vo.LoginId
 import java.time.LocalDateTime
 
 class AccessHistory(

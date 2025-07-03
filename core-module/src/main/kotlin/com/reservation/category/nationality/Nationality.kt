@@ -1,6 +1,6 @@
 package com.reservation.category.nationality
 
-import com.reservation.category.shared.CategoryDetail
+import com.reservation.category.shared.vo.CategoryDetail
 import com.reservation.enumeration.CategoryType.NATIONALITY
 
 class Nationality(

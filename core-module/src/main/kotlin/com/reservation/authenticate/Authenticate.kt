@@ -3,9 +3,9 @@ package com.reservation.authenticate
 import com.reservation.authenticate.policy.SignInPolicy
 import com.reservation.enumeration.Role
 import com.reservation.enumeration.UserStatus
-import com.reservation.user.shared.LockState
-import com.reservation.user.shared.LoginId
-import com.reservation.user.shared.Password
+import com.reservation.user.shared.vo.LockState
+import com.reservation.user.shared.vo.LoginId
+import com.reservation.user.shared.vo.Password
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import java.time.LocalDateTime
 import java.time.temporal.TemporalUnit

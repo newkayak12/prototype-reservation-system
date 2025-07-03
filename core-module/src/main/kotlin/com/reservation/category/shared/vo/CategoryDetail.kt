@@ -1,4 +1,4 @@
-package com.reservation.category.shared
+package com.reservation.category.shared.vo
 
 import com.reservation.enumeration.CategoryType
 

@@ -1,4 +1,4 @@
-package com.reservation.user.shared
+package com.reservation.user.shared.vo
 
 import com.reservation.enumeration.UserStatus
 import com.reservation.enumeration.UserStatus.ACTIVATED
