@@ -68,7 +68,7 @@ class FindCuisineControllerTest(
                 .andDo(
                     RestDocuments(
                         identifier = "findCuisines",
-                        documentTags = listOf("category", "cuisinecv"),
+                        documentTags = listOf("category", "cuisine"),
                         summary = "음식 카테고리 조회",
                         description = "음식 카테고리를 title로 전체 조회합니다.",
                         query =
