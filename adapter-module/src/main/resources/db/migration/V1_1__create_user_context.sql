@@ -43,7 +43,7 @@ CREATE TABLE prototype_reservation.user_change_history
 CREATE TABLE prototype_reservation.user_access_history
 (
     id              VARCHAR(128) COMMENT '식별키',
-    user_id         VARCHAR(128) COMMENT '식별키',
+    user_uuid         VARCHAR(128) COMMENT '식별키',
     access_status   ENUM ('SUCCESS', 'FAILURE') COMMENT '상태(SUCCESS, FAILURE)',
     access_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() COMMENT '요청 날짜-시간',
     PRIMARY KEY (id)
