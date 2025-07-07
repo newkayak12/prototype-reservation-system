@@ -41,7 +41,7 @@ class UserChangeHistoryEntity(
     val userUuid: String = uuid
 
     @Column(name = "user_id", columnDefinition = "VARCHAR(128)")
-    @Comment("식별키")
+    @Comment("사용자 아이디")
     val userId: String = userId
 
     @Column(name = "email", columnDefinition = "VARCHAR(32)")

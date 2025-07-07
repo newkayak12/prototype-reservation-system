@@ -34,19 +34,21 @@ graph LR
         Utilities
     end
 
-    Controller -- use --> InputPort
-    InputPort -- implemented --> UseCase
-    UseCase -- use --> DomainService
-    DomainService -- use --> DomainEntity
-    UseCase -- use --> OutputPort
-    Persistent -.-> OutputPort
-    UseCase -- use --> Utilities
-    DomainService -- use --> Utilities
-    JpaEntity --> Enumerations
-    DomainEntity --> Enumerations
-    Persistent -- contain --> JpaEntity
-    AbstractExceptions -- extended --> DomainService
-    AbstractExceptions -- extended --> UseCase
+    Controller -->|use| InputPort
+    UseCase -->|use| DomainService
+    DomainService -->|use| DomainEntity
+    UseCase -->|use| OutputPort
+    UseCase -->|use| Utilities
+    DomainService -->|use| Utilities
+    JpaEntity -->|use| Enumerations
+    DomainEntity -->|use| Enumerations
+    
+    UseCase -->|implements| InputPort
+    Persistent -->|implements| OutputPort
+    Persistent -->|contain| JpaEntity
+    
+    UseCase -->|extends| AbstractExceptions
+    DomainService -->|extends| AbstractExceptions
 ```
 
 ## 🧪 품질 정책

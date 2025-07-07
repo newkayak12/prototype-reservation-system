@@ -25,4 +25,4 @@ kotlin("plugin.jpa") version "2.0.10" apply false
 ----
 ## +⍺ JPA와 Kotlin 어울리는건가요?
 - 솔직히 위 두 문제만으로 JPA와 Kotlin은 궁합이 안맞는게 아닌가? 라는 생각이 들었다.
-- 이런 상황에서 `Expose`나 이전에 사용하던 `jooQ`를 사용하는 게 어떤가 하는 의문이 들었다.
+- 이런 상황에서 `Expose`나 이전에 사용하던 `jooq`를 사용하는 게 어떤가 하는 의문이 들었다.

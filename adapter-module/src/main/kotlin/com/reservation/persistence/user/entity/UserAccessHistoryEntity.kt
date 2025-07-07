@@ -25,9 +25,9 @@ class UserAccessHistoryEntity(
     @Comment("식별키")
     val id: String? = null
 
-    @Column(name = "user_id", columnDefinition = "VARCHAR(128)")
+    @Column(name = "user_uuid", columnDefinition = "VARCHAR(128)")
     @Comment("식별키")
-    val userId: String = userId
+    val userUuid: String = userId
 
     @Column(name = "access_status", columnDefinition = "ENUM ('SUCCESS', 'FAILURE')")
     @Comment("상태(SUCCESS, FAILURE)")
