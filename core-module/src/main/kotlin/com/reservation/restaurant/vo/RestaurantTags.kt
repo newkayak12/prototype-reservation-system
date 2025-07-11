@@ -1,7 +1,7 @@
 package com.reservation.restaurant.vo
 
 data class RestaurantTags(
-    val tags: MutableList<Long> = mutableListOf(),
+    private val tags: MutableList<Long> = mutableListOf(),
 ) {
     companion object {
         private const val MAX_TAG_SIZE = 10
@@ -17,4 +17,6 @@ data class RestaurantTags(
     fun remove(tagId: Long) {
         tags.remove(tagId)
     }
+
+    fun allTags(): List<Long> = tags.toList()
 }

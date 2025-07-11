@@ -1,7 +1,7 @@
 package com.reservation.restaurant.vo
 
 data class RestaurantPhotoBook(
-    val photos: MutableList<RestaurantPhoto> = mutableListOf(),
+    private val photos: MutableList<RestaurantPhoto> = mutableListOf(),
 ) {
     companion object {
         private const val MAX_PHOTO_SIZE = 10
@@ -17,4 +17,6 @@ data class RestaurantPhotoBook(
     fun remove(photo: RestaurantPhoto) {
         photos.remove(photo)
     }
+
+    fun allPhotos() = photos.toList()
 }

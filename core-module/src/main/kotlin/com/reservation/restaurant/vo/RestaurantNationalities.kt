@@ -1,7 +1,7 @@
 package com.reservation.restaurant.vo
 
 data class RestaurantNationalities(
-    val nationalities: MutableList<Long> = mutableListOf(),
+    private val nationalities: MutableList<Long> = mutableListOf(),
 ) {
     companion object {
         private const val MAX_NATIONALITY_SIZE = 10
@@ -17,4 +17,6 @@ data class RestaurantNationalities(
     fun remove(tagId: Long) {
         nationalities.remove(tagId)
     }
+
+    fun allNationalities(): List<Long> = nationalities.toList()
 }
