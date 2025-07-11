@@ -3,6 +3,7 @@ package com.reservation.restaurant.service
 import com.reservation.restaurant.Restaurant
 import com.reservation.restaurant.exceptions.InvalidateRestaurantElementException
 import com.reservation.restaurant.policy.format.CreateRestaurantForm
+import com.reservation.restaurant.policy.format.RestaurantWorkingDayForm
 import com.reservation.restaurant.policy.validations.RestaurantAddressEmptyValidationPolicy
 import com.reservation.restaurant.policy.validations.RestaurantAddressLengthValidationPolicy
 import com.reservation.restaurant.policy.validations.RestaurantAddressPolicy
@@ -27,8 +28,11 @@ import com.reservation.restaurant.vo.RestaurantAddress
 import com.reservation.restaurant.vo.RestaurantContact
 import com.reservation.restaurant.vo.RestaurantCoordinate
 import com.reservation.restaurant.vo.RestaurantDescription
+import com.reservation.restaurant.vo.RestaurantPhoto
+import com.reservation.restaurant.vo.RestaurantWorkingDay
 import java.math.BigDecimal
 
+@Suppress("TooManyFunctions")
 class CreateRestaurantService {
     private val restaurantNamePolicy: List<RestaurantNamePolicy> =
         listOf(
@@ -107,7 +111,74 @@ class CreateRestaurantService {
                     ),
             )
 
+        updateWorkingDays(restaurant, form.workingDays)
+        updatePhotos(restaurant, form.photos)
+        updateTags(restaurant, form.tags)
+        updateNationalities(restaurant, form.nationalities)
+        updateCuisines(restaurant, form.cuisines)
+
         return restaurant.snapshot()
+    }
+
+    private fun updateWorkingDays(
+        restaurant: Restaurant,
+        workingDays: List<RestaurantWorkingDayForm>,
+    ) {
+        if (workingDays.isEmpty()) return
+
+        restaurant.manipulateRoutine {
+            for ((day, startTime, endTime) in workingDays) {
+                it.add(RestaurantWorkingDay(day, startTime, endTime))
+            }
+        }
+    }
+
+    private fun updatePhotos(
+        restaurant: Restaurant,
+        photos: List<String>,
+    ) {
+        if (photos.isEmpty()) return
+        restaurant.manipulatePhoto {
+            for (url in photos) {
+                it.add(RestaurantPhoto(url))
+            }
+        }
+    }
+
+    private fun updateTags(
+        restaurant: Restaurant,
+        tags: List<Long>,
+    ) {
+        if (tags.isEmpty()) return
+        restaurant.manipulateTags {
+            for (tag in tags) {
+                it.add(tag)
+            }
+        }
+    }
+
+    private fun updateNationalities(
+        restaurant: Restaurant,
+        nationalities: List<Long>,
+    ) {
+        if (nationalities.isEmpty()) return
+        restaurant.manipulateNationalities {
+            for (tag in nationalities) {
+                it.add(tag)
+            }
+        }
+    }
+
+    private fun updateCuisines(
+        restaurant: Restaurant,
+        cuisines: List<Long>,
+    ) {
+        if (cuisines.isEmpty()) return
+        restaurant.manipulateCuisines {
+            for (tag in cuisines) {
+                it.add(tag)
+            }
+        }
     }
 
     private fun validate(form: CreateRestaurantForm) {

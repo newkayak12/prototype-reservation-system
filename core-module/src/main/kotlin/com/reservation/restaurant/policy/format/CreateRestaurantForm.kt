@@ -1,6 +1,5 @@
 package com.reservation.restaurant.policy.format
 
-import com.reservation.restaurant.vo.RestaurantPhoto
 import java.math.BigDecimal
 
 data class CreateRestaurantForm(
@@ -14,7 +13,7 @@ data class CreateRestaurantForm(
     val latitude: BigDecimal,
     val longitude: BigDecimal,
     val workingDays: List<RestaurantWorkingDayForm>,
-    val photos: List<RestaurantPhoto>,
+    val photos: List<String>,
     val tags: List<Long>,
     val nationalities: List<Long>,
     val cuisines: List<Long>,

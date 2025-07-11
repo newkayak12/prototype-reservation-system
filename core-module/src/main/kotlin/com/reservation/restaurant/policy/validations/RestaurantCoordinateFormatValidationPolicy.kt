@@ -7,7 +7,7 @@ class RestaurantCoordinateFormatValidationPolicy(
 ) : RestaurantCoordinatePolicy {
     companion object {
         private const val MAX_INTEGER_DIGITS = 3
-        private const val MAX_DECIMAL_DIGITS = 20
+        private const val MAX_DECIMAL_DIGITS = 5
     }
 
     private fun isValidScale(value: BigDecimal): Boolean {

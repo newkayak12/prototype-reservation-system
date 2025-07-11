@@ -28,7 +28,7 @@ class RestaurantCoordinateBoundaryValidationPolicy(
             longitude.isLessThan(MAX_LONGITUDE)
     }
 
-    private fun BigDecimal.isLargerThan(target: BigDecimal): Boolean = this.compareTo(target) > 0
+    private fun BigDecimal.isLargerThan(target: BigDecimal): Boolean = this.compareTo(target) >= 0
 
-    private fun BigDecimal.isLessThan(target: BigDecimal): Boolean = this.compareTo(target) < 0
+    private fun BigDecimal.isLessThan(target: BigDecimal): Boolean = this.compareTo(target) <= 0
 }
