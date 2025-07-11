@@ -5,7 +5,7 @@ import com.reservation.restaurant.vo.RestaurantWorkingDay
 import java.math.BigDecimal
 
 data class RestaurantSnapshot(
-    val id: String,
+    val id: String? = null,
     val companyId: String,
     val name: String,
     val introduce: String,

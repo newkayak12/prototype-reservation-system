@@ -4,7 +4,6 @@ import com.reservation.restaurant.vo.RestaurantPhoto
 import java.math.BigDecimal
 
 data class CreateRestaurantForm(
-    val id: String,
     val companyId: String,
     val name: String,
     val introduce: String,

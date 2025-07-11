@@ -10,9 +10,9 @@ import com.reservation.restaurant.vo.RestaurantPhotoBook
 import com.reservation.restaurant.vo.RestaurantRoutine
 import com.reservation.restaurant.vo.RestaurantTags
 
-class Restaurant(
-    val id: String,
-    val companyId: String,
+internal class Restaurant(
+    private val id: String? = null,
+    private val companyId: String,
     private var introduce: RestaurantDescription,
     private var contact: RestaurantContact,
     private var address: RestaurantAddress,
