@@ -1,6 +1,7 @@
 package com.reservation.restaurant.service
 
 import com.reservation.restaurant.Restaurant
+import com.reservation.restaurant.exceptions.InvalidateRestaurantElementException
 import com.reservation.restaurant.policy.format.CreateRestaurantForm
 import com.reservation.restaurant.policy.validations.RestaurantAddressEmptyValidationPolicy
 import com.reservation.restaurant.policy.validations.RestaurantAddressLengthValidationPolicy
@@ -26,7 +27,6 @@ import com.reservation.restaurant.vo.RestaurantAddress
 import com.reservation.restaurant.vo.RestaurantContact
 import com.reservation.restaurant.vo.RestaurantCoordinate
 import com.reservation.restaurant.vo.RestaurantDescription
-import com.reservation.user.common.exceptions.InvalidateUserElementException
 import java.math.BigDecimal
 
 class CreateRestaurantService {
@@ -47,8 +47,8 @@ class CreateRestaurantService {
         )
     private val restaurantAddressPolicy: List<RestaurantAddressPolicy> =
         listOf(
-            RestaurantAddressLengthValidationPolicy(),
             RestaurantAddressEmptyValidationPolicy(),
+            RestaurantAddressLengthValidationPolicy(),
         )
     private val restaurantZipCodePolicy: List<RestaurantZipCodePolicy> =
         listOf(
@@ -65,7 +65,7 @@ class CreateRestaurantService {
         target: String,
     ) = firstOrNull { !it.validate(target) }
         ?.let {
-            throw InvalidateUserElementException(it.reason)
+            throw InvalidateRestaurantElementException(it.reason)
         }
 
     private fun <
@@ -75,7 +75,7 @@ class CreateRestaurantService {
     ) {
         firstOrNull { !it.validate(target) }
             ?.let {
-                throw InvalidateUserElementException(it.reason)
+                throw InvalidateRestaurantElementException(it.reason)
             }
     }
 
