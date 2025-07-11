@@ -22,6 +22,19 @@ kotlin("plugin.jpa") version "2.0.10" apply false
 1. JPAEntity는 var로 둔다.
 2. 대신 실질적으로 도메인 로직, 비즈니스 로직을 다루는 DomainEntity를 val로 두고 사용한다.
 
+## 3. 빈 생성자
+### 1. 문제점
+1. JPA는 리플렉션을 바탕으로 동작한다.
+2. 리플렉션을 통해서 주입하기 위해서는 빈 생성자가 필요하다.
+3. kotlin은 PrimaryConstructor를 통해서 프로퍼티를 표현하는 경우가 있다.
+
+### 2. 해결
+```kotlin
+kotlin("plugin.jpa") version "2.0.10" apply false
+```
+1. 위와 같은 플러그인으로 빈 생성자를 암묵적으로 제공받는다.
+2. primaryConstructor를 두고 보조 생성자로 정의한다.
+
 ----
 ## +⍺ JPA와 Kotlin 어울리는건가요?
 - 솔직히 위 두 문제만으로 JPA와 Kotlin은 궁합이 안맞는게 아닌가? 라는 생각이 들었다.
