@@ -6,7 +6,7 @@ permissions:
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
 
 jobs:
   label:
@@ -17,6 +17,9 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           remove: size/XS, size/S, size/M, size/L, size/XL, size/XXL
+
+      - name: hibernate
+        run: sleep 3
 
       - name: Add updated size label
         uses: pascalgn/size-label-action@v0.5.0
