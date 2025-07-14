@@ -158,7 +158,6 @@ jobs:
         fail_on: "test failures"
         action_fail: true
 
-
   sonarcloud:
     name: SonarCloud Scan
     runs-on: ubuntu-latest
