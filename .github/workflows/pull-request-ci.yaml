@@ -50,6 +50,7 @@ jobs:
     uses: newkayak12/prototype-reservation-system/.github/workflows/upload-codecov.yaml@master
 
   build:
+    name: Build
     needs:
       - adapter-module-test
       - application-module-test
