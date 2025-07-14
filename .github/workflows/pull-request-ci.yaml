@@ -45,6 +45,8 @@ jobs:
       - core-module
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_PROJECT_KEY: ${{secrets.SONAR_PROJECT_KEY}}
+      SONAR_ORGANIZATION: ${{secrets.SONAR_ORGANIZATION}}
     uses: newkayak12/prototype-reservation-system/.github/workflows/upload-sonarcloud.yaml@master
 
   upload_to_codecov:
