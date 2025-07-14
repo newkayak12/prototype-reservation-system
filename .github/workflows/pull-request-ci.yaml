@@ -17,15 +17,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ［CI］_Adapter_Module:
+  Adapter_Module:
     name: Adapter Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/adapter-module-test.yaml@master
 
-  ［CI］_Application_Module:
+  Application_Module:
     name: Application Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/application-module-test.yaml@master
 
-  ［CI］Core_Module:
+  Core_Module:
     name: Core Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/core-module-test.yaml@master
 
