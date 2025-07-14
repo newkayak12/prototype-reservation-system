@@ -7,7 +7,9 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents:
+  checks: write  # ✅ Check Run 생성을 위해 반드시 필요
+  pull-requests: write
 
 jobs:
   adapter-module-test:
