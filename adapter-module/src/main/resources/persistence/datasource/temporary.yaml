@@ -8,7 +8,7 @@ spring:
             ddl-auto: validate
     datasource:
         hikari:
-        driver-class-name: com.p6spy.engine.spy.P6SpyDriver
-        url: jdbc:mysql://localhost:3306/prototype_reservation?serverTimezone=UTC&characterEncoding=UTF-8
-        username: temporary
-        password: temporary
+            driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+            username: temporary
+            password: temporary
+            jdbc-url: jdbc:mysql://localhost:3306/prototype_reservation?serverTimezone=UTC&characterEncoding=UTF-8
