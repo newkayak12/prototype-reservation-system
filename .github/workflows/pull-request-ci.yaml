@@ -133,23 +133,23 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: adapter-test-results
-        path: test-results/adapter.xml
+        path: test-results/adapter
     - name: Download application test-results
       uses: actions/download-artifact@v4
       with:
         name: application-test-results
-        path: test-results/application.xml
+        path: test-results/application
     - name: Download core test-results
       uses: actions/download-artifact@v4
       with:
         name: core-test-results
-        path: test-results/core.xml
+        path: test-results/core
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always()
       with:
         files: |
-          test-results/*.xml
+          test-results/**/TEST-*.xml
         comment_mode: failures
         comment_title: "🧪 Test Results"
         check_name: "Test Results"
