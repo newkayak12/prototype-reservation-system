@@ -17,48 +17,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  Adapter_Module:
+  adapter-module:
     name: Adapter Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/adapter-module-test.yaml@master
 
-  Application_Module:
+  application-module:
     name: Application Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/application-module-test.yaml@master
 
-  Core_Module:
+  core-module:
     name: Core Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/core-module-test.yaml@master
 
-  Publish_Test_Results:
+  publish_test_results:
     name: Publish Test Results
     needs:
-      - adapter-module-test
-      - application-module-test
-      - core-module-test
+      - adapter-module
+      - application-module
+      - core-module
     uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@master
 
-  Upload_to_SonarClouq:
+  upload_to_sonar_cloud:
     name: Upload JacocoReports to SonarCloud Scan
     needs:
-      - adapter-module-test
-      - application-module-test
-      - core-module-test
+      - adapter-module
+      - application-module
+      - core-module
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     uses: newkayak12/prototype-reservation-system/.github/workflows/upload-sonarcloud.yaml@master
 
-  Upload_to_Codecov:
+  upload_to_codecov:
     name: Upload Coverage to Codecov
     needs:
-      - adapter-module-test
-      - application-module-test
-      - core-module-test
+      - adapter-module
+      - application-module
+      - core-module
     uses: newkayak12/prototype-reservation-system/.github/workflows/upload-codecov.yaml@master
 
-  Build:
+  build:
     name: Build
     needs:
-      - adapter-module-test
-      - application-module-test
-      - core-module-test
+      - adapter-module
+      - application-module
+      - core-module
     uses: newkayak12/prototype-reservation-system/.github/workflows/build.yaml@master
