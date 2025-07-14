@@ -17,24 +17,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ［CI］Adapter Module:
+  ［CI］_Adapter_Module:
+    name: Adapter Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/adapter-module-test.yaml@master
 
-  ［CI］Application Module:
+  ［CI］_Application_Module:
+    name: Application Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/application-module-test.yaml@master
 
-  ［CI］Core Module:
+  ［CI］Core_Module:
+    name: Core Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/core-module-test.yaml@master
 
-  Publish Test Results:
+  Publish_Test_Results:
+    name: Publish Test Results
     needs:
       - adapter-module-test
       - application-module-test
       - core-module-test
     uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@master
 
-  Upload to SonarClouq:
-    name: SonarCloud Scan
+  Upload_to_SonarClouq:
+    name: Upload JacocoReports to SonarCloud Scan
     needs:
       - adapter-module-test
       - application-module-test
@@ -43,7 +47,7 @@ jobs:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     uses: newkayak12/prototype-reservation-system/.github/workflows/upload-sonarcloud.yaml@master
 
-  Upload to Codecov:
+  Upload_to_Codecov:
     name: Upload Coverage to Codecov
     needs:
       - adapter-module-test
