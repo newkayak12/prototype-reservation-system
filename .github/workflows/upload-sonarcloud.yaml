@@ -11,7 +11,7 @@ on:
         required: true
 
 jobs:
-  upload:
+  upload_to_sonar_cloud:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
