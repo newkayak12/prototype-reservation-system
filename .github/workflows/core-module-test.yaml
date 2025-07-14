@@ -1,4 +1,4 @@
-name: Application Module Test
+name: Core Module Test
 
 on:
   workflow_call:
@@ -30,14 +30,14 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
       - name: Run tests and coverage
-        run: ./gradlew :application-module:test :application-module:jacocoTestReport
-      - name: Upload application-module Jacoco
+        run: ./gradlew :core-module:test :core-module:jacocoTestReport
+      - name: Upload core-module Jacoco
         uses: actions/upload-artifact@v4
         with:
-          name: application-jacoco
-          path: application-module/build/reports/jacoco/test/jacocoTestReport.xml
+          name: core-jacoco
+          path: core-module/build/reports/jacoco/test/jacocoTestReport.xml
       - name: Upload adapter-module test result
         uses: actions/upload-artifact@v4
         with:
-          name: application-test-results
-          path: application-module/build/test-results/**/TEST-*.xml
+          name: core-test-results
+          path: core-module/build/test-results/**/TEST-*.xml
