@@ -1,0 +1,25 @@
+package com.reservation.restaurant.port.output
+
+import com.reservation.restaurant.policy.format.RestaurantWorkingDayForm
+import java.math.BigDecimal
+
+fun interface CreateRestaurant {
+    fun command(inquiry: CreateProductInquiry): Boolean
+
+    data class CreateProductInquiry(
+        val companyId: String,
+        val name: String,
+        val introduce: String,
+        val phone: String,
+        val zipCode: String,
+        val address: String,
+        val detail: String,
+        val latitude: BigDecimal,
+        val longitude: BigDecimal,
+        val workingDays: List<RestaurantWorkingDayForm>,
+        val photos: List<String>,
+        val tags: List<Long>,
+        val nationalities: List<Long>,
+        val cuisines: List<Long>,
+    )
+}
