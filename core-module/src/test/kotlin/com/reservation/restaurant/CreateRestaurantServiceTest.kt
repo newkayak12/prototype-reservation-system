@@ -27,8 +27,7 @@ class CreateRestaurantServiceTest : BehaviorSpec(
         Given(" 음식점 이름이 비어있는 생성 요청이 들어온다.") {
 
             val form = perfectCase().copy(name = "")
-
-            When("음식점을 생성할 때") {
+            When("음식점을 생성할 때 ") {
                 Then("음식점 이름이 비어 있어서 실패한다.") {
                     val exception =
                         shouldThrow<InvalidateRestaurantElementException> {
@@ -46,9 +45,10 @@ class CreateRestaurantServiceTest : BehaviorSpec(
          * Then: 음식점 이름이 너무 길어서 실패한다.
          */
         Given(" 음식점 이름이 64글자 이상인 생성 요청이 들어온다.") {
-            val form = perfectCase().copy(name = Arbitraries.strings().ofMinLength(65).sample())
 
-            When("음식점을 생성할 때") {
+            val form =
+                perfectCase().copy(name = Arbitraries.strings().ofMinLength(64).sample() + "!")
+            When("음식점을 생성할 때 ") {
                 Then("음식점 이름이 비어있어서 실패한다.") {
                     val exception =
                         shouldThrow<InvalidateRestaurantElementException> {
@@ -69,7 +69,7 @@ class CreateRestaurantServiceTest : BehaviorSpec(
 
             val form =
                 perfectCase().copy(introduce = Arbitraries.strings().ofMinLength(6001).sample())
-            When("음식점을 생성할 때") {
+            When("음식점을 생성할 때 ") {
                 Then("음식점 소개 길이 생성에 실패한다.") {
                     val exception =
                         shouldThrow<InvalidateRestaurantElementException> {
@@ -89,7 +89,7 @@ class CreateRestaurantServiceTest : BehaviorSpec(
         Given(" 전화번호가 비어있는 생성 요청이 들어온다.") {
 
             val form = perfectCase().copy(phone = "")
-            When("음식점을 생성할 때") {
+            When("음식점을 생성할 때 ") {
                 Then("음식점 전화번호가 비어있어 생성에 실패한다") {
                     val exception =
                         shouldThrow<InvalidateRestaurantElementException> {
@@ -110,9 +110,9 @@ class CreateRestaurantServiceTest : BehaviorSpec(
 
             val form =
                 perfectCase().copy(
-                    phone = CommonlyUsedArbitraries.phoneNumberArbitrary.sample() + 1,
+                    phone = CommonlyUsedArbitraries.phoneNumberArbitrary.sample() + "123",
                 )
-            When("음식점을 생성할 때") {
+            When("음식점을 생성할 때 ") {
                 Then("음식점 전화번호 길이 제한에 위배되어 생성에 실패한다.") {
                     val exception =
                         shouldThrow<InvalidateRestaurantElementException> {
@@ -133,7 +133,7 @@ class CreateRestaurantServiceTest : BehaviorSpec(
                             CommonlyUsedArbitraries.phoneNumberArbitrary.sample()
                                 .substring(IntRange(0, 9)),
                     )
-            When("음식점을 생성할 때") {
+            When("음식점을 생성할 때 ") {
                 Then("음식점 전화번호 길이 제한에 위배되어 생성에 실패한다.") {
                     val exception =
                         shouldThrow<InvalidateRestaurantElementException> {
@@ -159,7 +159,7 @@ class CreateRestaurantServiceTest : BehaviorSpec(
                             CommonlyUsedArbitraries.phoneNumberArbitrary.sample()
                                 .replaceFirst(Regex("01[016789]"), "000"),
                     )
-            When("음식점을 생성할 때") {
+            When("음식점을 생성할 때 ") {
                 Then("음식점 점화번호 형식 제한에 위배되어 생성에 실패한다.") {
                     val exception =
                         shouldThrow<InvalidateRestaurantElementException> {
@@ -179,7 +179,7 @@ class CreateRestaurantServiceTest : BehaviorSpec(
         Given(" 주소가 비어있는 생성 요청이 들어온다.") {
 
             val form = perfectCase().copy(address = "")
-            When("음식점을 생성할 때") {
+            When("음식점을 생성할 때 ") {
                 Then("주소가 비어있어 형식 제한에 위배되어 생성에 실패한다.") {
                     val exception =
                         shouldThrow<InvalidateRestaurantElementException> {
@@ -200,8 +200,8 @@ class CreateRestaurantServiceTest : BehaviorSpec(
 
             val form =
                 perfectCase()
-                    .copy(address = Arbitraries.strings().ofMinLength(257).sample())
-            When("음식점을 생성할 때") {
+                    .copy(address = Arbitraries.strings().ofMinLength(257).sample() + "T")
+            When("음식점을 생성할 때 ") {
                 Then("주소가 너무 길어서 생성에 실패한다.") {
                     val exception =
                         shouldThrow<InvalidateRestaurantElementException> {
@@ -220,8 +220,9 @@ class CreateRestaurantServiceTest : BehaviorSpec(
          */
         Given(" 우편번호 길이가 올바르지 못한 생성 요청이 들어온다.") {
 
-            val form = perfectCase().copy(zipCode = Arbitraries.strings().ofMinLength(5).sample())
-            When("음식점을 생성할 때") {
+            val form =
+                perfectCase().copy(zipCode = Arbitraries.strings().ofMinLength(6).sample())
+            When("음식점을 생성할 때 ") {
                 Then("우편번호 길이가 올바르지 않으므로 생성에 실패한다.") {
                     val exception =
                         shouldThrow<InvalidateRestaurantElementException> {
@@ -249,7 +250,7 @@ class CreateRestaurantServiceTest : BehaviorSpec(
                             .alpha()
                             .sample(),
                 )
-            When("음식점을 생성할 때") {
+            When("음식점을 생성할 때 ") {
                 Then("우편번호 형식에 맞지 않으므로 제한되어 생성에 실패한다.") {
                     val exception =
                         shouldThrow<InvalidateRestaurantElementException> {
@@ -268,12 +269,20 @@ class CreateRestaurantServiceTest : BehaviorSpec(
          */
         Given(" 위경도 형식에 맞지 않는 요청이 들어온다.") {
 
+            val point = BigDecimal.valueOf(0.1 - 0.000000000000011)
             val form =
                 perfectCase().copy(
-                    latitude = BigDecimal.valueOf(Arbitraries.doubles().sample()).setScale(100),
-                    longitude = BigDecimal.valueOf(Arbitraries.doubles().sample()).setScale(100),
+                    latitude =
+                        BigDecimal.valueOf(
+                            Arbitraries.doubles().greaterThan(0.0).sample(),
+                        ).add(point),
+                    longitude =
+                        BigDecimal.valueOf(
+                            Arbitraries.doubles().greaterThan(0.0).sample(),
+                        ).add(point),
                 )
-            When("음식점을 생성할 때") {
+
+            When("음식점을 생성할 때 ") {
                 Then("잘못된 위경도 형식이므로 생성에 실패한다.") {
                     val exception =
                         shouldThrow<InvalidateRestaurantElementException> {
@@ -291,12 +300,13 @@ class CreateRestaurantServiceTest : BehaviorSpec(
          * Then: 우리나라를 벗어나는 요청이므로 정책적으로 위배되어 생성에 실패한다.
          */
         Given(" 위경도 값이 우리나라를 벗어나는 요청이 들어온다.") {
+
             val form =
                 perfectCase().copy(
                     latitude = BigDecimal.ZERO,
                     longitude = BigDecimal.ZERO,
                 )
-            When("음식점을 생성할 때") {
+            When("음식점을 생성할 때 ") {
                 Then("우리나라를 벗어나는 요청이므로 정책적으로 위배되어 생성에 실패한다.") {
                     val exception =
                         shouldThrow<InvalidateRestaurantElementException> {
@@ -345,13 +355,13 @@ class CreateRestaurantServiceTest : BehaviorSpec(
             return pureMonkey.giveMeBuilder<CreateRestaurantForm>()
                 .setLazy(
                     "name",
-                ) { Arbitraries.strings().ofMaxLength(64).ofMinLength(9).sample() + "T" }
+                ) { Arbitraries.strings().ofMaxLength(63).ofMinLength(9).sample() + "T" }
                 .setLazy("introduce") { Arbitraries.strings().ofMaxLength(5999).sample() + "T" }
                 .setLazy("phone") { CommonlyUsedArbitraries.phoneNumberArbitrary.sample() }
                 .setLazy("zipCode") { CommonlyUsedArbitraries.zipCodeArbitary.sample() }
                 .setLazy(
                     "address",
-                ) { Arbitraries.strings().ofMinLength(10).ofMaxLength(255).sample() + "T" }
+                ) { Arbitraries.strings().ofMinLength(10).ofMaxLength(254).sample() + "T" }
                 .setLazy("latitude") {
                     Arbitraries.bigDecimals().between(MIN_LATITUDE, MAX_LATITUDE).sample()
                 }
