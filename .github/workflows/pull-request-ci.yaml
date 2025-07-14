@@ -8,6 +8,8 @@ on:
 permissions:
   id-token: write
   contents: read
+  checks: write  # ✅ Check Run 생성을 위해 반드시 필요
+  pull-requests: write
 
 jobs:
   adapter-module-test:
@@ -42,6 +44,11 @@ jobs:
         with:
           name: adapter-jacoco
           path: adapter-module/build/reports/jacoco/test/jacocoTestReport.xml
+      - name: Upload adapter-module test result
+        uses: actions/upload-artifact@v4
+        with:
+          name: adapter-test-results
+          path: adapter-module/build/test-results/**/TEST-*.xml
   application-module-test:
     runs-on: ubuntu-latest
     steps:
@@ -74,6 +81,11 @@ jobs:
         with:
           name: application-jacoco
           path: application-module/build/reports/jacoco/test/jacocoTestReport.xml
+      - name: Upload adapter-module test result
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-test-results
+          path: application-module/build/test-results/**/TEST-*.xml
   core-module-test:
     runs-on: ubuntu-latest
     steps:
@@ -106,6 +118,47 @@ jobs:
         with:
           name: core-jacoco
           path: core-module/build/reports/jacoco/test/jacocoTestReport.xml
+      - name: Upload adapter-module test result
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-test-results
+          path: core-module/build/test-results/**/TEST-*.xml
+
+  publish-test-result:
+    needs:
+      - adapter-module-test
+      - application-module-test
+      - core-module-test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download adapter test-results
+      uses: actions/download-artifact@v4
+      with:
+        name: adapter-test-results
+        path: test-results/adapter
+    - name: Download application test-results
+      uses: actions/download-artifact@v4
+      with:
+        name: application-test-results
+        path: test-results/application
+    - name: Download core test-results
+      uses: actions/download-artifact@v4
+      with:
+        name: core-test-results
+        path: test-results/core
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: |
+          test-results/**/TEST-*.xml
+        comment_mode: failures
+        comment_title: "🧪 Test Results"
+        check_name: "Test Results"
+        fail_on: "test failures"
+        action_fail: true
+
+
   sonarcloud:
     name: SonarCloud Scan
     runs-on: ubuntu-latest
