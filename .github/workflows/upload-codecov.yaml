@@ -1,0 +1,46 @@
+name: Upload Code Cov
+
+on:
+  workflow_call:
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: corretto
+
+      - name: Download adapter jacoco
+        uses: actions/download-artifact@v4
+        with:
+          name: adapter-jacoco
+          path: jacoco/adapter
+
+      - name: Download application jacoco
+        uses: actions/download-artifact@v4
+        with:
+          name: application-jacoco
+          path: jacoco/application
+
+      - name: Download core jacoco
+        uses: actions/download-artifact@v4
+        with:
+          name: core-jacoco
+          path: jacoco/core
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}  # public repo면 생략 가능
+          files: |
+            jacoco/adapter/jacocoTestReport.xml
+            jacoco/application/jacocoTestReport.xml
+            jacoco/core/jacocoTestReport.xml
+          flags: kotlin
+          fail_ci_if_error: true
