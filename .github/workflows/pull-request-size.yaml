@@ -1,28 +1,37 @@
 name: "Label PR by Size"
 
-
 permissions:
   contents: read
   pull-requests: write
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
 
 jobs:
   label:
     runs-on: ubuntu-latest
     steps:
-      - uses: pascalgn/size-label-action@v0.5.0
+      - name: Remove existing size labels
+        uses: PauMAVA/add-remove-label-action@v1.0.3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          remove: size/XS, size/S, size/M, size/L, size/XL, size/XXL
+
+      - name: hibernate
+        run: sleep 5
+
+      - name: Add updated size label
+        uses: pascalgn/size-label-action@v0.5.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           sizes: >
             {
-             "0": "XS",
-             "50": "S",
-             "150": "M",
-             "500": "L",
-             "1000": "XL",
-             "3000": "XXL"
+              "0": "XS",
+              "50": "S",
+              "150": "M",
+              "500": "L",
+              "1000": "XL",
+              "3000": "XXL"
             }

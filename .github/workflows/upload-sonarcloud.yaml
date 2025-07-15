@@ -1,0 +1,52 @@
+name: Upload Sonar Cloud
+
+on:
+  workflow_call:
+    secrets:
+      SONAR_TOKEN:
+        required: true
+      SONAR_PROJECT_KEY:
+        required: true
+      SONAR_ORGANIZATION:
+        required: true
+
+jobs:
+  upload_to_sonar_cloud:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: 21
+          distribution: corretto
+
+      - name: Download adapter jacoco
+        uses: actions/download-artifact@v4
+        with:
+          name: adapter-jacoco
+          path: jacoco/adapter
+      - name: Download application jacoco
+        uses: actions/download-artifact@v4
+        with:
+          name: application-jacoco
+          path: jacoco/application
+      - name: Download core jacoco
+        uses: actions/download-artifact@v4
+        with:
+          name: core-jacoco
+          path: jacoco/core
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v2
+        with:
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.sources=.
+            -Dsonar.exclusions=**/src/test/**/*
+            -Dsonar.coverage.exclusions=**/src/**/config/**/*.kt,**/src/**/dto/**/*.kt,**/src/**/exception/**/*.kt,**/src/**/mapper/**/*.kt,**/src/**/factory/**/*.kt,**/src/**/entity/**/*.kt,**/src/**/adapter/**/*.kt,**/src/**/repository/**/*.kt,**/*Config.kt,**/*Dto.kt,**/*Request.kt,**/*Response.kt,**/*Exception.kt,**/*Factory.kt,**/*Entity.kt,**/*Adapter.kt,**/*Repository.kt,**/*.sql,**/*.gradle.kts
+            -Dsonar.coverage.jacoco.xmlReportPaths=jacoco/adapter/jacocoTestReport.xml,jacoco/application/jacocoTestReport.xml,jacoco/core/jacocoTestReport.xml
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

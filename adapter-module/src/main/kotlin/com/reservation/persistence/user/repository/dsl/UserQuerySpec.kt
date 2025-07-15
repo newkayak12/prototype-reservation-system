@@ -11,7 +11,7 @@ object UserQuerySpec {
     fun idEq(id: String?): BooleanExpression? =
         id.let {
             if (StringUtils.hasText(id)) {
-                return@let userEntity.id.eq(it)
+                return@let userEntity.identifier.eq(it)
             }
 
             return@let null

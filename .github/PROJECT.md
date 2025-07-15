@@ -34,19 +34,21 @@ graph LR
         Utilities
     end
 
-    Controller -- use --> InputPort
-    InputPort -- implemented --> UseCase
-    UseCase -- use --> DomainService
-    DomainService -- use --> DomainEntity
-    UseCase -- use --> OutputPort
-    Persistent -.-> OutputPort
-    UseCase -- use --> Utilities
-    DomainService -- use --> Utilities
-    JpaEntity --> Enumerations
-    DomainEntity --> Enumerations
-    Persistent -- contain --> JpaEntity
-    AbstractExceptions -- extended --> DomainService
-    AbstractExceptions -- extended --> UseCase
+    Controller -->|use| InputPort
+    UseCase -->|use| DomainService
+    DomainService -->|use| DomainEntity
+    UseCase -->|use| OutputPort
+    UseCase -->|use| Utilities
+    DomainService -->|use| Utilities
+    JpaEntity -->|use| Enumerations
+    DomainEntity -->|use| Enumerations
+    
+    UseCase -->|implements| InputPort
+    Persistent -->|implements| OutputPort
+    Persistent -->|contain| JpaEntity
+    
+    UseCase -->|extends| AbstractExceptions
+    DomainService -->|extends| AbstractExceptions
 ```
 
 ## 🧪 품질 정책
@@ -61,6 +63,8 @@ graph LR
 1. Domain Driven Design에 맞춰서 도메인 로직과 서비스 로직이 분리된 애플리케이션을 개발.
 2. Hexagonal Architecture에 맞춰서 변화에 유연한 애플리케이션을 개발.
 3. OverEngineering 해서 할 수 있는 가장 엄격하고 풍부한 방법으로 애플리케이션을 개발.
+4. 비기술적인 부분에 대해서 고민하고 적용하며 목적 조직에 맞는 개발 방식 적용하기
+5. `문서 작성`과 친숙해지고 `좋은 문서`에 대해서 고민하기
 
 ## 🙂‍ Non-considerations
 

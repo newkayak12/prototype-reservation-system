@@ -61,7 +61,7 @@ class AuthenticateUserRepository(
         return query.select(
             Projections.constructor(
                 Result::class.java,
-                userEntity.id,
+                userEntity.identifier,
                 userEntity.loginId,
                 userEntity.password,
                 userEntity.failCount,

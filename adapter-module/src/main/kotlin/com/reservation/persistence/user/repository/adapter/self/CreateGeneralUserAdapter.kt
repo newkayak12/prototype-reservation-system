@@ -23,6 +23,6 @@ class CreateGeneralUserAdapter(
                 ),
             )
 
-        return entity.id != null
+        return entity.identifier != null
     }
 }

@@ -23,4 +23,6 @@ enum class SecurityRole {
             }
         }
     }
+
+    fun extractRole(): String = this.name.replace("ROLE_", "")
 }

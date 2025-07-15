@@ -1,9 +1,8 @@
 package com.reservation.persistence.company.entity
 
-import com.reservation.config.persistence.entity.TimeBasedUuidStrategy
+import com.reservation.persistence.common.TimeBasedPrimaryKey
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.Comment
 
@@ -19,13 +18,7 @@ class CompanyEntity(
     address: String,
     detail: String,
     representativeName: String,
-) {
-    @Id
-    @TimeBasedUuidStrategy
-    @Column(name = "id", columnDefinition = "VARCHAR(128)", nullable = false, updatable = false)
-    @Comment("식별키")
-    val id: String? = null
-
+) : TimeBasedPrimaryKey() {
     @Column(name = "brand_name")
     @Comment("상호명")
     var brandName: String = brandName

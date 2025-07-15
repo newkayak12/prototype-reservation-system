@@ -254,11 +254,13 @@ project(":adapter-module") {
 
 
 
+
     tasks.named("bootJar") { enabled = true }
     tasks.named("jar") { enabled = false }
 
     val developmentOnly by configurations
     val kapt by configurations
+
 
     dependencies {
         implementation("org.springframework.boot:spring-boot-starter-actuator")

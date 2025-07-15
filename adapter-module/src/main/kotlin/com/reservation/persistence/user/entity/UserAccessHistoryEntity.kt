@@ -1,10 +1,9 @@
 package com.reservation.persistence.user.entity
 
-import com.reservation.config.persistence.entity.TimeBasedUuidStrategy
 import com.reservation.enumeration.AccessStatus
+import com.reservation.persistence.common.TimeBasedPrimaryKey
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.Comment
 import java.time.LocalDateTime
@@ -18,16 +17,10 @@ class UserAccessHistoryEntity(
     userId: String,
     accessStatus: AccessStatus,
     accessDatetime: LocalDateTime,
-) {
-    @Id
-    @TimeBasedUuidStrategy
-    @Column(name = "id", columnDefinition = "VARCHAR(128)", nullable = false, updatable = false)
+) : TimeBasedPrimaryKey() {
+    @Column(name = "user_uuid", columnDefinition = "VARCHAR(128)")
     @Comment("식별키")
-    val id: String? = null
-
-    @Column(name = "user_id", columnDefinition = "VARCHAR(128)")
-    @Comment("식별키")
-    val userId: String = userId
+    val userUuid: String = userId
 
     @Column(name = "access_status", columnDefinition = "ENUM ('SUCCESS', 'FAILURE')")
     @Comment("상태(SUCCESS, FAILURE)")

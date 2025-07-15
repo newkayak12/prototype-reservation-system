@@ -88,9 +88,9 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .formLogin { it.disable() }
             .authorizeHttpRequests {
-                it.requestMatchers(*ADMIN_PATHS).hasRole(SecurityRole.ROLE_ADMIN.name)
-                it.requestMatchers(*SELLER_PATHS).hasRole(SecurityRole.ROLE_MANAGER.name)
-                it.requestMatchers(*USER_PATHS).hasRole(SecurityRole.ROLE_USER.name)
+                it.requestMatchers(*ADMIN_PATHS).hasRole(SecurityRole.ROLE_ADMIN.extractRole())
+                it.requestMatchers(*SELLER_PATHS).hasRole(SecurityRole.ROLE_MANAGER.extractRole())
+                it.requestMatchers(*USER_PATHS).hasRole(SecurityRole.ROLE_USER.extractRole())
                 it.requestMatchers(*COMMON_PATHS).permitAll()
                 it.anyRequest().authenticated()
             }

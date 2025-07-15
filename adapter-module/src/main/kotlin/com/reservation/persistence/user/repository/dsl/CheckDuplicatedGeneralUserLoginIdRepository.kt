@@ -12,7 +12,7 @@ class CheckDuplicatedGeneralUserLoginIdRepository(
 ) : CheckGeneralUserLoginIdDuplicated {
     override fun query(inquiry: CheckGeneralUserDuplicatedInquiry): Boolean {
         return query.select(
-            userEntity.id,
+            userEntity.identifier,
         )
             .from(userEntity)
             .where(
