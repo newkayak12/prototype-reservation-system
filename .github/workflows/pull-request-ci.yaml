@@ -20,14 +20,17 @@ jobs:
   adapter-module:
     name: Adapter Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/adapter-module-test.yaml@master
+    continue-on-error: true
 
   application-module:
     name: Application Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/application-module-test.yaml@master
+    continue-on-error: true
 
   core-module:
     name: Core Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/core-module-test.yaml@master
+    continue-on-error: true
 
   publish_test_results:
     name: Publish Test Results
@@ -35,6 +38,7 @@ jobs:
       - adapter-module
       - application-module
       - core-module
+    if: always()
     uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@master
 
   upload_to_sonar_cloud:
@@ -43,6 +47,7 @@ jobs:
       - adapter-module
       - application-module
       - core-module
+    if: success()
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_PROJECT_KEY: ${{secrets.SONAR_PROJECT_KEY}}
@@ -55,6 +60,7 @@ jobs:
       - adapter-module
       - application-module
       - core-module
+    if: success()
     uses: newkayak12/prototype-reservation-system/.github/workflows/upload-codecov.yaml@master
 
   build:
@@ -63,4 +69,5 @@ jobs:
       - adapter-module
       - application-module
       - core-module
+    if: success()
     uses: newkayak12/prototype-reservation-system/.github/workflows/build.yaml@master

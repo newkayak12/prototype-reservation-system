@@ -40,10 +40,12 @@ class CreateRestaurantUseCaseTest {
     @Nested
     inner class Failure {
         /**
+         * ```
          * Scenario: 이미 등록되어 있는 음식점을 등록해서 등록에 실패한다.
          * Given: 중복되는 이름을 가진 음식점을 등록 요청하여
          * When: 음식점 등록 시
          * Then: 중복됐음을 알리며 등록에 실패한다. (AlreadyPersistedException)
+         * ```
          */
         @DisplayName("이미 등록되어 있는 음식점을 등록해서 등록에 실패한다.")
         @Test
@@ -62,10 +64,12 @@ class CreateRestaurantUseCaseTest {
         }
 
         /**
+         * ```
          * Scenario: 요청 사항 중 정합성에 맞지 않은 필드가 있어서 등록에 실패한다.
          * Given: 정합성에 맞지 않은 양식으로 음식점 등록을 요청하여
          * When: 음식점 등록 시
          * Then: 등록할 수 없음을 알리며 등록에 실패한다. (InvalidateRestaurantElementException)
+         * ```
          */
         @DisplayName("요청 사항 중 정합성에 맞지 않은 필드가 있어서 등록에 실패한다.")
         @Test
@@ -94,10 +98,12 @@ class CreateRestaurantUseCaseTest {
     @Nested
     inner class Success {
         /**
+         * ```
          * Scenario: 정상적인 요청으로 음식점 등록에 성공한다.
          * Given: 정상적읜 양식으로 음식점 등록을 요청하여
-         * When: 음식점 등록 시
+         * When: 음식점 등록 시도
          * Then: 등록에 성공한다.
+         * ```
          */
         @DisplayName("정상적인 요청으로 음식점 등록에 성공한다.")
         @Test

@@ -14,6 +14,8 @@ data class TokenableAuthenticationDetails(
     override fun getAuthorities(): Collection<GrantedAuthority> =
         setOf(SimpleGrantedAuthority(securityRole.name))
 
+    fun identifier(): String = id
+
     override fun getPassword(): String = password
 
     override fun getUsername(): String = username
