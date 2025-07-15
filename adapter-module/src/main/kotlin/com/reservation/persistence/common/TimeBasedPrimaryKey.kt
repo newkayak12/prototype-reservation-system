@@ -26,6 +26,8 @@ abstract class TimeBasedPrimaryKey : Persistable<String> {
 
     override fun isNew(): Boolean = this.isNewEntity
 
+    fun isPersisted(): Boolean = !this.isNewEntity
+
     override fun hashCode(): Int = Objects.hashCode(identifier)
 
     override fun equals(other: Any?): Boolean {
