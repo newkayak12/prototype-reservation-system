@@ -1,7 +1,8 @@
 package com.reservation.restaurant.port.output
 
-import com.reservation.restaurant.policy.format.RestaurantWorkingDayForm
 import java.math.BigDecimal
+import java.time.DayOfWeek
+import java.time.LocalTime
 
 fun interface CreateRestaurant {
     fun command(inquiry: CreateProductInquiry): Boolean
@@ -16,10 +17,33 @@ fun interface CreateRestaurant {
         val detail: String,
         val latitude: BigDecimal,
         val longitude: BigDecimal,
-        val workingDays: List<RestaurantWorkingDayForm>,
-        val photos: List<String>,
+        val workingDays: List<WorkingDay>,
+        val photos: List<Photo>,
         val tags: List<Long>,
         val nationalities: List<Long>,
         val cuisines: List<Long>,
+    )
+
+    data class WorkingDay(
+        val day: DayOfWeek,
+        val startTime: LocalTime,
+        val endTime: LocalTime,
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is com.reservation.restaurant.vo.RestaurantWorkingDay) return false
+
+            if (day != other.day) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return day.hashCode()
+        }
+    }
+
+    data class Photo(
+        val url: String,
     )
 }
