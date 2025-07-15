@@ -5,6 +5,7 @@ on:
 
 jobs:
   publish_test_results:
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Download adapter test-results
