@@ -1,14 +1,13 @@
 package com.reservation.persistence.user.entity
 
-import com.reservation.config.persistence.entity.TimeBasedUuidStrategy
 import com.reservation.enumeration.Role
 import com.reservation.persistence.common.AuditDateTime
+import com.reservation.persistence.common.TimeBasedPrimaryKey
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.Comment
 
@@ -24,13 +23,7 @@ class UserChangeHistoryEntity(
     nickname: String,
     mobile: String,
     role: Role,
-) {
-    @Id
-    @TimeBasedUuidStrategy
-    @Column(name = "id", columnDefinition = "VARCHAR(128)", nullable = false, updatable = false)
-    @Comment("식별키")
-    val id: String? = null
-
+) : TimeBasedPrimaryKey() {
     @Column(
         name = "user_uuid",
         columnDefinition = "VARCHAR(128)",
