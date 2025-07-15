@@ -10,24 +10,22 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 
 data class CreateRestaurantRequest(
-    @NotNull
+    @field:NotBlank
     val companyId: String,
-    @NotBlank
+    @field:NotBlank
     val name: String,
-    @Size(max = 6000)
+    @field:Size(max = 6000)
     val introduce: String?,
-    @Size(min = 11, max = 13)
+    @field:Size(min = 11, max = 13)
     val phone: String,
-    @NotBlank
+    @field:NotBlank
     val zipCode: String,
-    @NotBlank
-    @Size(max = 256)
+    @field:NotBlank
+    @field:Size(max = 256)
     val address: String,
-    @Size(max = 256)
+    @field:Size(max = 256)
     val detail: String,
-    @NotNull
     val latitude: BigDecimal,
-    @NotNull
     val longitude: BigDecimal,
     val workingDays: List<CreateRestaurantWorkingDay>,
     val photos: List<String>,
@@ -36,11 +34,11 @@ data class CreateRestaurantRequest(
     val cuisines: List<Long>,
 ) {
     data class CreateRestaurantWorkingDay(
-        @NotNull
+        @field:NotNull
         val day: DayOfWeek,
-        @NotNull
+        @field:NotNull
         val startTime: LocalTime,
-        @NotNull
+        @field:NotNull
         val endTime: LocalTime,
     ) {
         fun toCommand(): RestaurantWorkingDayForm =
