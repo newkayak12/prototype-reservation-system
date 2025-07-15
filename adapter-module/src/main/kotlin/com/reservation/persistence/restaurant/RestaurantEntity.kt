@@ -11,6 +11,7 @@ import jakarta.persistence.FetchType
 import jakarta.persistence.Index
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import org.hibernate.annotations.Comment
 import java.math.BigDecimal
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -19,7 +20,7 @@ import java.time.LocalTime
     catalog = "prototype_reservation",
     name = "restaurant",
     indexes = [
-        Index(columnList = "name is_deleted", unique = false),
+        Index(columnList = "name is_deleted", unique = false, name = "index_name_is_deleted"),
     ],
 )
 @Entity
@@ -37,42 +38,52 @@ class RestaurantEntity(
     longitude: BigDecimal,
 ) : TimeBasedPrimaryKey() {
     @Column(name = "company_id")
+    @Comment("company 식별키")
     var companyId: String = companyId
         protected set
 
     @Column(name = "user_id")
+    @Comment("user 식별키")
     var userId: String = userId
         protected set
 
     @Column(name = "name")
+    @Comment("음식점 이름")
     var name: String = name
         protected set
 
     @Column(name = "introduce")
+    @Comment("음식점 소개")
     var introduce: String = introduce
         protected set
 
     @Column(name = "phone")
+    @Comment("음식점 전화번호")
     var phone: String = phone
         protected set
 
     @Column(name = "zip_code")
+    @Comment("우편번호")
     var zipCode: String = zipCode
         protected set
 
     @Column(name = "address")
+    @Comment("음식점 주소")
     var address: String = address
         protected set
 
     @Column(name = "detail")
+    @Comment("음식점 주소 상세")
     var detail: String = detail
         protected set
 
     @Column(name = "latitude", precision = 8, scale = 5)
+    @Comment("위도")
     var latitude: BigDecimal = latitude
         protected set
 
     @Column(name = "longitude", precision = 8, scale = 5)
+    @Comment("경도")
     var longitude: BigDecimal = longitude
         protected set
 

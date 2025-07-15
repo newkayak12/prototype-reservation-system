@@ -20,6 +20,7 @@ data class RestaurantWorkingDayId(
     val identifier: String,
     @Column(name = "day")
     @Enumerated(STRING)
+    @Comment("요일")
     val day: DayOfWeek,
 ) : Serializable {
     companion object {

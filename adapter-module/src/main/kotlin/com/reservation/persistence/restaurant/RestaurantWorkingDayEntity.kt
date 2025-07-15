@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.MapsId
 import jakarta.persistence.Table
+import org.hibernate.annotations.Comment
 import java.time.LocalTime
 
 @Table(
@@ -32,7 +33,9 @@ class RestaurantWorkingDayEntity(
     )
     val restaurant: RestaurantEntity,
     @Column(name = "start_time")
+    @Comment("시작 시간")
     var startTime: LocalTime,
     @Column(name = "end_time")
+    @Comment("종료 시간")
     var endTime: LocalTime,
 )
