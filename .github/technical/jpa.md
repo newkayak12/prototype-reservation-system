@@ -1,6 +1,106 @@
 # Java Persistence API
 
-## 🧩 1. Kotlin + JPA
+## 🧩 1. Kotlin + JPA의 Custom ID 전략
+### 0.  🔑 UUID 사용 이유
+#### 장점
+- 전역적으로 유일한 값을 보장할 수 있다.
+- 분산 환경에서 안전한 ID를 생성할 수 있다.
+- 보안적으로 예측이 불가하기 때문에 보안성을 향상시켜준다.
+- TimeBase-UUID: 사용 시 정렬성까지 갖출 수 있다.
+#### 단점
+- 너무 길다 따라서 인덱스 단편화를 발생시킬 수도 있다.
+- 스토리지 낭비가 있다.
+- 비즈니스적으로 의미가 없는 값이다.
+
+#### UUID 선택 이유
+- 운영 유연성: MicroService 환경 등에서 충돌 걱정이 없음
+- 보안: 난독화된 식별자로 예측 방지
+- 정렬성: Timebased로 일부 성능 이슈 해소가 가능하다.
+
+### 1. Kt에서 @IdGeneratorType
+
+#### 1. kt val 정책
+```kotlin
+////////// annotation
+import org.hibernate.annotations.IdGeneratorType
+
+@IdGeneratorType(TimeBasedIdGenerator::class)
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FIELD)
+annotation class TimeBasedUuidStrategy
+
+////////// 실제 생성
+        
+class TimeBasedIdGenerator : IdentifierGenerator {
+    override fun generate(
+        p0: SharedSessionContractImplementor?,
+        p1: Any?,
+    ): String {
+        return UuidGenerator.generate()
+    }
+}
+
+/////// 사용처
+
+@Id
+@TimeBasedUuidStrategy
+@Column(name = "id", columnDefinition = "VARCHAR(128)", nullable = false, updatable = false)
+@Comment("식별키")
+val id: String? = null
+```
+
+- 기본적으로 불변 필드를 주 생성자에 정의하는 것이 일반적이다.
+- Hibernate는 Java에서 Setter, Reflection을 사용해서 ID를 주입하려고 한다.
+- 하지만 id로 잡은 주 생성자에 넣은 필드는 setter가 없고 reflection 제한이 있다. -> Runtime Error를 발생시킨다.
+
+#### 2. kt에 맞는 상속 기반 id 전략
+```kotlin
+@MappedSuperclass
+abstract class TimeBasedPrimaryKey : Persistable<String> {
+    @Id
+    @Column(name = "id", columnDefinition = "VARCHAR(128)", nullable = false, updatable = false)
+    @Comment("식별키")
+    val id: String = UuidGenerator.generate()
+
+    @Transient
+    private var isNewEntity: Boolean = true
+
+    override fun getId(): String? = id
+
+    override fun isNew(): Boolean = isNewEntity
+
+    override fun hashCode(): Int = Objects.hashCode(id)
+
+    override fun equals(other: Any?): Boolean {
+        if (other == null) {
+            return false
+        }
+
+        if (other !is HibernateProxy && this::class != other::class) {
+            return false
+        }
+
+        return id == getIdentifier(other)
+    }
+
+    private fun getIdentifier(obj: Any): Serializable {
+        return if (obj is HibernateProxy) {
+            obj.hibernateLazyInitializer.identifier as Serializable
+        } else {
+            (obj as TimeBasedPrimaryKey).id
+        }
+    }
+
+    @PostPersist
+    @PostLoad
+    protected fun load() {
+        isNewEntity = false
+    }
+}
+```
+- 직접 equals/hashcode 구현, isNew 판별을 진행합니다.
+- UUID를 곧바로 생성하므로 JPA save가 merge할 가능성이 있다.
+- 즉, hibernate 버그, reflection을 명시적으로 회피하고 직접 생성 방식으로 처리한다.
 
 ## 💥 2. TroubleShooting
 ### 1. Open
