@@ -17,7 +17,7 @@ class FindGeneralUserRepository(
             .select(
                 Projections.constructor(
                     FindGeneralUserResult::class.java,
-                    userEntity.id,
+                    userEntity.identifier,
                     userEntity.loginId,
                     userEntity.email,
                     userEntity.nickname,

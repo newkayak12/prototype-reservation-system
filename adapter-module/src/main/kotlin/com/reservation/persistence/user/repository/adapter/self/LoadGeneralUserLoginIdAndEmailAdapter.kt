@@ -19,7 +19,7 @@ class LoadGeneralUserLoginIdAndEmailAdapter(
         )
             .map {
                 LoadGeneralUserByLoginIdAndEmailResult(
-                    it.id!!,
+                    it.identifier!!,
                     it.loginId,
                     it.password,
                     it.oldPassword,

@@ -13,7 +13,7 @@ class LoadResignTargetUserAdapter(
         return jpaRepository.findById(id)
             .map {
                 LoadResignTargetResult(
-                    it.id!!,
+                    it.identifier!!,
                     it.loginId,
                     it.password,
                     it.oldPassword,

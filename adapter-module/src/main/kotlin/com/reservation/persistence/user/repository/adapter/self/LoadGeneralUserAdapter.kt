@@ -13,7 +13,7 @@ class LoadGeneralUserAdapter(
         return jpaRepository.findById(id)
             .map {
                 LoadGeneralUserResult(
-                    it.id!!,
+                    it.identifier!!,
                     it.loginId,
                     it.password,
                     it.oldPassword,
