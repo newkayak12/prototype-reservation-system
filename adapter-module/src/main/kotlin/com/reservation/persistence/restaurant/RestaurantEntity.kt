@@ -1,10 +1,16 @@
 package com.reservation.persistence.restaurant
 
+import com.reservation.persistence.category.entity.CategoryEntity
 import com.reservation.persistence.common.TimeBasedPrimaryKey
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
+import jakarta.persistence.ConstraintMode.NO_CONSTRAINT
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
+import jakarta.persistence.ForeignKey
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
+import jakarta.persistence.ManyToMany
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import java.math.BigDecimal
@@ -56,8 +62,39 @@ class RestaurantEntity(
 
     @OneToMany(
         mappedBy = "restaurant",
-        cascade = [ CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE ],
+        cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE],
         fetch = FetchType.LAZY,
     )
     private var weekDays = mutableListOf<RestaurantWorkingDayEntity>()
+
+    @ManyToMany(
+        targetEntity = CategoryEntity::class,
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.PERSIST, CascadeType.MERGE],
+    )
+    @JoinTable(
+        name = "restaurant_category",
+        catalog = "prototype_reservation",
+        joinColumns = [
+            JoinColumn(
+                name = "restaurant_id",
+                foreignKey = ForeignKey(NO_CONSTRAINT),
+            ),
+        ],
+        inverseJoinColumns = [
+            JoinColumn(
+                name = "category_id",
+                foreignKey = ForeignKey(NO_CONSTRAINT),
+            ),
+        ],
+    )
+    private var categories = mutableListOf<CategoryEntity>()
+
+    @OneToMany(
+        mappedBy = "restaurant",
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.PERSIST, CascadeType.MERGE],
+        targetEntity = RestaurantEntity::class,
+    )
+    private var photos = mutableListOf<RestaurantPhotoEntity>()
 }
