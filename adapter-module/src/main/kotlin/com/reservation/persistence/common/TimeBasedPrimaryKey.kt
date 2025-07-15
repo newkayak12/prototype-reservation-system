@@ -17,16 +17,16 @@ abstract class TimeBasedPrimaryKey : Persistable<String> {
     @Id
     @Column(name = "id", columnDefinition = "VARCHAR(128)", nullable = false, updatable = false)
     @Comment("식별키")
-    val id: String = UuidGenerator.generate()
+    val identifier: String = UuidGenerator.generate()
 
     @Transient
     private var isNewEntity: Boolean = true
 
-    override fun getId(): String? = id
+    override fun getId(): String? = this.identifier
 
-    override fun isNew(): Boolean = isNewEntity
+    override fun isNew(): Boolean = this.isNewEntity
 
-    override fun hashCode(): Int = Objects.hashCode(id)
+    override fun hashCode(): Int = Objects.hashCode(identifier)
 
     override fun equals(other: Any?): Boolean {
         if (other == null) {
@@ -37,14 +37,14 @@ abstract class TimeBasedPrimaryKey : Persistable<String> {
             return false
         }
 
-        return id == getIdentifier(other)
+        return identifier == getIdentifier(other)
     }
 
     private fun getIdentifier(obj: Any): Serializable {
         return if (obj is HibernateProxy) {
             obj.hibernateLazyInitializer.identifier as Serializable
         } else {
-            (obj as TimeBasedPrimaryKey).id
+            (obj as TimeBasedPrimaryKey).identifier
         }
     }
 

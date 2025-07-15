@@ -16,7 +16,7 @@ class FindCompanies(
         return query.select(
             Projections.constructor(
                 FindCompaniesQueryResult::class.java,
-                companyEntity.id,
+                companyEntity.identifier,
                 companyEntity.brandName,
                 companyEntity.brandUrl,
                 companyEntity.representativeName,
