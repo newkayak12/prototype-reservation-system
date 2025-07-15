@@ -1,20 +1,14 @@
 package com.reservation.persistence.restaurant
 
-import com.reservation.persistence.category.entity.CategoryEntity
 import com.reservation.persistence.common.AuditDateTime
 import com.reservation.persistence.common.LogicalDelete
 import com.reservation.persistence.common.TimeBasedPrimaryKey
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
-import jakarta.persistence.ConstraintMode.NO_CONSTRAINT
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
-import jakarta.persistence.ForeignKey
 import jakarta.persistence.Index
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.JoinTable
-import jakarta.persistence.ManyToMany
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import java.math.BigDecimal
@@ -90,28 +84,13 @@ class RestaurantEntity(
     )
     private var weekDays = mutableListOf<RestaurantWorkingDayEntity>()
 
-    @ManyToMany(
-        targetEntity = CategoryEntity::class,
+    @OneToMany(
+        mappedBy = "restaurant",
+        targetEntity = RestaurantCategoryEntity::class,
         fetch = FetchType.LAZY,
         cascade = [CascadeType.PERSIST, CascadeType.MERGE],
     )
-    @JoinTable(
-        name = "restaurant_category",
-        catalog = "prototype_reservation",
-        joinColumns = [
-            JoinColumn(
-                name = "restaurant_id",
-                foreignKey = ForeignKey(NO_CONSTRAINT),
-            ),
-        ],
-        inverseJoinColumns = [
-            JoinColumn(
-                name = "category_id",
-                foreignKey = ForeignKey(NO_CONSTRAINT),
-            ),
-        ],
-    )
-    private var categories = mutableListOf<CategoryEntity>()
+    private var categories = mutableListOf<RestaurantCategoryEntity>()
 
     @OneToMany(
         mappedBy = "restaurant",
@@ -163,16 +142,21 @@ class RestaurantEntity(
         weekDays.remove(item)
     }
 
-    fun addCategory(category: CategoryEntity) {
-        val item = categories.find { it.id == category.id }
+    fun addCategory(categoryId: Long) {
+        val item = categories.find { it.categoryId == categoryId }
         if (item !== null) {
             return
         }
-        categories.add(category)
+        categories.add(
+            RestaurantCategoryEntity(
+                restaurant = this,
+                categoryId = categoryId,
+            ),
+        )
     }
 
-    fun removeCategory(category: CategoryEntity) {
-        val item = categories.find { it.id == category.id }
+    fun removeCategory(categoryId: Long) {
+        val item = categories.find { it.categoryId == categoryId }
         if (item == null) {
             return
         }

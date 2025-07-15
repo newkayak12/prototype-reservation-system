@@ -29,6 +29,7 @@ class CreateRestaurantAdapter(
 
         addWorkingDays(entity, inquiry.workingDays)
         addPhotos(entity, inquiry.photos)
+        addCategories(entity, inquiry.tags + inquiry.nationalities + inquiry.cuisines)
 
         val result = jpaRepository.save(entity)
         return result.isPersisted()
@@ -57,6 +58,19 @@ class CreateRestaurantAdapter(
 
         for ((url) in photos) {
             entity.addPhoto(url)
+        }
+    }
+
+    private fun addCategories(
+        entity: RestaurantEntity,
+        categories: List<Long>,
+    ) {
+        if (categories.isEmpty()) {
+            return
+        }
+
+        for (category in categories) {
+            entity.addCategory(category)
         }
     }
 }
