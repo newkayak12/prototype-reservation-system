@@ -39,6 +39,7 @@ class CreateRestaurantUseCase(
         val form =
             CreateRestaurantForm(
                 companyId = request.companyId,
+                userId = request.userId,
                 name = request.name,
                 introduce = request.introduce,
                 phone = request.phone,
@@ -61,6 +62,7 @@ class CreateRestaurantUseCase(
         val inquiry =
             CreateProductInquiry(
                 companyId = snapshot.companyId,
+                userId = snapshot.userId,
                 name = snapshot.name,
                 introduce = snapshot.introduce,
                 phone = snapshot.phone,

@@ -2,6 +2,7 @@ package com.reservation.persistence.restaurant
 
 import com.reservation.persistence.category.entity.CategoryEntity
 import com.reservation.persistence.common.AuditDateTime
+import com.reservation.persistence.common.LogicalDelete
 import com.reservation.persistence.common.TimeBasedPrimaryKey
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
@@ -24,13 +25,14 @@ import java.time.LocalTime
     catalog = "prototype_reservation",
     name = "restaurant",
     indexes = [
-        Index(columnList = "name", unique = false),
+        Index(columnList = "name is_deleted", unique = false),
     ],
 )
 @Entity
 @Suppress("LongParameterList")
 class RestaurantEntity(
     companyId: String,
+    userId: String,
     name: String,
     introduce: String,
     phone: String,
@@ -42,6 +44,10 @@ class RestaurantEntity(
 ) : TimeBasedPrimaryKey() {
     @Column(name = "company_id")
     var companyId: String = companyId
+        protected set
+
+    @Column(name = "user_id")
+    var userId: String = userId
         protected set
 
     @Column(name = "name")
@@ -120,6 +126,10 @@ class RestaurantEntity(
     var auditDateTime: AuditDateTime = AuditDateTime()
         protected set
 
+    @Embedded
+    var logicalDelete: LogicalDelete = LogicalDelete()
+        protected set
+
     fun weekDaysAll() = weekDays.toList()
 
     fun categoriesAll() = categories.toList()
@@ -185,5 +195,9 @@ class RestaurantEntity(
         }
 
         photos.remove(item)
+    }
+
+    fun delete() {
+        logicalDelete = LogicalDelete(true)
     }
 }

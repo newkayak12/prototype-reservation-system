@@ -7,6 +7,7 @@ import java.math.BigDecimal
 data class RestaurantSnapshot(
     val id: String? = null,
     val companyId: String,
+    val userId: String,
     val name: String,
     val introduce: String,
     val phone: String,

@@ -9,6 +9,7 @@ fun interface CreateRestaurant {
 
     data class CreateProductInquiry(
         val companyId: String,
+        val userId: String,
         val name: String,
         val introduce: String,
         val phone: String,
@@ -31,7 +32,7 @@ fun interface CreateRestaurant {
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
-            if (other !is com.reservation.restaurant.vo.RestaurantWorkingDay) return false
+            if (other !is WorkingDay) return false
 
             if (day != other.day) return false
 

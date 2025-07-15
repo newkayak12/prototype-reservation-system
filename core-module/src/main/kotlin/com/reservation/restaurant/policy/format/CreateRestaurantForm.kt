@@ -4,6 +4,7 @@ import java.math.BigDecimal
 
 data class CreateRestaurantForm(
     val companyId: String,
+    val userId: String,
     val name: String,
     val introduce: String,
     val phone: String,

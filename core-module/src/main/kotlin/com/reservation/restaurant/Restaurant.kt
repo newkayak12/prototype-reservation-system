@@ -13,6 +13,7 @@ import com.reservation.restaurant.vo.RestaurantTags
 internal class Restaurant(
     private val id: String? = null,
     private val companyId: String,
+    private val userId: String,
     private var introduce: RestaurantDescription,
     private var contact: RestaurantContact,
     private var address: RestaurantAddress,
@@ -50,6 +51,7 @@ internal class Restaurant(
         RestaurantSnapshot(
             id = id,
             companyId = companyId,
+            userId = userId,
             name = introduce.name,
             introduce = introduce.introduce,
             phone = contact.phone,

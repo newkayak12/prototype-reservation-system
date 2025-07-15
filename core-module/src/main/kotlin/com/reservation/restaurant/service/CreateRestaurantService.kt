@@ -89,6 +89,7 @@ class CreateRestaurantService {
         val restaurant =
             Restaurant(
                 companyId = form.companyId,
+                userId = form.userId,
                 introduce =
                     RestaurantDescription(
                         name = form.name,

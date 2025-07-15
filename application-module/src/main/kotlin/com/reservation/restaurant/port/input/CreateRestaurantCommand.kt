@@ -11,6 +11,7 @@ fun interface CreateRestaurantCommand {
 
     data class CreateProductCommandDto(
         val companyId: String,
+        val userId: String,
         val name: String,
         val introduce: String,
         val phone: String,
