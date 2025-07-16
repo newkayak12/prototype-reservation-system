@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.ninjasquad.springmockk.MockkBean
 import com.reservation.authenticate.port.input.ExtractIdentifierFromHeaderQuery
+import com.reservation.config.restdoc.Body
+import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
@@ -15,6 +17,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.data.forAll
 import io.kotest.data.row
 import io.kotest.extensions.spring.SpringExtension
+import io.mockk.every
 import net.jqwik.api.Arbitraries
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
@@ -24,9 +27,14 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post
+import org.springframework.restdocs.payload.JsonFieldType.ARRAY
+import org.springframework.restdocs.payload.JsonFieldType.BOOLEAN
+import org.springframework.restdocs.payload.JsonFieldType.NUMBER
+import org.springframework.restdocs.payload.JsonFieldType.STRING
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @AutoConfigureRestDocs
@@ -62,7 +70,7 @@ class CreateRestaurantControllerTest(
             .sample()
 
     init {
-        test("JakartaValidation - NotBlank인 케이스에 위배되어 실패한다.") {
+        test("비정상 요청으로 (JakartaValidation - NotBlank)인 케이스에 위배되어 실패한다.") {
             forAll(
                 row("companyId"),
                 row("name"),
@@ -85,6 +93,215 @@ class CreateRestaurantControllerTest(
                         status().is4xxClientError,
                     )
             }
+        }
+
+        test("비정상 요청으로 (JakartaValidation - Size)에 위배되어 실패한다.") {
+            forAll(
+                row("phone", 11, 13),
+                row("address", 1, 256),
+            ) { fieldName: String, min: Int, max: Int ->
+
+                val value =
+                    Arbitraries.oneOf(
+                        Arbitraries.strings().numeric().ofMinLength(max + 1),
+                        Arbitraries.strings().numeric().ofMaxLength(min - 1),
+                    )
+                        .sample()
+
+                val request =
+                    when (fieldName) {
+                        "phone" -> perfectCase().copy(phone = value)
+                        "address" -> perfectCase().copy(address = value)
+                        else -> perfectCase()
+                    }
+
+                mockMvc.perform(
+                    post(RestaurantUrl.CREATE_RESTAURANT)
+                        .header(
+                            HttpHeaders.AUTHORIZATION,
+                            CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)),
+                )
+                    .andDo(MockMvcResultHandlers.print())
+                    .andExpect(
+                        status().is4xxClientError,
+                    )
+            }
+        }
+
+        test("비정상 요청으로 (JakartaValidation - Nullable이고 최대 Size)만 있는 경우 위배되어 실패한다.") {
+            forAll(
+                row("introduce", 6000),
+                row("detail", 256),
+            ) { fieldName: String, max: Int ->
+
+                val request =
+                    when (fieldName) {
+                        "introduce" ->
+                            perfectCase().copy(
+                                introduce = Arbitraries.strings().ofMinLength(max + 1).sample(),
+                            )
+                        "detail" ->
+                            perfectCase().copy(
+                                detail = Arbitraries.strings().ofMinLength(max + 1).sample(),
+                            )
+                        else -> perfectCase()
+                    }
+
+                mockMvc.perform(
+                    post(RestaurantUrl.CREATE_RESTAURANT)
+                        .header(
+                            HttpHeaders.AUTHORIZATION,
+                            CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)),
+                )
+                    .andDo(MockMvcResultHandlers.print())
+                    .andExpect(
+                        status().is4xxClientError,
+                    )
+            }
+        }
+
+        test("정상 요청으로 정상 성공한다.") {
+            val request = perfectCase()
+            every {
+                extractIdentifierFromHeaderQuery.execute(any())
+            } returns Arbitraries.strings().sample()
+
+            every {
+                createRestaurantCommand.execute(any())
+            } returns true
+
+            mockMvc.perform(
+                post(RestaurantUrl.CREATE_RESTAURANT)
+                    .header(
+                        HttpHeaders.AUTHORIZATION,
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                    )
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)),
+            )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isCreated)
+                .andExpect(jsonPath("$.result").isBoolean)
+                .andExpect(jsonPath("$.result").value(true))
+                .andDo(
+                    RestDocuments(
+                        identifier = "createRestaurant",
+                        documentTags = listOf("restaurant", "create"),
+                        summary = "음식점 생성",
+                        description = "사용자 요청에 맞춰서 음식점을 생성합니다.",
+                        requestBody =
+                            arrayOf(
+                                Body(
+                                    name = "companyId",
+                                    jsonType = STRING,
+                                    optional = false,
+                                    description = "회사 식별값",
+                                ),
+                                Body(
+                                    name = "name",
+                                    jsonType = STRING,
+                                    optional = false,
+                                    description = "음식점 이름",
+                                ),
+                                Body(
+                                    name = "introduce",
+                                    jsonType = STRING,
+                                    optional = true,
+                                    description = "음식점 소개",
+                                ),
+                                Body(
+                                    name = "phone",
+                                    jsonType = STRING,
+                                    optional = false,
+                                    description = "음식점 전화번호",
+                                ),
+                                Body(
+                                    name = "zipCode",
+                                    jsonType = STRING,
+                                    optional = false,
+                                    description = "음식점 우편번호",
+                                ),
+                                Body(
+                                    name = "address",
+                                    jsonType = STRING,
+                                    optional = false,
+                                    description = "음식점 주소",
+                                ),
+                                Body(
+                                    name = "detail",
+                                    jsonType = STRING,
+                                    optional = true,
+                                    description = "음식점 주소 상세",
+                                ),
+                                Body(
+                                    name = "latitude",
+                                    jsonType = NUMBER,
+                                    optional = false,
+                                    description = "위도",
+                                ),
+                                Body(
+                                    name = "longitude",
+                                    jsonType = NUMBER,
+                                    optional = false,
+                                    description = "경도",
+                                ),
+                                Body(
+                                    name = "workingDays[].day",
+                                    jsonType = STRING,
+                                    optional = false,
+                                    description = "요일",
+                                ),
+                                Body(
+                                    name = "workingDays[].startTime",
+                                    jsonType = STRING,
+                                    optional = false,
+                                    description = "시작 시간",
+                                ),
+                                Body(
+                                    name = "workingDays[].endTime",
+                                    jsonType = STRING,
+                                    optional = false,
+                                    description = "마감 시간",
+                                ),
+                                Body(
+                                    name = "photos[]",
+                                    jsonType = ARRAY,
+                                    optional = true,
+                                    description = "사진",
+                                ),
+                                Body(
+                                    name = "tags[]",
+                                    jsonType = ARRAY,
+                                    optional = true,
+                                    description = "태그",
+                                ),
+                                Body(
+                                    name = "nationalities[]",
+                                    jsonType = ARRAY,
+                                    optional = true,
+                                    description = "국가",
+                                ),
+                                Body(
+                                    name = "cuisines[]",
+                                    jsonType = ARRAY,
+                                    optional = true,
+                                    description = "음식",
+                                ),
+                            ),
+                        responseBody =
+                            arrayOf(
+                                Body("result", BOOLEAN, true, "결과"),
+                            ),
+                    )
+                        .authorizedRequestHeader()
+                        .create(),
+                )
         }
     }
 }

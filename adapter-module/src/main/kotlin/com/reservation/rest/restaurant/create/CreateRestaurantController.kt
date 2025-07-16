@@ -25,7 +25,7 @@ class CreateRestaurantController(
             extractIdentifierFromHeaderQuery
                 .execute(header.getFirst(HttpHeaders.AUTHORIZATION))
 
-        return BooleanResponse.ok(
+        return BooleanResponse.created(
             createRestaurantCommand.execute(request.toCommand(identifier)),
         )
     }

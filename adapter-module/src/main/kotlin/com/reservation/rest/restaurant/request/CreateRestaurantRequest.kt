@@ -3,8 +3,7 @@ package com.reservation.rest.restaurant.request
 import com.reservation.restaurant.policy.format.RestaurantWorkingDayForm
 import com.reservation.restaurant.port.input.CreateRestaurantCommand.CreateProductCommandDto
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
-import jakarta.validation.constraints.Size
+import org.hibernate.validator.constraints.Length
 import java.math.BigDecimal
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -14,17 +13,17 @@ data class CreateRestaurantRequest(
     val companyId: String,
     @field:NotBlank
     val name: String,
-    @field:Size(max = 6000)
+    @field:Length(max = 6000)
     val introduce: String?,
-    @field:Size(min = 11, max = 13)
+    @field:Length(min = 11, max = 13)
     val phone: String,
     @field:NotBlank
     val zipCode: String,
     @field:NotBlank
-    @field:Size(max = 256)
+    @field:Length(max = 256)
     val address: String,
-    @field:Size(max = 256)
-    val detail: String = "",
+    @field:Length(max = 256)
+    val detail: String?,
     val latitude: BigDecimal,
     val longitude: BigDecimal,
     val workingDays: List<CreateRestaurantWorkingDay>,
@@ -34,11 +33,8 @@ data class CreateRestaurantRequest(
     val cuisines: List<Long>,
 ) {
     data class CreateRestaurantWorkingDay(
-        @field:NotNull
         val day: DayOfWeek,
-        @field:NotNull
         val startTime: LocalTime,
-        @field:NotNull
         val endTime: LocalTime,
     ) {
         fun toCommand(): RestaurantWorkingDayForm =
@@ -54,7 +50,7 @@ data class CreateRestaurantRequest(
             phone = phone,
             zipCode = zipCode,
             address = address,
-            detail = detail,
+            detail = detail ?: "",
             latitude = latitude,
             longitude = longitude,
             workingDays = workingDays.map { it.toCommand() },
