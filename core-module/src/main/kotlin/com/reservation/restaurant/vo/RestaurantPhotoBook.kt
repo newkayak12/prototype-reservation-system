@@ -10,7 +10,7 @@ data class RestaurantPhotoBook(
 
     fun add(photo: RestaurantPhoto) {
         if (photos.contains(photo)) return
-        require(photos.size + 1 > MAX_PHOTO_SIZE) { MAX_PHOTO_SIZE_MESSAGE }
+        require(photos.size < MAX_PHOTO_SIZE) { MAX_PHOTO_SIZE_MESSAGE }
         photos.add(photo)
     }
 

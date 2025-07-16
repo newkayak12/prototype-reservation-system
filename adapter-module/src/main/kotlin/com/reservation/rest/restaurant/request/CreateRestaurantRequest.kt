@@ -24,7 +24,7 @@ data class CreateRestaurantRequest(
     @field:Size(max = 256)
     val address: String,
     @field:Size(max = 256)
-    val detail: String,
+    val detail: String = "",
     val latitude: BigDecimal,
     val longitude: BigDecimal,
     val workingDays: List<CreateRestaurantWorkingDay>,

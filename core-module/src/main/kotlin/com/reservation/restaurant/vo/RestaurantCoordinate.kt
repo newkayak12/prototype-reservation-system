@@ -22,7 +22,7 @@ data class RestaurantCoordinate(
     }
 
     init {
-        require(isValidScale(latitude)) { "위도는 지수부 3자리, 소수부 20자리를 초과할 수 없습니다." }
-        require(isValidScale(longitude)) { "경도는 지수부 3자리, 소수부 20자리를 초과할 수 없습니다." }
+        require(isValidScale(latitude)) { "위도는 지수부 3자리, 소수부 5자리를 초과할 수 없습니다." }
+        require(isValidScale(longitude)) { "경도는 지수부 3자리, 소수부 5자리를 초과할 수 없습니다." }
     }
 }

@@ -10,7 +10,7 @@ data class RestaurantCuisines(
 
     fun add(tagId: Long) {
         if (cuisines.contains(tagId)) return
-        require(cuisines.size + 1 > MAX_CUISINE_SIZE) { MAX_CUISINE_SIZE_MESSAGE }
+        require(cuisines.size < MAX_CUISINE_SIZE) { MAX_CUISINE_SIZE_MESSAGE }
         cuisines.add(tagId)
     }
 

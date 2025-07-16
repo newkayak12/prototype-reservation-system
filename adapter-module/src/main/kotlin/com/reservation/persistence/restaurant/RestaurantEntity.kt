@@ -155,7 +155,7 @@ class RestaurantEntity(
 
     fun addCategory(categoryId: Long) {
         val item = categories.find { it.categoryId == categoryId }
-        if (item !== null) {
+        if (item != null) {
             return
         }
         categories.add(

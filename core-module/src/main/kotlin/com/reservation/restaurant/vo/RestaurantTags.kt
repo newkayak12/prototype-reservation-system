@@ -10,7 +10,7 @@ data class RestaurantTags(
 
     fun add(tagId: Long) {
         if (tags.contains(tagId)) return
-        require(tags.size + 1 > MAX_TAG_SIZE) { MAX_TAG_SIZE_MESSAGE }
+        require(tags.size < MAX_TAG_SIZE) { MAX_TAG_SIZE_MESSAGE }
         tags.add(tagId)
     }
 

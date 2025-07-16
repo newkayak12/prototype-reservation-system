@@ -68,8 +68,8 @@ class CreateRestaurantControllerTest(
                 row("name"),
                 row("zipCode"),
                 row("address"),
-            ) { nullField ->
-                val request = perfectCase().copy(nullField, "")
+            ) { emptyField ->
+                val request = perfectCase().copy(emptyField, "")
 
                 mockMvc.perform(
                     post(RestaurantUrl.CREATE_RESTAURANT)

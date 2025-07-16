@@ -10,7 +10,7 @@ data class RestaurantNationalities(
 
     fun add(tagId: Long) {
         if (nationalities.contains(tagId)) return
-        require(nationalities.size + 1 > MAX_NATIONALITY_SIZE) { MAX_NATIONALITY_SIZE_MESSAGE }
+        require(nationalities.size < MAX_NATIONALITY_SIZE) { MAX_NATIONALITY_SIZE_MESSAGE }
         nationalities.add(tagId)
     }
 
