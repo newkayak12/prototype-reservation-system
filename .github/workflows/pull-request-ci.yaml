@@ -20,17 +20,14 @@ jobs:
   adapter-module:
     name: Adapter Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/adapter-module-test.yaml@master
-    continue-on-error: true
 
   application-module:
     name: Application Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/application-module-test.yaml@master
-    continue-on-error: true
 
   core-module:
     name: Core Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/core-module-test.yaml@master
-    continue-on-error: true
 
   publish_test_results:
     name: Publish Test Results
