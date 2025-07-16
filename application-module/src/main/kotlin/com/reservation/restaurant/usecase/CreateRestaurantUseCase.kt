@@ -11,15 +11,18 @@ import com.reservation.restaurant.port.output.CreateRestaurant
 import com.reservation.restaurant.port.output.CreateRestaurant.CreateProductInquiry
 import com.reservation.restaurant.port.output.CreateRestaurant.Photo
 import com.reservation.restaurant.port.output.CreateRestaurant.WorkingDay
+import com.reservation.restaurant.port.output.UploadRestaurantImageFile
 import com.reservation.restaurant.service.CreateRestaurantService
 import com.reservation.restaurant.snapshot.RestaurantSnapshot
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 
 @UseCase
 class CreateRestaurantUseCase(
     private val createRestaurant: CreateRestaurant,
     private val checkRestaurantDuplicated: CheckRestaurantDuplicated,
     private val createRestaurantService: CreateRestaurantService,
+    private val uploadRestaurantImageFile: UploadRestaurantImageFile,
 ) : CreateRestaurantCommand {
     private fun checkDuplicated(
         companyId: String,
@@ -35,7 +38,12 @@ class CreateRestaurantUseCase(
         }
     }
 
+    private fun uploadFiles(files: List<MultipartFile>): List<String> =
+        if (files.isEmpty()) listOf() else uploadRestaurantImageFile.execute(files)
+
     private fun createRestaurant(request: CreateProductCommandDto): RestaurantSnapshot {
+        val images: List<String> = uploadFiles(request.photos)
+
         val form =
             CreateRestaurantForm(
                 companyId = request.companyId,
@@ -49,7 +57,7 @@ class CreateRestaurantUseCase(
                 latitude = request.latitude,
                 longitude = request.longitude,
                 workingDays = request.workingDays,
-                photos = request.photos,
+                photos = images,
                 tags = request.tags,
                 nationalities = request.nationalities,
                 cuisines = request.cuisines,

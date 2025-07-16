@@ -5,6 +5,8 @@ import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.ninjasquad.springmockk.MockkBean
 import com.reservation.authenticate.port.input.ExtractIdentifierFromHeaderQuery
 import com.reservation.config.restdoc.Body
+import com.reservation.config.restdoc.Part
+import com.reservation.config.restdoc.RequestPartFields
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
@@ -25,8 +27,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockPart
 import org.springframework.restdocs.RestDocumentationExtension
-import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post
+import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.multipart
 import org.springframework.restdocs.payload.JsonFieldType.ARRAY
 import org.springframework.restdocs.payload.JsonFieldType.BOOLEAN
 import org.springframework.restdocs.payload.JsonFieldType.NUMBER
@@ -58,12 +61,14 @@ class CreateRestaurantControllerTest(
 
     private fun perfectCase() =
         pureMonkey.giveMeBuilder<CreateRestaurantRequest>()
-            .setLazy("companyId") { Arbitraries.strings().ofLength(128).sample() }
-            .setLazy("name") { Arbitraries.strings().ofLength(64).sample() }
+            .setLazy("companyId") { Arbitraries.strings().numeric().ofLength(128).sample() }
+            .setLazy("name") { Arbitraries.strings().numeric().ofLength(64).sample() }
             .setLazy("introduce") { Arbitraries.strings().ofLength(6000).sample() }
-            .setLazy("phone") { Arbitraries.strings().ofMinLength(11).ofMaxLength(13).sample() }
-            .setLazy("zipCode") { Arbitraries.strings().ofLength(5).sample() }
-            .setLazy("address") { Arbitraries.strings().ofLength(256).sample() }
+            .setLazy(
+                "phone",
+            ) { Arbitraries.strings().numeric().ofMinLength(11).ofMaxLength(13).sample() }
+            .setLazy("zipCode") { Arbitraries.strings().numeric().ofLength(5).sample() }
+            .setLazy("address") { Arbitraries.strings().numeric().ofLength(256).sample() }
             .setLazy("detail") { Arbitraries.strings().ofLength(256).sample() }
             .setLazy("latitude") { Arbitraries.bigDecimals().ofScale(6).sample() }
             .setLazy("longitude") { Arbitraries.bigDecimals().ofScale(6).sample() }
@@ -77,16 +82,20 @@ class CreateRestaurantControllerTest(
                 row("zipCode"),
                 row("address"),
             ) { emptyField ->
-                val request = perfectCase().copy(emptyField, "")
+                val requestBody = perfectCase().copy(emptyField, "")
+
+                val request =
+                    MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                        .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
                 mockMvc.perform(
-                    post(RestaurantUrl.CREATE_RESTAURANT)
+                    multipart(RestaurantUrl.CREATE_RESTAURANT)
+                        .part(request)
                         .header(
                             HttpHeaders.AUTHORIZATION,
                             CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
                         )
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)),
+                        .contentType(MediaType.MULTIPART_FORM_DATA),
                 )
                     .andDo(MockMvcResultHandlers.print())
                     .andExpect(
@@ -108,21 +117,25 @@ class CreateRestaurantControllerTest(
                     )
                         .sample()
 
-                val request =
+                val requestBody =
                     when (fieldName) {
                         "phone" -> perfectCase().copy(phone = value)
                         "address" -> perfectCase().copy(address = value)
                         else -> perfectCase()
                     }
 
+                val request =
+                    MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                        .apply { headers.contentType = MediaType.APPLICATION_JSON }
+
                 mockMvc.perform(
-                    post(RestaurantUrl.CREATE_RESTAURANT)
+                    multipart(RestaurantUrl.CREATE_RESTAURANT)
+                        .part(request)
                         .header(
                             HttpHeaders.AUTHORIZATION,
                             CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
                         )
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)),
+                        .contentType(MediaType.MULTIPART_FORM_DATA),
                 )
                     .andDo(MockMvcResultHandlers.print())
                     .andExpect(
@@ -137,7 +150,7 @@ class CreateRestaurantControllerTest(
                 row("detail", 256),
             ) { fieldName: String, max: Int ->
 
-                val request =
+                val requestBody =
                     when (fieldName) {
                         "introduce" ->
                             perfectCase().copy(
@@ -150,14 +163,18 @@ class CreateRestaurantControllerTest(
                         else -> perfectCase()
                     }
 
+                val request =
+                    MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                        .apply { headers.contentType = MediaType.APPLICATION_JSON }
+
                 mockMvc.perform(
-                    post(RestaurantUrl.CREATE_RESTAURANT)
+                    multipart(RestaurantUrl.CREATE_RESTAURANT)
+                        .part(request)
                         .header(
                             HttpHeaders.AUTHORIZATION,
                             CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
                         )
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)),
+                        .contentType(MediaType.MULTIPART_FORM_DATA),
                 )
                     .andDo(MockMvcResultHandlers.print())
                     .andExpect(
@@ -167,7 +184,7 @@ class CreateRestaurantControllerTest(
         }
 
         test("정상 요청으로 정상 성공한다.") {
-            val request = perfectCase()
+            val requestBody = perfectCase()
             every {
                 extractIdentifierFromHeaderQuery.execute(any())
             } returns Arbitraries.strings().sample()
@@ -176,14 +193,55 @@ class CreateRestaurantControllerTest(
                 createRestaurantCommand.execute(any())
             } returns true
 
+            val request =
+                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                    .apply { headers.contentType = MediaType.APPLICATION_JSON }
+
             mockMvc.perform(
-                post(RestaurantUrl.CREATE_RESTAURANT)
+                multipart(RestaurantUrl.CREATE_RESTAURANT)
+                    .part(request)
                     .header(
                         HttpHeaders.AUTHORIZATION,
                         CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
                     )
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)),
+                    .contentType(MediaType.MULTIPART_FORM_DATA),
+            )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isCreated)
+                .andExpect(jsonPath("$.result").isBoolean)
+                .andExpect(jsonPath("$.result").value(true))
+        }
+
+        test("이미지와 함께 정상 요청으로 정상 성공한다.") {
+            val requestBody = perfectCase()
+            every {
+                extractIdentifierFromHeaderQuery.execute(any())
+            } returns Arbitraries.strings().sample()
+
+            every {
+                createRestaurantCommand.execute(any())
+            } returns true
+
+            val request =
+                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                    .apply { headers.contentType = MediaType.APPLICATION_JSON }
+            val photo1 =
+                MockPart("photos", "img1.jpg", byteArrayOf(1, 2, 3))
+                    .apply { headers.contentType = MediaType.IMAGE_JPEG }
+            val photo2 =
+                MockPart("photos", "img2.jpg", byteArrayOf(4, 5, 6))
+                    .apply { headers.contentType = MediaType.IMAGE_JPEG }
+
+            mockMvc.perform(
+                multipart(RestaurantUrl.CREATE_RESTAURANT)
+                    .part(request)
+                    .part(photo1)
+                    .part(photo2)
+                    .header(
+                        HttpHeaders.AUTHORIZATION,
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                    )
+                    .contentType(MediaType.MULTIPART_FORM_DATA),
             )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isCreated)
@@ -195,109 +253,114 @@ class CreateRestaurantControllerTest(
                         documentTags = listOf("restaurant", "create"),
                         summary = "음식점 생성",
                         description = "사용자 요청에 맞춰서 음식점을 생성합니다.",
-                        requestBody =
+                        requestPart =
                             arrayOf(
-                                Body(
-                                    name = "companyId",
-                                    jsonType = STRING,
-                                    optional = false,
-                                    description = "회사 식별값",
-                                ),
-                                Body(
-                                    name = "name",
-                                    jsonType = STRING,
-                                    optional = false,
-                                    description = "음식점 이름",
-                                ),
-                                Body(
-                                    name = "introduce",
-                                    jsonType = STRING,
-                                    optional = true,
-                                    description = "음식점 소개",
-                                ),
-                                Body(
-                                    name = "phone",
-                                    jsonType = STRING,
-                                    optional = false,
-                                    description = "음식점 전화번호",
-                                ),
-                                Body(
-                                    name = "zipCode",
-                                    jsonType = STRING,
-                                    optional = false,
-                                    description = "음식점 우편번호",
-                                ),
-                                Body(
-                                    name = "address",
-                                    jsonType = STRING,
-                                    optional = false,
-                                    description = "음식점 주소",
-                                ),
-                                Body(
-                                    name = "detail",
-                                    jsonType = STRING,
-                                    optional = true,
-                                    description = "음식점 주소 상세",
-                                ),
-                                Body(
-                                    name = "latitude",
-                                    jsonType = NUMBER,
-                                    optional = false,
-                                    description = "위도",
-                                ),
-                                Body(
-                                    name = "longitude",
-                                    jsonType = NUMBER,
-                                    optional = false,
-                                    description = "경도",
-                                ),
-                                Body(
-                                    name = "workingDays[]",
-                                    jsonType = ARRAY,
-                                    optional = true,
-                                    description = "업무 시간",
-                                ),
-                                Body(
-                                    name = "workingDays[].day",
-                                    jsonType = STRING,
-                                    optional = false,
-                                    description = "요일",
-                                ),
-                                Body(
-                                    name = "workingDays[].startTime",
-                                    jsonType = STRING,
-                                    optional = false,
-                                    description = "시작 시간",
-                                ),
-                                Body(
-                                    name = "workingDays[].endTime",
-                                    jsonType = STRING,
-                                    optional = false,
-                                    description = "마감 시간",
-                                ),
-                                Body(
-                                    name = "photos[]",
-                                    jsonType = ARRAY,
-                                    optional = true,
-                                    description = "사진",
-                                ),
-                                Body(
-                                    name = "tags[]",
-                                    jsonType = ARRAY,
-                                    optional = true,
-                                    description = "태그",
-                                ),
-                                Body(
-                                    name = "nationalities[]",
-                                    jsonType = ARRAY,
-                                    optional = true,
-                                    description = "국가",
-                                ),
-                                Body(
-                                    name = "cuisines[]",
-                                    jsonType = ARRAY,
-                                    optional = true,
-                                    description = "음식",
+                                Part("photos", true, "사진"),
+                                Part("request", false, "요청"),
+                            ),
+                        requestPartBody =
+                            arrayOf(
+                                RequestPartFields(
+                                    partName = "request",
+                                    jsonFields =
+                                        arrayOf(
+                                            Body(
+                                                name = "companyId",
+                                                jsonType = STRING,
+                                                optional = false,
+                                                description = "회사 식별값",
+                                            ),
+                                            Body(
+                                                name = "name",
+                                                jsonType = STRING,
+                                                optional = false,
+                                                description = "음식점 이름",
+                                            ),
+                                            Body(
+                                                name = "introduce",
+                                                jsonType = STRING,
+                                                optional = true,
+                                                description = "음식점 소개",
+                                            ),
+                                            Body(
+                                                name = "phone",
+                                                jsonType = STRING,
+                                                optional = false,
+                                                description = "음식점 전화번호",
+                                            ),
+                                            Body(
+                                                name = "zipCode",
+                                                jsonType = STRING,
+                                                optional = false,
+                                                description = "음식점 우편번호",
+                                            ),
+                                            Body(
+                                                name = "address",
+                                                jsonType = STRING,
+                                                optional = false,
+                                                description = "음식점 주소",
+                                            ),
+                                            Body(
+                                                name = "detail",
+                                                jsonType = STRING,
+                                                optional = true,
+                                                description = "음식점 주소 상세",
+                                            ),
+                                            Body(
+                                                name = "latitude",
+                                                jsonType = NUMBER,
+                                                optional = false,
+                                                description = "위도",
+                                            ),
+                                            Body(
+                                                name = "longitude",
+                                                jsonType = NUMBER,
+                                                optional = false,
+                                                description = "경도",
+                                            ),
+                                            Body(
+                                                name = "workingDays[]",
+                                                jsonType = ARRAY,
+                                                optional = true,
+                                                description = "업무 시간",
+                                            ),
+                                            Body(
+                                                name = "workingDays[].day",
+                                                jsonType = STRING,
+                                                optional = false,
+                                                description = "요일",
+                                            ),
+                                            Body(
+                                                name = "workingDays[].startTime",
+                                                jsonType = STRING,
+                                                optional = false,
+                                                description = "시작 시간",
+                                            ),
+                                            Body(
+                                                name = "workingDays[].endTime",
+                                                jsonType = STRING,
+                                                optional = false,
+                                                description = "마감 시간",
+                                            ),
+                                            Body(
+                                                name = "tags[]",
+                                                jsonType = ARRAY,
+                                                optional = true,
+                                                description = "태그",
+                                            ),
+                                            Body(
+                                                name = "nationalities[]",
+                                                jsonType = ARRAY,
+                                                optional = true,
+                                                description = "국가",
+                                            ),
+                                            Body(
+                                                name = "cuisines[]",
+                                                jsonType = ARRAY,
+                                                optional = true,
+                                                description = "음식",
+                                            ),
+                                        ),
                                 ),
                             ),
                         responseBody =

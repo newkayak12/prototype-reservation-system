@@ -1,5 +1,6 @@
 package com.reservation.restaurant.usecase
 
+import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.common.exceptions.AlreadyPersistedException
 import com.reservation.fixture.FixtureMonkeyFactory
@@ -7,6 +8,7 @@ import com.reservation.restaurant.exceptions.InvalidateRestaurantElementExceptio
 import com.reservation.restaurant.port.input.CreateRestaurantCommand.CreateProductCommandDto
 import com.reservation.restaurant.port.output.CheckRestaurantDuplicated
 import com.reservation.restaurant.port.output.CreateRestaurant
+import com.reservation.restaurant.port.output.UploadRestaurantImageFile
 import com.reservation.restaurant.service.CreateRestaurantService
 import com.reservation.restaurant.snapshot.RestaurantSnapshot
 import io.mockk.every
@@ -33,6 +35,9 @@ class CreateRestaurantUseCaseTest {
     @MockK
     private lateinit var createRestaurant: CreateRestaurant
 
+    @MockK
+    private lateinit var uploadRestaurantImageFile: UploadRestaurantImageFile
+
     @InjectMockKs
     private lateinit var useCase: CreateRestaurantUseCase
 
@@ -51,11 +56,15 @@ class CreateRestaurantUseCaseTest {
         @Test
         fun `fail with duplicated restaurant name`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val images = pureMonkey.giveMe<String>(3)
             val request = pureMonkey.giveMeOne<CreateProductCommandDto>()
 
             every {
                 checkRestaurantDuplicated.query(any())
             } returns true
+            every {
+                uploadRestaurantImageFile.execute(any())
+            } returns images
 
             assertThrows<AlreadyPersistedException> {
                 useCase.execute(request)
@@ -75,11 +84,16 @@ class CreateRestaurantUseCaseTest {
         @Test
         fun `fail with invalid restaurant form`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val images = pureMonkey.giveMe<String>(3)
             val request = pureMonkey.giveMeOne<CreateProductCommandDto>()
 
             every {
                 checkRestaurantDuplicated.query(any())
             } returns false
+
+            every {
+                uploadRestaurantImageFile.execute(any())
+            } returns images
 
             every {
                 createRestaurantService.create(any())
@@ -109,12 +123,17 @@ class CreateRestaurantUseCaseTest {
         @Test
         fun createRestaurantSuccessfully() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val images = pureMonkey.giveMe<String>(3)
             val request = pureMonkey.giveMeOne<CreateProductCommandDto>()
             val snapshot = pureMonkey.giveMeOne<RestaurantSnapshot>()
 
             every {
                 checkRestaurantDuplicated.query(any())
             } returns false
+
+            every {
+                uploadRestaurantImageFile.execute(any())
+            } returns images
 
             every {
                 createRestaurantService.create(any())

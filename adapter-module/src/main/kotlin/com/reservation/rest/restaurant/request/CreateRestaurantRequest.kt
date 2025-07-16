@@ -4,6 +4,7 @@ import com.reservation.restaurant.policy.format.RestaurantWorkingDayForm
 import com.reservation.restaurant.port.input.CreateRestaurantCommand.CreateProductCommandDto
 import jakarta.validation.constraints.NotBlank
 import org.hibernate.validator.constraints.Length
+import org.springframework.web.multipart.MultipartFile
 import java.math.BigDecimal
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -27,7 +28,6 @@ data class CreateRestaurantRequest(
     val latitude: BigDecimal,
     val longitude: BigDecimal,
     val workingDays: List<CreateRestaurantWorkingDay>,
-    val photos: List<String>,
     val tags: List<Long>,
     val nationalities: List<Long>,
     val cuisines: List<Long>,
@@ -41,7 +41,10 @@ data class CreateRestaurantRequest(
             RestaurantWorkingDayForm(day, startTime, endTime)
     }
 
-    fun toCommand(userId: String): CreateProductCommandDto =
+    fun toCommand(
+        userId: String,
+        photos: List<MultipartFile>,
+    ): CreateProductCommandDto =
         CreateProductCommandDto(
             companyId = companyId,
             userId = userId,

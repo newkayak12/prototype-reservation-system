@@ -1,6 +1,7 @@
 package com.reservation.restaurant.port.input
 
 import com.reservation.restaurant.policy.format.RestaurantWorkingDayForm
+import org.springframework.web.multipart.MultipartFile
 import java.math.BigDecimal
 
 fun interface CreateRestaurantCommand {
@@ -21,7 +22,7 @@ fun interface CreateRestaurantCommand {
         val latitude: BigDecimal,
         val longitude: BigDecimal,
         val workingDays: List<RestaurantWorkingDayForm>,
-        val photos: List<String>,
+        val photos: List<MultipartFile>,
         val tags: List<Long>,
         val nationalities: List<Long>,
         val cuisines: List<Long>,
