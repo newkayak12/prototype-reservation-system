@@ -12,14 +12,14 @@ jobs:
   label:
     runs-on: ubuntu-latest
     steps:
-      - name: Remove existing size labels
-        uses: PauMAVA/add-remove-label-action@v1.0.3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          remove: size/XS, size/S, size/M, size/L, size/XL, size/XXL
-
-      - name: hibernate
-        run: sleep 5
+#      - name: Remove existing size labels
+#        uses: PauMAVA/add-remove-label-action@v1.0.3
+#        with:
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
+#          remove: size/XS, size/S, size/M, size/L, size/XL, size/XXL
+#
+#      - name: hibernate
+#        run: sleep 5
 
       - name: Add updated size label
         uses: pascalgn/size-label-action@v0.5.5
