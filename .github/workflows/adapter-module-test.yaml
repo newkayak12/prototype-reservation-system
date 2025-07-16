@@ -37,8 +37,10 @@ jobs:
         with:
           name: adapter-jacoco
           path: adapter-module/build/reports/jacoco/test/jacocoTestReport.xml
+
       - name: Upload adapter-module test result
         uses: actions/upload-artifact@v4
         with:
           name: adapter-test-results
           path: adapter-module/build/test-results/**/TEST-*.xml
+

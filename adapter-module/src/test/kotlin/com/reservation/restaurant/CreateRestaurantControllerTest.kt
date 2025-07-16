@@ -252,6 +252,12 @@ class CreateRestaurantControllerTest(
                                     description = "경도",
                                 ),
                                 Body(
+                                    name = "workingDays[]",
+                                    jsonType = ARRAY,
+                                    optional = true,
+                                    description = "업무 시간",
+                                ),
+                                Body(
                                     name = "workingDays[].day",
                                     jsonType = STRING,
                                     optional = false,

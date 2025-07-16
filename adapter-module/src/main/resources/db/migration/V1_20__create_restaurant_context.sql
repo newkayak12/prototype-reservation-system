@@ -50,6 +50,8 @@ CREATE TABLE prototype_reservation.restaurant_category
     id VARCHAR(128) COMMENT '식별키',
     restaurant_id  VARCHAR(128) COMMENT '음식점 식별키',
     category_id BIGINT COMMENT '카테고리 식별자',
+    created_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() COMMENT '생성 날짜-시간',
+    updated_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '수정 날짜-시간',
     PRIMARY KEY (id),
     INDEX index_restaurant_category (restaurant_id, category_id)
 )
