@@ -30,7 +30,7 @@ jobs:
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
       - name: Run tests and coverage
-        run: ./gradlew :application-module:test :application-module:jacocoTestReport
+        run: ./gradlew :application-module:test :application-module:jacocoTestReport  --continue
         continue-on-error: true
       - name: Upload application-module Jacoco
         uses: actions/upload-artifact@v4
