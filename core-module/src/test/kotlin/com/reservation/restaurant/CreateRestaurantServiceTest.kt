@@ -1,5 +1,6 @@
 package com.reservation.restaurant
 
+import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
@@ -323,7 +324,6 @@ class CreateRestaurantServiceTest : BehaviorSpec(
          * When: 음식점을 생성할 때
          * Then: 요청에 따른 생성이 완료되고 각 항목들이 모두 일치한다.
          */
-
         Given("올바른 요청이 들어온다.") {
             val request = perfectCase()
             When("음식점을 생성할 때") {
@@ -338,6 +338,146 @@ class CreateRestaurantServiceTest : BehaviorSpec(
                     request.detail shouldBeEqual result.detail
                     request.latitude shouldBeEqual result.latitude
                     request.longitude shouldBeEqual result.longitude
+                }
+            }
+        }
+
+        /**
+         * Given: 필수 항목에 대해서 통제 범위 내의 올바른 요청이 들어온다. 추가적으로 영업일이 추가된다.
+         * When: 음식점을 생성할 때
+         * Then: 요청에 따른 생성이 완료되고 각 항목들이 모두 일치한다.
+         */
+        Given("올바른 요청과 영업일이 들어온다.") {
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val workingDays = pureMonkey.giveMe<RestaurantWorkingDayForm>(7).distinctBy { it.day }
+
+            val request = perfectCase().copy(workingDays = workingDays)
+
+            When("음식점을 생성할 때") {
+                val result = service.create(request)
+                Then("요청에 따른 생성이 완료되고 각 항목들이 모두 일치한다.") {
+                    result.companyId shouldBeEqual request.companyId
+                    result.name shouldBeEqual request.name
+                    result.introduce shouldBeEqual request.introduce
+                    result.phone shouldBeEqual request.phone
+                    result.zipCode shouldBeEqual request.zipCode
+                    result.address shouldBeEqual request.address
+                    result.detail shouldBeEqual request.detail
+                    result.latitude shouldBeEqual request.latitude
+                    result.longitude shouldBeEqual request.longitude
+                    result.workingDays.map { it.day } shouldBeEqual workingDays.map { it.day }
+                }
+            }
+        }
+
+        /**
+         * Given: 필수 항목에 대해서 통제 범위 내의 올바른 요청이 들어온다. 추가적으로 사진이 추가된다.
+         * When: 음식점을 생성할 때
+         * Then: 요청에 따른 생성이 완료되고 각 항목들이 모두 일치한다.
+         */
+        Given("올바른 요청과 사진이 들어온다.") {
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val photos = pureMonkey.giveMe<String>(7)
+
+            val request = perfectCase().copy(photos = photos)
+
+            When("음식점을 생성할 때") {
+                val result = service.create(request)
+                Then("요청에 따른 생성이 완료되고 각 항목들이 모두 일치한다.") {
+                    result.companyId shouldBeEqual request.companyId
+                    result.name shouldBeEqual request.name
+                    result.introduce shouldBeEqual request.introduce
+                    result.phone shouldBeEqual request.phone
+                    result.zipCode shouldBeEqual request.zipCode
+                    result.address shouldBeEqual request.address
+                    result.detail shouldBeEqual request.detail
+                    result.latitude shouldBeEqual request.latitude
+                    result.longitude shouldBeEqual request.longitude
+                    result.photos.map { it.url } shouldBeEqual photos
+                }
+            }
+        }
+
+        /**
+         * Given: 필수 항목에 대해서 통제 범위 내의 올바른 요청이 들어온다. 추가적으로 태그가 추가된다.
+         * When: 음식점을 생성할 때
+         * Then: 요청에 따른 생성이 완료되고 각 항목들이 모두 일치한다.
+         */
+        Given("올바른 요청과 태그가 들어온다.") {
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val categories = pureMonkey.giveMe<Long>(7)
+
+            val request = perfectCase().copy(tags = categories)
+
+            When("음식점을 생성할 때") {
+                val result = service.create(request)
+                Then("요청에 따른 생성이 완료되고 각 항목들이 모두 일치한다.") {
+                    result.companyId shouldBeEqual request.companyId
+                    result.name shouldBeEqual request.name
+                    result.introduce shouldBeEqual request.introduce
+                    result.phone shouldBeEqual request.phone
+                    result.zipCode shouldBeEqual request.zipCode
+                    result.address shouldBeEqual request.address
+                    result.detail shouldBeEqual request.detail
+                    result.latitude shouldBeEqual request.latitude
+                    result.longitude shouldBeEqual request.longitude
+                    result.tags shouldBeEqual categories
+                }
+            }
+        }
+
+        /**
+         * Given: 필수 항목에 대해서 통제 범위 내의 올바른 요청이 들어온다. 추가적으로 국가가 추가된다.
+         * When: 음식점을 생성할 때
+         * Then: 요청에 따른 생성이 완료되고 각 항목들이 모두 일치한다.
+         */
+        Given("올바른 요청과 국가가 들어온다.") {
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val categories = pureMonkey.giveMe<Long>(7)
+
+            val request = perfectCase().copy(nationalities = categories)
+
+            When("음식점을 생성할 때") {
+                val result = service.create(request)
+                Then("요청에 따른 생성이 완료되고 각 항목들이 모두 일치한다.") {
+                    result.companyId shouldBeEqual request.companyId
+                    result.name shouldBeEqual request.name
+                    result.introduce shouldBeEqual request.introduce
+                    result.phone shouldBeEqual request.phone
+                    result.zipCode shouldBeEqual request.zipCode
+                    result.address shouldBeEqual request.address
+                    result.detail shouldBeEqual request.detail
+                    result.latitude shouldBeEqual request.latitude
+                    result.longitude shouldBeEqual request.longitude
+                    result.nationalities shouldBeEqual categories
+                }
+            }
+        }
+
+        /**
+         * Given: 필수 항목에 대해서 통제 범위 내의 올바른 요청이 들어온다. 추가적으로 음식 태그가 추가된다.
+         * When: 음식점을 생성할 때
+         * Then: 요청에 따른 생성이 완료되고 각 항목들이 모두 일치한다.
+         */
+        Given("올바른 요청과 음식 태그가 들어온다.") {
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val categories = pureMonkey.giveMe<Long>(7)
+
+            val request = perfectCase().copy(cuisines = categories)
+
+            When("음식점을 생성할 때") {
+                val result = service.create(request)
+                Then("요청에 따른 생성이 완료되고 각 항목들이 모두 일치한다.") {
+                    result.companyId shouldBeEqual request.companyId
+                    result.name shouldBeEqual request.name
+                    result.introduce shouldBeEqual request.introduce
+                    result.phone shouldBeEqual request.phone
+                    result.zipCode shouldBeEqual request.zipCode
+                    result.address shouldBeEqual request.address
+                    result.detail shouldBeEqual request.detail
+                    result.latitude shouldBeEqual request.latitude
+                    result.longitude shouldBeEqual request.longitude
+                    result.cuisines shouldBeEqual categories
                 }
             }
         }
