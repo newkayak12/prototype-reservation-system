@@ -12,6 +12,8 @@ import org.springframework.restdocs.operation.preprocess.Preprocessors.preproces
 import org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint
 import org.springframework.restdocs.payload.FieldDescriptor
 import org.springframework.restdocs.payload.PayloadDocumentation.requestFields
+import org.springframework.restdocs.payload.PayloadDocumentation.requestPartBody
+import org.springframework.restdocs.payload.PayloadDocumentation.requestPartFields
 import org.springframework.restdocs.payload.PayloadDocumentation.responseFields
 import org.springframework.restdocs.request.ParameterDescriptor
 import org.springframework.restdocs.request.RequestDocumentation.pathParameters
@@ -32,7 +34,8 @@ class RestDocuments(
     private val responseHeader: Array<Header>? = null,
     private val query: Array<Query>? = null,
     private val pathParameter: Array<PathParameter>? = null,
-    private val part: Array<Part>? = null,
+    private val requestPart: Array<Part>? = null,
+    private val requestPartBody: Array<RequestPartFields>? = null,
 ) {
     private var tags: ResourceSnippetDetails = resourceDetails()
 
@@ -68,47 +71,21 @@ class RestDocuments(
             requestHeader = requestHeader?.distinctBy { it.name }?.toTypedArray()
         }
 
-        snippets.addIfNotNullOrEmpty(
-            requestHeader,
-            { it.parse() },
-            { requestHeaders(it as List<HeaderDescriptor>) },
-        )
+        bindRequestHeader(snippets)
 
-        snippets.addIfNotNullOrEmpty(
-            responseHeader,
-            { it.parse() },
-            { requestHeaders(it as List<HeaderDescriptor>) },
-        )
+        bindResponseHeader(snippets)
 
-        snippets.addIfNotNullOrEmpty(
-            requestBody,
-            { it.parse() },
-            { requestFields(it as List<FieldDescriptor>) },
-        )
+        bindRequestBody(snippets)
 
-        snippets.addIfNotNullOrEmpty(
-            responseBody,
-            { it.parse() },
-            { responseFields(it as List<FieldDescriptor>) },
-        )
+        bindResponseBody(snippets)
 
-        snippets.addIfNotNullOrEmpty(
-            query,
-            { it.parse() },
-            { queryParameters(it as List<ParameterDescriptor>) },
-        )
+        bindQueryParams(snippets)
 
-        snippets.addIfNotNullOrEmpty(
-            pathParameter,
-            { it.parse() },
-            { pathParameters(it as List<ParameterDescriptor>) },
-        )
+        bindPathParams(snippets)
 
-        snippets.addIfNotNullOrEmpty(
-            part,
-            { it.parse() },
-            { requestParts(it as List<RequestPartDescriptor>) },
-        )
+        bindRequestPart(snippets)
+
+        bindRequestPartBody(snippets)
 
         return document(
             identifier = identifier,
@@ -117,6 +94,81 @@ class RestDocuments(
             requestPreprocessor = preprocessRequest(prettyPrint()),
             responsePreprocessor = preprocessResponse(prettyPrint()),
             snippets = snippets.toTypedArray(),
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun bindRequestPartBody(snippets: MutableSet<Snippet>) {
+        for ((name, bodies) in requestPartBody ?: arrayOf()) {
+            snippets.add(requestPartBody(name))
+            snippets.addIfNotNullOrEmpty(
+                bodies,
+                { it.parse() },
+                { requestPartFields(name, it as List<FieldDescriptor>) },
+            )
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun bindRequestPart(snippets: MutableSet<Snippet>) {
+        snippets.addIfNotNullOrEmpty(
+            requestPart,
+            { it.parse() },
+            { requestParts(it as List<RequestPartDescriptor>) },
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun bindPathParams(snippets: MutableSet<Snippet>) {
+        snippets.addIfNotNullOrEmpty(
+            pathParameter,
+            { it.parse() },
+            { pathParameters(it as List<ParameterDescriptor>) },
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun bindQueryParams(snippets: MutableSet<Snippet>) {
+        snippets.addIfNotNullOrEmpty(
+            query,
+            { it.parse() },
+            { queryParameters(it as List<ParameterDescriptor>) },
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun bindResponseBody(snippets: MutableSet<Snippet>) {
+        snippets.addIfNotNullOrEmpty(
+            responseBody,
+            { it.parse() },
+            { responseFields(it as List<FieldDescriptor>) },
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun bindRequestBody(snippets: MutableSet<Snippet>) {
+        snippets.addIfNotNullOrEmpty(
+            requestBody,
+            { it.parse() },
+            { requestFields(it as List<FieldDescriptor>) },
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun bindResponseHeader(snippets: MutableSet<Snippet>) {
+        snippets.addIfNotNullOrEmpty(
+            responseHeader,
+            { it.parse() },
+            { requestHeaders(it as List<HeaderDescriptor>) },
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun bindRequestHeader(snippets: MutableSet<Snippet>) {
+        snippets.addIfNotNullOrEmpty(
+            requestHeader,
+            { it.parse() },
+            { requestHeaders(it as List<HeaderDescriptor>) },
         )
     }
 }

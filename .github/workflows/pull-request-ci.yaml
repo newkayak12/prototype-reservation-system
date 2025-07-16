@@ -35,6 +35,7 @@ jobs:
       - adapter-module
       - application-module
       - core-module
+    if: always()
     uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@master
 
   upload_to_sonar_cloud:
@@ -43,6 +44,7 @@ jobs:
       - adapter-module
       - application-module
       - core-module
+    if: success()
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_PROJECT_KEY: ${{secrets.SONAR_PROJECT_KEY}}
@@ -55,6 +57,7 @@ jobs:
       - adapter-module
       - application-module
       - core-module
+    if: success()
     uses: newkayak12/prototype-reservation-system/.github/workflows/upload-codecov.yaml@master
 
   build:
@@ -63,4 +66,5 @@ jobs:
       - adapter-module
       - application-module
       - core-module
+    if: success()
     uses: newkayak12/prototype-reservation-system/.github/workflows/build.yaml@master

@@ -68,4 +68,7 @@ object CommonlyUsedArbitraries {
                     it.toByteArray(Charset.defaultCharset()),
                 )}"
             }
+
+    val zipCodeArbitary: Arbitrary<String> =
+        Arbitraries.strings().numeric().ofMinLength(5).ofMaxLength(5)
 }
