@@ -18,7 +18,7 @@ data class RestaurantWorkingDayId(
     )
     @Comment("식별키")
     val identifier: String,
-    @Column(name = "day")
+    @Column(name = "day_of_month")
     @Enumerated(STRING)
     @Comment("요일")
     val day: DayOfWeek,

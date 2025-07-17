@@ -35,10 +35,10 @@ CREATE TABLE prototype_reservation.restaurant_photo
 CREATE TABLE prototype_reservation.restaurant_working_day
 (
     restaurant_id  VARCHAR(128) COMMENT '음식점 식별키',
-    day ENUM ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY') COMMENT '요일',
+    day_of_month ENUM ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY') COMMENT '요일',
     start_time TIME COMMENT '시작 시간',
     end_time TIME COMMENT '종료 시간',
-    PRIMARY KEY (restaurant_id, day)
+    PRIMARY KEY (restaurant_id, day_of_month)
 )
     ENGINE = innodb
     DEFAULT CHARACTER SET 'utf8mb4'

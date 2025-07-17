@@ -16,7 +16,7 @@ import java.time.LocalDateTime
 
 @Table(
     catalog = "prototype_reservation",
-    name = "user",
+    name = "app_user",
     indexes = [
         Index(name = "index_login_id_and_role", columnList = "login_id, role"),
     ],

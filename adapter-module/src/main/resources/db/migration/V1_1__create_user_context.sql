@@ -1,4 +1,4 @@
-CREATE TABLE prototype_reservation.`user`
+CREATE TABLE prototype_reservation.app_user
 (
     id                        VARCHAR(128) comment '식별키',
     login_id                  VARCHAR(32) comment '사용자 아이디',

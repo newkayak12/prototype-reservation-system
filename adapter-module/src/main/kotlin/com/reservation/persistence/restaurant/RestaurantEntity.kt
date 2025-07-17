@@ -20,7 +20,7 @@ import java.time.LocalTime
     catalog = "prototype_reservation",
     name = "restaurant",
     indexes = [
-        Index(columnList = "name is_deleted", unique = false, name = "index_name_is_deleted"),
+        Index(columnList = "name, is_deleted", unique = false, name = "index_name_is_deleted"),
     ],
 )
 @Entity

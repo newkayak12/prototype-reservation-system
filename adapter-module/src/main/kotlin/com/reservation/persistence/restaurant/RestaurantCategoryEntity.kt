@@ -18,7 +18,7 @@ import org.hibernate.annotations.Comment
     name = "restaurant_category",
     indexes = [
         Index(
-            columnList = "restaurant_id category_id",
+            columnList = "restaurant_id, category_id",
             unique = false,
             name = "index_restaurant_category",
         ),

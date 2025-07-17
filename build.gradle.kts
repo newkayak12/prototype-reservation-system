@@ -100,6 +100,7 @@ tasks.register("gitPreCommitHook") {
     }
 }
 
+
 // pre-commit 후크 설정
 tasks.named("gitPreCommitHook") {
     doLast {
@@ -275,6 +276,8 @@ project(":adapter-module") {
         add("kapt", "com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
         add("kapt", "jakarta.annotation:jakarta.annotation-api")
         add("kapt", "jakarta.persistence:jakarta.persistence-api")
+
+
     }
 
     dependencies {
@@ -285,4 +288,30 @@ project(":adapter-module") {
         testImplementation("org.springframework.boot:spring-boot-testcontainers")
         testImplementation("org.testcontainers:junit-jupiter")
     }
+
+    val rootComposePath = rootDir.resolve("compose.yaml").absolutePath
+    tasks.register<JavaExec>("generatePreviousSchema") {
+        group = "migration"
+        description = "Generate schema-prev.sql using Hibernate + H2"
+        mainClass.set("com.reservation.ReservationApplicationKt")
+        classpath = sourceSets["main"].runtimeClasspath
+        jvmArgs = listOf(
+            "-Dspring.profiles.active=schema",
+            "-Dspring.docker.compose.file=$rootComposePath"
+        )
+    }
+
+    tasks.register<JavaExec>("generateEntitySchema") {
+
+        group = "build"
+        description = "Generate DDL schema.sql using Hibernate + H2"
+        classpath = sourceSets["main"].runtimeClasspath
+        mainClass.set("com.reservation.ReservationApplicationKt") // ← 패키지에 맞게 수정
+        jvmArgs= listOf(
+            "-Dspring.profiles.active=generate",
+            "-Dspring.docker.compose.file=$rootComposePath"
+        )
+    }
+
+
 }
