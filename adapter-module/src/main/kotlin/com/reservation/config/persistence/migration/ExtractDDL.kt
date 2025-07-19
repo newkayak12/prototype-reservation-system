@@ -1,4 +1,4 @@
-package com.reservation.config.migration
+package com.reservation.config.persistence.migration
 
 import com.reservation.utilities.logger.loggerFactory
 import javax.sql.DataSource

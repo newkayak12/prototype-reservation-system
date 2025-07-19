@@ -6,11 +6,17 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
 object InitializeSkeema {
-    val log = loggerFactory<InitializeSkeema>()
+    private val log = loggerFactory<InitializeSkeema>()
+    private const val VERSION = "1.12.3"
 
-    fun install() {
-        val installDirectory = "build/tools/skeema"
-        val downloadDirectory = "build/skeema.tar.gz"
+    data class SkeemaDirectory(
+        val installDirectory: String,
+        val downloadDirectory: String,
+    )
+
+    fun install(directory: SkeemaDirectory) {
+        val installDirectory = directory.installDirectory
+        val downloadDirectory = directory.downloadDirectory
         val url = getUrl()
 
         downloadSkeema(url, installDirectory, downloadDirectory)
@@ -19,18 +25,27 @@ object InitializeSkeema {
 
     private fun getUrl(): String {
         val osName = System.getProperty("os.name").lowercase()
+        val arch = System.getProperty("os.arch").lowercase()
+
         val platform =
             when {
-                osName.contains("mac") -> "darwin"
+                osName.contains("mac") -> "mac"
                 osName.contains("linux") -> "linux"
-                osName.contains("win") -> "windows"
+                osName.contains("win") -> ""
                 else -> error("Unsupported OS: $osName")
             }
+        val archName =
+            when {
+                arch.contains("x86_64") || arch.contains("amd64") -> "amd64"
+                arch.contains("aarch64") || arch.contains("arm64") -> "arm64"
+                else -> error("Unsupported architecture: $arch")
+            }
 
-        log.error("🟢 OS: $osName")
+        log.error("🟢 OS: ${osName}_$archName")
 
+        // https://github.com/skeema/skeema/releases/download/v1.12.3/skeema_1.12.3_linux_amd64.tar.gz
         val url = "https://github.com/skeema/skeema/releases/download"
-        return "$url/v1.13.1/skeema_1.13.1_${platform}_amd64.tar.gz"
+        return "$url/v$VERSION/skeema_${VERSION}_${platform}_$archName.tar.gz"
     }
 
     private fun downloadSkeema(
@@ -57,12 +72,20 @@ object InitializeSkeema {
         val archive = File(downloadDirectory)
         val skeemaInstallDir = File(installDirectory)
 
+        if (!archive.exists()) {
+            archive.mkdirs()
+        }
+        if (!skeemaInstallDir.exists()) {
+            skeemaInstallDir.mkdirs()
+        }
+
         val process =
             ProcessBuilder("tar", "-xzf", archive.absolutePath, "-C", skeemaInstallDir.absolutePath)
                 .inheritIO() // 콘솔 출력 연결 (원하면 생략 가능)
                 .start()
 
         val exitCode = process.waitFor()
+        log.error("🔴 result {}", exitCode)
         if (exitCode != 0) {
             error("tar extraction failed with exit code $exitCode")
         }
