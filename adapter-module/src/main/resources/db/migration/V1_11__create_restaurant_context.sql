@@ -45,15 +45,43 @@ CREATE TABLE prototype_reservation.restaurant_working_day
     COLLATE 'utf8mb4_general_ci';
 
 
-CREATE TABLE prototype_reservation.restaurant_category
+CREATE TABLE prototype_reservation.restaurant_tags
 (
     id VARCHAR(128) COMMENT '식별키',
     restaurant_id  VARCHAR(128) COMMENT '음식점 식별키',
-    category_id BIGINT COMMENT '카테고리 식별자',
+    tags_id BIGINT COMMENT '카테고리 식별자',
     created_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() COMMENT '생성 날짜-시간',
     updated_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '수정 날짜-시간',
     PRIMARY KEY (id),
-    INDEX index_restaurant_category (restaurant_id, category_id)
+    INDEX index_restaurant_category (restaurant_id, tags_id)
+)
+    ENGINE = innodb
+    DEFAULT CHARACTER SET 'utf8mb4'
+    COLLATE 'utf8mb4_general_ci';
+
+CREATE TABLE prototype_reservation.restaurant_nationalities
+(
+    id VARCHAR(128) COMMENT '식별키',
+    restaurant_id  VARCHAR(128) COMMENT '음식점 식별키',
+    nationalities_id BIGINT COMMENT '카테고리 식별자',
+    created_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() COMMENT '생성 날짜-시간',
+    updated_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '수정 날짜-시간',
+    PRIMARY KEY (id),
+    INDEX index_restaurant_category (restaurant_id, nationalities_id)
+)
+    ENGINE = innodb
+    DEFAULT CHARACTER SET 'utf8mb4'
+    COLLATE 'utf8mb4_general_ci';
+
+CREATE TABLE prototype_reservation.restaurant_cuisines
+(
+    id VARCHAR(128) COMMENT '식별키',
+    restaurant_id  VARCHAR(128) COMMENT '음식점 식별키',
+    cuisines_id BIGINT COMMENT '카테고리 식별자',
+    created_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() COMMENT '생성 날짜-시간',
+    updated_datetime DATETIME DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '수정 날짜-시간',
+    PRIMARY KEY (id),
+    INDEX index_restaurant_category (restaurant_id, cuisines_id)
 )
     ENGINE = innodb
     DEFAULT CHARACTER SET 'utf8mb4'
