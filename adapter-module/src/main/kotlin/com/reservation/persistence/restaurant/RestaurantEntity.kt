@@ -13,8 +13,6 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.Comment
 import java.math.BigDecimal
-import java.time.DayOfWeek
-import java.time.LocalTime
 
 @Table(
     catalog = "prototype_reservation",
@@ -24,7 +22,7 @@ import java.time.LocalTime
     ],
 )
 @Entity
-@Suppress("LongParameterList")
+@Suppress("LongParameterList", "TooManyFunctions")
 class RestaurantEntity(
     companyId: String,
     userId: String,
@@ -93,15 +91,34 @@ class RestaurantEntity(
         fetch = FetchType.LAZY,
         orphanRemoval = true,
     )
-    private var weekDays = mutableListOf<RestaurantWorkingDayEntity>()
+    private var workingDays = mutableListOf<RestaurantWorkingDayEntity>()
 
     @OneToMany(
         mappedBy = "restaurant",
-        targetEntity = RestaurantCategoryEntity::class,
+        targetEntity = RestaurantTagsEntity::class,
         fetch = FetchType.LAZY,
         cascade = [CascadeType.PERSIST, CascadeType.MERGE],
+        orphanRemoval = true,
     )
-    private var categories = mutableListOf<RestaurantCategoryEntity>()
+    private var tags = mutableListOf<RestaurantTagsEntity>()
+
+    @OneToMany(
+        mappedBy = "restaurant",
+        targetEntity = RestaurantNationalitiesEntity::class,
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.PERSIST, CascadeType.MERGE],
+        orphanRemoval = true,
+    )
+    private var nationalities = mutableListOf<RestaurantNationalitiesEntity>()
+
+    @OneToMany(
+        mappedBy = "restaurant",
+        targetEntity = RestaurantCuisinesEntity::class,
+        fetch = FetchType.LAZY,
+        cascade = [CascadeType.PERSIST, CascadeType.MERGE],
+        orphanRemoval = true,
+    )
+    private var cuisines = mutableListOf<RestaurantCuisinesEntity>()
 
     @OneToMany(
         mappedBy = "restaurant",
@@ -120,77 +137,28 @@ class RestaurantEntity(
     var logicalDelete: LogicalDelete = LogicalDelete()
         protected set
 
-    fun weekDaysAll() = weekDays.toList()
+    fun workingDaysAll() = workingDays.toList()
 
-    fun categoriesAll() = categories.toList()
+    fun tagsAll() = tags.toList()
+
+    fun nationalitiesAll() = nationalities.toList()
+
+    fun cuisinesAll() = cuisines.toList()
 
     fun photosAll() = photos.toList()
 
-    fun addWeekDay(
-        day: DayOfWeek,
-        startTime: LocalTime,
-        endTime: LocalTime,
-    ) {
-        val item = weekDays.find { it.id.day == day }
-        if (item != null) {
-            return
-        }
-        weekDays.add(
-            RestaurantWorkingDayEntity(
-                id = RestaurantWorkingDayId(this.identifier, day),
-                restaurant = this,
-                startTime = startTime,
-                endTime = endTime,
-            ),
-        )
-    }
+    fun adjustWorkingDay(block: MutableList<RestaurantWorkingDayEntity>.() -> Unit) =
+        workingDays.apply(block)
 
-    fun removeWeekDay(day: DayOfWeek) {
-        val item = weekDays.find { it.id.day == day }
-        if (item == null) {
-            return
-        }
-        weekDays.remove(item)
-    }
+    fun adjustTag(block: MutableList<RestaurantTagsEntity>.() -> Unit) = tags.apply(block)
 
-    fun addCategory(categoryId: Long) {
-        val item = categories.find { it.categoryId == categoryId }
-        if (item != null) {
-            return
-        }
-        categories.add(
-            RestaurantCategoryEntity(
-                restaurant = this,
-                categoryId = categoryId,
-            ),
-        )
-    }
+    fun adjustNationalities(block: MutableList<RestaurantNationalitiesEntity>.() -> Unit) =
+        nationalities.apply(block)
 
-    fun removeCategory(categoryId: Long) {
-        val item = categories.find { it.categoryId == categoryId }
-        if (item == null) {
-            return
-        }
-        categories.remove(item)
-    }
+    fun adjustCuisines(block: MutableList<RestaurantCuisinesEntity>.() -> Unit) =
+        cuisines.apply(block)
 
-    fun addPhoto(url: String) {
-        val item = photos.find { it.url == url }
-        if (item != null) {
-            return
-        }
-
-        photos.add(RestaurantPhotoEntity(this, url))
-    }
-
-    fun removePhoto(url: String) {
-        val item = photos.find { it.url == url }
-        if (item == null) {
-            return
-        }
-
-        photos.remove(item)
-    }
+    fun adjustPhotos(block: MutableList<RestaurantPhotoEntity>.() -> Unit) = photos.apply(block)
 
     fun delete() {
         logicalDelete = LogicalDelete(true)

@@ -15,17 +15,17 @@ import org.hibernate.annotations.Comment
 
 @Table(
     catalog = "prototype_reservation",
-    name = "restaurant_category",
+    name = "restaurant_tags",
     indexes = [
         Index(
-            columnList = "restaurant_id category_id",
+            columnList = "restaurant_id,tags_id",
             unique = false,
-            name = "index_restaurant_category",
+            name = "index_restaurant_tags",
         ),
     ],
 )
 @Entity
-class RestaurantCategoryEntity(
+class RestaurantTagsEntity(
     @ManyToOne(targetEntity = RestaurantEntity::class)
     @JoinColumn(
         name = "restaurant_id",
@@ -34,9 +34,9 @@ class RestaurantCategoryEntity(
     )
     @Comment("음식점 식별자")
     private val restaurant: RestaurantEntity,
-    @Column(name = "category_id")
+    @Column(name = "tags_id")
     @Comment("카테고리 식별자")
-    val categoryId: Long,
+    val tagsId: Long,
 ) : TimeBasedPrimaryKey() {
     @Embedded
     var auditDateTime: AuditDateTime = AuditDateTime()
