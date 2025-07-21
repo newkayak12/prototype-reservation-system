@@ -33,6 +33,6 @@ object RestaurantPhotosMutator {
     }
 
     fun purgeNationalities(restaurantEntity: RestaurantEntity) {
-        restaurantEntity.adjustTag { removeAll(restaurantEntity.tagsAll()) }
+        restaurantEntity.adjustPhotos { removeAll(restaurantEntity.photosAll()) }
     }
 }
