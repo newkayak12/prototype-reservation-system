@@ -48,7 +48,7 @@ class RestaurantEntity(
     @Column(name = "name")
     @Comment("음식점 이름")
     var name: String = name
-        protected set
+        internal set
 
     @Column(name = "introduce")
     @Comment("음식점 소개")
@@ -162,5 +162,31 @@ class RestaurantEntity(
 
     fun delete() {
         logicalDelete = LogicalDelete(true)
+    }
+
+    fun updateDescription(
+        name: String,
+        introduce: String,
+    ) {
+        this.name = name
+        this.introduce = introduce
+    }
+
+    fun updateContact(phone: String) {
+        this.phone = phone
+    }
+
+    fun updateAddress(
+        zipCode: String,
+        address: String,
+        detail: String,
+        latitude: BigDecimal,
+        longitude: BigDecimal,
+    ) {
+        this.zipCode = zipCode
+        this.address = address
+        this.detail = detail
+        this.latitude = latitude
+        this.longitude = longitude
     }
 }

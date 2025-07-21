@@ -37,7 +37,7 @@ class CreateRestaurantAdapter(
         )
         RestaurantPhotosMutator.addPhotos(entity, inquiry.photos.map { it.url })
         RestaurantTagMutator.addTags(entity, inquiry.tags)
-        RestaurantNationalitiesMutator.addNationalities(entity, inquiry.nationalities)
+        RestaurantNationalitiesMutator.addNationality(entity, inquiry.nationalities)
         RestaurantCuisinesMutator.addCuisines(entity, inquiry.cuisines)
 
         val result = jpaRepository.save(entity)

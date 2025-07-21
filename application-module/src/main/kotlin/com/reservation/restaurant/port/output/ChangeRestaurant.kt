@@ -4,13 +4,11 @@ import java.math.BigDecimal
 import java.time.DayOfWeek
 import java.time.LocalTime
 
-fun interface LoadRestaurant {
-    fun execute(id: String): LoadRestaurantResult
+fun interface ChangeRestaurant {
+    fun execute(inquiry: ChangeRestaurantInquiry): Boolean
 
-    data class LoadRestaurantResult(
+    data class ChangeRestaurantInquiry(
         val id: String,
-        val companyId: String,
-        val userId: String,
         val name: String,
         val introduce: String,
         val phone: String,
@@ -19,32 +17,32 @@ fun interface LoadRestaurant {
         val detail: String,
         val latitude: BigDecimal,
         val longitude: BigDecimal,
-        val workingDay: List<LoadWorkingDayResult>,
-        val tag: List<LoadTagResult>,
-        val nationalities: List<LoadNationalitiesResult>,
-        val cuisines: List<LoadCuisinesResult>,
-        val photos: List<LoadPhotosResult>,
+        val workingDay: List<ChangeWorkingDayResult>,
+        val tag: List<ChangeTagResult>,
+        val nationalities: List<ChangeNationalitiesResult>,
+        val cuisines: List<ChangeCuisinesResult>,
+        val photos: List<ChangePhotosResult>,
     )
 
-    data class LoadWorkingDayResult(
+    data class ChangeWorkingDayResult(
         val day: DayOfWeek,
         val startTime: LocalTime,
         val endTime: LocalTime,
     )
 
-    data class LoadTagResult(
+    data class ChangeTagResult(
         val tagsId: Long,
     )
 
-    data class LoadNationalitiesResult(
+    data class ChangeNationalitiesResult(
         val nationalitiesId: Long,
     )
 
-    data class LoadCuisinesResult(
+    data class ChangeCuisinesResult(
         val cuisinesId: Long,
     )
 
-    data class LoadPhotosResult(
+    data class ChangePhotosResult(
         val url: String,
     )
 }
