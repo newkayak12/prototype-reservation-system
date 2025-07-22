@@ -17,32 +17,32 @@ fun interface ChangeRestaurant {
         val detail: String,
         val latitude: BigDecimal,
         val longitude: BigDecimal,
-        val workingDay: List<ChangeWorkingDayResult>,
-        val tag: List<ChangeTagResult>,
-        val nationalities: List<ChangeNationalitiesResult>,
-        val cuisines: List<ChangeCuisinesResult>,
-        val photos: List<ChangePhotosResult>,
+        val workingDay: List<ChangeWorkingDayInquiry>,
+        val tag: List<ChangeTagInquiry>,
+        val nationalities: List<ChangeNationalitiesInquiry>,
+        val cuisines: List<ChangeCuisinesInquiry>,
+        val photos: List<ChangePhotosInquiry>,
     )
 
-    data class ChangeWorkingDayResult(
+    data class ChangeWorkingDayInquiry(
         val day: DayOfWeek,
         val startTime: LocalTime,
         val endTime: LocalTime,
     )
 
-    data class ChangeTagResult(
+    data class ChangeTagInquiry(
         val tagsId: Long,
     )
 
-    data class ChangeNationalitiesResult(
+    data class ChangeNationalitiesInquiry(
         val nationalitiesId: Long,
     )
 
-    data class ChangeCuisinesResult(
+    data class ChangeCuisinesInquiry(
         val cuisinesId: Long,
     )
 
-    data class ChangePhotosResult(
+    data class ChangePhotosInquiry(
         val url: String,
     )
 }

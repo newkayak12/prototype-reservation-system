@@ -12,7 +12,7 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 
 fun interface LoadRestaurant {
-    fun execute(id: String): LoadRestaurantResult
+    fun execute(id: String): LoadRestaurantResult?
 
     data class LoadRestaurantResult(
         val id: String,
@@ -67,8 +67,24 @@ fun interface LoadRestaurant {
 
             restaurant.manipulatePhoto {
                 photos
-                    .map { it.url }
+                    .map { photo -> photo.url }
                     .map { photoUrl -> RestaurantPhoto(photoUrl) }
+                    .forEach(it::add)
+            }
+
+            restaurant.manipulateTags {
+                tag
+                    .map { tag -> tag.tagsId }
+                    .forEach(it::add)
+            }
+            restaurant.manipulateNationalities {
+                nationalities
+                    .map { nationality -> nationality.nationalitiesId }
+                    .forEach(it::add)
+            }
+            restaurant.manipulateCuisines {
+                cuisines
+                    .map { cuisines -> cuisines.cuisinesId }
                     .forEach(it::add)
             }
 
