@@ -1,5 +1,12 @@
 package com.reservation.restaurant.port.output
 
+import com.reservation.restaurant.Restaurant
+import com.reservation.restaurant.vo.RestaurantAddress
+import com.reservation.restaurant.vo.RestaurantContact
+import com.reservation.restaurant.vo.RestaurantCoordinate
+import com.reservation.restaurant.vo.RestaurantDescription
+import com.reservation.restaurant.vo.RestaurantPhoto
+import com.reservation.restaurant.vo.RestaurantWorkingDay
 import java.math.BigDecimal
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -24,7 +31,50 @@ fun interface LoadRestaurant {
         val nationalities: List<LoadNationalitiesResult>,
         val cuisines: List<LoadCuisinesResult>,
         val photos: List<LoadPhotosResult>,
-    )
+    ) {
+        fun toDomain(): Restaurant {
+            val restaurant =
+                Restaurant(
+                    id = id,
+                    companyId = companyId,
+                    userId = userId,
+                    introduce = RestaurantDescription(name, introduce),
+                    contact = RestaurantContact(phone),
+                    address =
+                        RestaurantAddress(
+                            zipCode = zipCode,
+                            address = address,
+                            detail = detail,
+                            coordinate =
+                                RestaurantCoordinate(
+                                    latitude = latitude,
+                                    longitude = longitude,
+                                ),
+                        ),
+                )
+
+            restaurant.manipulateRoutine {
+                workingDay
+                    .map { workingDay ->
+                        RestaurantWorkingDay(
+                            workingDay.day,
+                            workingDay.startTime,
+                            workingDay.endTime,
+                        )
+                    }
+                    .forEach(it::add)
+            }
+
+            restaurant.manipulatePhoto {
+                photos
+                    .map { it.url }
+                    .map { photoUrl -> RestaurantPhoto(photoUrl) }
+                    .forEach(it::add)
+            }
+
+            return restaurant
+        }
+    }
 
     data class LoadWorkingDayResult(
         val day: DayOfWeek,

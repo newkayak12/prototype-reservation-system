@@ -1,5 +1,6 @@
 package com.reservation.restaurant.port.input
 
+import org.springframework.web.multipart.MultipartFile
 import java.math.BigDecimal
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -18,7 +19,7 @@ fun interface UpdateRestaurantCommand {
         val latitude: BigDecimal,
         val longitude: BigDecimal,
         val workingDays: List<ChangeWorkingDayCommandDto> = listOf(),
-        val photos: List<String> = listOf(),
+        val photos: List<MultipartFile> = listOf(),
         val tags: List<Long> = listOf(),
         val nationalities: List<Long> = listOf(),
         val cuisines: List<Long> = listOf(),
