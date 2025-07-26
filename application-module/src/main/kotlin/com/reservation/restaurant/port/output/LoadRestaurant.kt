@@ -12,7 +12,7 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 
 fun interface LoadRestaurant {
-    fun execute(id: String): LoadRestaurantResult?
+    fun query(id: String): LoadRestaurantResult?
 
     data class LoadRestaurantResult(
         val id: String,

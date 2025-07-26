@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 class ChangeRestaurantAdapter(
     private val jpaRepository: RestaurantJpaRepository,
 ) : ChangeRestaurant {
-    override fun execute(inquiry: ChangeRestaurantInquiry): Boolean {
+    override fun command(inquiry: ChangeRestaurantInquiry): Boolean {
         var result = false
         jpaRepository.findRestaurantEntityById(inquiry.id)
             .ifPresent {

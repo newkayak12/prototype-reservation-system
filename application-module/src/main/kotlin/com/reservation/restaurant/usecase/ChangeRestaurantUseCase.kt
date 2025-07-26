@@ -2,6 +2,7 @@ package com.reservation.restaurant.usecase
 
 import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.annotations.UseCase
+import com.reservation.restaurant.Restaurant
 import com.reservation.restaurant.policy.format.ChangeRestaurantForm
 import com.reservation.restaurant.policy.format.RestaurantWorkingDayForm
 import com.reservation.restaurant.port.input.UpdateRestaurantCommand
@@ -29,7 +30,7 @@ class ChangeRestaurantUseCase(
 ) : UpdateRestaurantCommand {
     @Transactional
     override fun execute(request: ChangeRestaurantCommandDto): Boolean {
-        val restaurant = load(request.id)
+        val restaurant: Restaurant = load(request.id)
         val photoUrls = uploadPhotos(request.photos)
 
         val form = createForm(request, photoUrls)
@@ -39,7 +40,7 @@ class ChangeRestaurantUseCase(
     }
 
     private fun load(id: String) =
-        loadRestaurant.execute(id)
+        loadRestaurant.query(id)
             ?.toDomain()
             ?: throw NoSuchPersistedElementException()
 
@@ -91,6 +92,6 @@ class ChangeRestaurantUseCase(
                 cuisines = result.cuisines.map { ChangeCuisinesInquiry(it) },
             )
 
-        return changeRestaurant.execute(inquiry)
+        return changeRestaurant.command(inquiry)
     }
 }

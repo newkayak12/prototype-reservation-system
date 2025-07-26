@@ -5,7 +5,7 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 
 fun interface ChangeRestaurant {
-    fun execute(inquiry: ChangeRestaurantInquiry): Boolean
+    fun command(inquiry: ChangeRestaurantInquiry): Boolean
 
     data class ChangeRestaurantInquiry(
         val id: String,
