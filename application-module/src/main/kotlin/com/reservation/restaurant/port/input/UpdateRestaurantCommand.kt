@@ -10,6 +10,7 @@ fun interface UpdateRestaurantCommand {
 
     data class ChangeRestaurantCommandDto(
         val id: String,
+        val userId: String,
         val name: String,
         val introduce: String,
         val phone: String,
