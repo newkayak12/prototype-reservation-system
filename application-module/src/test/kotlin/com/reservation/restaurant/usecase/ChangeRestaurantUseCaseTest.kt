@@ -137,11 +137,16 @@ class ChangeRestaurantUseCaseTest {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             // given
             val restaurantId = "1"
+            val userId = "1"
             val request = mockk<ChangeRestaurantCommandDto>()
             val restaurantSnapshot = mockk<RestaurantSnapshot>()
-            val loadResult = pureMonkey.giveMeOne<LoadRestaurantResult>()
+            val loadResult =
+                pureMonkey.giveMeBuilder<LoadRestaurantResult>()
+                    .set("userId", userId)
+                    .sample()
 
             every { request.id } returns restaurantId
+            every { request.userId } returns userId
             every { loadRestaurant.query(any()) } returns loadResult
             every { uploadRestaurantImageFile.execute(any()) } returns listOf()
             every { changeRestaurantService.change(any(), any()) } returns restaurantSnapshot
@@ -185,15 +190,18 @@ class ChangeRestaurantUseCaseTest {
         fun `it returns true on successful update`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             // given
+            val userId = "1"
             val request =
                 pureMonkey.giveMeBuilder<ChangeRestaurantCommandDto>()
                     .set("photos", listOf<MultipartFile>())
+                    .set("userId", userId)
                     .sample()
             val loadResult = mockk<LoadRestaurantResult>()
             val domain = pureMonkey.giveMeOne<Restaurant>()
             val restaurantSnapshot = domain.snapshot()
 
             every { loadRestaurant.query(any()) } returns loadResult
+            every { loadResult.userId } returns userId
             every { loadResult.toDomain() } returns domain
             every { uploadRestaurantImageFile.execute(any()) } returns listOf()
             every { changeRestaurantService.change(any(), any()) } returns restaurantSnapshot
@@ -221,15 +229,18 @@ class ChangeRestaurantUseCaseTest {
         fun `it updates restaurant with uploaded photo URLs`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             // given
+            val userId = "1"
             val request =
                 pureMonkey.giveMeBuilder<ChangeRestaurantCommandDto>()
                     .set("photos", listOf(pureMonkey.giveMeOne<MockMultipartFile>()))
+                    .set("userId", userId)
                     .sample()
             val photoUrl = "https://image.com/1.jpg"
             val loadResult = mockk<LoadRestaurantResult>()
             val domain = pureMonkey.giveMeOne<Restaurant>()
             val restaurantSnapshot = domain.snapshot()
 
+            every { loadResult.userId } returns userId
             every { loadRestaurant.query(any()) } returns loadResult
             every { loadResult.toDomain() } returns domain
             every { uploadRestaurantImageFile.execute(any()) } returns listOf(photoUrl)

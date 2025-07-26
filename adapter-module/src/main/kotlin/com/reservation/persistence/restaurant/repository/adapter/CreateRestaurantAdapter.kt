@@ -31,14 +31,14 @@ class CreateRestaurantAdapter(
                 longitude = inquiry.longitude,
             )
 
-        RestaurantWorkingDayMutator.addWorkingDays(
+        RestaurantWorkingDayMutator.appendWorkingDays(
             entity,
             inquiry.workingDays.map { WorkingDayMutatorForm(it.day, it.startTime, it.endTime) },
         )
-        RestaurantPhotosMutator.addPhotos(entity, inquiry.photos.map { it.url })
-        RestaurantTagMutator.addTags(entity, inquiry.tags)
-        RestaurantNationalitiesMutator.addNationality(entity, inquiry.nationalities)
-        RestaurantCuisinesMutator.addCuisines(entity, inquiry.cuisines)
+        RestaurantPhotosMutator.appendPhoto(entity, inquiry.photos.map { it.url })
+        RestaurantTagMutator.appendTag(entity, inquiry.tags)
+        RestaurantNationalitiesMutator.appendNationality(entity, inquiry.nationalities)
+        RestaurantCuisinesMutator.appendCuisine(entity, inquiry.cuisines)
 
         val result = jpaRepository.save(entity)
         return result.isPersisted()

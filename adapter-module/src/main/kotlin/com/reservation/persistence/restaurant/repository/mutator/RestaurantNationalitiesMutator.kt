@@ -14,9 +14,9 @@ object RestaurantNationalitiesMutator {
         }
     }
 
-    private fun RestaurantEntity.removeNationalities(nationalitiesIds: List<Long>) {
-        val items = nationalitiesAll().filter { nationalitiesIds.contains(it.nationalitiesId) }
-        if (items == null || items.isEmpty()) {
+    private fun RestaurantEntity.removeExceptedNationalities(nationalitiesIds: List<Long>) {
+        val items = nationalitiesAll().filter { !nationalitiesIds.contains(it.nationalitiesId) }
+        if (items.isEmpty()) {
             return
         }
         adjustNationalities {
@@ -39,7 +39,7 @@ object RestaurantNationalitiesMutator {
         val exists = nationalitiesAll().map { it.nationalitiesId }
         val item: List<Long> = nationalitiesId.filter { !exists.contains(it) }
 
-        if (item != null || item.isEmpty()) {
+        if (item.isEmpty()) {
             return
         }
 
@@ -50,7 +50,7 @@ object RestaurantNationalitiesMutator {
         }
     }
 
-    fun addNationality(
+    fun appendNationality(
         restaurantEntity: RestaurantEntity,
         nationalities: List<Long>,
     ) = nationalities.forEach {
@@ -65,7 +65,7 @@ object RestaurantNationalitiesMutator {
         restaurantEntity: RestaurantEntity,
         ids: List<Long>,
     ) {
-        restaurantEntity.removeNationalities(ids)
+        restaurantEntity.removeExceptedNationalities(ids)
         restaurantEntity.addNationalities(ids)
     }
 }

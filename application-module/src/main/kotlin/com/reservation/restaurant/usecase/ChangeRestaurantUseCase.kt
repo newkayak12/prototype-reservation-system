@@ -30,7 +30,7 @@ class ChangeRestaurantUseCase(
 ) : UpdateRestaurantCommand {
     @Transactional
     override fun execute(request: ChangeRestaurantCommandDto): Boolean {
-        val restaurant: Restaurant = load(request.id)
+        val restaurant: Restaurant = load(request.id, request.userId)
         val photoUrls = uploadPhotos(request.photos)
 
         val form = createForm(request, photoUrls)
@@ -39,10 +39,16 @@ class ChangeRestaurantUseCase(
         return updateRestaurant(changedResult)
     }
 
-    private fun load(id: String) =
-        loadRestaurant.query(id)
-            ?.toDomain()
-            ?: throw NoSuchPersistedElementException()
+    private fun load(
+        id: String,
+        userId: String,
+    ): Restaurant {
+        val entity = loadRestaurant.query(id) ?: throw NoSuchPersistedElementException()
+
+        if (entity.userId != userId) throw NoSuchPersistedElementException()
+
+        return entity.toDomain()
+    }
 
     private fun uploadPhotos(photos: List<MultipartFile>) =
         if (photos.isEmpty()) listOf() else uploadRestaurantImageFile.execute(photos)

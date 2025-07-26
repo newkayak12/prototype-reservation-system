@@ -17,6 +17,17 @@ object RestaurantWorkingDayMutator {
         }
     }
 
+    private fun RestaurantEntity.removeExceptedWorkingDays(day: List<DayOfWeek>) {
+        val items = workingDaysAll().filter { !day.contains(it.id.day) }
+        if (items.isEmpty()) {
+            return
+        }
+
+        adjustWorkingDay {
+            removeAll(items)
+        }
+    }
+
     private fun RestaurantEntity.addWorkingDay(
         day: DayOfWeek,
         startTime: LocalTime,
@@ -39,13 +50,41 @@ object RestaurantWorkingDayMutator {
         }
     }
 
+    private fun RestaurantEntity.addWorkingDays(schedule: List<WorkingDayMutatorForm>) {
+        val exists =
+            workingDaysAll().filter {
+                schedule.map { schedule -> schedule.day }.contains(it.id.day)
+            }
+                .map { it.id.day }
+
+        val items = schedule.filter { timetable -> !exists.contains(timetable.day) }
+
+        if (items.isEmpty()) {
+            return
+        }
+
+        adjustWorkingDay {
+            for (element in items) {
+                val entity =
+                    RestaurantWorkingDayEntity(
+                        RestaurantWorkingDayId(this@addWorkingDays.identifier, element.day),
+                        this@addWorkingDays,
+                        element.startTime,
+                        element.endTime,
+                    )
+
+                add(entity)
+            }
+        }
+    }
+
     data class WorkingDayMutatorForm(
         val day: DayOfWeek,
         val startTime: LocalTime,
         val endTime: LocalTime,
     )
 
-    fun addWorkingDays(
+    fun appendWorkingDays(
         restaurantEntity: RestaurantEntity,
         workingDays: List<WorkingDayMutatorForm>,
     ) = workingDays.forEach {
@@ -58,5 +97,13 @@ object RestaurantWorkingDayMutator {
 
     fun purgeWorkingDays(restaurantEntity: RestaurantEntity) {
         restaurantEntity.adjustWorkingDay { removeAll(restaurantEntity.workingDaysAll()) }
+    }
+
+    fun adjustWorkingDays(
+        restaurantEntity: RestaurantEntity,
+        ids: List<WorkingDayMutatorForm>,
+    ) {
+        restaurantEntity.removeExceptedWorkingDays(ids.map { it.day })
+        restaurantEntity.addWorkingDays(ids)
     }
 }
