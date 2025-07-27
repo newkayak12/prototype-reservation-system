@@ -82,7 +82,14 @@ class CreateRestaurantControllerTest(
                 row("zipCode"),
                 row("address"),
             ) { emptyField ->
-                val requestBody = perfectCase().copy(emptyField, "")
+                val requestBody =
+                    when (emptyField) {
+                        "companyId" -> perfectCase().copy(companyId = "")
+                        "name" -> perfectCase().copy(name = "")
+                        "zipCode" -> perfectCase().copy(zipCode = "")
+                        "address" -> perfectCase().copy(address = "")
+                        else -> perfectCase()
+                    }
 
                 val request =
                     MockPart("request", objectMapper.writeValueAsBytes(requestBody))

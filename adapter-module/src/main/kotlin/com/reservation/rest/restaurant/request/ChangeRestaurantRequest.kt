@@ -13,7 +13,7 @@ data class ChangeRestaurantRequest(
     @field:NotBlank
     val name: String,
     @field:Length(max = 6000)
-    val introduce: String,
+    val introduce: String?,
     @field:Length(min = 11, max = 13)
     val phone: String,
     @field:NotBlank
@@ -44,7 +44,7 @@ data class ChangeRestaurantRequest(
         id,
         userId,
         name,
-        introduce,
+        introduce = "",
         phone,
         zipCode,
         address,
