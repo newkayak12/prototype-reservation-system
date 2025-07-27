@@ -53,9 +53,11 @@ class ChangeRestaurantUseCaseTest {
         fun `it throws NoSuchPersistedElementException`() {
             // given
             val restaurantId = "1"
+            val userId = "1"
             val request = mockk<ChangeRestaurantCommandDto>()
 
             every { request.id } returns restaurantId
+            every { request.userId } returns userId
             every { loadRestaurant.query(any()) } returns null
 
             // when & then
@@ -96,11 +98,13 @@ class ChangeRestaurantUseCaseTest {
 
             // given
             val restaurantId = "1"
+            val userId = "1"
             val request = mockk<ChangeRestaurantCommandDto>()
             val loadResult = mockk<LoadRestaurantResult>()
             val domain = pureMonkey.giveMeOne<Restaurant>()
 
             every { request.id } returns restaurantId
+            every { request.userId } returns userId
             every { loadRestaurant.query(any()) } returns loadResult
             every { loadResult.toDomain() } returns domain
             every { uploadRestaurantImageFile.execute(any()) } throws RuntimeException()

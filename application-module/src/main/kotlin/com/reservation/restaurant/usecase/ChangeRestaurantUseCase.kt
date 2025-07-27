@@ -18,6 +18,7 @@ import com.reservation.restaurant.port.output.LoadRestaurant
 import com.reservation.restaurant.port.output.UploadRestaurantImageFile
 import com.reservation.restaurant.service.ChangeRestaurantService
 import com.reservation.restaurant.snapshot.RestaurantSnapshot
+import com.reservation.utilities.logger.loggerFactory
 import jakarta.transaction.Transactional
 import org.springframework.web.multipart.MultipartFile
 
@@ -28,6 +29,8 @@ class ChangeRestaurantUseCase(
     private val changeRestaurant: ChangeRestaurant,
     private val uploadRestaurantImageFile: UploadRestaurantImageFile,
 ) : UpdateRestaurantCommand {
+    val log = loggerFactory<ChangeRestaurantUseCase>()
+
     @Transactional
     override fun execute(request: ChangeRestaurantCommandDto): Boolean {
         val restaurant: Restaurant = load(request.id, request.userId)
