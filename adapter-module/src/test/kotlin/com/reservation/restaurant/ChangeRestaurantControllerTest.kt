@@ -6,15 +6,17 @@ import com.ninjasquad.springmockk.MockkBean
 import com.reservation.authenticate.port.input.ExtractIdentifierFromHeaderQuery
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.Part
+import com.reservation.config.restdoc.PathParameter
 import com.reservation.config.restdoc.RequestPartFields
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.restaurant.RestaurantUrl
-import com.reservation.rest.restaurant.create.CreateRestaurantController
-import com.reservation.rest.restaurant.request.CreateRestaurantRequest
-import com.reservation.restaurant.port.input.CreateRestaurantCommand
+import com.reservation.rest.restaurant.change.ChangeRestaurantController
+import com.reservation.rest.restaurant.request.ChangeRestaurantRequest
+import com.reservation.restaurant.port.input.UpdateRestaurantCommand
+import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.data.forAll
 import io.kotest.data.row
@@ -31,7 +33,6 @@ import org.springframework.mock.web.MockPart
 import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.multipart
 import org.springframework.restdocs.payload.JsonFieldType.ARRAY
-import org.springframework.restdocs.payload.JsonFieldType.BOOLEAN
 import org.springframework.restdocs.payload.JsonFieldType.NUMBER
 import org.springframework.restdocs.payload.JsonFieldType.STRING
 import org.springframework.test.context.ActiveProfiles
@@ -43,25 +44,24 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @AutoConfigureRestDocs
 @ActiveProfiles(value = ["test"])
 @Import(value = [TestSecurity::class])
-@WebMvcTest(CreateRestaurantController::class)
+@WebMvcTest(ChangeRestaurantController::class)
 @ExtendWith(RestDocumentationExtension::class)
-class CreateRestaurantControllerTest(
+class ChangeRestaurantControllerTest(
     private val mockMvc: MockMvc,
     private val objectMapper: ObjectMapper,
 ) : FunSpec() {
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    lateinit var createRestaurantCommand: CreateRestaurantCommand
+    private lateinit var updateRestaurantCommand: UpdateRestaurantCommand
 
     @MockkBean
-    lateinit var extractIdentifierFromHeaderQuery: ExtractIdentifierFromHeaderQuery
+    private lateinit var extractIdentifierFromHeaderQuery: ExtractIdentifierFromHeaderQuery
 
     private val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
     private fun perfectCase() =
-        pureMonkey.giveMeBuilder<CreateRestaurantRequest>()
-            .setLazy("companyId") { Arbitraries.strings().numeric().ofLength(128).sample() }
+        pureMonkey.giveMeBuilder<ChangeRestaurantRequest>()
             .setLazy("name") { Arbitraries.strings().numeric().ofLength(64).sample() }
             .setLazy("introduce") { Arbitraries.strings().ofLength(6000).sample() }
             .setLazy(
@@ -77,14 +77,12 @@ class CreateRestaurantControllerTest(
     init {
         test("비정상 요청으로 (JakartaValidation - NotBlank)인 케이스에 위배되어 실패한다.") {
             forAll(
-                row("companyId"),
                 row("name"),
                 row("zipCode"),
                 row("address"),
             ) { emptyField ->
                 val requestBody =
                     when (emptyField) {
-                        "companyId" -> perfectCase().copy(companyId = "")
                         "name" -> perfectCase().copy(name = "")
                         "zipCode" -> perfectCase().copy(zipCode = "")
                         "address" -> perfectCase().copy(address = "")
@@ -96,8 +94,12 @@ class CreateRestaurantControllerTest(
                         .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
                 mockMvc.perform(
-                    multipart(RestaurantUrl.CREATE_RESTAURANT)
+                    multipart("${RestaurantUrl.PREFIX}/{id}", UuidGenerator.generate())
                         .part(request)
+                        .with {
+                            it.method = "PUT"
+                            it
+                        }
                         .header(
                             HttpHeaders.AUTHORIZATION,
                             CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
@@ -136,8 +138,12 @@ class CreateRestaurantControllerTest(
                         .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
                 mockMvc.perform(
-                    multipart(RestaurantUrl.CREATE_RESTAURANT)
+                    multipart("${RestaurantUrl.PREFIX}/{id}", UuidGenerator.generate())
                         .part(request)
+                        .with {
+                            it.method = "PUT"
+                            it
+                        }
                         .header(
                             HttpHeaders.AUTHORIZATION,
                             CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
@@ -163,10 +169,12 @@ class CreateRestaurantControllerTest(
                             perfectCase().copy(
                                 introduce = Arbitraries.strings().ofMinLength(max + 1).sample(),
                             )
+
                         "detail" ->
                             perfectCase().copy(
                                 detail = Arbitraries.strings().ofMinLength(max + 1).sample(),
                             )
+
                         else -> perfectCase()
                     }
 
@@ -175,8 +183,12 @@ class CreateRestaurantControllerTest(
                         .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
                 mockMvc.perform(
-                    multipart(RestaurantUrl.CREATE_RESTAURANT)
+                    multipart("${RestaurantUrl.PREFIX}/{id}", UuidGenerator.generate())
                         .part(request)
+                        .with {
+                            it.method = "PUT"
+                            it
+                        }
                         .header(
                             HttpHeaders.AUTHORIZATION,
                             CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
@@ -190,23 +202,26 @@ class CreateRestaurantControllerTest(
             }
         }
 
-        test("정상 요청으로 정상 성공한다.") {
+        test("올바른 요청으로 정상적으로 수정에 성공한다.") {
             val requestBody = perfectCase()
-            every {
-                extractIdentifierFromHeaderQuery.execute(any())
-            } returns Arbitraries.strings().sample()
-
-            every {
-                createRestaurantCommand.execute(any())
-            } returns true
-
             val request =
                 MockPart("request", objectMapper.writeValueAsBytes(requestBody))
                     .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
+            every {
+                extractIdentifierFromHeaderQuery.execute(any())
+            } returns Arbitraries.strings().sample()
+            every {
+                updateRestaurantCommand.execute(any())
+            } returns true
+
             mockMvc.perform(
-                multipart(RestaurantUrl.CREATE_RESTAURANT)
+                multipart("${RestaurantUrl.PREFIX}/{id}", UuidGenerator.generate())
                     .part(request)
+                    .with {
+                        it.method = "PUT"
+                        it
+                    }
                     .header(
                         HttpHeaders.AUTHORIZATION,
                         CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
@@ -214,19 +229,19 @@ class CreateRestaurantControllerTest(
                     .contentType(MediaType.MULTIPART_FORM_DATA),
             )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(status().isCreated)
+                .andExpect(status().isResetContent)
                 .andExpect(jsonPath("$.result").isBoolean)
                 .andExpect(jsonPath("$.result").value(true))
         }
 
-        test("이미지와 함께 정상 요청으로 정상 성공한다.") {
+        test("이미지와 함께 올바른 요청으로 정상적으로 수정에 성공한다.") {
             val requestBody = perfectCase()
+
             every {
                 extractIdentifierFromHeaderQuery.execute(any())
             } returns Arbitraries.strings().sample()
-
             every {
-                createRestaurantCommand.execute(any())
+                updateRestaurantCommand.execute(any())
             } returns true
 
             val request =
@@ -240,10 +255,14 @@ class CreateRestaurantControllerTest(
                     .apply { headers.contentType = MediaType.IMAGE_JPEG }
 
             mockMvc.perform(
-                multipart(RestaurantUrl.CREATE_RESTAURANT)
+                multipart("${RestaurantUrl.PREFIX}/{id}", UuidGenerator.generate())
                     .part(request)
                     .part(photo1)
                     .part(photo2)
+                    .with {
+                        it.method = "PUT"
+                        it
+                    }
                     .header(
                         HttpHeaders.AUTHORIZATION,
                         CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
@@ -251,15 +270,19 @@ class CreateRestaurantControllerTest(
                     .contentType(MediaType.MULTIPART_FORM_DATA),
             )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(status().isCreated)
+                .andExpect(status().isResetContent)
                 .andExpect(jsonPath("$.result").isBoolean)
                 .andExpect(jsonPath("$.result").value(true))
                 .andDo(
                     RestDocuments(
-                        identifier = "createRestaurant",
-                        documentTags = listOf("restaurant", "create"),
-                        summary = "음식점 생성",
-                        description = "사용자 요청에 맞춰서 음식점을 생성합니다.",
+                        identifier = "changeRestaurant",
+                        documentTags = listOf("restaurant", "change"),
+                        summary = "음식점 수정",
+                        description = "사용자 요청에 맞춰서 음식점을 수정합니다.",
+                        pathParameter =
+                            arrayOf(
+                                PathParameter("id", false, "음식점 식별 값"),
+                            ),
                         requestPart =
                             arrayOf(
                                 Part("photos", true, "사진"),
@@ -272,12 +295,6 @@ class CreateRestaurantControllerTest(
                                     jsonFields =
                                         arrayOf(
                                             Body(
-                                                name = "companyId",
-                                                jsonType = STRING,
-                                                optional = false,
-                                                description = "회사 식별값",
-                                            ),
-                                            Body(
                                                 name = "name",
                                                 jsonType = STRING,
                                                 optional = false,
@@ -287,7 +304,7 @@ class CreateRestaurantControllerTest(
                                                 name = "introduce",
                                                 jsonType = STRING,
                                                 optional = true,
-                                                description = "음식점 소개",
+                                                description = "음식점 설명",
                                             ),
                                             Body(
                                                 name = "phone",
@@ -299,19 +316,19 @@ class CreateRestaurantControllerTest(
                                                 name = "zipCode",
                                                 jsonType = STRING,
                                                 optional = false,
-                                                description = "음식점 우편번호",
+                                                description = "우편번호",
                                             ),
                                             Body(
                                                 name = "address",
                                                 jsonType = STRING,
                                                 optional = false,
-                                                description = "음식점 주소",
+                                                description = "주소",
                                             ),
                                             Body(
                                                 name = "detail",
                                                 jsonType = STRING,
                                                 optional = true,
-                                                description = "음식점 주소 상세",
+                                                description = "주소 상세",
                                             ),
                                             Body(
                                                 name = "latitude",
@@ -369,10 +386,6 @@ class CreateRestaurantControllerTest(
                                             ),
                                         ),
                                 ),
-                            ),
-                        responseBody =
-                            arrayOf(
-                                Body("result", BOOLEAN, true, "결과"),
                             ),
                     )
                         .authorizedRequestHeader()

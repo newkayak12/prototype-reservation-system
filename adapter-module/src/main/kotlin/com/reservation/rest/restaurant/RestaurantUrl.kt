@@ -1,6 +1,7 @@
 package com.reservation.rest.restaurant
 
 object RestaurantUrl {
-    private const val PREFIX = "/api/v1/restaurant"
+    const val PREFIX = "/api/v1/restaurant"
     const val CREATE_RESTAURANT = PREFIX
+    const val CHANGE_RESTAURANT = "$PREFIX/{id:[0-9a-fA-F\\-]{36}}"
 }

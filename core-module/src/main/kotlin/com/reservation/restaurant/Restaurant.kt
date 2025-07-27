@@ -10,7 +10,7 @@ import com.reservation.restaurant.vo.RestaurantPhotoBook
 import com.reservation.restaurant.vo.RestaurantRoutine
 import com.reservation.restaurant.vo.RestaurantTags
 
-internal class Restaurant(
+class Restaurant(
     private val id: String? = null,
     private val companyId: String,
     private val userId: String,
@@ -32,7 +32,7 @@ internal class Restaurant(
         address = newLocation
     }
 
-    fun updateContract(newContract: RestaurantContact) {
+    fun updateContact(newContract: RestaurantContact) {
         contact = newContract
     }
 

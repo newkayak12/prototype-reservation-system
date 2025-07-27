@@ -203,3 +203,6 @@ gradle-app.setting
 mysql_data
 .obsidian
 # End of https://www.toptal.com/developers/gitignore/api/kotlin,intellij,macos,gradle
+
+
+.gemini

@@ -12,6 +12,9 @@ import jakarta.persistence.Index
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.Comment
+import org.hibernate.annotations.DynamicUpdate
+import org.hibernate.annotations.Filter
+import org.hibernate.annotations.FilterDef
 import java.math.BigDecimal
 
 @Table(
@@ -22,7 +25,10 @@ import java.math.BigDecimal
     ],
 )
 @Entity
+@DynamicUpdate
 @Suppress("LongParameterList", "TooManyFunctions")
+@FilterDef(name = "is_not_deleted", defaultCondition = "is_deleted = false")
+@Filter(name = "is_not_deleted")
 class RestaurantEntity(
     companyId: String,
     userId: String,
@@ -48,7 +54,7 @@ class RestaurantEntity(
     @Column(name = "name")
     @Comment("음식점 이름")
     var name: String = name
-        protected set
+        internal set
 
     @Column(name = "introduce")
     @Comment("음식점 소개")
@@ -162,5 +168,31 @@ class RestaurantEntity(
 
     fun delete() {
         logicalDelete = LogicalDelete(true)
+    }
+
+    fun updateDescription(
+        name: String,
+        introduce: String,
+    ) {
+        this.name = name
+        this.introduce = introduce
+    }
+
+    fun updateContact(phone: String) {
+        this.phone = phone
+    }
+
+    fun updateAddress(
+        zipCode: String,
+        address: String,
+        detail: String,
+        latitude: BigDecimal,
+        longitude: BigDecimal,
+    ) {
+        this.zipCode = zipCode
+        this.address = address
+        this.detail = detail
+        this.latitude = latitude
+        this.longitude = longitude
     }
 }
