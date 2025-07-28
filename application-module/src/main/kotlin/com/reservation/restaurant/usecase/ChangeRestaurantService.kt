@@ -18,7 +18,6 @@ import com.reservation.restaurant.port.output.LoadRestaurant
 import com.reservation.restaurant.port.output.UploadRestaurantImageFile
 import com.reservation.restaurant.service.ChangeRestaurantDomainService
 import com.reservation.restaurant.snapshot.RestaurantSnapshot
-import com.reservation.utilities.logger.loggerFactory
 import jakarta.transaction.Transactional
 import org.springframework.web.multipart.MultipartFile
 
@@ -29,8 +28,6 @@ class ChangeRestaurantService(
     private val changeRestaurant: ChangeRestaurant,
     private val uploadRestaurantImageFile: UploadRestaurantImageFile,
 ) : UpdateRestaurantUseCase {
-    val log = loggerFactory<ChangeRestaurantService>()
-
     @Transactional
     override fun execute(request: ChangeRestaurantCommand): Boolean {
         val restaurant: Restaurant = load(request.id, request.userId)
@@ -39,7 +36,6 @@ class ChangeRestaurantService(
         val form = createForm(request, photoUrls)
         val changedResult = changeRestaurantDomainService.change(restaurant, form)
 
-        println("????????? $changedResult")
         return updateRestaurant(changedResult)
     }
 

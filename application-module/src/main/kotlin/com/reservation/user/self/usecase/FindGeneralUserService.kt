@@ -15,7 +15,7 @@ class FindGeneralUserService(
     @Transactional(readOnly = true)
     override fun execute(id: String): FindGeneralUserQueryResult {
         return findGeneralUser.query(FindGeneralUserInquiry(id))
-            ?.let { it.toQuery() }
+            ?.toQuery()
             ?: throw NoSuchPersistedElementException()
     }
 }
