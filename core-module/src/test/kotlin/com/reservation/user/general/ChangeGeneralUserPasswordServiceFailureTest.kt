@@ -6,7 +6,7 @@ import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.user.common.exceptions.InvalidateUserElementException
 import com.reservation.user.common.exceptions.UseSamePasswordAsBeforeException
 import com.reservation.user.self.User
-import com.reservation.user.service.ChangeGeneralUserPasswordService
+import com.reservation.user.service.ChangeGeneralUserPasswordDomainService
 import com.reservation.user.shared.vo.LoginId
 import com.reservation.user.shared.vo.Password
 import com.reservation.user.shared.vo.PersonalAttributes
@@ -16,7 +16,7 @@ import io.kotest.core.spec.style.FunSpec
 
 class ChangeGeneralUserPasswordServiceFailureTest : FunSpec(
     {
-        val changeGeneralUserPasswordService = ChangeGeneralUserPasswordService()
+        val changeGeneralUserPasswordDomainService = ChangeGeneralUserPasswordDomainService()
 
         test("비밀번호 길이가 8 ~ 18 글자 사이를 만족하지 못해서 실패한다.") {
 
@@ -33,7 +33,7 @@ class ChangeGeneralUserPasswordServiceFailureTest : FunSpec(
             val rawPassword = CommonlyUsedArbitraries.passwordArbitrary.sample().substring(0, 7)
 
             shouldThrow<InvalidateUserElementException> {
-                changeGeneralUserPasswordService.changePassword(user, rawPassword)
+                changeGeneralUserPasswordDomainService.changePassword(user, rawPassword)
             }
         }
 
@@ -53,7 +53,7 @@ class ChangeGeneralUserPasswordServiceFailureTest : FunSpec(
             val rawPassword = pureMonkey.giveMeOne<String>()
 
             shouldThrow<InvalidateUserElementException> {
-                changeGeneralUserPasswordService.changePassword(user, rawPassword)
+                changeGeneralUserPasswordDomainService.changePassword(user, rawPassword)
             }
         }
 
@@ -76,7 +76,7 @@ class ChangeGeneralUserPasswordServiceFailureTest : FunSpec(
                 )
 
             shouldThrow<UseSamePasswordAsBeforeException> {
-                changeGeneralUserPasswordService.changePassword(user, rawPassword)
+                changeGeneralUserPasswordDomainService.changePassword(user, rawPassword)
             }
         }
     },

@@ -9,8 +9,8 @@ import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.request.GeneralUserSignUpRequest
 import com.reservation.rest.user.general.sign.GeneralUserSignUpController
-import com.reservation.user.self.port.input.CreateGeneralUserCommand
-import com.reservation.user.self.port.input.CreateGeneralUserCommand.CreateGeneralUserCommandDto
+import com.reservation.user.self.port.input.CreateGeneralUserUseCase
+import com.reservation.user.self.port.input.command.request.CreateGeneralUserCommand
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.data.forAll
 import io.kotest.data.row
@@ -43,7 +43,7 @@ class GeneralUserSignUpControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var createGeneralUserCommand: CreateGeneralUserCommand
+    private lateinit var createGeneralUserUseCase: CreateGeneralUserUseCase
 
     init {
 
@@ -58,7 +58,7 @@ class GeneralUserSignUpControllerTest(
                 )
 
             every {
-                createGeneralUserCommand.execute(any<CreateGeneralUserCommandDto>())
+                createGeneralUserUseCase.execute(any<CreateGeneralUserCommand>())
             } returns true
 
             mockMvc.perform(

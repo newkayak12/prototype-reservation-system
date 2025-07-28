@@ -4,7 +4,7 @@ import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.user.self.User
-import com.reservation.user.service.ChangeGeneralUserPasswordService
+import com.reservation.user.service.ChangeGeneralUserPasswordDomainService
 import com.reservation.user.shared.vo.LoginId
 import com.reservation.user.shared.vo.Password
 import com.reservation.user.shared.vo.PersonalAttributes
@@ -14,7 +14,7 @@ import io.kotest.matchers.shouldBe
 
 class ChangeGeneralUserPasswordServiceTest : FunSpec(
     {
-        val changeGeneralUserPasswordService = ChangeGeneralUserPasswordService()
+        val changeGeneralUserPasswordDomainService = ChangeGeneralUserPasswordDomainService()
 
         test("비밀번호 길이가 8 ~ 18 글자 사이를 만족하고 비밀번호 형식에 만족하여 비밀번호가 변경된다.") {
 
@@ -30,7 +30,7 @@ class ChangeGeneralUserPasswordServiceTest : FunSpec(
                 )
             val rawPassword = CommonlyUsedArbitraries.passwordArbitrary.sample()
 
-            val actual = changeGeneralUserPasswordService.changePassword(user, rawPassword)
+            val actual = changeGeneralUserPasswordDomainService.changePassword(user, rawPassword)
 
             PasswordEncoderUtility.matches(rawPassword, actual.userEncodedPassword) shouldBe true
         }

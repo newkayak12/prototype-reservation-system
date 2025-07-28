@@ -1,6 +1,6 @@
 package com.reservation.rest.user.seller.sign
 
-import com.reservation.authenticate.port.input.AuthenticateSellerUserQuery
+import com.reservation.authenticate.port.input.AuthenticateSellerUserUseCase
 import com.reservation.rest.user.RefreshTokenDefinitions
 import com.reservation.rest.user.seller.SellerUserUrl
 import com.reservation.rest.user.seller.request.SellerUserLoginRequest
@@ -14,14 +14,14 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class SellerUserSignInController(
-    private val authenticateSellerUserQuery: AuthenticateSellerUserQuery,
+    private val authenticateSellerUserUseCase: AuthenticateSellerUserUseCase,
 ) {
     @PutMapping(SellerUserUrl.USER_SIGN_IN)
     fun signIn(
         @RequestBody @Valid request: SellerUserLoginRequest,
         httpServletResponse: HttpServletResponse,
     ): LoginSellerUserResponse {
-        val result = authenticateSellerUserQuery.execute(request.toQuery())
+        val result = authenticateSellerUserUseCase.execute(request.toQuery())
 
         val refreshTokenCookie =
             Cookie(RefreshTokenDefinitions.REFRESH_TOKEN_KEY, result.refreshToken)

@@ -1,6 +1,6 @@
 package com.reservation.rest.user.general.sign
 
-import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery
+import com.reservation.authenticate.port.input.AuthenticateGeneralUserUseCase
 import com.reservation.rest.user.RefreshTokenDefinitions
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.request.GeneralUserLoginRequest
@@ -14,14 +14,14 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class GeneralUserSignInController(
-    private val authenticateGeneralUserQuery: AuthenticateGeneralUserQuery,
+    private val authenticateGeneralUserUseCase: AuthenticateGeneralUserUseCase,
 ) {
     @PutMapping(GeneralUserUrl.USER_SIGN_IN)
     fun signIn(
         @RequestBody @Valid request: GeneralUserLoginRequest,
         httpServletResponse: HttpServletResponse,
     ): LoginGeneralUserResponse {
-        val result = authenticateGeneralUserQuery.execute(request.toQuery())
+        val result = authenticateGeneralUserUseCase.execute(request.toQuery())
 
         val refreshTokenCookie =
             Cookie(RefreshTokenDefinitions.REFRESH_TOKEN_KEY, result.refreshToken)

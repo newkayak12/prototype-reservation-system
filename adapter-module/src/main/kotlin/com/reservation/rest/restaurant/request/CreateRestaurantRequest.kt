@@ -1,7 +1,7 @@
 package com.reservation.rest.restaurant.request
 
 import com.reservation.restaurant.policy.format.RestaurantWorkingDayForm
-import com.reservation.restaurant.port.input.CreateRestaurantCommand.CreateProductCommandDto
+import com.reservation.restaurant.port.input.command.request.CreateProductCommand
 import jakarta.validation.constraints.NotBlank
 import org.hibernate.validator.constraints.Length
 import org.springframework.web.multipart.MultipartFile
@@ -44,8 +44,8 @@ data class CreateRestaurantRequest(
     fun toCommand(
         userId: String,
         photos: List<MultipartFile>,
-    ): CreateProductCommandDto =
-        CreateProductCommandDto(
+    ): CreateProductCommand =
+        CreateProductCommand(
             companyId = companyId,
             userId = userId,
             name = name,

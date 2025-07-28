@@ -1,10 +1,10 @@
 package com.reservation.category.cuisine.port.output
 
-import com.reservation.category.cuisine.port.input.FindCuisinesQuery.FindCuisinesQueryResult
+import com.reservation.category.cuisine.port.input.query.response.FindCuisinesQueryResult
 import com.reservation.enumeration.CategoryType
 import com.reservation.enumeration.CategoryType.CUISINE
 
-fun interface FindCuisines {
+interface FindCuisines {
     fun query(inquiry: FindCuisinesInquiry): List<FindCuisinesResult>
 
     data class FindCuisinesInquiry(

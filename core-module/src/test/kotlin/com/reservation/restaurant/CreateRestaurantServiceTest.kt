@@ -7,7 +7,7 @@ import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.restaurant.exceptions.InvalidateRestaurantElementException
 import com.reservation.restaurant.policy.format.CreateRestaurantForm
 import com.reservation.restaurant.policy.format.RestaurantWorkingDayForm
-import com.reservation.restaurant.service.CreateRestaurantService
+import com.reservation.restaurant.service.CreateRestaurantDomainService
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.equals.shouldBeEqual
@@ -18,7 +18,7 @@ import java.math.BigDecimal
 class CreateRestaurantServiceTest : BehaviorSpec(
     {
 
-        val service = CreateRestaurantService()
+        val service = CreateRestaurantDomainService()
 
         /**
          * Given: 음식점 이름이 비어있는 생성 요청이 들어온다.
@@ -405,7 +405,7 @@ class CreateRestaurantServiceTest : BehaviorSpec(
          */
         Given("올바른 요청과 태그가 들어온다.") {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val categories = pureMonkey.giveMe<Long>(7)
+            val categories = pureMonkey.giveMe<Long>(7).stream().distinct().toList()
 
             val request = perfectCase().copy(tags = categories)
 
@@ -433,7 +433,7 @@ class CreateRestaurantServiceTest : BehaviorSpec(
          */
         Given("올바른 요청과 국가가 들어온다.") {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val categories = pureMonkey.giveMe<Long>(7)
+            val categories = pureMonkey.giveMe<Long>(7).stream().distinct().toList()
 
             val request = perfectCase().copy(nationalities = categories)
 
@@ -461,7 +461,7 @@ class CreateRestaurantServiceTest : BehaviorSpec(
          */
         Given("올바른 요청과 음식 태그가 들어온다.") {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val categories = pureMonkey.giveMe<Long>(7)
+            val categories = pureMonkey.giveMe<Long>(7).stream().distinct().toList()
 
             val request = perfectCase().copy(cuisines = categories)
 

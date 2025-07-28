@@ -1,10 +1,10 @@
 package com.reservation.category.nationality.port.output
 
-import com.reservation.category.nationality.port.input.FindNationalitiesQuery.FindNationalitiesQueryResult
+import com.reservation.category.nationality.port.input.query.response.FindNationalitiesQueryResult
 import com.reservation.enumeration.CategoryType
 import com.reservation.enumeration.CategoryType.NATIONALITY
 
-fun interface FindNationalities {
+interface FindNationalities {
     fun query(inquiry: FindNationalitiesInquiry): List<FindNationalitiesResult>
 
     data class FindNationalitiesInquiry(

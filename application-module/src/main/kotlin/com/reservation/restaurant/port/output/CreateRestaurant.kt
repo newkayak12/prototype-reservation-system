@@ -4,7 +4,7 @@ import java.math.BigDecimal
 import java.time.DayOfWeek
 import java.time.LocalTime
 
-fun interface CreateRestaurant {
+interface CreateRestaurant {
     fun command(inquiry: CreateProductInquiry): Boolean
 
     data class CreateProductInquiry(

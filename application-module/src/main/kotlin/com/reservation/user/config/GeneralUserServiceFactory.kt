@@ -1,20 +1,22 @@
 package com.reservation.user.config
 
-import com.reservation.user.self.service.CreateGeneralUserService
-import com.reservation.user.service.ChangeGeneralUserPasswordService
-import com.reservation.user.service.ChangeUserNicknameService
+import com.reservation.user.self.service.CreateGeneralUserDomainService
+import com.reservation.user.service.ChangeGeneralUserPasswordDomainService
+import com.reservation.user.service.ChangeUserNicknameDomainService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
 class GeneralUserServiceFactory {
     @Bean
-    fun createGeneralUserService(): CreateGeneralUserService = CreateGeneralUserService()
+    fun createGeneralUserDomainService(): CreateGeneralUserDomainService =
+        CreateGeneralUserDomainService()
 
     @Bean
-    fun changeGeneralUserPasswordService(): ChangeGeneralUserPasswordService =
-        ChangeGeneralUserPasswordService()
+    fun changeGeneralUserPasswordDomainService(): ChangeGeneralUserPasswordDomainService =
+        ChangeGeneralUserPasswordDomainService()
 
     @Bean
-    fun changeUserNicknameService(): ChangeUserNicknameService = ChangeUserNicknameService()
+    fun changeUserNicknameDomainService(): ChangeUserNicknameDomainService =
+        ChangeUserNicknameDomainService()
 }

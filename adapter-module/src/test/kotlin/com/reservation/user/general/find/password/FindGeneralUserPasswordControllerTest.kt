@@ -12,7 +12,7 @@ import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.request.FindGeneralUserPasswordRequest
 import com.reservation.rest.user.general.sign.find.password.FindGeneralUserPasswordController
-import com.reservation.user.self.port.input.FindGeneralUserPasswordCommand
+import com.reservation.user.self.port.input.FindGeneralUserPasswordUseCase
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
@@ -45,7 +45,7 @@ class FindGeneralUserPasswordControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var findGeneralUserPasswordCommand: FindGeneralUserPasswordCommand
+    private lateinit var findGeneralUserPasswordUseCase: FindGeneralUserPasswordUseCase
 
     init {
 
@@ -54,7 +54,7 @@ class FindGeneralUserPasswordControllerTest(
             val request = pureMonkey.giveMeOne<FindGeneralUserPasswordRequest>()
 
             every {
-                findGeneralUserPasswordCommand.execute(any())
+                findGeneralUserPasswordUseCase.execute(any())
             } throws NoSuchPersistedElementException()
 
             mockMvc.perform(
@@ -77,7 +77,7 @@ class FindGeneralUserPasswordControllerTest(
             val request = pureMonkey.giveMeOne<FindGeneralUserPasswordRequest>()
 
             every {
-                findGeneralUserPasswordCommand.execute(any())
+                findGeneralUserPasswordUseCase.execute(any())
             } returns true
 
             mockMvc.perform(

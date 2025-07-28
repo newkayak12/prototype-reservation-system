@@ -2,7 +2,7 @@ package com.reservation.category.nationality
 
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.ninjasquad.springmockk.MockkBean
-import com.reservation.category.nationality.port.input.FindNationalitiesQuery
+import com.reservation.category.nationality.port.input.FindNationalitiesUseCase
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.Query
 import com.reservation.config.restdoc.RestDocuments
@@ -40,7 +40,7 @@ class FindNationalitiesControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var findNationalitiesQuery: FindNationalitiesQuery
+    private lateinit var findNationalitiesUseCase: FindNationalitiesUseCase
 
     init {
 
@@ -48,7 +48,7 @@ class FindNationalitiesControllerTest(
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
             every {
-                findNationalitiesQuery.execute(any())
+                findNationalitiesUseCase.execute(any())
             } returns pureMonkey.giveMe(18)
 
             mockMvc.perform(

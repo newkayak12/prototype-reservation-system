@@ -2,7 +2,7 @@ package com.reservation.category.tag
 
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.ninjasquad.springmockk.MockkBean
-import com.reservation.category.tag.port.input.FindTagsQuery
+import com.reservation.category.tag.port.input.FindTagsUseCase
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.Query
 import com.reservation.config.restdoc.RestDocuments
@@ -40,7 +40,7 @@ class FindTagsControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var findNationalitiesQuery: FindTagsQuery
+    private lateinit var findNationalitiesQuery: FindTagsUseCase
 
     init {
 

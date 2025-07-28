@@ -1,7 +1,7 @@
 package com.reservation.rest.user.general.request
 
-import com.reservation.user.self.port.input.FindGeneralUserIdsQuery.FindGeneralUserIdQueryDto
+import com.reservation.user.self.port.input.query.request.FindGeneralUserIdQuery
 
 data class FindGeneralUserIdsRequest(val email: String) {
-    fun toQuery(): FindGeneralUserIdQueryDto = FindGeneralUserIdQueryDto(email)
+    fun toQuery(): FindGeneralUserIdQuery = FindGeneralUserIdQuery(email)
 }

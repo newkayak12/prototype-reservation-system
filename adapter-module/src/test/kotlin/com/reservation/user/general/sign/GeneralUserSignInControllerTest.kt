@@ -3,8 +3,8 @@ package com.reservation.user.general.sign
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.ninjasquad.springmockk.MockkBean
-import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery
-import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery.AuthenticateGeneralUserQueryResult
+import com.reservation.authenticate.port.input.AuthenticateGeneralUserUseCase
+import com.reservation.authenticate.port.input.query.response.AuthenticateGeneralUserQueryResult
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
@@ -43,7 +43,7 @@ class GeneralUserSignInControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var authenticateGeneralUserQuery: AuthenticateGeneralUserQuery
+    private lateinit var authenticateGeneralUserUseCase: AuthenticateGeneralUserUseCase
 
     init {
 
@@ -79,7 +79,7 @@ class GeneralUserSignInControllerTest(
             val request = jakartaMonkey.giveMeOne<GeneralUserLoginRequest>()
 
             every {
-                authenticateGeneralUserQuery.execute(any())
+                authenticateGeneralUserUseCase.execute(any())
             } returns jakartaMonkey.giveMeOne<AuthenticateGeneralUserQueryResult>()
 
             mockMvc.perform(

@@ -2,9 +2,9 @@ package com.reservation.persistence.company.repository.dsl
 
 import com.querydsl.core.types.Projections
 import com.querydsl.jpa.impl.JPAQueryFactory
-import com.reservation.company.port.input.FindCompaniesQuery.FindCompaniesQueryResult
 import com.reservation.company.port.output.FindCompanies
 import com.reservation.company.port.output.FindCompanies.FindCompaniesInquiry
+import com.reservation.company.port.output.FindCompanies.FindCompaniesResult
 import com.reservation.persistence.company.entity.QCompanyEntity.companyEntity
 import org.springframework.stereotype.Component
 
@@ -12,10 +12,10 @@ import org.springframework.stereotype.Component
 class FindCompanies(
     private val query: JPAQueryFactory,
 ) : FindCompanies {
-    override fun query(inquiry: FindCompaniesInquiry): List<FindCompaniesQueryResult> {
+    override fun query(inquiry: FindCompaniesInquiry): List<FindCompaniesResult> {
         return query.select(
             Projections.constructor(
-                FindCompaniesQueryResult::class.java,
+                FindCompaniesResult::class.java,
                 companyEntity.identifier,
                 companyEntity.brandName,
                 companyEntity.brandUrl,

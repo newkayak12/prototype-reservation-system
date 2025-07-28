@@ -1,0 +1,281 @@
+package com.reservation.user.self.usecase
+
+import com.navercorp.fixturemonkey.kotlin.giveMeOne
+import com.reservation.common.exceptions.NoSuchPersistedElementException
+import com.reservation.exceptions.InvalidSituationException
+import com.reservation.fixture.CommonlyUsedArbitraries
+import com.reservation.fixture.FixtureMonkeyFactory
+import com.reservation.user.self.User
+import com.reservation.user.self.port.input.query.request.FindGeneralUserPasswordCommand
+import com.reservation.user.self.port.output.LoadGeneralUserByLoginIdAndEmail
+import com.reservation.user.self.port.output.SendFindGeneralUserPasswordAsEmail
+import com.reservation.user.self.port.output.UpdateGeneralUserTemporaryPassword
+import com.reservation.user.service.ChangeGeneralUserPasswordDomainService
+import com.reservation.user.shared.vo.LoginId
+import com.reservation.user.shared.vo.Password
+import com.reservation.user.shared.vo.PersonalAttributes
+import com.reservation.utilities.generator.uuid.UuidGenerator
+import io.mockk.Runs
+import io.mockk.every
+import io.mockk.impl.annotations.InjectMockKs
+import io.mockk.impl.annotations.MockK
+import io.mockk.junit5.MockKExtension
+import io.mockk.just
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.ExtendWith
+import java.time.LocalDateTime
+
+@ExtendWith(MockKExtension::class)
+class FindGeneralUserPasswordServiceTest {
+    @MockK
+    private lateinit var changeGeneralUserPasswordDomainService:
+        ChangeGeneralUserPasswordDomainService
+
+    @MockK
+    private lateinit var loadGeneralUserByLoginIdAndEmail: LoadGeneralUserByLoginIdAndEmail
+
+    @MockK
+    private lateinit var updateGeneralUserTemporaryPassword: UpdateGeneralUserTemporaryPassword
+
+    @MockK
+    private lateinit var sendFindGeneralUserPasswordAsEmail: SendFindGeneralUserPasswordAsEmail
+
+    @InjectMockKs
+    private lateinit var useCase: FindGeneralUserPasswordService
+
+    @DisplayName("[실패]")
+    @Nested
+    inner class Failure {
+        @DisplayName(value = "찾고자 하는 계정이 없는 경우")
+        @Test
+        fun `no such user`() {
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            // given
+            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommand>()
+
+            every {
+                loadGeneralUserByLoginIdAndEmail.load(any())
+            } returns null
+
+            assertThrows<NoSuchPersistedElementException> {
+                useCase.execute(command)
+            }
+        }
+
+        @DisplayName(value = "있어야 할 요소(id)가 없는 경우")
+        @Test
+        fun `invalid id state`() {
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommand>()
+            val changePasswordResult =
+                User(
+                    loginId =
+                        LoginId(
+                            loginId = CommonlyUsedArbitraries.loginIdArbitrary.sample(),
+                        ),
+                    password =
+                        Password(
+                            encodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
+                            oldEncodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
+                            changedDateTime = LocalDateTime.now(),
+                        ),
+                    personalAttributes =
+                        PersonalAttributes(
+                            email = CommonlyUsedArbitraries.emailArbitrary.sample(),
+                            mobile = CommonlyUsedArbitraries.phoneNumberArbitrary.sample(),
+                        ),
+                    nickname = pureMonkey.giveMeOne(),
+                )
+
+            every {
+                loadGeneralUserByLoginIdAndEmail.load(any())
+            } returns pureMonkey.giveMeOne()
+
+            every {
+                changeGeneralUserPasswordDomainService.changePassword(any(), any(), eq(true))
+            } returns changePasswordResult
+
+            assertThrows<InvalidSituationException> {
+                useCase.execute(command)
+            }
+        }
+
+        @DisplayName(value = "있어야 할 요소(userOldEncodedPassword)가 없는 경우")
+        @Test
+        fun `old password is not exists`() {
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommand>()
+            val changePasswordResult =
+                User(
+                    id = UuidGenerator.generate(),
+                    loginId =
+                        LoginId(
+                            loginId = CommonlyUsedArbitraries.loginIdArbitrary.sample(),
+                        ),
+                    password =
+                        Password(
+                            encodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
+                            oldEncodedPassword = null,
+                            changedDateTime = LocalDateTime.now(),
+                        ),
+                    personalAttributes =
+                        PersonalAttributes(
+                            email = CommonlyUsedArbitraries.emailArbitrary.sample(),
+                            mobile = CommonlyUsedArbitraries.phoneNumberArbitrary.sample(),
+                        ),
+                    nickname = pureMonkey.giveMeOne(),
+                )
+
+            every {
+                loadGeneralUserByLoginIdAndEmail.load(any())
+            } returns pureMonkey.giveMeOne()
+
+            every {
+                changeGeneralUserPasswordDomainService.changePassword(any(), any(), eq(true))
+            } returns changePasswordResult
+
+            assertThrows<InvalidSituationException> {
+                useCase.execute(command)
+            }
+        }
+
+        @DisplayName(value = "있어야 할 요소(userPasswordChangedDatetime)가 없는 경우")
+        @Test
+        fun `userPasswordChangedDatetime is not exists`() {
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommand>()
+            val changePasswordResult =
+                User(
+                    id = UuidGenerator.generate(),
+                    loginId =
+                        LoginId(
+                            loginId = CommonlyUsedArbitraries.loginIdArbitrary.sample(),
+                        ),
+                    password =
+                        Password(
+                            encodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
+                            oldEncodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
+                            changedDateTime = null,
+                        ),
+                    personalAttributes =
+                        PersonalAttributes(
+                            email = CommonlyUsedArbitraries.emailArbitrary.sample(),
+                            mobile = CommonlyUsedArbitraries.phoneNumberArbitrary.sample(),
+                        ),
+                    nickname = pureMonkey.giveMeOne(),
+                )
+
+            every {
+                loadGeneralUserByLoginIdAndEmail.load(any())
+            } returns pureMonkey.giveMeOne()
+
+            every {
+                changeGeneralUserPasswordDomainService.changePassword(any(), any(), eq(true))
+            } returns changePasswordResult
+
+            assertThrows<InvalidSituationException> {
+                useCase.execute(command)
+            }
+        }
+
+        @DisplayName(value = "패스워드 업데이트가 실패한 경우")
+        @Test
+        fun `password update is failed`() {
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommand>()
+            val expected = false
+            val changePasswordResult =
+                User(
+                    id = UuidGenerator.generate(),
+                    loginId =
+                        LoginId(
+                            loginId = CommonlyUsedArbitraries.loginIdArbitrary.sample(),
+                        ),
+                    password =
+                        Password(
+                            encodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
+                            oldEncodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
+                            changedDateTime = LocalDateTime.now(),
+                        ),
+                    personalAttributes =
+                        PersonalAttributes(
+                            email = CommonlyUsedArbitraries.emailArbitrary.sample(),
+                            mobile = CommonlyUsedArbitraries.phoneNumberArbitrary.sample(),
+                        ),
+                    nickname = pureMonkey.giveMeOne(),
+                )
+
+            every {
+                loadGeneralUserByLoginIdAndEmail.load(any())
+            } returns pureMonkey.giveMeOne()
+
+            every {
+                changeGeneralUserPasswordDomainService.changePassword(any(), any(), eq(true))
+            } returns changePasswordResult
+
+            every {
+                updateGeneralUserTemporaryPassword.command(
+                    any(),
+                )
+            } returns false
+
+            assertEquals(expected, useCase.execute(command))
+        }
+    }
+
+    @DisplayName("[성공]")
+    @Nested
+    inner class Success {
+        @DisplayName(value = "아이디, 이메일로 비밀번호 재발급 후 이메일 발송")
+        @Test
+        fun `password update is failed`() {
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommand>()
+            val expected = true
+            val changePasswordResult =
+                User(
+                    id = UuidGenerator.generate(),
+                    loginId =
+                        LoginId(
+                            loginId = CommonlyUsedArbitraries.loginIdArbitrary.sample(),
+                        ),
+                    password =
+                        Password(
+                            encodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
+                            oldEncodedPassword = CommonlyUsedArbitraries.passwordArbitrary.sample(),
+                            changedDateTime = LocalDateTime.now(),
+                        ),
+                    personalAttributes =
+                        PersonalAttributes(
+                            email = CommonlyUsedArbitraries.emailArbitrary.sample(),
+                            mobile = CommonlyUsedArbitraries.phoneNumberArbitrary.sample(),
+                        ),
+                    nickname = pureMonkey.giveMeOne(),
+                )
+
+            every {
+                loadGeneralUserByLoginIdAndEmail.load(any())
+            } returns pureMonkey.giveMeOne()
+
+            every {
+                changeGeneralUserPasswordDomainService.changePassword(any(), any(), eq(true))
+            } returns changePasswordResult
+
+            every {
+                updateGeneralUserTemporaryPassword.command(
+                    any(),
+                )
+            } returns true
+
+            every {
+                sendFindGeneralUserPasswordAsEmail.execute(any())
+            } just Runs
+
+            assertEquals(expected, useCase.execute(command))
+        }
+    }
+}

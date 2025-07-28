@@ -1,6 +1,6 @@
 package com.reservation.rest.category.nationalities
 
-import com.reservation.category.nationality.port.input.FindNationalitiesQuery
+import com.reservation.category.nationality.port.input.FindNationalitiesUseCase
 import com.reservation.rest.category.CategoryUrl
 import com.reservation.rest.category.request.FindNationalitiesRequest
 import com.reservation.rest.category.response.FindNationalitiesResponse
@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class FindNationalitiesController(
-    private val findNationalitiesQuery: FindNationalitiesQuery,
+    private val findNationalitiesUseCase: FindNationalitiesUseCase,
 ) {
     @GetMapping(CategoryUrl.NATIONALITIES)
     fun findNationalities(
         request: FindNationalitiesRequest,
     ): ListResponse<FindNationalitiesResponse> =
         ListResponse.ok(
-            findNationalitiesQuery.execute(request.toQuery())
+            findNationalitiesUseCase.execute(request.toQuery())
                 .map {
                     FindNationalitiesResponse(
                         it.id,

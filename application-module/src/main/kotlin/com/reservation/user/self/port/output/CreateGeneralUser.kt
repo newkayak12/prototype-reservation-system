@@ -2,7 +2,7 @@ package com.reservation.user.self.port.output
 
 import com.reservation.enumeration.Role
 
-fun interface CreateGeneralUser {
+interface CreateGeneralUser {
     fun command(inquiry: CreateGeneralUserInquiry): Boolean
 
     data class CreateGeneralUserInquiry(

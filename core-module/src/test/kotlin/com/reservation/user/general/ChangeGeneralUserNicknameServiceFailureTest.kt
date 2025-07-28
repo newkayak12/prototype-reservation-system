@@ -5,7 +5,7 @@ import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.user.common.exceptions.InvalidateUserElementException
 import com.reservation.user.self.User
-import com.reservation.user.service.ChangeUserNicknameService
+import com.reservation.user.service.ChangeUserNicknameDomainService
 import com.reservation.user.shared.vo.LoginId
 import com.reservation.user.shared.vo.Password
 import com.reservation.user.shared.vo.PersonalAttributes
@@ -16,7 +16,7 @@ class ChangeGeneralUserNicknameServiceFailureTest : FunSpec(
     {
 
         test("입력한 닉네임이 5 ~ 12에 맞지 않아 변경되지 않고 예외를 발생시킨다.") {
-            val changeUserNicknameService = ChangeUserNicknameService()
+            val changeUserNicknameDomainService = ChangeUserNicknameDomainService()
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             val user =
                 User(
@@ -30,7 +30,7 @@ class ChangeGeneralUserNicknameServiceFailureTest : FunSpec(
 
             shouldThrow<InvalidateUserElementException> {
 
-                changeUserNicknameService.changePersonalAttributes(user, newNickname)
+                changeUserNicknameDomainService.changePersonalAttributes(user, newNickname)
             }
         }
     },

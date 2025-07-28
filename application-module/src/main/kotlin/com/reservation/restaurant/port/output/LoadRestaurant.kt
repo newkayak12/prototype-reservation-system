@@ -11,7 +11,7 @@ import java.math.BigDecimal
 import java.time.DayOfWeek
 import java.time.LocalTime
 
-fun interface LoadRestaurant {
+interface LoadRestaurant {
     fun query(id: String): LoadRestaurantResult?
 
     data class LoadRestaurantResult(

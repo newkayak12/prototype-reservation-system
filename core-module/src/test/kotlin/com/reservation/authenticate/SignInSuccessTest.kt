@@ -3,7 +3,7 @@ package com.reservation.authenticate
 import com.navercorp.fixturemonkey.api.jqwik.JavaTypeArbitraryGenerator
 import com.navercorp.fixturemonkey.api.jqwik.JqwikPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
-import com.reservation.authenticate.service.AuthenticateSignInService
+import com.reservation.authenticate.service.AuthenticateSignInDomainService
 import com.reservation.enumeration.AccessStatus
 import com.reservation.enumeration.UserStatus.ACTIVATED
 import com.reservation.fixture.FixtureMonkeyFactory
@@ -32,7 +32,7 @@ class SignInSuccessTest : BehaviorSpec(
                 }
                 .build()
 
-        val authenticateSignInService = AuthenticateSignInService()
+        val authenticateSignInDomainService = AuthenticateSignInDomainService()
 
         Given("올바른 Authenticate와 사용자가 입력한 패스워드를 제공 받고") {
             var rawPassword: String =
@@ -61,7 +61,7 @@ class SignInSuccessTest : BehaviorSpec(
                     .sample()
 
             When("로그인 요청을 한다.") {
-                val actual = authenticateSignInService.signIn(authenticate, rawPassword)
+                val actual = authenticateSignInDomainService.signIn(authenticate, rawPassword)
 
                 Then("성공 플래그 true가 된다.") {
                     actual.isSuccess shouldBe true
