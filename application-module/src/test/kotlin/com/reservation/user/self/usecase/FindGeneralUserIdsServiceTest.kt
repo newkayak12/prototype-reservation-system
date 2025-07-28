@@ -3,7 +3,7 @@ package com.reservation.user.self.usecase
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.user.self.port.input.FindGeneralUserIdsQuery.FindGeneralUserIdQueryDto
+import com.reservation.user.self.port.input.query.request.FindGeneralUserIdQuery
 import com.reservation.user.self.port.output.FindGeneralUserIds
 import com.reservation.user.self.port.output.FindGeneralUserIds.FindGeneralUserIdResult
 import io.mockk.every
@@ -28,7 +28,7 @@ class FindGeneralUserIdsServiceTest {
     @Test
     fun `empty result`() {
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-        val query = pureMonkey.giveMeOne<FindGeneralUserIdQueryDto>()
+        val query = pureMonkey.giveMeOne<FindGeneralUserIdQuery>()
 
         every { findGeneralUserIds.query(any()) } returns emptyList()
 
@@ -40,10 +40,8 @@ class FindGeneralUserIdsServiceTest {
     @DisplayName("찾고자 하는 아이디가 5개 있다.")
     @Test
     fun `5 id exists`() {
-        val pureMonkey =
-            FixtureMonkeyFactory.giveMePureMonkey()
-                .build()
-        val query = pureMonkey.giveMeOne<FindGeneralUserIdQueryDto>()
+        val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+        val query = pureMonkey.giveMeOne<FindGeneralUserIdQuery>()
 
         every {
             findGeneralUserIds.query(any())

@@ -6,7 +6,7 @@ import com.reservation.user.shared.vo.Password
 import com.reservation.user.shared.vo.PersonalAttributes
 import java.time.LocalDateTime
 
-fun interface LoadGeneralUser {
+interface LoadGeneralUser {
     fun load(id: String): LoadGeneralUserResult?
 
     data class LoadGeneralUserResult(

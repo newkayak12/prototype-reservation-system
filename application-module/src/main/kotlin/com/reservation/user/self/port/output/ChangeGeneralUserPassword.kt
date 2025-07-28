@@ -2,7 +2,7 @@ package com.reservation.user.self.port.output
 
 import java.time.LocalDateTime
 
-fun interface ChangeGeneralUserPassword {
+interface ChangeGeneralUserPassword {
     fun command(inquiry: ChangeGeneralUserPasswordInquiry): Boolean
 
     data class ChangeGeneralUserPasswordInquiry(

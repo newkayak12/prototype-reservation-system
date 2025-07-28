@@ -1,6 +1,6 @@
 package com.reservation.rest.user.general.response
 
-import com.reservation.authenticate.port.input.AuthenticateGeneralUserQuery.AuthenticateGeneralUserQueryResult
+import com.reservation.authenticate.port.input.query.response.AuthenticateGeneralUserQueryResult
 
 data class LoginGeneralUserResponse(
     val accessToken: String,

@@ -1,11 +1,12 @@
 package com.reservation.authenticate.config
 
-import com.reservation.authenticate.service.AuthenticateSignInService
+import com.reservation.authenticate.service.AuthenticateSignInDomainService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
 class AuthenticateServiceFactory {
     @Bean
-    fun authenticateSignInService(): AuthenticateSignInService = AuthenticateSignInService()
+    fun authenticateSignInDomainService(): AuthenticateSignInDomainService =
+        AuthenticateSignInDomainService()
 }

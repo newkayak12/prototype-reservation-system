@@ -2,7 +2,7 @@ package com.reservation.category.cuisine
 
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.ninjasquad.springmockk.MockkBean
-import com.reservation.category.cuisine.port.input.FindCuisinesQuery
+import com.reservation.category.cuisine.port.input.FindCuisinesUseCase
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.Query
 import com.reservation.config.restdoc.RestDocuments
@@ -40,7 +40,7 @@ class FindCuisineControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var findCuisinesQuery: FindCuisinesQuery
+    private lateinit var findCuisinesUseCase: FindCuisinesUseCase
 
     init {
 
@@ -48,7 +48,7 @@ class FindCuisineControllerTest(
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
             every {
-                findCuisinesQuery.execute(any())
+                findCuisinesUseCase.execute(any())
             } returns pureMonkey.giveMe(16)
 
             mockMvc.perform(

@@ -1,6 +1,6 @@
 package com.reservation.rest.user.seller.request
 
-import com.reservation.authenticate.port.input.AuthenticateSellerUserQuery.SellerUserQueryDto
+import com.reservation.authenticate.port.input.query.request.SellerUserQuery
 import jakarta.validation.constraints.NotBlank
 
 data class SellerUserLoginRequest(
@@ -9,7 +9,7 @@ data class SellerUserLoginRequest(
     @field:NotBlank
     val password: String,
 ) {
-    fun toQuery(): SellerUserQueryDto {
-        return SellerUserQueryDto(loginId, password)
+    fun toQuery(): SellerUserQuery {
+        return SellerUserQuery(loginId, password)
     }
 }

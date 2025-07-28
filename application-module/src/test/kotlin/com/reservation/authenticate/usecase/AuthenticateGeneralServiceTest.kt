@@ -4,7 +4,7 @@ import com.navercorp.fixturemonkey.api.jqwik.JavaTypeArbitraryGenerator
 import com.navercorp.fixturemonkey.api.jqwik.JqwikPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
-import com.reservation.authenticate.port.input.AuthenticateGeneralUserUseCase.GeneralUserQueryDto
+import com.reservation.authenticate.port.input.query.request.GeneralUserQuery
 import com.reservation.authenticate.port.output.AuthenticateGeneralUser
 import com.reservation.authenticate.port.output.AuthenticateGeneralUser.AuthenticateGeneralUserResult
 import com.reservation.authenticate.port.output.SaveGeneralUserRefreshToken
@@ -15,7 +15,7 @@ import com.reservation.common.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.enumeration.JWTVersion.V1
 import com.reservation.enumeration.UserStatus
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
+import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesUseCase
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import com.reservation.utilities.provider.JWTProvider
 import com.reservation.utilities.provider.JWTRecord
@@ -45,7 +45,7 @@ class AuthenticateGeneralServiceTest {
     private lateinit var authenticateGeneralUser: AuthenticateGeneralUser
 
     @MockK
-    private lateinit var createUserHistoriesCommand: CreateUserAccessHistoriesCommand
+    private lateinit var createUserHistoriesCommand: CreateUserAccessHistoriesUseCase
 
     @MockK
     private lateinit var saveGeneralUserRefreshToken: SaveGeneralUserRefreshToken
@@ -101,7 +101,7 @@ class AuthenticateGeneralServiceTest {
                 .sample()
 
         val query =
-            fixtureMonkey.giveMeBuilder<GeneralUserQueryDto>()
+            fixtureMonkey.giveMeBuilder<GeneralUserQuery>()
                 .set("password", rawPassword)
                 .sample()
 
@@ -151,7 +151,7 @@ class AuthenticateGeneralServiceTest {
                 .sample()
 
         val query =
-            fixtureMonkey.giveMeBuilder<GeneralUserQueryDto>()
+            fixtureMonkey.giveMeBuilder<GeneralUserQuery>()
                 .set("password", rawPassword)
                 .sample()
 
@@ -201,7 +201,7 @@ class AuthenticateGeneralServiceTest {
                 .sample()
 
         val query =
-            fixtureMonkey.giveMeBuilder<GeneralUserQueryDto>()
+            fixtureMonkey.giveMeBuilder<GeneralUserQuery>()
                 .set("password", rawPassword)
                 .sample()
 
@@ -254,7 +254,7 @@ class AuthenticateGeneralServiceTest {
                 .sample()
 
         val query =
-            fixtureMonkey.giveMeBuilder<GeneralUserQueryDto>()
+            fixtureMonkey.giveMeBuilder<GeneralUserQuery>()
                 .set("password", rawPassword)
                 .sample()
 

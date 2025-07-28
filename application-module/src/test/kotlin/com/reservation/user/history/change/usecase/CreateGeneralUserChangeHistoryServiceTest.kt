@@ -2,7 +2,7 @@ package com.reservation.user.history.change.usecase
 
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryCommand.CreateGeneralUserChangeHistoryCommandDto
+import com.reservation.user.history.change.port.input.command.request.CreateGeneralUserChangeHistoryCommand
 import com.reservation.user.history.change.port.output.CreateGeneralUserChangeHistory
 import io.mockk.Runs
 import io.mockk.every
@@ -29,7 +29,7 @@ class CreateGeneralUserChangeHistoryServiceTest {
     fun `save change history at once`() {
         // given
         val fixtureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-        val request = fixtureMonkey.giveMeOne<CreateGeneralUserChangeHistoryCommandDto>()
+        val request = fixtureMonkey.giveMeOne<CreateGeneralUserChangeHistoryCommand>()
 
         every { createGeneralUserChangeHistory.save(any()) } just Runs
 

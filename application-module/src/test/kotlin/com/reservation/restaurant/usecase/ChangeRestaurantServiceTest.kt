@@ -5,13 +5,14 @@ import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.restaurant.Restaurant
-import com.reservation.restaurant.port.input.UpdateRestaurantCommand.ChangeRestaurantCommandDto
+import com.reservation.restaurant.port.input.command.request.ChangeRestaurantCommand
 import com.reservation.restaurant.port.output.ChangeRestaurant
 import com.reservation.restaurant.port.output.LoadRestaurant
 import com.reservation.restaurant.port.output.LoadRestaurant.LoadRestaurantResult
 import com.reservation.restaurant.port.output.UploadRestaurantImageFile
 import com.reservation.restaurant.service.ChangeRestaurantDomainService
 import com.reservation.restaurant.snapshot.RestaurantSnapshot
+import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
@@ -54,7 +55,7 @@ class ChangeRestaurantServiceTest {
             // given
             val restaurantId = "1"
             val userId = "1"
-            val request = mockk<ChangeRestaurantCommandDto>()
+            val request = mockk<ChangeRestaurantCommand>()
 
             every { request.id } returns restaurantId
             every { request.userId } returns userId
@@ -99,7 +100,7 @@ class ChangeRestaurantServiceTest {
             // given
             val restaurantId = "1"
             val userId = "1"
-            val request = mockk<ChangeRestaurantCommandDto>()
+            val request = mockk<ChangeRestaurantCommand>()
             val loadResult = mockk<LoadRestaurantResult>()
             val domain = pureMonkey.giveMeOne<Restaurant>()
 
@@ -142,7 +143,7 @@ class ChangeRestaurantServiceTest {
             // given
             val restaurantId = "1"
             val userId = "1"
-            val request = mockk<ChangeRestaurantCommandDto>()
+            val request = mockk<ChangeRestaurantCommand>()
             val restaurantSnapshot = mockk<RestaurantSnapshot>()
             val loadResult =
                 pureMonkey.giveMeBuilder<LoadRestaurantResult>()
@@ -196,12 +197,15 @@ class ChangeRestaurantServiceTest {
             // given
             val userId = "1"
             val request =
-                pureMonkey.giveMeBuilder<ChangeRestaurantCommandDto>()
+                pureMonkey.giveMeBuilder<ChangeRestaurantCommand>()
                     .set("photos", listOf<MultipartFile>())
                     .set("userId", userId)
                     .sample()
             val loadResult = mockk<LoadRestaurantResult>()
-            val domain = pureMonkey.giveMeOne<Restaurant>()
+            val domain =
+                pureMonkey.giveMeBuilder<Restaurant>()
+                    .set("id", UuidGenerator.generate())
+                    .sample()
             val restaurantSnapshot = domain.snapshot()
 
             every { loadRestaurant.query(any()) } returns loadResult
@@ -235,13 +239,17 @@ class ChangeRestaurantServiceTest {
             // given
             val userId = "1"
             val request =
-                pureMonkey.giveMeBuilder<ChangeRestaurantCommandDto>()
+                pureMonkey.giveMeBuilder<ChangeRestaurantCommand>()
                     .set("photos", listOf(pureMonkey.giveMeOne<MockMultipartFile>()))
                     .set("userId", userId)
                     .sample()
             val photoUrl = "https://image.com/1.jpg"
             val loadResult = mockk<LoadRestaurantResult>()
-            val domain = pureMonkey.giveMeOne<Restaurant>()
+            val domain =
+                pureMonkey.giveMeBuilder<Restaurant>()
+                    .set("id", UuidGenerator.generate())
+                    .sample()
+
             val restaurantSnapshot = domain.snapshot()
 
             every { loadResult.userId } returns userId

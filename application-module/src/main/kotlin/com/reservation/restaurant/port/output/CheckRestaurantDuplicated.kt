@@ -1,6 +1,6 @@
 package com.reservation.restaurant.port.output
 
-fun interface CheckRestaurantDuplicated {
+interface CheckRestaurantDuplicated {
     fun query(inquiry: CheckRestaurantDuplicatedInquiry): Boolean
 
     data class CheckRestaurantDuplicatedInquiry(

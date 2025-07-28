@@ -12,8 +12,8 @@ import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.self.FindGeneralUserController
-import com.reservation.user.self.port.input.FindGeneralUserQuery
-import com.reservation.user.self.port.input.FindGeneralUserQuery.FindGeneralUserQueryResult
+import com.reservation.user.self.port.input.FindGeneralUserUseCase
+import com.reservation.user.self.port.input.query.response.FindGeneralUserQueryResult
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
@@ -44,7 +44,7 @@ class FindGeneralUserControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var findGeneralUserQuery: FindGeneralUserQuery
+    private lateinit var findGeneralUserUseCase: FindGeneralUserUseCase
 
     init {
         test("사용자를 찾을 수 없음") {
@@ -52,7 +52,7 @@ class FindGeneralUserControllerTest(
             val id = UuidGenerator.generate()
 
             every {
-                findGeneralUserQuery.execute(any())
+                findGeneralUserUseCase.execute(any())
             } throws NoSuchPersistedElementException()
 
             mockMvc.perform(
@@ -74,7 +74,7 @@ class FindGeneralUserControllerTest(
             val id = UuidGenerator.generate()
 
             every {
-                findGeneralUserQuery.execute(any())
+                findGeneralUserUseCase.execute(any())
             } returns
                 pureMonkey.giveMeBuilder<FindGeneralUserQueryResult>()
                     .set("id", id)

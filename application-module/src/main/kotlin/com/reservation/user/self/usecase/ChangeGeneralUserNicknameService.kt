@@ -4,11 +4,11 @@ import com.reservation.common.exceptions.AlreadyPersistedException
 import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.annotations.UseCase
 import com.reservation.exceptions.InvalidSituationException
-import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryCommand
-import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryCommand.CreateGeneralUserChangeHistoryCommandDto
+import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryUseCase
+import com.reservation.user.history.change.port.input.command.request.CreateGeneralUserChangeHistoryCommand
 import com.reservation.user.self.User
-import com.reservation.user.self.port.input.ChangeGeneralUserNicknameCommand
-import com.reservation.user.self.port.input.ChangeGeneralUserNicknameCommand.ChangeGeneralUserNicknameCommandDto
+import com.reservation.user.self.port.input.ChangeGeneralUserNicknameUseCase
+import com.reservation.user.self.port.input.command.request.ChangeGeneralUserNicknameCommand
 import com.reservation.user.self.port.output.ChangeGeneralUserNickname
 import com.reservation.user.self.port.output.ChangeGeneralUserNickname.ChangeGeneralUserNicknameDto
 import com.reservation.user.self.port.output.CheckGeneralUserNicknameDuplicated
@@ -24,8 +24,8 @@ class ChangeGeneralUserNicknameService(
     private val checkGeneralUserNicknameDuplicated: CheckGeneralUserNicknameDuplicated,
     private val changeUserNicknameDomainService: ChangeUserNicknameDomainService,
     private val loadGeneralUser: LoadGeneralUser,
-    private val createGeneralUserChangeHistoryCommand: CreateGeneralUserChangeHistoryCommand,
-) : ChangeGeneralUserNicknameCommand {
+    private val createGeneralUserChangeHistoryCommand: CreateGeneralUserChangeHistoryUseCase,
+) : ChangeGeneralUserNicknameUseCase {
     private fun changePersonalAttribute(
         loadUserResult: LoadGeneralUserResult,
         nickname: String,
@@ -38,7 +38,7 @@ class ChangeGeneralUserNicknameService(
 
     private fun writeChangeHistory(loadUserResult: LoadGeneralUserResult) {
         createGeneralUserChangeHistoryCommand.execute(
-            CreateGeneralUserChangeHistoryCommandDto(
+            CreateGeneralUserChangeHistoryCommand(
                 loadUserResult.id,
                 loadUserResult.loginId,
                 loadUserResult.email,
@@ -52,7 +52,7 @@ class ChangeGeneralUserNicknameService(
      * 닉네임에 대한 중복 체크를 진행한 후 사용자를 찾아 현재 상태를 저장하고 닉네임 변경을 진행합니다.
      */
     @Transactional
-    override fun execute(command: ChangeGeneralUserNicknameCommandDto): Boolean {
+    override fun execute(command: ChangeGeneralUserNicknameCommand): Boolean {
         checkGeneralUserNicknameDuplicated.query(
             CheckGeneralUserNicknameDuplicatedInquiry(command.nickname, command.role),
         ).run {

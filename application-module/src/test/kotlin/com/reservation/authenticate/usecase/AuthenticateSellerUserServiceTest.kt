@@ -2,7 +2,7 @@ package com.reservation.authenticate.usecase
 
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
-import com.reservation.authenticate.port.input.AuthenticateSellerUserUseCase.SellerUserQueryDto
+import com.reservation.authenticate.port.input.query.request.SellerUserQuery
 import com.reservation.authenticate.port.output.AuthenticateSellerUser
 import com.reservation.authenticate.port.output.AuthenticateSellerUser.AuthenticateSellerUserResult
 import com.reservation.authenticate.port.output.SaveSellerUserRefreshToken
@@ -15,7 +15,7 @@ import com.reservation.enumeration.JWTVersion.V1
 import com.reservation.enumeration.UserStatus
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
+import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesUseCase
 import com.reservation.utilities.encrypt.password.PasswordEncoderUtility
 import com.reservation.utilities.provider.JWTProvider
 import com.reservation.utilities.provider.JWTRecord
@@ -46,7 +46,7 @@ class AuthenticateSellerUserServiceTest {
     private lateinit var authenticateSellerUser: AuthenticateSellerUser
 
     @MockK
-    private lateinit var createSellerUserAccessHistoriesCommand: CreateUserAccessHistoriesCommand
+    private lateinit var createSellerUserAccessHistoriesCommand: CreateUserAccessHistoriesUseCase
 
     @MockK
     private lateinit var updateSellerUserAuthenticateResult: UpdateAuthenticateResult
@@ -73,7 +73,7 @@ class AuthenticateSellerUserServiceTest {
         @Test
         fun `try sign-in with wrong loginId`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val request = pureMonkey.giveMeOne<SellerUserQueryDto>()
+            val request = pureMonkey.giveMeOne<SellerUserQuery>()
 
             every {
                 authenticateSellerUser.query(any())
@@ -93,7 +93,7 @@ class AuthenticateSellerUserServiceTest {
         fun `try sign-in with wrong password`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             val request =
-                pureMonkey.giveMeBuilder<SellerUserQueryDto>()
+                pureMonkey.giveMeBuilder<SellerUserQuery>()
                     .set("loginId", CommonlyUsedArbitraries.loginIdArbitrary.sample())
                     .sample()
             val rawPassword = CommonlyUsedArbitraries.passwordArbitrary.sample()
@@ -139,7 +139,7 @@ class AuthenticateSellerUserServiceTest {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
             val request =
-                pureMonkey.giveMeBuilder<SellerUserQueryDto>()
+                pureMonkey.giveMeBuilder<SellerUserQuery>()
                     .set("loginId", CommonlyUsedArbitraries.loginIdArbitrary.sample())
                     .sample()
             val rawPassword = CommonlyUsedArbitraries.passwordArbitrary.sample()
@@ -182,7 +182,7 @@ class AuthenticateSellerUserServiceTest {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
             val request =
-                pureMonkey.giveMeBuilder<SellerUserQueryDto>()
+                pureMonkey.giveMeBuilder<SellerUserQuery>()
                     .set("loginId", CommonlyUsedArbitraries.loginIdArbitrary.sample())
                     .sample()
             val rawPassword = CommonlyUsedArbitraries.passwordArbitrary.sample()
@@ -230,7 +230,7 @@ class AuthenticateSellerUserServiceTest {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             val rawPassword = CommonlyUsedArbitraries.passwordArbitrary.sample()
             val request =
-                pureMonkey.giveMeBuilder<SellerUserQueryDto>()
+                pureMonkey.giveMeBuilder<SellerUserQuery>()
                     .set("loginId", CommonlyUsedArbitraries.loginIdArbitrary.sample())
                     .set("password", rawPassword)
                     .sample()
@@ -286,7 +286,7 @@ class AuthenticateSellerUserServiceTest {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             val rawPassword = CommonlyUsedArbitraries.passwordArbitrary.sample()
             val request =
-                pureMonkey.giveMeBuilder<SellerUserQueryDto>()
+                pureMonkey.giveMeBuilder<SellerUserQuery>()
                     .set("loginId", CommonlyUsedArbitraries.loginIdArbitrary.sample())
                     .set("password", rawPassword)
                     .sample()

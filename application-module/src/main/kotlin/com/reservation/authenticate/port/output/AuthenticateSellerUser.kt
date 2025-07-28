@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 /**
  * loginId, password, Role.RESTAURANT_OWNER로 쿼리하여 결과를 가지고 옵니다.ㅁ
  */
-fun interface AuthenticateSellerUser {
+interface AuthenticateSellerUser {
     fun query(request: AuthenticateSellerUserInquiry): AuthenticateSellerUserResult?
 
     data class AuthenticateSellerUserInquiry(

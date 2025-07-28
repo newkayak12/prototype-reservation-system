@@ -8,8 +8,8 @@ import com.reservation.enumeration.JWTType.REFRESH_TOKEN
 import com.reservation.exceptions.AlreadyExpiredException
 import com.reservation.exceptions.InvalidTokenException
 import com.reservation.exceptions.UnauthorizedException
-import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenQuery
-import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenQuery.RefreshResult
+import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenUseCase
+import com.reservation.user.self.port.input.query.response.RefreshResult
 import com.reservation.user.self.port.output.FindGeneralUserRefreshToken
 import com.reservation.user.self.port.output.FindGeneralUserRefreshToken.FindRefreshTokenInquiry
 import com.reservation.utilities.provider.JWTRecord
@@ -20,7 +20,7 @@ class RefreshGeneralUserService(
     private val tokenProvider: TokenProvider<JWTRecord>,
     private val findGeneralUserRefreshToken: FindGeneralUserRefreshToken,
     private val saveGeneralUserRefreshToken: SaveGeneralUserRefreshToken,
-) : RefreshGeneralUserAccessTokenQuery {
+) : RefreshGeneralUserAccessTokenUseCase {
     private fun validateJWTs(refreshToken: String) {
         if (
             refreshToken.isBlank() ||

@@ -3,7 +3,7 @@ package com.reservation.category.tags
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
-import com.reservation.category.tag.port.input.FindTagsQuery.FindTagsQueryDto
+import com.reservation.category.tag.port.input.query.request.FindTagsQuery
 import com.reservation.category.tag.port.output.FindTags
 import com.reservation.category.tag.port.output.FindTags.FindTagsResult
 import com.reservation.category.tag.usecase.FindTagsService
@@ -32,7 +32,7 @@ class FindTagsServiceTest {
     fun findTags() {
         val size = 18
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-        val request = pureMonkey.giveMeOne<FindTagsQueryDto>()
+        val request = pureMonkey.giveMeOne<FindTagsQuery>()
         val resultList = pureMonkey.giveMe<FindTagsResult>(size)
 
         every {
@@ -54,7 +54,7 @@ class FindTagsServiceTest {
         val size = 10
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
         val request =
-            pureMonkey.giveMeBuilder<FindTagsQueryDto>()
+            pureMonkey.giveMeBuilder<FindTagsQuery>()
                 .set("title", Arbitraries.strings().sample())
                 .sample()
         val resultList = pureMonkey.giveMe<FindTagsResult>(size)

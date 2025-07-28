@@ -2,7 +2,7 @@ package com.reservation.user.history.access.usecase
 
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand.CreateUserHistoryCommandDto
+import com.reservation.user.history.access.port.input.command.request.CreateUserHistoryCommand
 import com.reservation.user.history.access.port.output.CreateUserAccessHistories
 import com.reservation.user.history.access.port.output.CreateUserAccessHistories.CreateUserHistoryInquiry
 import io.mockk.every
@@ -28,7 +28,7 @@ class CreateUserAccessHistoriesServiceTest {
     fun `save access histories at once`() {
         // given
         val fixtureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-        val target: List<CreateUserHistoryCommandDto> = fixtureMonkey.giveMe(10)
+        val target: List<CreateUserHistoryCommand> = fixtureMonkey.giveMe(10)
 
         // when
         every { createUserAccessHistories.saveAll(any()) } returns Unit
@@ -46,7 +46,7 @@ class CreateUserAccessHistoriesServiceTest {
     @DisplayName("[성공]: 사용자 접근 기록이 없어 아무런 작업을 하지 않는다.")
     fun `save access histories not work`() {
         // given
-        val target: List<CreateUserHistoryCommandDto> = emptyList()
+        val target: List<CreateUserHistoryCommand> = emptyList()
 
         // when
 

@@ -3,7 +3,7 @@ package com.reservation.authenticate.port.output
 import com.reservation.enumeration.UserStatus
 import java.time.LocalDateTime
 
-fun interface UpdateAuthenticateResult {
+interface UpdateAuthenticateResult {
     fun command(authenticateResult: UpdateAuthenticateResultDto)
 
     data class UpdateAuthenticateResultDto(

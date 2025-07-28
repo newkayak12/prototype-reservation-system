@@ -1,7 +1,7 @@
 package com.reservation.rest.restaurant.request
 
-import com.reservation.restaurant.port.input.UpdateRestaurantCommand.ChangeRestaurantCommandDto
-import com.reservation.restaurant.port.input.UpdateRestaurantCommand.ChangeWorkingDayCommandDto
+import com.reservation.restaurant.port.input.command.request.ChangeRestaurantCommand
+import com.reservation.restaurant.port.input.command.request.ChangeRestaurantCommand.ChangeWorkingDayCommand
 import jakarta.validation.constraints.NotBlank
 import org.hibernate.validator.constraints.Length
 import org.springframework.web.multipart.MultipartFile
@@ -40,7 +40,7 @@ data class ChangeRestaurantRequest(
         id: String,
         userId: String,
         photos: List<MultipartFile>,
-    ) = ChangeRestaurantCommandDto(
+    ) = ChangeRestaurantCommand(
         id,
         userId,
         name,
@@ -51,7 +51,7 @@ data class ChangeRestaurantRequest(
         detail = "",
         latitude,
         longitude,
-        workingDays.map { ChangeWorkingDayCommandDto(it.day, it.startTime, it.endTime) },
+        workingDays.map { ChangeWorkingDayCommand(it.day, it.startTime, it.endTime) },
         photos,
         tags,
         nationalities,

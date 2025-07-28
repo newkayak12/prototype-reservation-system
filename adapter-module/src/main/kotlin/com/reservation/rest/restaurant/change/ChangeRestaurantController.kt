@@ -1,10 +1,10 @@
 package com.reservation.rest.restaurant.change
 
-import com.reservation.authenticate.port.input.ExtractIdentifierFromHeaderQuery
+import com.reservation.authenticate.port.input.ExtractIdentifierFromHeaderUseCase
 import com.reservation.rest.common.response.BooleanResponse
 import com.reservation.rest.restaurant.RestaurantUrl
 import com.reservation.rest.restaurant.request.ChangeRestaurantRequest
-import com.reservation.restaurant.port.input.UpdateRestaurantCommand
+import com.reservation.restaurant.port.input.UpdateRestaurantUseCase
 import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -16,8 +16,8 @@ import org.springframework.web.multipart.MultipartFile
 
 @RestController
 class ChangeRestaurantController(
-    private val updateRestaurantCommand: UpdateRestaurantCommand,
-    private val extractIdentifierFromHeaderQuery: ExtractIdentifierFromHeaderQuery,
+    private val updateRestaurantUseCase: UpdateRestaurantUseCase,
+    private val extractIdentifierFromHeaderUseCase: ExtractIdentifierFromHeaderUseCase,
 ) {
     @PutMapping(RestaurantUrl.CHANGE_RESTAURANT, consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun changeRestaurant(
@@ -27,11 +27,11 @@ class ChangeRestaurantController(
         @RequestPart(name = "photos") photos: List<MultipartFile> = listOf(),
     ): BooleanResponse {
         val identifier =
-            extractIdentifierFromHeaderQuery
+            extractIdentifierFromHeaderUseCase
                 .execute(header.getFirst(HttpHeaders.AUTHORIZATION))
 
         return BooleanResponse.resetContents(
-            updateRestaurantCommand.execute(request.toCommand(id, identifier, photos)),
+            updateRestaurantUseCase.execute(request.toCommand(id, identifier, photos)),
         )
     }
 }

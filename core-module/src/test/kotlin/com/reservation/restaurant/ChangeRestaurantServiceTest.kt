@@ -1,5 +1,7 @@
 package com.reservation.restaurant
 
+import com.navercorp.fixturemonkey.api.jqwik.JavaTypeArbitraryGenerator
+import com.navercorp.fixturemonkey.api.jqwik.JqwikPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.reservation.fixture.CommonlyUsedArbitraries
@@ -20,6 +22,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.string.shouldContain
 import net.jqwik.api.Arbitraries
+import net.jqwik.api.arbitraries.StringArbitrary
 import java.math.BigDecimal
 
 class ChangeRestaurantServiceTest : BehaviorSpec(
@@ -395,7 +398,18 @@ class ChangeRestaurantServiceTest : BehaviorSpec(
          * Then: 요청에 따른 수정이 완료되고 각 항목들이 모두 일치한다.
          */
         Given("올바른 요청과 사진이 들어온다.") {
-            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val pureMonkey =
+                FixtureMonkeyFactory.giveMePureMonkey()
+                    .plugin(
+                        JqwikPlugin().javaTypeArbitraryGenerator(
+                            object : JavaTypeArbitraryGenerator {
+                                override fun strings(): StringArbitrary {
+                                    return Arbitraries.strings().ofLength(5)
+                                }
+                            },
+                        ),
+                    )
+                    .build()
             val photos = pureMonkey.giveMe<String>(7)
 
             val request = perfectCase().copy(photos = photos)

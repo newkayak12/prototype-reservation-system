@@ -3,7 +3,7 @@ package com.reservation.restaurant
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.ninjasquad.springmockk.MockkBean
-import com.reservation.authenticate.port.input.ExtractIdentifierFromHeaderQuery
+import com.reservation.authenticate.port.input.ExtractIdentifierFromHeaderUseCase
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.Part
 import com.reservation.config.restdoc.RequestPartFields
@@ -14,7 +14,7 @@ import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.restaurant.RestaurantUrl
 import com.reservation.rest.restaurant.create.CreateRestaurantController
 import com.reservation.rest.restaurant.request.CreateRestaurantRequest
-import com.reservation.restaurant.port.input.CreateRestaurantCommand
+import com.reservation.restaurant.port.input.CreateRestaurantUseCase
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.data.forAll
 import io.kotest.data.row
@@ -52,10 +52,10 @@ class CreateRestaurantControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    lateinit var createRestaurantCommand: CreateRestaurantCommand
+    lateinit var createRestaurantUseCase: CreateRestaurantUseCase
 
     @MockkBean
-    lateinit var extractIdentifierFromHeaderQuery: ExtractIdentifierFromHeaderQuery
+    lateinit var extractIdentifierFromHeaderUseCase: ExtractIdentifierFromHeaderUseCase
 
     private val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
@@ -193,11 +193,11 @@ class CreateRestaurantControllerTest(
         test("정상 요청으로 정상 성공한다.") {
             val requestBody = perfectCase()
             every {
-                extractIdentifierFromHeaderQuery.execute(any())
+                extractIdentifierFromHeaderUseCase.execute(any())
             } returns Arbitraries.strings().sample()
 
             every {
-                createRestaurantCommand.execute(any())
+                createRestaurantUseCase.execute(any())
             } returns true
 
             val request =
@@ -222,11 +222,11 @@ class CreateRestaurantControllerTest(
         test("이미지와 함께 정상 요청으로 정상 성공한다.") {
             val requestBody = perfectCase()
             every {
-                extractIdentifierFromHeaderQuery.execute(any())
+                extractIdentifierFromHeaderUseCase.execute(any())
             } returns Arbitraries.strings().sample()
 
             every {
-                createRestaurantCommand.execute(any())
+                createRestaurantUseCase.execute(any())
             } returns true
 
             val request =

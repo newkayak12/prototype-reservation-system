@@ -1,6 +1,6 @@
 package com.reservation.authenticate.port.output
 
-fun interface SaveGeneralUserRefreshToken {
+interface SaveGeneralUserRefreshToken {
     fun command(inquiry: SaveRefreshTokenInquiry)
 
     data class SaveRefreshTokenInquiry(

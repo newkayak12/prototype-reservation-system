@@ -2,7 +2,7 @@ package com.reservation.user.self.usecase
 
 import com.reservation.common.exceptions.AlreadyPersistedException
 import com.reservation.fixture.CommonlyUsedArbitraries
-import com.reservation.user.self.port.input.CreateGeneralUserCommand.CreateGeneralUserCommandDto
+import com.reservation.user.self.port.input.command.request.CreateGeneralUserCommand
 import com.reservation.user.self.port.output.CheckGeneralUserLoginIdDuplicated
 import com.reservation.user.self.port.output.CheckGeneralUserLoginIdDuplicated.CheckGeneralUserDuplicatedInquiry
 import com.reservation.user.self.port.output.CreateGeneralUser
@@ -37,7 +37,7 @@ class CreateGeneralUserServiceTest {
     @DisplayName("이미 존재하는 아이디로 중복체크를 통과하지 못 함.")
     fun `it's duplicated login id `() {
         val command =
-            CreateGeneralUserCommandDto(
+            CreateGeneralUserCommand(
                 loginId = CommonlyUsedArbitraries.loginIdArbitrary.sample(),
                 password = CommonlyUsedArbitraries.passwordArbitrary.sample(),
                 email = CommonlyUsedArbitraries.emailArbitrary.sample(),
@@ -58,7 +58,7 @@ class CreateGeneralUserServiceTest {
     @DisplayName("여러 제약 조건을 만족하여 계정이 생성된다.")
     fun `create a user successfully`() {
         val command =
-            CreateGeneralUserCommandDto(
+            CreateGeneralUserCommand(
                 loginId = CommonlyUsedArbitraries.loginIdArbitrary.sample(),
                 password = CommonlyUsedArbitraries.passwordArbitrary.sample(),
                 email = CommonlyUsedArbitraries.emailArbitrary.sample(),

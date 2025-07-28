@@ -3,8 +3,8 @@ package com.reservation.user.seller.sign
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.ninjasquad.springmockk.MockkBean
-import com.reservation.authenticate.port.input.AuthenticateSellerUserQuery
-import com.reservation.authenticate.port.input.AuthenticateSellerUserQuery.AuthenticateSellerUserQueryResult
+import com.reservation.authenticate.port.input.AuthenticateSellerUserUseCase
+import com.reservation.authenticate.port.input.query.response.AuthenticateSellerUserQueryResult
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
@@ -44,7 +44,7 @@ class SellerUserSignInControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var authenticateSellerUserQuery: AuthenticateSellerUserQuery
+    private lateinit var authenticateSellerUserUseCase: AuthenticateSellerUserUseCase
 
     init {
 
@@ -79,7 +79,7 @@ class SellerUserSignInControllerTest(
             val request = jakartaMonkey.giveMeOne<SellerUserLoginRequest>()
 
             every {
-                authenticateSellerUserQuery.execute(any())
+                authenticateSellerUserUseCase.execute(any())
             } returns jakartaMonkey.giveMeOne<AuthenticateSellerUserQueryResult>()
 
             mockMvc.perform(

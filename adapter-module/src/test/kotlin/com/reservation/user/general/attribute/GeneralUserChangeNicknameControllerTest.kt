@@ -9,7 +9,7 @@ import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.rest.user.general.attribute.GeneralUserChangeNicknameController
 import com.reservation.rest.user.general.request.GeneralUserChangeNicknameRequest
-import com.reservation.user.self.port.input.ChangeGeneralUserNicknameCommand
+import com.reservation.user.self.port.input.ChangeGeneralUserNicknameUseCase
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
@@ -42,7 +42,7 @@ class GeneralUserChangeNicknameControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var changeGeneralUserNicknameCommand: ChangeGeneralUserNicknameCommand
+    private lateinit var changeGeneralUserNicknameUseCase: ChangeGeneralUserNicknameUseCase
 
     init {
 
@@ -55,7 +55,7 @@ class GeneralUserChangeNicknameControllerTest(
                 )
 
             every {
-                changeGeneralUserNicknameCommand.execute(any())
+                changeGeneralUserNicknameUseCase.execute(any())
             } returns true
 
             mockMvc.perform(

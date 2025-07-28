@@ -3,7 +3,7 @@ package com.reservation.category.nationality
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
-import com.reservation.category.nationality.port.input.FindNationalitiesQuery.FindNationalitiesQueryDto
+import com.reservation.category.nationality.port.input.query.request.FindNationalitiesQuery
 import com.reservation.category.nationality.port.output.FindNationalities
 import com.reservation.category.nationality.port.output.FindNationalities.FindNationalitiesResult
 import com.reservation.category.nationality.usecase.FindNationalitiesService
@@ -32,7 +32,7 @@ class FindNationalityServiceTest {
     fun findNationalities() {
         val size = 18
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-        val request = pureMonkey.giveMeOne<FindNationalitiesQueryDto>()
+        val request = pureMonkey.giveMeOne<FindNationalitiesQuery>()
         val resultList = pureMonkey.giveMe<FindNationalitiesResult>(size)
 
         every {
@@ -54,7 +54,7 @@ class FindNationalityServiceTest {
         val size = 10
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
         val request =
-            pureMonkey.giveMeBuilder<FindNationalitiesQueryDto>()
+            pureMonkey.giveMeBuilder<FindNationalitiesQuery>()
                 .set("title", Arbitraries.strings().sample())
                 .sample()
         val resultList = pureMonkey.giveMe<FindNationalitiesResult>(size)

@@ -1,9 +1,7 @@
 package com.reservation.company.port.output
 
-import com.reservation.company.port.input.FindCompaniesQuery.FindCompaniesQueryResult
-
-fun interface FindCompanies {
-    fun query(inquiry: FindCompaniesInquiry): List<FindCompaniesQueryResult>
+interface FindCompanies {
+    fun query(inquiry: FindCompaniesInquiry): List<FindCompaniesResult>
 
     data class FindCompaniesInquiry(
         val companyName: String?,

@@ -1,8 +1,8 @@
 package com.reservation.company.usecase
 
-import com.reservation.company.port.input.FindCompaniesQuery
-import com.reservation.company.port.input.FindCompaniesQuery.FindCompaniesQueryDto
-import com.reservation.company.port.input.FindCompaniesQuery.FindCompaniesQueryResult
+import com.reservation.company.port.input.FindCompaniesUseCase
+import com.reservation.company.port.input.query.request.FindCompaniesQuery
+import com.reservation.company.port.input.query.response.FindCompaniesQueryResult
 import com.reservation.company.port.output.FindCompanies
 import com.reservation.config.annotations.UseCase
 import org.springframework.transaction.annotation.Transactional
@@ -10,9 +10,9 @@ import org.springframework.transaction.annotation.Transactional
 @UseCase
 class FindCompaniesService(
     val findCompanies: FindCompanies,
-) : FindCompaniesQuery {
+) : FindCompaniesUseCase {
     @Transactional(readOnly = true)
-    override fun execute(request: FindCompaniesQueryDto): List<FindCompaniesQueryResult> {
+    override fun execute(request: FindCompaniesQuery): List<FindCompaniesQueryResult> {
         return findCompanies.query(request.toInquiry()).map {
             FindCompaniesQueryResult(
                 it.id,

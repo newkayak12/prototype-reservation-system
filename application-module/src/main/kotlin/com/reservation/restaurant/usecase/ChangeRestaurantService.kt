@@ -5,8 +5,8 @@ import com.reservation.config.annotations.UseCase
 import com.reservation.restaurant.Restaurant
 import com.reservation.restaurant.policy.format.ChangeRestaurantForm
 import com.reservation.restaurant.policy.format.RestaurantWorkingDayForm
-import com.reservation.restaurant.port.input.UpdateRestaurantCommand
-import com.reservation.restaurant.port.input.UpdateRestaurantCommand.ChangeRestaurantCommandDto
+import com.reservation.restaurant.port.input.UpdateRestaurantUseCase
+import com.reservation.restaurant.port.input.command.request.ChangeRestaurantCommand
 import com.reservation.restaurant.port.output.ChangeRestaurant
 import com.reservation.restaurant.port.output.ChangeRestaurant.ChangeCuisinesInquiry
 import com.reservation.restaurant.port.output.ChangeRestaurant.ChangeNationalitiesInquiry
@@ -28,17 +28,18 @@ class ChangeRestaurantService(
     private val loadRestaurant: LoadRestaurant,
     private val changeRestaurant: ChangeRestaurant,
     private val uploadRestaurantImageFile: UploadRestaurantImageFile,
-) : UpdateRestaurantCommand {
+) : UpdateRestaurantUseCase {
     val log = loggerFactory<ChangeRestaurantService>()
 
     @Transactional
-    override fun execute(request: ChangeRestaurantCommandDto): Boolean {
+    override fun execute(request: ChangeRestaurantCommand): Boolean {
         val restaurant: Restaurant = load(request.id, request.userId)
         val photoUrls = uploadPhotos(request.photos)
 
         val form = createForm(request, photoUrls)
         val changedResult = changeRestaurantDomainService.change(restaurant, form)
 
+        println("????????? $changedResult")
         return updateRestaurant(changedResult)
     }
 
@@ -57,7 +58,7 @@ class ChangeRestaurantService(
         if (photos.isEmpty()) listOf() else uploadRestaurantImageFile.execute(photos)
 
     private fun createForm(
-        request: ChangeRestaurantCommandDto,
+        request: ChangeRestaurantCommand,
         photoUrls: List<String>,
     ) = ChangeRestaurantForm(
         id = request.id,

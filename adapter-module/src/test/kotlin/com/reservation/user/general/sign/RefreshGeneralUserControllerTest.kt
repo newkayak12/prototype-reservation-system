@@ -10,8 +10,8 @@ import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.rest.user.RefreshTokenDefinitions
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.sign.RefreshGeneralUserController
-import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenQuery
-import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenQuery.RefreshResult
+import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenUseCase
+import com.reservation.user.self.port.input.query.response.RefreshResult
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
@@ -40,14 +40,14 @@ class RefreshGeneralUserControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var refreshGeneralUserAccessTokenQuery: RefreshGeneralUserAccessTokenQuery
+    private lateinit var refreshGeneralUserAccessTokenUseCase: RefreshGeneralUserAccessTokenUseCase
 
     init {
 
         test("리프레시에 실패한다.") {
 
             every {
-                refreshGeneralUserAccessTokenQuery.refresh(any())
+                refreshGeneralUserAccessTokenUseCase.refresh(any())
             } throws UnauthorizedException()
 
             mockMvc.perform(
@@ -65,7 +65,7 @@ class RefreshGeneralUserControllerTest(
         test("리프레시에 성공한다.") {
 
             every {
-                refreshGeneralUserAccessTokenQuery.refresh(any())
+                refreshGeneralUserAccessTokenUseCase.refresh(any())
             } returns
                 RefreshResult(
                     CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),

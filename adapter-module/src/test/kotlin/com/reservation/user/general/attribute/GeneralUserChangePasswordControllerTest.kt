@@ -9,7 +9,7 @@ import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.rest.user.general.attribute.GeneralUserChangePasswordController
 import com.reservation.rest.user.general.request.GeneralUserChangePasswordRequest
-import com.reservation.user.self.port.input.ChangeGeneralUserPasswordCommand
+import com.reservation.user.self.port.input.ChangeGeneralUserPasswordUseCase
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
@@ -42,7 +42,7 @@ class GeneralUserChangePasswordControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var changeGeneralUserPasswordCommand: ChangeGeneralUserPasswordCommand
+    private lateinit var changeGeneralUserPasswordUseCase: ChangeGeneralUserPasswordUseCase
 
     init {
 
@@ -55,7 +55,7 @@ class GeneralUserChangePasswordControllerTest(
                 )
 
             every {
-                changeGeneralUserPasswordCommand.execute(any())
+                changeGeneralUserPasswordUseCase.execute(any())
             } returns true
 
             mockMvc.perform(

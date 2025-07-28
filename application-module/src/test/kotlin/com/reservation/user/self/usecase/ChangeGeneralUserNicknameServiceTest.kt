@@ -6,9 +6,9 @@ import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.exceptions.InvalidSituationException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryCommand
+import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryUseCase
 import com.reservation.user.self.User
-import com.reservation.user.self.port.input.ChangeGeneralUserNicknameCommand.ChangeGeneralUserNicknameCommandDto
+import com.reservation.user.self.port.input.command.request.ChangeGeneralUserNicknameCommand
 import com.reservation.user.self.port.output.ChangeGeneralUserNickname
 import com.reservation.user.self.port.output.CheckGeneralUserNicknameDuplicated
 import com.reservation.user.self.port.output.LoadGeneralUser
@@ -46,7 +46,7 @@ class ChangeGeneralUserNicknameServiceTest {
 
     @MockK
     private lateinit var createGeneralUserChangeHistoryCommand:
-        CreateGeneralUserChangeHistoryCommand
+        CreateGeneralUserChangeHistoryUseCase
 
     @SpyK
     private var changeUserNicknameDomainService = ChangeUserNicknameDomainService()
@@ -62,7 +62,7 @@ class ChangeGeneralUserNicknameServiceTest {
         fun `it s duplicated nickname`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
-            val command = pureMonkey.giveMeOne<ChangeGeneralUserNicknameCommandDto>()
+            val command = pureMonkey.giveMeOne<ChangeGeneralUserNicknameCommand>()
 
             every {
                 checkGeneralUserNicknameDuplicated.query(any())
@@ -78,7 +78,7 @@ class ChangeGeneralUserNicknameServiceTest {
         fun `can not find use`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
-            val command = pureMonkey.giveMeOne<ChangeGeneralUserNicknameCommandDto>()
+            val command = pureMonkey.giveMeOne<ChangeGeneralUserNicknameCommand>()
 
             every {
                 checkGeneralUserNicknameDuplicated.query(any())
@@ -98,7 +98,7 @@ class ChangeGeneralUserNicknameServiceTest {
         fun `user is existed but some field has invalid state`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
-            val command = pureMonkey.giveMeOne<ChangeGeneralUserNicknameCommandDto>()
+            val command = pureMonkey.giveMeOne<ChangeGeneralUserNicknameCommand>()
             val loadResult = pureMonkey.giveMeOne<LoadGeneralUserResult>()
             val invalidUser =
                 User(
@@ -150,7 +150,7 @@ class ChangeGeneralUserNicknameServiceTest {
         fun successChangeNickname() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
-            val command = pureMonkey.giveMeOne<ChangeGeneralUserNicknameCommandDto>()
+            val command = pureMonkey.giveMeOne<ChangeGeneralUserNicknameCommand>()
             val loadResult = pureMonkey.giveMeOne<LoadGeneralUserResult>()
             val validUser =
                 User(

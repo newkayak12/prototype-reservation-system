@@ -1,10 +1,10 @@
 package com.reservation.category.tag.port.output
 
-import com.reservation.category.tag.port.input.FindTagsQuery.FindTagsQueryResult
+import com.reservation.category.tag.port.input.query.response.FindTagsQueryResult
 import com.reservation.enumeration.CategoryType
 import com.reservation.enumeration.CategoryType.CUISINE
 
-fun interface FindTags {
+interface FindTags {
     fun query(inquiry: FindTagsInquiry): List<FindTagsResult>
 
     data class FindTagsInquiry(

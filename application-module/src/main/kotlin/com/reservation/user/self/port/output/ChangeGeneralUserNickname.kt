@@ -1,6 +1,6 @@
 package com.reservation.user.self.port.output
 
-fun interface ChangeGeneralUserNickname {
+interface ChangeGeneralUserNickname {
     fun command(inquiry: ChangeGeneralUserNicknameDto): Boolean
 
     data class ChangeGeneralUserNicknameDto(

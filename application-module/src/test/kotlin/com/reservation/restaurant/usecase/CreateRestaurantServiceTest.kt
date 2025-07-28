@@ -5,7 +5,7 @@ import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.common.exceptions.AlreadyPersistedException
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.restaurant.exceptions.InvalidateRestaurantElementException
-import com.reservation.restaurant.port.input.CreateRestaurantCommand.CreateProductCommandDto
+import com.reservation.restaurant.port.input.command.request.CreateProductCommand
 import com.reservation.restaurant.port.output.CheckRestaurantDuplicated
 import com.reservation.restaurant.port.output.CreateRestaurant
 import com.reservation.restaurant.port.output.UploadRestaurantImageFile
@@ -57,7 +57,7 @@ class CreateRestaurantServiceTest {
         fun `fail with duplicated restaurant name`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             val images = pureMonkey.giveMe<String>(3)
-            val request = pureMonkey.giveMeOne<CreateProductCommandDto>()
+            val request = pureMonkey.giveMeOne<CreateProductCommand>()
 
             every {
                 checkRestaurantDuplicated.query(any())
@@ -85,7 +85,7 @@ class CreateRestaurantServiceTest {
         fun `fail with invalid restaurant form`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             val images = pureMonkey.giveMe<String>(3)
-            val request = pureMonkey.giveMeOne<CreateProductCommandDto>()
+            val request = pureMonkey.giveMeOne<CreateProductCommand>()
 
             every {
                 checkRestaurantDuplicated.query(any())
@@ -124,7 +124,7 @@ class CreateRestaurantServiceTest {
         fun createRestaurantSuccessfully() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             val images = pureMonkey.giveMe<String>(3)
-            val request = pureMonkey.giveMeOne<CreateProductCommandDto>()
+            val request = pureMonkey.giveMeOne<CreateProductCommand>()
             val snapshot = pureMonkey.giveMeOne<RestaurantSnapshot>()
 
             every {

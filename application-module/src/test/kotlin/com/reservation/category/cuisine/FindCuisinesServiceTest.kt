@@ -3,7 +3,7 @@ package com.reservation.category.cuisine
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
-import com.reservation.category.cuisine.port.input.FindCuisinesQuery.FindCuisinesQueryDto
+import com.reservation.category.cuisine.port.input.query.request.FindCuisinesQuery
 import com.reservation.category.cuisine.port.output.FindCuisines
 import com.reservation.category.cuisine.port.output.FindCuisines.FindCuisinesResult
 import com.reservation.category.cuisine.usecase.FindCuisinesService
@@ -32,7 +32,7 @@ class FindCuisinesServiceTest {
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
         val size = 16
         val queryResult = pureMonkey.giveMe<FindCuisinesResult>(size)
-        val request = pureMonkey.giveMeOne<FindCuisinesQueryDto>()
+        val request = pureMonkey.giveMeOne<FindCuisinesQuery>()
 
         every {
             findCuisines.query(any())
@@ -53,7 +53,7 @@ class FindCuisinesServiceTest {
         val size = 2
         val queryResult = pureMonkey.giveMe<FindCuisinesResult>(size)
         val request =
-            pureMonkey.giveMeBuilder<FindCuisinesQueryDto>()
+            pureMonkey.giveMeBuilder<FindCuisinesQuery>()
                 .set("title", "test")
                 .sample()
 

@@ -1,7 +1,7 @@
 package com.reservation.rest.user.general.response
 
 import com.reservation.enumeration.UserStatus
-import com.reservation.user.self.port.input.FindGeneralUserQuery.FindGeneralUserQueryResult
+import com.reservation.user.self.port.input.query.response.FindGeneralUserQueryResult
 
 data class FindGeneralUserResponse(
     val id: String,

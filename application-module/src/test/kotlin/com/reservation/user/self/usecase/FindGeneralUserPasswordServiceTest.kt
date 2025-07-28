@@ -6,7 +6,7 @@ import com.reservation.exceptions.InvalidSituationException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.user.self.User
-import com.reservation.user.self.port.input.FindGeneralUserPasswordCommand.FindGeneralUserPasswordCommandDto
+import com.reservation.user.self.port.input.query.request.FindGeneralUserPasswordCommand
 import com.reservation.user.self.port.output.LoadGeneralUserByLoginIdAndEmail
 import com.reservation.user.self.port.output.SendFindGeneralUserPasswordAsEmail
 import com.reservation.user.self.port.output.UpdateGeneralUserTemporaryPassword
@@ -55,7 +55,7 @@ class FindGeneralUserPasswordServiceTest {
         fun `no such user`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             // given
-            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommandDto>()
+            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommand>()
 
             every {
                 loadGeneralUserByLoginIdAndEmail.load(any())
@@ -70,7 +70,7 @@ class FindGeneralUserPasswordServiceTest {
         @Test
         fun `invalid id state`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommandDto>()
+            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommand>()
             val changePasswordResult =
                 User(
                     loginId =
@@ -108,7 +108,7 @@ class FindGeneralUserPasswordServiceTest {
         @Test
         fun `old password is not exists`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommandDto>()
+            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommand>()
             val changePasswordResult =
                 User(
                     id = UuidGenerator.generate(),
@@ -147,7 +147,7 @@ class FindGeneralUserPasswordServiceTest {
         @Test
         fun `userPasswordChangedDatetime is not exists`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommandDto>()
+            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommand>()
             val changePasswordResult =
                 User(
                     id = UuidGenerator.generate(),
@@ -186,7 +186,7 @@ class FindGeneralUserPasswordServiceTest {
         @Test
         fun `password update is failed`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommandDto>()
+            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommand>()
             val expected = false
             val changePasswordResult =
                 User(
@@ -234,7 +234,7 @@ class FindGeneralUserPasswordServiceTest {
         @Test
         fun `password update is failed`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommandDto>()
+            val command = pureMonkey.giveMeOne<FindGeneralUserPasswordCommand>()
             val expected = true
             val changePasswordResult =
                 User(

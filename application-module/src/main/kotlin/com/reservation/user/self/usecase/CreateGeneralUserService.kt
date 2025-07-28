@@ -4,8 +4,8 @@ import com.reservation.common.exceptions.AlreadyPersistedException
 import com.reservation.config.annotations.UseCase
 import com.reservation.enumeration.Role.USER
 import com.reservation.user.policy.formats.CreateGeneralUserForm
-import com.reservation.user.self.port.input.CreateGeneralUserCommand
-import com.reservation.user.self.port.input.CreateGeneralUserCommand.CreateGeneralUserCommandDto
+import com.reservation.user.self.port.input.CreateGeneralUserUseCase
+import com.reservation.user.self.port.input.command.request.CreateGeneralUserCommand
 import com.reservation.user.self.port.output.CheckGeneralUserLoginIdDuplicated
 import com.reservation.user.self.port.output.CheckGeneralUserLoginIdDuplicated.CheckGeneralUserDuplicatedInquiry
 import com.reservation.user.self.port.output.CreateGeneralUser
@@ -18,9 +18,9 @@ class CreateGeneralUserService(
     private val createGeneralUserDomainService: CreateGeneralUserDomainService,
     private val createGeneralUser: CreateGeneralUser,
     private val checkGeneralUserDuplicated: CheckGeneralUserLoginIdDuplicated,
-) : CreateGeneralUserCommand {
+) : CreateGeneralUserUseCase {
     @Transactional
-    override fun execute(command: CreateGeneralUserCommandDto): Boolean {
+    override fun execute(command: CreateGeneralUserCommand): Boolean {
         val user =
             createGeneralUserDomainService.createGeneralUser(
                 CreateGeneralUserForm(

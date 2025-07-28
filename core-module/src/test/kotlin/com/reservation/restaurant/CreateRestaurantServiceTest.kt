@@ -405,7 +405,7 @@ class CreateRestaurantServiceTest : BehaviorSpec(
          */
         Given("올바른 요청과 태그가 들어온다.") {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val categories = pureMonkey.giveMe<Long>(7)
+            val categories = pureMonkey.giveMe<Long>(7).stream().distinct().toList()
 
             val request = perfectCase().copy(tags = categories)
 
@@ -433,7 +433,7 @@ class CreateRestaurantServiceTest : BehaviorSpec(
          */
         Given("올바른 요청과 국가가 들어온다.") {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val categories = pureMonkey.giveMe<Long>(7)
+            val categories = pureMonkey.giveMe<Long>(7).stream().distinct().toList()
 
             val request = perfectCase().copy(nationalities = categories)
 
@@ -461,7 +461,7 @@ class CreateRestaurantServiceTest : BehaviorSpec(
          */
         Given("올바른 요청과 음식 태그가 들어온다.") {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val categories = pureMonkey.giveMe<Long>(7)
+            val categories = pureMonkey.giveMe<Long>(7).stream().distinct().toList()
 
             val request = perfectCase().copy(cuisines = categories)
 

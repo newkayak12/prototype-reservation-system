@@ -3,9 +3,9 @@ package com.reservation.company.useacse
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
-import com.reservation.company.port.input.FindCompaniesQuery.FindCompaniesQueryDto
-import com.reservation.company.port.input.FindCompaniesQuery.FindCompaniesQueryResult
+import com.reservation.company.port.input.query.request.FindCompaniesQuery
 import com.reservation.company.port.output.FindCompanies
+import com.reservation.company.port.output.FindCompanies.FindCompaniesResult
 import com.reservation.company.usecase.FindCompaniesService
 import com.reservation.fixture.FixtureMonkeyFactory
 import io.mockk.every
@@ -33,8 +33,8 @@ class FindCompaniesServiceTest {
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
         val size = 50
 
-        val queryResults = pureMonkey.giveMe<FindCompaniesQueryResult>(size)
-        val request = pureMonkey.giveMeOne<FindCompaniesQueryDto>()
+        val queryResults = pureMonkey.giveMe<FindCompaniesResult>(size)
+        val request = pureMonkey.giveMeOne<FindCompaniesQuery>()
 
         every {
             findCompanies.query(any())
@@ -55,9 +55,9 @@ class FindCompaniesServiceTest {
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
         val size = 1
 
-        val queryResults = pureMonkey.giveMe<FindCompaniesQueryResult>(size)
+        val queryResults = pureMonkey.giveMe<FindCompaniesResult>(size)
         val request =
-            pureMonkey.giveMeBuilder<FindCompaniesQueryDto>()
+            pureMonkey.giveMeBuilder<FindCompaniesQuery>()
                 .set("companyName", Arbitraries.strings().sample())
                 .sample()
 

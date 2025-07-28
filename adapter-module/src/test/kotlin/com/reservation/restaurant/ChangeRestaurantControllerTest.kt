@@ -3,7 +3,7 @@ package com.reservation.restaurant
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.ninjasquad.springmockk.MockkBean
-import com.reservation.authenticate.port.input.ExtractIdentifierFromHeaderQuery
+import com.reservation.authenticate.port.input.ExtractIdentifierFromHeaderUseCase
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.Part
 import com.reservation.config.restdoc.PathParameter
@@ -15,7 +15,7 @@ import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.restaurant.RestaurantUrl
 import com.reservation.rest.restaurant.change.ChangeRestaurantController
 import com.reservation.rest.restaurant.request.ChangeRestaurantRequest
-import com.reservation.restaurant.port.input.UpdateRestaurantCommand
+import com.reservation.restaurant.port.input.UpdateRestaurantUseCase
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.data.forAll
@@ -53,10 +53,10 @@ class ChangeRestaurantControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var updateRestaurantCommand: UpdateRestaurantCommand
+    private lateinit var updateRestaurantUseCase: UpdateRestaurantUseCase
 
     @MockkBean
-    private lateinit var extractIdentifierFromHeaderQuery: ExtractIdentifierFromHeaderQuery
+    private lateinit var extractIdentifierFromHeaderUseCase: ExtractIdentifierFromHeaderUseCase
 
     private val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
@@ -209,10 +209,10 @@ class ChangeRestaurantControllerTest(
                     .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
             every {
-                extractIdentifierFromHeaderQuery.execute(any())
+                extractIdentifierFromHeaderUseCase.execute(any())
             } returns Arbitraries.strings().sample()
             every {
-                updateRestaurantCommand.execute(any())
+                updateRestaurantUseCase.execute(any())
             } returns true
 
             mockMvc.perform(
@@ -238,10 +238,10 @@ class ChangeRestaurantControllerTest(
             val requestBody = perfectCase()
 
             every {
-                extractIdentifierFromHeaderQuery.execute(any())
+                extractIdentifierFromHeaderUseCase.execute(any())
             } returns Arbitraries.strings().sample()
             every {
-                updateRestaurantCommand.execute(any())
+                updateRestaurantUseCase.execute(any())
             } returns true
 
             val request =

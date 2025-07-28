@@ -9,7 +9,7 @@ import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.rest.resign.ResignUrl
 import com.reservation.rest.resign.self.ResignUserController
-import com.reservation.user.resign.port.input.ResignUserCommand
+import com.reservation.user.resign.port.input.ResignUserUseCase
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
@@ -41,14 +41,14 @@ class ResignUserControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var resignUserCommand: ResignUserCommand
+    private lateinit var resignUserUseCase: ResignUserUseCase
 
     init {
 
         test("사용자가 탈퇴한다.") {
 
             every {
-                resignUserCommand.execute(any())
+                resignUserUseCase.execute(any())
             } returns true
 
             val id = UuidGenerator.generate()

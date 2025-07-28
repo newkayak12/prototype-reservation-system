@@ -6,7 +6,7 @@ import com.reservation.exceptions.InvalidSituationException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.user.self.User
-import com.reservation.user.self.port.input.ChangeGeneralUserPasswordCommand.ChangeGeneralUserPasswordCommandDto
+import com.reservation.user.self.port.input.command.request.ChangeGeneralUserPasswordCommand
 import com.reservation.user.self.port.output.ChangeGeneralUserPassword
 import com.reservation.user.self.port.output.LoadGeneralUser
 import com.reservation.user.self.port.output.LoadGeneralUser.LoadGeneralUserResult
@@ -48,7 +48,7 @@ class ChangeGeneralUserPasswordServiceTest {
         @DisplayName("DB에서 조회된 데이터가 없어서 exception을 던진다.")
         fun `there is no data`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val command = pureMonkey.giveMeOne<ChangeGeneralUserPasswordCommandDto>()
+            val command = pureMonkey.giveMeOne<ChangeGeneralUserPasswordCommand>()
 
             every {
                 loadGeneralUser.load(any())
@@ -63,7 +63,7 @@ class ChangeGeneralUserPasswordServiceTest {
         @DisplayName("비밀번호 변경 중 필요한 값(ID)가 없다.")
         fun `invalid situation_nullish id`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val command = pureMonkey.giveMeOne<ChangeGeneralUserPasswordCommandDto>()
+            val command = pureMonkey.giveMeOne<ChangeGeneralUserPasswordCommand>()
             val loadResult = pureMonkey.giveMeOne<LoadGeneralUserResult>()
             val changePasswordResult =
                 User(
@@ -102,7 +102,7 @@ class ChangeGeneralUserPasswordServiceTest {
         @DisplayName("비밀번호 변경 중 필요한 값(old password)가 없다.")
         fun `invalid situation_nullish old password`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val command = pureMonkey.giveMeOne<ChangeGeneralUserPasswordCommandDto>()
+            val command = pureMonkey.giveMeOne<ChangeGeneralUserPasswordCommand>()
             val loadResult = pureMonkey.giveMeOne<LoadGeneralUserResult>()
             val changePasswordResult =
                 User(
@@ -142,7 +142,7 @@ class ChangeGeneralUserPasswordServiceTest {
         @DisplayName("비밀번호 변경 중 필요한 값(changedPasswordDatetime)가 없다.")
         fun `invalid situation_nullish changed password datetime`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val command = pureMonkey.giveMeOne<ChangeGeneralUserPasswordCommandDto>()
+            val command = pureMonkey.giveMeOne<ChangeGeneralUserPasswordCommand>()
             val loadResult = pureMonkey.giveMeOne<LoadGeneralUserResult>()
             val changePasswordResult =
                 User(
@@ -187,7 +187,7 @@ class ChangeGeneralUserPasswordServiceTest {
         fun `change password`() {
             val expected = true
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val command = pureMonkey.giveMeOne<ChangeGeneralUserPasswordCommandDto>()
+            val command = pureMonkey.giveMeOne<ChangeGeneralUserPasswordCommand>()
             val loadResult = pureMonkey.giveMeOne<LoadGeneralUserResult>()
             val changePasswordResult =
                 User(

@@ -11,8 +11,8 @@ import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.sign.find.id.FindGeneralUserIdsController
-import com.reservation.user.self.port.input.FindGeneralUserIdsQuery
-import com.reservation.user.self.port.input.FindGeneralUserIdsQuery.FindGeneralUserIdQueryResult
+import com.reservation.user.self.port.input.FindGeneralUserIdsUseCase
+import com.reservation.user.self.port.input.query.response.FindGeneralUserIdQueryResult
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
@@ -42,14 +42,14 @@ class FindGeneralUserIdsControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var findGeneralUserIdsQuery: FindGeneralUserIdsQuery
+    private lateinit var findGeneralUserIdsUseCase: FindGeneralUserIdsUseCase
 
     init {
 
         test("올바르지 않은 이메일을 입력하여 아이디를 찾을 수 없다.") {
 
             every {
-                findGeneralUserIdsQuery.execute(any())
+                findGeneralUserIdsUseCase.execute(any())
             } returns emptyList()
 
             mockMvc.perform(
@@ -72,7 +72,7 @@ class FindGeneralUserIdsControllerTest(
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
             every {
-                findGeneralUserIdsQuery.execute(any())
+                findGeneralUserIdsUseCase.execute(any())
             } returns
                 pureMonkey.giveMeBuilder<FindGeneralUserIdQueryResult>()
                     .set("userId", CommonlyUsedArbitraries.loginIdArbitrary.sample())

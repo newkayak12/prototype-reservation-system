@@ -3,8 +3,8 @@ package com.reservation.authenticate.usecase
 import com.reservation.authenticate.AccessHistory
 import com.reservation.authenticate.Authenticate
 import com.reservation.authenticate.port.input.AuthenticateSellerUserUseCase
-import com.reservation.authenticate.port.input.AuthenticateSellerUserUseCase.AuthenticateSellerUserQueryResult
-import com.reservation.authenticate.port.input.AuthenticateSellerUserUseCase.SellerUserQueryDto
+import com.reservation.authenticate.port.input.query.request.SellerUserQuery
+import com.reservation.authenticate.port.input.query.response.AuthenticateSellerUserQueryResult
 import com.reservation.authenticate.port.output.AuthenticateSellerUser
 import com.reservation.authenticate.port.output.SaveSellerUserRefreshToken
 import com.reservation.authenticate.port.output.SaveSellerUserRefreshToken.SaveSellerUserRefreshTokenInquiry
@@ -16,8 +16,8 @@ import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.common.exceptions.WrongLoginIdOrPasswordException
 import com.reservation.config.annotations.UseCase
 import com.reservation.enumeration.JWTType
-import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand
-import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesCommand.CreateUserHistoryCommandDto
+import com.reservation.user.history.access.port.input.CreateUserAccessHistoriesUseCase
+import com.reservation.user.history.access.port.input.command.request.CreateUserHistoryCommand
 import com.reservation.utilities.provider.JWTRecord
 import com.reservation.utilities.provider.TokenProvider
 import org.springframework.transaction.annotation.Transactional
@@ -26,13 +26,13 @@ import org.springframework.transaction.annotation.Transactional
 class AuthenticateSellerUserService(
     private val authenticateSignInDomainService: AuthenticateSignInDomainService,
     private val authenticateSellerUser: AuthenticateSellerUser,
-    private val createUserAccessHistoriesCommand: CreateUserAccessHistoriesCommand,
+    private val createUserAccessHistoriesUseCase: CreateUserAccessHistoriesUseCase,
     private val updateAuthenticateResult: UpdateAuthenticateResult,
     private val tokenProvider: TokenProvider<JWTRecord>,
     private val saveSellerUserRefreshToken: SaveSellerUserRefreshToken,
 ) : AuthenticateSellerUserUseCase {
     @Transactional
-    override fun execute(request: SellerUserQueryDto): AuthenticateSellerUserQueryResult {
+    override fun execute(request: SellerUserQuery): AuthenticateSellerUserQueryResult {
         val authenticate =
             authenticateSellerUser.query(request.toInquiry())
                 ?.toDomain()
@@ -58,9 +58,9 @@ class AuthenticateSellerUserService(
     }
 
     private fun createAccessHistory(accessHistories: List<AccessHistory>) {
-        createUserAccessHistoriesCommand.execute(
+        createUserAccessHistoriesUseCase.execute(
             accessHistories.map {
-                CreateUserHistoryCommandDto(
+                CreateUserHistoryCommand(
                     it.authenticateId,
                     it.loginId,
                     it.accessStatus(),

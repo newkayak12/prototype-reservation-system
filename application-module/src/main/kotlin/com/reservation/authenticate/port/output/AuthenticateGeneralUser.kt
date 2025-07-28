@@ -8,7 +8,7 @@ import com.reservation.user.shared.vo.LoginId
 import com.reservation.user.shared.vo.Password
 import java.time.LocalDateTime
 
-fun interface AuthenticateGeneralUser {
+interface AuthenticateGeneralUser {
     fun query(request: AuthenticateGeneralUserInquiry): AuthenticateGeneralUserResult?
 
     data class AuthenticateGeneralUserInquiry(

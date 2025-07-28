@@ -3,8 +3,8 @@ package com.reservation.restaurant.usecase
 import com.reservation.common.exceptions.AlreadyPersistedException
 import com.reservation.config.annotations.UseCase
 import com.reservation.restaurant.policy.format.CreateRestaurantForm
-import com.reservation.restaurant.port.input.CreateRestaurantCommand
-import com.reservation.restaurant.port.input.CreateRestaurantCommand.CreateProductCommandDto
+import com.reservation.restaurant.port.input.CreateRestaurantUseCase
+import com.reservation.restaurant.port.input.command.request.CreateProductCommand
 import com.reservation.restaurant.port.output.CheckRestaurantDuplicated
 import com.reservation.restaurant.port.output.CheckRestaurantDuplicated.CheckRestaurantDuplicatedInquiry
 import com.reservation.restaurant.port.output.CreateRestaurant
@@ -23,7 +23,7 @@ class CreateRestaurantService(
     private val checkRestaurantDuplicated: CheckRestaurantDuplicated,
     private val createRestaurantDomainService: CreateRestaurantDomainService,
     private val uploadRestaurantImageFile: UploadRestaurantImageFile,
-) : CreateRestaurantCommand {
+) : CreateRestaurantUseCase {
     private fun checkDuplicated(
         companyId: String,
         restaurantName: String,
@@ -41,7 +41,7 @@ class CreateRestaurantService(
     private fun uploadFiles(files: List<MultipartFile>): List<String> =
         if (files.isEmpty()) listOf() else uploadRestaurantImageFile.execute(files)
 
-    private fun createRestaurant(request: CreateProductCommandDto): RestaurantSnapshot {
+    private fun createRestaurant(request: CreateProductCommand): RestaurantSnapshot {
         val images: List<String> = uploadFiles(request.photos)
 
         val form =
@@ -93,7 +93,7 @@ class CreateRestaurantService(
     }
 
     @Transactional
-    override fun execute(request: CreateProductCommandDto): Boolean {
+    override fun execute(request: CreateProductCommand): Boolean {
         checkDuplicated(request.companyId, request.name)
 
         val snapshot = createRestaurant(request)

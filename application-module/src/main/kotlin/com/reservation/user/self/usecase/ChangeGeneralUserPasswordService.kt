@@ -3,8 +3,8 @@ package com.reservation.user.self.usecase
 import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.annotations.UseCase
 import com.reservation.exceptions.InvalidSituationException
-import com.reservation.user.self.port.input.ChangeGeneralUserPasswordCommand
-import com.reservation.user.self.port.input.ChangeGeneralUserPasswordCommand.ChangeGeneralUserPasswordCommandDto
+import com.reservation.user.self.port.input.ChangeGeneralUserPasswordUseCase
+import com.reservation.user.self.port.input.command.request.ChangeGeneralUserPasswordCommand
 import com.reservation.user.self.port.output.ChangeGeneralUserPassword
 import com.reservation.user.self.port.output.ChangeGeneralUserPassword.ChangeGeneralUserPasswordInquiry
 import com.reservation.user.self.port.output.LoadGeneralUser
@@ -16,9 +16,9 @@ class ChangeGeneralUserPasswordService(
     private val changeGeneralUserPasswordDomainService: ChangeGeneralUserPasswordDomainService,
     private val changeGeneralUserPassword: ChangeGeneralUserPassword,
     private val loadGeneralUser: LoadGeneralUser,
-) : ChangeGeneralUserPasswordCommand {
+) : ChangeGeneralUserPasswordUseCase {
     @Transactional
-    override fun execute(command: ChangeGeneralUserPasswordCommandDto): Boolean {
+    override fun execute(command: ChangeGeneralUserPasswordCommand): Boolean {
         val user =
             loadGeneralUser.load(command.id)?.let {
                 changeGeneralUserPasswordDomainService.changePassword(
