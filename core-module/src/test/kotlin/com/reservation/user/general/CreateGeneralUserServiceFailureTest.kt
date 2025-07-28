@@ -10,14 +10,14 @@ import com.reservation.user.policy.validations.MobilePhoneFormatValidationPolicy
 import com.reservation.user.policy.validations.NicknameLengthValidationPolicy
 import com.reservation.user.policy.validations.PasswordComplexityValidationPolicy
 import com.reservation.user.policy.validations.PasswordLengthValidationPolicy
-import com.reservation.user.self.service.CreateGeneralUserService
+import com.reservation.user.self.service.CreateGeneralUserDomainService
 import io.kotest.assertions.throwables.shouldThrowWithMessage
 import io.kotest.core.spec.style.FunSpec
 import net.jqwik.api.Arbitraries
 
 class CreateGeneralUserServiceFailureTest : FunSpec(
     {
-        val createGeneralUserService = CreateGeneralUserService()
+        val createGeneralUserDomainService = CreateGeneralUserDomainService()
 
         test("아이디 길이가 4 ~ 20을 만족하지 않는다.") {
             val message = LoginIdLengthValidationPolicy().reason
@@ -31,7 +31,7 @@ class CreateGeneralUserServiceFailureTest : FunSpec(
                 )
 
             shouldThrowWithMessage<InvalidateUserElementException>(message) {
-                createGeneralUserService.createGeneralUser(createUserForm)
+                createGeneralUserDomainService.createGeneralUser(createUserForm)
             }
         }
 
@@ -47,7 +47,7 @@ class CreateGeneralUserServiceFailureTest : FunSpec(
                 )
 
             shouldThrowWithMessage<InvalidateUserElementException>(message) {
-                createGeneralUserService.createGeneralUser(createUserForm)
+                createGeneralUserDomainService.createGeneralUser(createUserForm)
             }
         }
 
@@ -65,7 +65,7 @@ class CreateGeneralUserServiceFailureTest : FunSpec(
                 )
 
             shouldThrowWithMessage<InvalidateUserElementException>(message) {
-                createGeneralUserService.createGeneralUser(createUserForm)
+                createGeneralUserDomainService.createGeneralUser(createUserForm)
             }
         }
 
@@ -83,7 +83,7 @@ class CreateGeneralUserServiceFailureTest : FunSpec(
                 )
 
             shouldThrowWithMessage<InvalidateUserElementException>(message) {
-                createGeneralUserService.createGeneralUser(createUserForm)
+                createGeneralUserDomainService.createGeneralUser(createUserForm)
             }
         }
 
@@ -99,7 +99,7 @@ class CreateGeneralUserServiceFailureTest : FunSpec(
                 )
 
             shouldThrowWithMessage<InvalidateUserElementException>(message) {
-                createGeneralUserService.createGeneralUser(createUserForm)
+                createGeneralUserDomainService.createGeneralUser(createUserForm)
             }
         }
 
@@ -115,7 +115,7 @@ class CreateGeneralUserServiceFailureTest : FunSpec(
                 )
 
             shouldThrowWithMessage<InvalidateUserElementException>(message) {
-                createGeneralUserService.createGeneralUser(createUserForm)
+                createGeneralUserDomainService.createGeneralUser(createUserForm)
             }
         }
 
@@ -133,7 +133,7 @@ class CreateGeneralUserServiceFailureTest : FunSpec(
                 )
 
             shouldThrowWithMessage<InvalidateUserElementException>(message) {
-                createGeneralUserService.createGeneralUser(createUserForm)
+                createGeneralUserDomainService.createGeneralUser(createUserForm)
             }
         }
     },

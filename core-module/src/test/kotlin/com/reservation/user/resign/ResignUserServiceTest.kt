@@ -1,7 +1,7 @@
 package com.reservation.user.resign
 
 import com.reservation.fixture.CommonlyUsedArbitraries
-import com.reservation.user.resign.service.ResignUserService
+import com.reservation.user.resign.service.ResignUserDomainService
 import com.reservation.user.self.User
 import com.reservation.user.shared.vo.LoginId
 import com.reservation.user.shared.vo.Password
@@ -17,7 +17,7 @@ class ResignUserServiceTest : BehaviorSpec(
         @Suppress("MaxLineLength")
         val secretKey = "af869782f3abde439def4230f2b05bd701f1ab047ec80808d3b84f1c8923506a"
         val bidirectionalUtility = BidirectionalEncryptUtility(secretKey)
-        val service = ResignUserService(bidirectionalUtility)
+        val service = ResignUserDomainService(bidirectionalUtility)
 
         Given("사용자를 조회한다.") {
 

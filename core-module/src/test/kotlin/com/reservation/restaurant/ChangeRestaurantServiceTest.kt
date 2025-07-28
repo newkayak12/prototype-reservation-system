@@ -7,7 +7,7 @@ import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.restaurant.exceptions.InvalidateRestaurantElementException
 import com.reservation.restaurant.policy.format.ChangeRestaurantForm
 import com.reservation.restaurant.policy.format.RestaurantWorkingDayForm
-import com.reservation.restaurant.service.ChangeRestaurantService
+import com.reservation.restaurant.service.ChangeRestaurantDomainService
 import com.reservation.restaurant.service.update.UpdateCuisines
 import com.reservation.restaurant.service.update.UpdateNationalities
 import com.reservation.restaurant.service.update.UpdatePhoto
@@ -32,7 +32,7 @@ class ChangeRestaurantServiceTest : BehaviorSpec(
         val updateCuisines = UpdateCuisines()
 
         val service =
-            ChangeRestaurantService(
+            ChangeRestaurantDomainService(
                 updateRoutine,
                 updatePhoto,
                 updateTag,

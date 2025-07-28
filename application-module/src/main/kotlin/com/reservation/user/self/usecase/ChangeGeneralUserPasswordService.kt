@@ -1,0 +1,39 @@
+package com.reservation.user.self.usecase
+
+import com.reservation.common.exceptions.NoSuchPersistedElementException
+import com.reservation.config.annotations.UseCase
+import com.reservation.exceptions.InvalidSituationException
+import com.reservation.user.self.port.input.ChangeGeneralUserPasswordCommand
+import com.reservation.user.self.port.input.ChangeGeneralUserPasswordCommand.ChangeGeneralUserPasswordCommandDto
+import com.reservation.user.self.port.output.ChangeGeneralUserPassword
+import com.reservation.user.self.port.output.ChangeGeneralUserPassword.ChangeGeneralUserPasswordInquiry
+import com.reservation.user.self.port.output.LoadGeneralUser
+import com.reservation.user.service.ChangeGeneralUserPasswordDomainService
+import org.springframework.transaction.annotation.Transactional
+
+@UseCase
+class ChangeGeneralUserPasswordService(
+    private val changeGeneralUserPasswordDomainService: ChangeGeneralUserPasswordDomainService,
+    private val changeGeneralUserPassword: ChangeGeneralUserPassword,
+    private val loadGeneralUser: LoadGeneralUser,
+) : ChangeGeneralUserPasswordCommand {
+    @Transactional
+    override fun execute(command: ChangeGeneralUserPasswordCommandDto): Boolean {
+        val user =
+            loadGeneralUser.load(command.id)?.let {
+                changeGeneralUserPasswordDomainService.changePassword(
+                    it.toDomain(),
+                    command.encodedPassword,
+                )
+            } ?: run { throw NoSuchPersistedElementException() }
+
+        return changeGeneralUserPassword.command(
+            ChangeGeneralUserPasswordInquiry(
+                user.identifier ?: run { throw InvalidSituationException() },
+                user.userEncodedPassword,
+                user.userOldEncodedPassword ?: run { throw InvalidSituationException() },
+                user.userPasswordChangedDatetime ?: run { throw InvalidSituationException() },
+            ),
+        )
+    }
+}

@@ -7,7 +7,7 @@ import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.restaurant.exceptions.InvalidateRestaurantElementException
 import com.reservation.restaurant.policy.format.CreateRestaurantForm
 import com.reservation.restaurant.policy.format.RestaurantWorkingDayForm
-import com.reservation.restaurant.service.CreateRestaurantService
+import com.reservation.restaurant.service.CreateRestaurantDomainService
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.equals.shouldBeEqual
@@ -18,7 +18,7 @@ import java.math.BigDecimal
 class CreateRestaurantServiceTest : BehaviorSpec(
     {
 
-        val service = CreateRestaurantService()
+        val service = CreateRestaurantDomainService()
 
         /**
          * Given: 음식점 이름이 비어있는 생성 요청이 들어온다.

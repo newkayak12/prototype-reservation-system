@@ -1,7 +1,7 @@
 package com.reservation.authenticate
 
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
-import com.reservation.authenticate.service.AuthenticateSignInService
+import com.reservation.authenticate.service.AuthenticateSignInDomainService
 import com.reservation.enumeration.AccessStatus
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.user.shared.vo.Password
@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 
 class SignInFailureWIthPasswordTest : BehaviorSpec(
     {
-        val authenticateSignInService = AuthenticateSignInService()
+        val authenticateSignInDomainService = AuthenticateSignInDomainService()
 
         Given("올바른 Authenticate와 사용자가 입력한 패스워드를 제공 받고") {
             var rawPassword: String =
@@ -42,7 +42,7 @@ class SignInFailureWIthPasswordTest : BehaviorSpec(
 
             When("잘못된 비밀번호로 로그인 요청을 한다.") {
                 val actual =
-                    authenticateSignInService.signIn(
+                    authenticateSignInDomainService.signIn(
                         authenticate,
                         rawPassword + "1",
                     )
