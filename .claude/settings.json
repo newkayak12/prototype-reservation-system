@@ -1,0 +1,163 @@
+{
+  "default_flags": {
+    "compression": true,
+    "ultracompressed": true,
+    "answer_only": false,
+    "validate": true,
+    "safe_mode": false,
+    "verbose": false,
+    "plan": false,
+    "introspect": false
+  },
+  "thinking_modes": {
+    "default_think": "standard",
+    "auto_think": true,
+    "think_threshold": 0.6,
+    "think_hard_threshold": 0.8,
+    "ultrathink_threshold": 0.9
+  },
+  "persona_settings": {
+    "default_persona": "mentor",
+    "auto_activation": true,
+    "confidence_threshold": 0.75,
+    "persona_preferences": {
+      "architecture": "architect",
+      "frontend": "frontend",
+      "backend": "backend",
+      "analysis": "analyzer",
+      "security": "security",
+      "documentation": "scribe",
+      "refactoring": "refactorer",
+      "performance": "performance",
+      "testing": "qa",
+      "devops": "devops"
+    }
+  },
+  "mcp_settings": {
+    "auto_activation": true,
+    "context7_auto": true,
+    "sequential_auto": true,
+    "magic_auto": true,
+    "playwright_auto": true,
+    "fallback_enabled": true,
+    "timeout_ms": 30000,
+    "max_retries": 2
+  },
+  "performance": {
+    "token_management": {
+      "auto_compress_threshold": 0.6,
+      "emergency_threshold": 0.80,
+      "reserve_percentage": 0.10
+    },
+    "parallel_operations": {
+      "enabled": true,
+      "max_concurrent": 3,
+      "batch_operations": true
+    },
+    "caching": {
+      "enabled": true,
+      "ttl_seconds": 3600,
+      "max_cache_size_mb": 100
+    }
+  },
+  "delegation": {
+    "auto_delegate": true,
+    "file_threshold": 50,
+    "directory_threshold": 7,
+    "complexity_threshold": 0.8,
+    "max_agents": 5,
+    "default_strategy": "auto",
+    "concurrency_limit": 3
+  },
+  "wave_orchestration": {
+    "enabled": true,
+    "auto_detection": true,
+    "wave_threshold": 0.7,
+    "default_strategy": "adaptive",
+    "max_waves": 5,
+    "validation_required": true,
+    "checkpoint_enabled": true
+  },
+  "iterative_improvement": {
+    "auto_loop": true,
+    "default_iterations": 3,
+    "max_iterations": 10,
+    "quality_threshold": 0.85,
+    "interactive_mode": false
+  },
+  "task_management": {
+    "auto_create_todos": true,
+    "min_steps_for_todo": 3,
+    "real_time_updates": true,
+    "progress_notifications": true,
+    "single_focus_mode": true
+  },
+  "quality_gates": {
+    "enabled": true,
+    "validation_steps": 8,
+    "auto_lint": true,
+    "auto_test": true,
+    "security_scan": true,
+    "performance_check": true,
+    "documentation_check": true
+  },
+  "security": {
+    "safe_mode_auto": false,
+    "validation_required": true,
+    "risk_threshold": 0.7,
+    "backup_before_changes": true,
+    "sensitive_data_protection": true
+  },
+  "project_specific": {
+    "framework": "spring_boot",
+    "architecture": "hexagonal",
+    "primary_language": "kotlin",
+    "database": "mysql",
+    "build_tool": "gradle",
+    "test_framework": "kotest",
+    "code_style": "ktlint",
+    "documentation_format": "markdown"
+  },
+  "command_defaults": {
+    "/analyze": ["--think", "--seq"],
+    "/build": ["--uc", "--validate"],
+    "/implement": ["--c7", "--magic"],
+    "/improve": ["--loop", "--validate"],
+    "/document": ["--persona-scribe", "--c7"],
+    "/test": ["--persona-qa", "--play"],
+    "/troubleshoot": ["--think", "--seq", "--persona-analyzer"],
+    "/git": ["--persona-devops", "--validate"]
+  },
+  "advanced": {
+    "experimental_features": false,
+    "debug_mode": false,
+    "verbose_logging": false,
+    "telemetry_enabled": true,
+    "feature_flags": {
+      "wave_v2": false,
+      "enhanced_delegation": true,
+      "smart_caching": true,
+      "adaptive_compression": true
+    }
+  },
+  "monitoring": {
+    "performance_tracking": true,
+    "success_rate_tracking": true,
+    "token_usage_analytics": true,
+    "command_frequency_analysis": true,
+    "optimization_suggestions": true
+  },
+  "localization": {
+    "default_language": "ko",
+    "timezone": "Asia/Seoul",
+    "date_format": "YYYY-MM-DD",
+    "number_format": "korean"
+  },
+  "output_formatting": {
+    "use_markdown": true,
+    "code_syntax_highlighting": true,
+    "emoji_enabled": true,
+    "table_formatting": "github",
+    "diagram_format": "mermaid"
+  }
+}
