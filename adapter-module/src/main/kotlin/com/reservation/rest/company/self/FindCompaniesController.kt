@@ -1,6 +1,6 @@
 package com.reservation.rest.company.self
 
-import com.reservation.company.port.input.FindCompaniesUseCase
+import com.reservation.company.port.input.FindCompaniesByCompanyNameUseCase
 import com.reservation.rest.common.response.ListResponse
 import com.reservation.rest.company.CompanyUrl
 import com.reservation.rest.company.request.FindCompaniesRequest
@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class FindCompaniesController(
-    private val findCompaniesUseCase: FindCompaniesUseCase,
+    private val findCompaniesByCompanyNameUseCase: FindCompaniesByCompanyNameUseCase,
 ) {
     @GetMapping(CompanyUrl.COMPANIES_URL)
     fun findCompanies(request: FindCompaniesRequest): ListResponse<FindCompaniesResponse> =
         ListResponse.ok(
-            findCompaniesUseCase.execute(request.toInquiry())
+            findCompaniesByCompanyNameUseCase.execute(request.toInquiry())
                 .map {
                     FindCompaniesResponse(
                         it.id,

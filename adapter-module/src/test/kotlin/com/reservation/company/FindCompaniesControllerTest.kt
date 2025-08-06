@@ -2,7 +2,7 @@ package com.reservation.company
 
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.ninjasquad.springmockk.MockkBean
-import com.reservation.company.port.input.FindCompaniesUseCase
+import com.reservation.company.port.input.FindCompaniesByCompanyNameUseCase
 import com.reservation.company.port.input.query.response.FindCompaniesQueryResult
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.Query
@@ -41,7 +41,7 @@ class FindCompaniesControllerTest(
     override fun extensions() = listOf(SpringExtension)
 
     @MockkBean
-    private lateinit var findCompaniesUseCase: FindCompaniesUseCase
+    private lateinit var findCompaniesByCompanyNameUseCase: FindCompaniesByCompanyNameUseCase
 
     init {
         test("회사를 조회하고 총 55건의 결과를 반환받는다.") {
@@ -50,7 +50,7 @@ class FindCompaniesControllerTest(
             val queryResult = pureMonkey.giveMe<FindCompaniesQueryResult>(55)
 
             every {
-                findCompaniesUseCase.execute(any())
+                findCompaniesByCompanyNameUseCase.execute(any())
             } returns queryResult
 
             mockMvc.perform(
