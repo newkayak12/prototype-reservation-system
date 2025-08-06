@@ -8,6 +8,7 @@ interface FindTags {
     fun query(inquiry: FindTagsInquiry): List<FindTagsResult>
 
     data class FindTagsInquiry(
+        val ids: List<Long>?,
         val title: String?,
         val categoryType: CategoryType = CUISINE,
     )
