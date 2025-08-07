@@ -30,7 +30,7 @@ class FindCompanyServiceTest {
 
     @DisplayName(value = "ID로 겁색했지만 결과 값이 없었고 NoSuchPersistedElementException이 발생한다.")
     @Test
-    fun `throw NoSuchPersistedElementException`()  {
+    fun `throw NoSuchPersistedElementException`() {
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
         val mockQuery = mockk<FindCompaniesByIdQuery>()
         val query = pureMonkey.giveMeOne<FindCompanyInquiry>()
@@ -52,7 +52,7 @@ class FindCompanyServiceTest {
 
     @DisplayName(value = "ID로 검색헀고 적절한 결과가 도출되어 반환된다.")
     @Test
-    fun `return proper element`()  {
+    fun `return proper element`() {
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
         val mockQuery = mockk<FindCompaniesByIdQuery>()
         val query = pureMonkey.giveMeOne<FindCompanyInquiry>()
