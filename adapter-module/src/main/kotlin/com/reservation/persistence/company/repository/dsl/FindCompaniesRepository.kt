@@ -9,7 +9,7 @@ import com.reservation.persistence.company.entity.QCompanyEntity.companyEntity
 import org.springframework.stereotype.Component
 
 @Component
-class FindCompanies(
+class FindCompaniesRepository(
     private val query: JPAQueryFactory,
 ) : FindCompanies {
     override fun query(inquiry: FindCompaniesInquiry): List<FindCompaniesResult> {
