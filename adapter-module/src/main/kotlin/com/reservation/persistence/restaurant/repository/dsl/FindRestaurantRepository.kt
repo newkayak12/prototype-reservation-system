@@ -37,40 +37,41 @@ class FindRestaurantRepository(
                 RestaurantQuerySpec.identifierEq(id),
                 RestaurantQuerySpec.isNotDeleted(),
             )
-            .transform(
-                groupBy(restaurantEntity.identifier).`as`(
+            .transform(projections()).values.firstOrNull()
+    }
+
+    private fun projections() =
+        groupBy(restaurantEntity.identifier).`as`(
+            Projections.constructor(
+                FindRestaurantResult::class.java,
+                restaurantEntity.identifier,
+                restaurantEntity.companyId,
+                restaurantEntity.userId,
+                restaurantEntity.name,
+                restaurantEntity.introduce,
+                restaurantEntity.phone,
+                restaurantEntity.zipCode,
+                restaurantEntity.address,
+                restaurantEntity.detail,
+                restaurantEntity.latitude,
+                restaurantEntity.longitude,
+                list(
                     Projections.constructor(
-                        FindRestaurantResult::class.java,
-                        restaurantEntity.identifier,
-                        restaurantEntity.companyId,
-                        restaurantEntity.userId,
-                        restaurantEntity.name,
-                        restaurantEntity.introduce,
-                        restaurantEntity.phone,
-                        restaurantEntity.zipCode,
-                        restaurantEntity.address,
-                        restaurantEntity.detail,
-                        restaurantEntity.latitude,
-                        restaurantEntity.longitude,
-                        list(
-                            Projections.constructor(
-                                FindRestaurantWorkingDay::class.java,
-                                restaurantWorkingDayEntity.id.day,
-                                restaurantWorkingDayEntity.startTime,
-                                restaurantWorkingDayEntity.endTime,
-                            ),
-                        ),
-                        list(
-                            Projections.constructor(
-                                FindRestaurantPhoto::class.java,
-                                restaurantPhotoEntity.url,
-                            ),
-                        ),
-                        list(restaurantTagsEntity.tagsId),
-                        list(restaurantNationalitiesEntity.nationalitiesId),
-                        list(restaurantCuisinesEntity.cuisinesId),
+                        FindRestaurantWorkingDay::class.java,
+                        restaurantWorkingDayEntity.id.day,
+                        restaurantWorkingDayEntity.startTime,
+                        restaurantWorkingDayEntity.endTime,
                     ),
                 ),
-            ).values.firstOrNull()
-    }
+                list(
+                    Projections.constructor(
+                        FindRestaurantPhoto::class.java,
+                        restaurantPhotoEntity.url,
+                    ),
+                ),
+                list(restaurantTagsEntity.tagsId),
+                list(restaurantNationalitiesEntity.nationalitiesId),
+                list(restaurantCuisinesEntity.cuisinesId),
+            ),
+        )
 }
