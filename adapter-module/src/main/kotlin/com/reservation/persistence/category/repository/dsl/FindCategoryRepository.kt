@@ -23,6 +23,7 @@ class FindCategoryRepository(
     override fun query(inquiry: FindNationalitiesInquiry): List<FindNationalitiesResult> {
         val databaseInquiry =
             Inquiry(
+                inquiry.ids?.toSet(),
                 inquiry.title,
                 inquiry.categoryType,
             )
@@ -38,6 +39,7 @@ class FindCategoryRepository(
     override fun query(inquiry: FindCuisinesInquiry): List<FindCuisinesResult> {
         val databaseInquiry =
             Inquiry(
+                inquiry.ids?.toSet(),
                 inquiry.title,
                 inquiry.categoryType,
             )
@@ -54,6 +56,7 @@ class FindCategoryRepository(
     override fun query(inquiry: FindTagsInquiry): List<FindTagsResult> {
         val databaseInquiry =
             Inquiry(
+                inquiry.ids?.toSet(),
                 inquiry.title,
                 inquiry.categoryType,
             )
@@ -82,11 +85,13 @@ class FindCategoryRepository(
                 CategoryQuerySpec.excludeDeleted(),
                 CategoryQuerySpec.categoryTypeEqNationality(),
                 CategoryQuerySpec.titleContains(inquiry.title),
+                CategoryQuerySpec.idsIn(inquiry.ids),
             )
             .fetch()
     }
 
     data class Inquiry(
+        val ids: Set<Long>?,
         val title: String?,
         val categoryType: CategoryType = NATIONALITY,
     )

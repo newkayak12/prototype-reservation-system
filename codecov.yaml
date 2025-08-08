@@ -6,3 +6,5 @@ coverage:
     - "**/jpa/**"
     - "**/config/**"
     - "**/*Properties"
+    - "**/request/*"
+    - "**/response/*"

@@ -8,6 +8,7 @@ interface FindNationalities {
     fun query(inquiry: FindNationalitiesInquiry): List<FindNationalitiesResult>
 
     data class FindNationalitiesInquiry(
+        val ids: List<Long>?,
         val title: String?,
         val categoryType: CategoryType = NATIONALITY,
     )

@@ -17,4 +17,13 @@ object CategoryQuerySpec {
             }
             return null
         }
+
+    fun idsIn(ids: Set<Long>?): BooleanExpression? =
+        ids?.let {
+            if (ids.isNotEmpty()) {
+                categoryEntity.id.`in`(ids)
+            } else {
+                null
+            }
+        }
 }

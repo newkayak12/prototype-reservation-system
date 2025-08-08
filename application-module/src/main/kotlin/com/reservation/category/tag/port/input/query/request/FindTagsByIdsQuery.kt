@@ -2,8 +2,8 @@ package com.reservation.category.tag.port.input.query.request
 
 import com.reservation.category.tag.port.output.FindTags.FindTagsInquiry
 
-data class FindTagsQuery(
-    val title: String?,
+data class FindTagsByIdsQuery(
+    val ids: List<Long>?,
 ) {
-    fun toInquiry() = FindTagsInquiry(title)
+    fun toInquiry() = FindTagsInquiry(ids, null)
 }

@@ -8,6 +8,7 @@ interface FindCuisines {
     fun query(inquiry: FindCuisinesInquiry): List<FindCuisinesResult>
 
     data class FindCuisinesInquiry(
+        val ids: List<Long>?,
         val title: String?,
         val categoryType: CategoryType = CUISINE,
     )

@@ -3,7 +3,8 @@ package com.reservation.category.tags
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
-import com.reservation.category.tag.port.input.query.request.FindTagsQuery
+import com.reservation.category.tag.port.input.query.request.FindTagsByIdsQuery
+import com.reservation.category.tag.port.input.query.request.FindTagsByTitleQuery
 import com.reservation.category.tag.port.output.FindTags
 import com.reservation.category.tag.port.output.FindTags.FindTagsResult
 import com.reservation.category.tag.usecase.FindTagsService
@@ -16,6 +17,7 @@ import io.mockk.verify
 import net.jqwik.api.Arbitraries
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
@@ -27,48 +29,101 @@ class FindTagsServiceTest {
     @InjectMockKs
     private lateinit var useCase: FindTagsService
 
-    @DisplayName("태그 조회 요청을 진행하고 18건의 결과가 조회된다.")
-    @Test
-    fun findTags() {
-        val size = 18
-        val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-        val request = pureMonkey.giveMeOne<FindTagsQuery>()
-        val resultList = pureMonkey.giveMe<FindTagsResult>(size)
+    @DisplayName("Title로 검색")
+    @Nested
+    inner class Title {
+        @DisplayName("태그 조회 요청을 진행하고 18건의 결과가 조회된다.")
+        @Test
+        fun findTags() {
+            val size = 18
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val request = pureMonkey.giveMeOne<FindTagsByTitleQuery>()
+            val resultList = pureMonkey.giveMe<FindTagsResult>(size)
 
-        every {
-            findTags.query(any())
-        } returns resultList
+            every {
+                findTags.query(any())
+            } returns resultList
 
-        val result = useCase.execute(request)
+            val result = useCase.execute(request)
 
-        assertThat(result).hasSize(size)
+            assertThat(result).hasSize(size)
 
-        verify(exactly = 1) {
-            findTags.query(any())
+            verify(exactly = 1) {
+                findTags.query(any())
+            }
+        }
+
+        @DisplayName("title을 입력해서 태그 조회 요청을 진행하고 10건의 결과가 조회된다.")
+        @Test
+        fun findTagsByTitle() {
+            val size = 10
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val request =
+                pureMonkey.giveMeBuilder<FindTagsByTitleQuery>()
+                    .set("title", Arbitraries.strings().sample())
+                    .sample()
+            val resultList = pureMonkey.giveMe<FindTagsResult>(size)
+
+            every {
+                findTags.query(any())
+            } returns resultList
+
+            val result = useCase.execute(request)
+
+            assertThat(result).hasSize(size)
+
+            verify(exactly = 1) {
+                findTags.query(any())
+            }
         }
     }
 
-    @DisplayName("title을 입력해서 태그 조회 요청을 진행하고 10건의 결과가 조회된다.")
-    @Test
-    fun findTagsByTitle() {
-        val size = 10
-        val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-        val request =
-            pureMonkey.giveMeBuilder<FindTagsQuery>()
-                .set("title", Arbitraries.strings().sample())
-                .sample()
-        val resultList = pureMonkey.giveMe<FindTagsResult>(size)
+    @DisplayName("Ids로 검색")
+    @Nested
+    inner class Ids {
+        @DisplayName("태그 조회 요청을 진행하고 18건의 결과가 조회된다.")
+        @Test
+        fun findTags() {
+            val size = 18
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val request = pureMonkey.giveMeOne<FindTagsByIdsQuery>()
+            val resultList = pureMonkey.giveMe<FindTagsResult>(size)
 
-        every {
-            findTags.query(any())
-        } returns resultList
+            every {
+                findTags.query(any())
+            } returns resultList
 
-        val result = useCase.execute(request)
+            val result = useCase.execute(request)
 
-        assertThat(result).hasSize(size)
+            assertThat(result).hasSize(size)
 
-        verify(exactly = 1) {
-            findTags.query(any())
+            verify(exactly = 1) {
+                findTags.query(any())
+            }
+        }
+
+        @DisplayName("ids을 입력해서 태그 조회 요청을 진행하고 10건의 결과가 조회된다.")
+        @Test
+        fun findTagsByIds() {
+            val size = 10
+            val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+            val request =
+                pureMonkey.giveMeBuilder<FindTagsByIdsQuery>()
+                    .set("title", Arbitraries.strings().sample())
+                    .sample()
+            val resultList = pureMonkey.giveMe<FindTagsResult>(size)
+
+            every {
+                findTags.query(any())
+            } returns resultList
+
+            val result = useCase.execute(request)
+
+            assertThat(result).hasSize(size)
+
+            verify(exactly = 1) {
+                findTags.query(any())
+            }
         }
     }
 }

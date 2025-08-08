@@ -2,20 +2,20 @@ package com.reservation.persistence.company.repository.dsl
 
 import com.querydsl.core.types.Projections
 import com.querydsl.jpa.impl.JPAQueryFactory
-import com.reservation.company.port.output.FindCompanies
-import com.reservation.company.port.output.FindCompanies.FindCompaniesInquiry
-import com.reservation.company.port.output.FindCompanies.FindCompaniesResult
+import com.reservation.company.port.output.FindCompany
+import com.reservation.company.port.output.FindCompany.FindCompanyInquiry
+import com.reservation.company.port.output.FindCompany.FindCompanyResult
 import com.reservation.persistence.company.entity.QCompanyEntity.companyEntity
 import org.springframework.stereotype.Component
 
 @Component
-class FindCompanies(
+class FindCompanyRepository(
     private val query: JPAQueryFactory,
-) : FindCompanies {
-    override fun query(inquiry: FindCompaniesInquiry): List<FindCompaniesResult> {
+) : FindCompany {
+    override fun query(inquiry: FindCompanyInquiry): FindCompanyResult? {
         return query.select(
             Projections.constructor(
-                FindCompaniesResult::class.java,
+                FindCompanyResult::class.java,
                 companyEntity.identifier,
                 companyEntity.brandName,
                 companyEntity.brandUrl,
@@ -32,9 +32,7 @@ class FindCompanies(
             ),
         )
             .from(companyEntity)
-            .where(
-                CompanyQuerySpec.brandNameContains(inquiry.companyName),
-            )
-            .fetch()
+            .where(CompanyQuerySpec.identifierEqOrFalse(inquiry.id))
+            .fetchOne()
     }
 }

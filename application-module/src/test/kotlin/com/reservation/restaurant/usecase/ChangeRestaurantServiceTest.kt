@@ -240,7 +240,13 @@ class ChangeRestaurantServiceTest {
             val userId = "1"
             val request =
                 pureMonkey.giveMeBuilder<ChangeRestaurantCommand>()
-                    .set("photos", listOf(pureMonkey.giveMeOne<MockMultipartFile>()))
+                    .set(
+                        "photos",
+                        listOf(
+                            MockMultipartFile("1", "".toByteArray()),
+                            MockMultipartFile("1", "".toByteArray()),
+                        ),
+                    )
                     .set("userId", userId)
                     .sample()
             val photoUrl = "https://image.com/1.jpg"
