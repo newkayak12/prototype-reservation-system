@@ -9,6 +9,8 @@
   - [2025.05.18 ~ 2025.05.31](https://github.com/users/newkayak12/projects/3): 사용자 
   - [2025.06.01 ~ 2025.06.14](https://github.com/users/newkayak12/projects/4): 사용자
   - [2025.06.21 ~ 2025.07.14](https://github.com/users/newkayak12/projects/6): 매장
+  - [2025.07.15 ~ 2025.07.28](https://github.com/users/newkayak12/projects/7)
+  - [2025.07.29 ~ 2025.08.12](https://github.com/users/newkayak12/projects/9)
 
 ## 3. [🎯 프로젝트 목표](/.github/PROJECT.md)
 ## 4. [🧑🏻‍💻 코드 퀄리티를 위한 도구 도입](.github/CODE_STYLE.md)
