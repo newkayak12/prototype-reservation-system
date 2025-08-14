@@ -23,7 +23,7 @@ jobs:
                     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
                     LANGUAGE: Korean
                     PROMPT: ${{secrets.OPENAI_PROMPT}}
-                    MODEL: gpt-5-mini
+                    MODEL: gpt-4.1
                     TEMPERATURE: 0.3
                     MAX_TOKENS: 4096
                     IGNORE_PATTERNS: .github,.gradle/**/*,.gitignore,*.yaml,*.jar,.gitkeep
