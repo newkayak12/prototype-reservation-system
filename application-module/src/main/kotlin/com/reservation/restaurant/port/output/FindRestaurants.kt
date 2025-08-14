@@ -2,10 +2,10 @@ package com.reservation.restaurant.port.output
 
 import com.reservation.restaurant.port.input.query.response.FindRestaurantsQueryResults.FindRestaurantsQueryResult
 import com.reservation.restaurant.port.input.query.response.FindRestaurantsQueryResults.FindRestaurantsQueryResultAddress
+import com.reservation.restaurant.port.input.query.response.FindRestaurantsQueryResults.FindRestaurantsQueryResultCategory
 import com.reservation.restaurant.port.input.query.response.FindRestaurantsQueryResults.FindRestaurantsQueryResultCoordinate
 import com.reservation.restaurant.port.input.query.response.FindRestaurantsQueryResults.FindRestaurantsQueryResultInformation
 import com.reservation.restaurant.port.input.query.response.FindRestaurantsQueryResults.FindRestaurantsQueryResultPhoto
-import com.reservation.restaurant.port.input.query.response.FindRestaurantsQueryResults.FindRestaurantsQueryResultTag
 import com.reservation.restaurant.port.input.query.response.FindRestaurantsQueryResults.FindRestaurantsQueryResultWorkingDay
 import java.math.BigDecimal
 import java.time.DayOfWeek
@@ -16,14 +16,15 @@ interface FindRestaurants {
 
     data class FindRestaurantsInquiry(
         val identifierFrom: String = "",
-        val size: Int = 10,
+        val size: Long = 10,
         val searchText: String = "",
         val tags: List<Long> = listOf(),
         val nationalities: List<Long> = listOf(),
         val cuisines: List<Long> = listOf(),
     )
 
-    data class FindRestaurantsResult(
+    @Suppress("LongParameterList")
+    class FindRestaurantsResult(
         val identifier: String,
         val information: FindRestaurantsResultInformation,
         val address: FindRestaurantsResultAddress,
@@ -34,9 +35,9 @@ interface FindRestaurants {
         val cuisines: List<Long> = listOf(),
     ) {
         fun toQuery(
-            tags: List<FindRestaurantsQueryResultTag>,
-            nationalities: List<FindRestaurantsQueryResultTag>,
-            cuisines: List<FindRestaurantsQueryResultTag>,
+            tags: List<FindRestaurantsQueryResultCategory>,
+            nationalities: List<FindRestaurantsQueryResultCategory>,
+            cuisines: List<FindRestaurantsQueryResultCategory>,
         ): FindRestaurantsQueryResult {
             return FindRestaurantsQueryResult(
                 identifier,
