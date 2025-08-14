@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Min
 
 data class FindRestaurantsRequest(
     val identifierFrom: String = "",
-    @Min(value = 1L)
+    @field:Min(value = 1L)
     val size: Long = 10,
     val searchText: String = "",
     val tags: List<Long> = listOf(),
