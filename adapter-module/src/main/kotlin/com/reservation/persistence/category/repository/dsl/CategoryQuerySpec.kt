@@ -11,7 +11,7 @@ object CategoryQuerySpec {
     fun categoryTypeEqNationality(): BooleanExpression = categoryEntity.categoryType.eq(NATIONALITY)
 
     fun titleContains(searchText: String?): BooleanExpression? =
-        searchText.let {
+        searchText?.let {
             if (StringUtils.hasText(it)) {
                 return categoryEntity.title.contains(it)
             }
