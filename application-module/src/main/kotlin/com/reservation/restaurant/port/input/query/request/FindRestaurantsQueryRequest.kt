@@ -4,7 +4,7 @@ import com.reservation.restaurant.port.output.FindRestaurants.FindRestaurantsInq
 
 data class FindRestaurantsQueryRequest(
     val identifierFrom: String = "",
-    val size: Int = 10,
+    val size: Long = 10,
     val searchText: String = "",
     val tags: List<Long> = listOf(),
     val nationalities: List<Long> = listOf(),

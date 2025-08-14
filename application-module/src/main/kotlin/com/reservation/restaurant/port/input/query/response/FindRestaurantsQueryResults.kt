@@ -34,9 +34,9 @@ class FindRestaurantsQueryResults(
         val address: FindRestaurantsQueryResultAddress,
         val workingDays: List<FindRestaurantsQueryResultWorkingDay> = listOf(),
         val photos: List<FindRestaurantsQueryResultPhoto> = listOf(),
-        val tags: List<FindRestaurantsQueryResultTag> = listOf(),
-        val nationalities: List<FindRestaurantsQueryResultTag> = listOf(),
-        val cuisines: List<FindRestaurantsQueryResultTag> = listOf(),
+        val tags: List<FindRestaurantsQueryResultCategory> = listOf(),
+        val nationalities: List<FindRestaurantsQueryResultCategory> = listOf(),
+        val cuisines: List<FindRestaurantsQueryResultCategory> = listOf(),
     )
 
     data class FindRestaurantsQueryResultWorkingDay(
@@ -66,7 +66,7 @@ class FindRestaurantsQueryResults(
         val introduce: String,
     )
 
-    data class FindRestaurantsQueryResultTag(
+    data class FindRestaurantsQueryResultCategory(
         val id: Long,
         val title: String,
         val categoryType: CategoryType,

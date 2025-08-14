@@ -11,7 +11,7 @@ import com.reservation.restaurant.port.input.FindRestaurantsUseCase
 import com.reservation.restaurant.port.input.query.request.FindRestaurantsQueryRequest
 import com.reservation.restaurant.port.input.query.response.FindRestaurantsQueryResults
 import com.reservation.restaurant.port.input.query.response.FindRestaurantsQueryResults.FindRestaurantsQueryResult
-import com.reservation.restaurant.port.input.query.response.FindRestaurantsQueryResults.FindRestaurantsQueryResultTag
+import com.reservation.restaurant.port.input.query.response.FindRestaurantsQueryResults.FindRestaurantsQueryResultCategory
 import com.reservation.restaurant.port.output.FindRestaurants
 import com.reservation.restaurant.port.output.FindRestaurants.FindRestaurantsResult
 import org.springframework.transaction.annotation.Transactional
@@ -41,9 +41,9 @@ class FindRestaurantsService(
 
     private fun mapResult(
         list: List<FindRestaurantsResult>,
-        tagMap: Map<Long, FindRestaurantsQueryResultTag>,
-        nationalitiesMap: Map<Long, FindRestaurantsQueryResultTag>,
-        cuisinesMap: Map<Long, FindRestaurantsQueryResultTag>,
+        tagMap: Map<Long, FindRestaurantsQueryResultCategory>,
+        nationalitiesMap: Map<Long, FindRestaurantsQueryResultCategory>,
+        cuisinesMap: Map<Long, FindRestaurantsQueryResultCategory>,
     ): List<FindRestaurantsQueryResult> {
         return list.map {
             val mappedTags =
@@ -65,25 +65,25 @@ class FindRestaurantsService(
         }
     }
 
-    private fun provideTagMap(tags: List<Long>): Map<Long, FindRestaurantsQueryResultTag> {
+    private fun provideTagMap(tags: List<Long>): Map<Long, FindRestaurantsQueryResultCategory> {
         return findTagsByIdsUseCase.execute(FindTagsByIdsQuery(tags))
-            .map { FindRestaurantsQueryResultTag(it.id, it.title, it.categoryType) }
+            .map { FindRestaurantsQueryResultCategory(it.id, it.title, it.categoryType) }
             .associateBy { it.id }
     }
 
     private fun provideNationalitiesMap(
         nationalities: List<Long>,
-    ): Map<Long, FindRestaurantsQueryResultTag> {
+    ): Map<Long, FindRestaurantsQueryResultCategory> {
         return findNationalitiesByIdsUseCase.execute(FindNationalitiesByIdsQuery(nationalities))
-            .map { FindRestaurantsQueryResultTag(it.id, it.title, it.categoryType) }
+            .map { FindRestaurantsQueryResultCategory(it.id, it.title, it.categoryType) }
             .associateBy { it.id }
     }
 
     private fun provideCuisinesMap(
         cuisines: List<Long>,
-    ): Map<Long, FindRestaurantsQueryResultTag> {
+    ): Map<Long, FindRestaurantsQueryResultCategory> {
         return findCuisinesByIdsUseCase.execute(FindCuisinesByIdsQuery(cuisines))
-            .map { FindRestaurantsQueryResultTag(it.id, it.title, it.categoryType) }
+            .map { FindRestaurantsQueryResultCategory(it.id, it.title, it.categoryType) }
             .associateBy { it.id }
     }
 }
