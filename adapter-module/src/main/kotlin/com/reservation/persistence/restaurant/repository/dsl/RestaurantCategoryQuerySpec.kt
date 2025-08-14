@@ -7,11 +7,11 @@ import com.reservation.persistence.restaurant.QRestaurantTagsEntity.restaurantTa
 
 object RestaurantCategoryQuerySpec {
     fun tagsIn(ids: Set<Long>): BooleanExpression? =
-        if (ids.isNotEmpty()) restaurantNationalitiesEntity.nationalitiesId.`in`(ids) else null
+        if (ids.isNotEmpty()) restaurantTagsEntity.tagsId.`in`(ids) else null
 
     fun nationalitiesIn(ids: Set<Long>): BooleanExpression? =
-        if (ids.isNotEmpty()) restaurantCuisinesEntity.cuisinesId.`in`(ids) else null
+        if (ids.isNotEmpty()) restaurantNationalitiesEntity.nationalitiesId.`in`(ids) else null
 
     fun cuisinesIn(ids: Set<Long>): BooleanExpression? =
-        if (ids.isNotEmpty()) restaurantTagsEntity.tagsId.`in`(ids) else null
+        if (ids.isNotEmpty()) restaurantCuisinesEntity.cuisinesId.`in`(ids) else null
 }
