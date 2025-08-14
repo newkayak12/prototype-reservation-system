@@ -6,7 +6,6 @@ import com.navercorp.fixturemonkey.api.jqwik.JavaTypeArbitraryGenerator
 import com.navercorp.fixturemonkey.api.jqwik.JqwikPlugin
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
-import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.ninjasquad.springmockk.MockkBean
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.Query
@@ -63,7 +62,10 @@ class FindRestaurantsControllerTest(
 
         test("레스토랑을 조회했으나 결과 값이 존재하지 않는다.") {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val request = pureMonkey.giveMeOne<FindRestaurantsRequest>()
+            val request =
+                pureMonkey.giveMeBuilder<FindRestaurantsRequest>()
+                    .set("size", 10L)
+                    .sample()
             val useCaseResult = FindRestaurantsQueryResults(listOf(), false)
             val type = object : TypeReference<Map<String, Any>>() {}
             val convert = objectMapper.convertValue(request, type)
