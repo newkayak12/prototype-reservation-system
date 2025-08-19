@@ -140,7 +140,7 @@ class CreateMenuTest : BehaviorSpec(
                 .ofMaxLength(30)
         private val bigDecimalArbitrary =
             Arbitraries.bigDecimals()
-                .lessThan(BigDecimal.valueOf(999_999_999L))
+                .lessThan(BigDecimal.valueOf(999999999L))
                 .greaterThan(BigDecimal.ZERO)
 
         private val booleanArbitrary = Arbitraries.of(true, false)
