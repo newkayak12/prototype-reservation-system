@@ -117,16 +117,16 @@ class CreateMenuTest : BehaviorSpec(
         Given("조건에 부합하는 form이 주어진다.") {
             val perfectCase = perfectCase()
             When("Menu를 생성할 때") {
-                val snapshot = domainService.createMenu(perfectCase)
+                val result = domainService.createMenu(perfectCase)
                 Then("입력했던 바와 똑같은 Snapshot이 만들어진다.") {
 
-                    snapshot.restaurantId shouldBeEqual perfectCase.restaurantId
-                    snapshot.title shouldBeEqual perfectCase.title
-                    snapshot.description shouldBeEqual perfectCase.description
-                    snapshot.price shouldBeEqual perfectCase.price
-                    snapshot.isRepresentative shouldBeEqual perfectCase.isRepresentative
-                    snapshot.isRecommended shouldBeEqual perfectCase.isRecommended
-                    snapshot.isVisible shouldBeEqual perfectCase.isVisible
+                    result.restaurantId shouldBeEqual perfectCase.restaurantId
+                    result.title shouldBeEqual perfectCase.title
+                    result.description shouldBeEqual perfectCase.description
+                    result.price shouldBeEqual perfectCase.price
+                    result.isRepresentative shouldBeEqual perfectCase.isRepresentative
+                    result.isRecommended shouldBeEqual perfectCase.isRecommended
+                    result.isVisible shouldBeEqual perfectCase.isVisible
                 }
             }
         }
