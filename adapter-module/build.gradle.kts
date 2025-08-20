@@ -1,5 +1,17 @@
 import io.gitlab.arturbosch.detekt.Detekt
 
+plugins {
+    alias(libs.plugins.kotlin.jpa)
+    alias(libs.plugins.asciidoctor)
+    alias(libs.plugins.restdocs.api.spec)
+    alias(libs.plugins.swagger.generator)
+    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.flyway)
+}
+
+tasks.named("bootJar") { enabled = true }
+tasks.named("jar") { enabled = false }
+
 configurations.create("asciidoctorExt")
 
 flyway {
@@ -11,8 +23,9 @@ flyway {
 
 kapt {
     arguments {
-        arg("querydsl.generatedAnnotation", "javax.annotation.Generated")
+        arg("querydsl.generatedAnnotation", "jakarta.annotation.Generated")
     }
+    correctErrorTypes = true
 }
 
 sourceSets {
@@ -78,25 +91,48 @@ tasks.register("swagger") {
     }
 }
 
-dependencies {
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0")
-
-    add("asciidoctorExt", "org.springframework.restdocs:spring-restdocs-asciidoctor")
-    testImplementation("com.epages:restdocs-api-spec-mockmvc:0.19.4")
-    testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
-    testImplementation(project(":test-module"))
-}
+val developmentOnly by configurations
+val kapt by configurations
 
 dependencies {
-    implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.10.0")
-    implementation("org.springframework.boot:spring-boot-starter-data-redis")
-    runtimeOnly("com.h2database:h2")
-}
-
-dependencies {
+    // Project modules
     implementation(project(":shared-module"))
     implementation(project(":application-module"))
     compileOnly(project(":core-module"))
+    
+    // Kotlin basics
+    implementation(libs.kotlin.reflect)
+    implementation(libs.jackson.kotlin)
+    
+    // Spring Boot starters
+    implementation(libs.bundles.spring.web)
+    implementation(libs.bundles.spring.data)
+    
+    // Database dependencies
+    implementation(libs.bundles.database)
+    
+    // QueryDSL
+    implementation("com.querydsl:querydsl-jpa:${libs.versions.querydsl.get()}:jakarta")
+    kapt("com.querydsl:querydsl-apt:${libs.versions.querydsl.get()}:jakarta")
+    kapt(libs.bundles.querydsl.kapt)
+    
+    // Additional dependencies
+    implementation(libs.springdoc.openapi)
+    implementation(libs.p6spy)
+    
+    // Development only
+    developmentOnly(libs.spring.boot.docker.compose)
+    
+    // Documentation
+    add("asciidoctorExt", libs.restdocs.asciidoctor)
+    testImplementation(libs.bundles.documentation)
+    testImplementation(libs.spring.security.test)
+    testImplementation(libs.bundles.testing.containers)
+    testImplementation(libs.bundles.testing.kotest)
+    testImplementation(libs.bundles.testing.mock)
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.bundles.testing.fixtures)  // FixtureMonkey includes jqwik
+    testImplementation(project(":test-module"))
 }
 
 allOpen {
