@@ -1,4 +1,4 @@
-package com.reservation.menu.port.usecase
+package com.reservation.menu.usecase
 
 import com.reservation.config.annotations.UseCase
 import com.reservation.menu.policy.format.CreateMenuForm

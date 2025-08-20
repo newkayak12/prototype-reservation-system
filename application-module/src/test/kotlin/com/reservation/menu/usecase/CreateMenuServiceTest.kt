@@ -8,7 +8,6 @@ import com.reservation.menu.exceptions.InvalidateMenuElementException
 import com.reservation.menu.port.input.request.CreateMenuCommand
 import com.reservation.menu.port.output.CreateMenu
 import com.reservation.menu.port.output.UploadMenuImageFile
-import com.reservation.menu.port.usecase.CreateMenuService
 import com.reservation.menu.service.CreateMenuDomainService
 import com.reservation.menu.snapshot.MenuSnapshot
 import io.mockk.every

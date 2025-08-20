@@ -1,4 +1,4 @@
-package com.reservation.menu.port.config
+package com.reservation.menu.config
 
 import com.reservation.menu.service.CreateMenuDomainService
 import org.springframework.context.annotation.Bean
