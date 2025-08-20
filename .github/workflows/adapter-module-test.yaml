@@ -16,7 +16,7 @@ jobs:
           distribution: 'corretto'
           cache: gradle
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@017a9ef # v4.4.2
+        uses: gradle/actions/setup-gradle@017a9effdb900e5b5b2fddfb590a105619dca3c3 # v4.4.2
       - name: Gradle Caching
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.1
         with:
