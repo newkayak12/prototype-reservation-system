@@ -4,7 +4,8 @@
       "Bash(./gradlew:*)",
       "Bash(mkdir:*)",
       "Bash(find:*)",
-      "mcp__sequential-thinking__sequentialthinking"
+      "mcp__sequential-thinking__sequentialthinking",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }
