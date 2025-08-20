@@ -1,19 +1,17 @@
 plugins {
-    id("org.springframework.boot") version "3.4.5" apply false
-    id("io.spring.dependency-management") version "1.1.7"
-    id("jacoco")
-    kotlin("jvm") version "2.0.10"
-    kotlin("plugin.spring") version "2.0.10" apply false
-    kotlin("plugin.jpa") version "2.0.10" apply false
-    kotlin("kapt") version "2.0.10" apply false
-    id("org.flywaydb.flyway") version "10.20.1" apply false
-//    id("org.sonarqube") version "4.4.1.3373"
-    id("org.asciidoctor.jvm.convert") version "3.3.2" apply false
-    id("com.epages.restdocs-api-spec") version "0.19.4" apply false
-    id("org.hidetake.swagger.generator") version "2.18.2" apply false
-    id("io.gitlab.arturbosch.detekt") version "1.23.7"
-    id("com.diffplug.spotless") version "6.25.0"
-    id("com.github.ben-manes.versions") version "0.51.0"
+    alias(libs.plugins.spring.boot) apply false
+    alias(libs.plugins.spring.dependency.management)
+    jacoco
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.spring) apply false
+    alias(libs.plugins.kotlin.jpa) apply false
+    alias(libs.plugins.kotlin.kapt) apply false
+    alias(libs.plugins.flyway) apply false
+    alias(libs.plugins.asciidoctor) apply false
+    alias(libs.plugins.restdocs.api.spec) apply false
+    alias(libs.plugins.swagger.generator) apply false
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.spotless)
 }
 
 
@@ -32,23 +30,16 @@ kotlin {
 spotless {
     kotlin {
         target("**/*.kt")
-
-
-
-        ktlint("1.2.1")
+        ktlint(libs.versions.ktlint.get())
         trimTrailingWhitespace()
         indentWithSpaces(4)
         endWithNewline()
     }
 
-//    kotlinGradle {
-//        target("**/*.kts")
-//        ktlint("1.2.1")
-//    }
 }
 
 jacoco {
-    toolVersion = "0.8.11" // 원하는 버전 명시
+    toolVersion = libs.versions.jacoco.get()
 }
 
 fun String.runCommand(): String =
@@ -119,7 +110,7 @@ tasks.named("gitPreCommitHook") {
 
 dependencyManagement {
     imports {
-        mavenBom("org.testcontainers:testcontainers-bom:1.21.0")
+        mavenBom("org.testcontainers:testcontainers-bom:${libs.versions.testcontainers.get()}")
     }
 }
 
@@ -148,30 +139,16 @@ subprojects {
         buildUponDefaultConfig = true
     }
 
-    dependencies {
-        implementation("org.jetbrains.kotlin:kotlin-reflect")
-        implementation("org.springframework.boot:spring-boot-starter-web")
-        implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    configurations.named("detekt").configure {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "org.jetbrains.kotlin") {
+                useVersion("2.0.10")
+            }
+        }
     }
 
-    dependencies {
-        testImplementation("org.springframework.boot:spring-boot-starter-test")
-        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-        testImplementation("io.kotest:kotest-runner-junit5:5.9.0")
-        testImplementation("io.kotest:kotest-assertions-core:5.9.0")
-        testImplementation("io.kotest:kotest-framework-engine:5.9.0")
-        testImplementation("io.kotest:kotest-assertions-core:5.9.0")
-        testImplementation("io.kotest:kotest-property:5.9.0")
-        testImplementation("io.kotest:kotest-runner-junit5:5.9.0")
-        testImplementation("io.kotest.extensions:kotest-extensions-spring:1.3.0")
-        testImplementation("com.ninja-squad:springmockk:4.0.2")
-        testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter-kotlin:1.1.11")
-        testImplementation("com.navercorp.fixturemonkey:fixture-monkey-kotest:1.1.11")
-        testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
-        testImplementation("io.mockk:mockk:1.13.10")
-        testImplementation("io.mockk:mockk-agent:1.13.10")
-        testImplementation("org.assertj:assertj-core:3.24.2")
-    }
+    // 공통 dependencies는 각 모듈에서 개별적으로 정의
+    // 루트에서는 version catalog를 활용한 설정만 관리
 
 
 
@@ -212,77 +189,3 @@ subprojects {
     }
 }
 
-val queryDslVersion = "5.1.0"
-
-project(":test-module") {
-    tasks.named("bootJar") { enabled = false }
-    tasks.named("jar") { enabled = true }
-
-}
-
-project(":shared-module") {
-    tasks.named("bootJar") { enabled = false }
-    tasks.named("jar") { enabled = true }
-
-    dependencies {
-        implementation("org.springframework.security:spring-security-crypto")
-    }
-}
-
-project(":core-module") {
-    tasks.named("bootJar") { enabled = false }
-    tasks.named("jar") { enabled = true }
-}
-
-project(":application-module") {
-    tasks.named("bootJar") { enabled = false }
-    tasks.named("jar") { enabled = true }
-    dependencies {
-//        implementation("org.springframework.security:spring-security-core:6.3.5")
-        implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    }
-}
-
-project(":adapter-module") {
-    apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
-    apply(plugin = "org.asciidoctor.jvm.convert")
-    apply(plugin = "com.epages.restdocs-api-spec")
-    apply(plugin = "org.hidetake.swagger.generator")
-    apply(plugin = "org.jetbrains.kotlin.kapt")
-    apply(plugin = "org.flywaydb.flyway")
-
-
-
-
-
-    tasks.named("bootJar") { enabled = true }
-    tasks.named("jar") { enabled = false }
-
-    val developmentOnly by configurations
-    val kapt by configurations
-
-
-    dependencies {
-        implementation("org.springframework.boot:spring-boot-starter-actuator")
-        implementation("org.springframework.boot:spring-boot-starter-validation")
-        implementation("org.springframework.boot:spring-boot-starter-security")
-        implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
-        implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-        implementation("org.flywaydb:flyway-core")
-        implementation("org.flywaydb:flyway-mysql")
-        runtimeOnly("com.mysql:mysql-connector-j")
-        implementation("com.querydsl:querydsl-jpa:$queryDslVersion:jakarta")
-        add("kapt", "com.querydsl:querydsl-apt:$queryDslVersion:jakarta")
-        add("kapt", "jakarta.annotation:jakarta.annotation-api")
-        add("kapt", "jakarta.persistence:jakarta.persistence-api")
-    }
-
-    dependencies {
-        developmentOnly("org.springframework.boot:spring-boot-docker-compose")
-        testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
-        testImplementation("org.springframework.security:spring-security-test")
-        testImplementation("org.testcontainers:mysql")
-        testImplementation("org.springframework.boot:spring-boot-testcontainers")
-        testImplementation("org.testcontainers:junit-jupiter")
-    }
-}

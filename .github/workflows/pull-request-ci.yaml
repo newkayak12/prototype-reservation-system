@@ -19,15 +19,15 @@ concurrency:
 jobs:
   adapter-module:
     name: Adapter Module Test
-    uses: newkayak12/prototype-reservation-system/.github/workflows/adapter-module-test.yaml@master
+    uses: newkayak12/prototype-reservation-system/.github/workflows/adapter-module-test.yaml@658699f588c33d5c8d037c722352c8221568fe94
 
   application-module:
     name: Application Module Test
-    uses: newkayak12/prototype-reservation-system/.github/workflows/application-module-test.yaml@master
+    uses: newkayak12/prototype-reservation-system/.github/workflows/application-module-test.yaml@658699f588c33d5c8d037c722352c8221568fe94
 
   core-module:
     name: Core Module Test
-    uses: newkayak12/prototype-reservation-system/.github/workflows/core-module-test.yaml@master
+    uses: newkayak12/prototype-reservation-system/.github/workflows/core-module-test.yaml@658699f588c33d5c8d037c722352c8221568fe94
 
   publish_test_results:
     name: Publish Test Results
@@ -36,7 +36,7 @@ jobs:
       - application-module
       - core-module
     if: always()
-    uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@master
+    uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@658699f588c33d5c8d037c722352c8221568fe94
 
   upload_to_sonar_cloud:
     name: Upload JacocoReports to SonarCloud Scan
@@ -49,7 +49,7 @@ jobs:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_PROJECT_KEY: ${{secrets.SONAR_PROJECT_KEY}}
       SONAR_ORGANIZATION: ${{secrets.SONAR_ORGANIZATION}}
-    uses: newkayak12/prototype-reservation-system/.github/workflows/upload-sonarcloud.yaml@master
+    uses: newkayak12/prototype-reservation-system/.github/workflows/upload-sonarcloud.yaml@658699f588c33d5c8d037c722352c8221568fe94
 
   upload_to_codecov:
     name: Upload Coverage to Codecov
@@ -58,7 +58,7 @@ jobs:
       - application-module
       - core-module
     if: success()
-    uses: newkayak12/prototype-reservation-system/.github/workflows/upload-codecov.yaml@master
+    uses: newkayak12/prototype-reservation-system/.github/workflows/upload-codecov.yaml@658699f588c33d5c8d037c722352c8221568fe94
 
   build:
     name: Build
@@ -67,4 +67,4 @@ jobs:
       - application-module
       - core-module
     if: success()
-    uses: newkayak12/prototype-reservation-system/.github/workflows/build.yaml@master
+    uses: newkayak12/prototype-reservation-system/.github/workflows/build.yaml@658699f588c33d5c8d037c722352c8221568fe94
