@@ -10,7 +10,7 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@v9
+      - uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639 # v9.1.0
         with:
           stale-issue-message: "이 이슈는 최근 활동이 없어 stale 상태로 변경됩니다."
           stale-pr-message: "이 PR은 최근 활동이 없어 stale 상태로 변경됩니다."

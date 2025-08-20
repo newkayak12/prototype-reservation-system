@@ -15,31 +15,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcb5dd907a8 # v5.0.0
 
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@c5195ef # v4.7.1
         with:
           java-version: 21
           distribution: corretto
 
       - name: Download adapter jacoco
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@634f93c # v5.0.0
         with:
           name: adapter-jacoco
           path: jacoco/adapter
       - name: Download application jacoco
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@634f93c # v5.0.0
         with:
           name: application-jacoco
           path: jacoco/application
       - name: Download core jacoco
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@634f93c # v5.0.0
         with:
           name: core-jacoco
           path: jacoco/core
       - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@v2
+        uses: sonarsource/sonarcloud-github-action@ffc3010689be73b8e5ae0c57ce35968afd7909e8 # v5.0.0
         with:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}

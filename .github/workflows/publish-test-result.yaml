@@ -9,22 +9,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download adapter test-results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@634f93c # v5.0.0
         with:
           name: adapter-test-results
           path: test-results/adapter
       - name: Download application test-results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@634f93c # v5.0.0
         with:
           name: application-test-results
           path: test-results/application
       - name: Download core test-results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@634f93c # v5.0.0
         with:
           name: core-test-results
           path: test-results/core
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: EnricoMi/publish-unit-test-result-action@3a74b2957438d0b6e2e61d67b05318aa25c9e6c6 # v2.20.0
         if: always()
         with:
           files: |

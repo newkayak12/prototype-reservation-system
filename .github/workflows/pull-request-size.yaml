@@ -22,7 +22,7 @@ jobs:
 #        run: sleep 5
 
       - name: Add updated size label
-        uses: pascalgn/size-label-action@v0.5.5
+        uses: pascalgn/size-label-action@f8edde3 # v0.5.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
