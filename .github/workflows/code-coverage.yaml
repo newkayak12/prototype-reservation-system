@@ -42,7 +42,7 @@ jobs:
         run: ./gradlew jacocoTestReport
 
       - name: Upload to Codecov
-        uses: codecov/codecov-action@18283e0 # v5.2.0
+        uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5.2.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}  # 프라이빗 repo만 필요
           files: |
