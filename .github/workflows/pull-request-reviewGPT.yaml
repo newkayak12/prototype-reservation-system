@@ -14,10 +14,10 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             -   name: Checkout code
-                uses: actions/checkout@v3
+                uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v5.0.0
 
             -   name: ChatGPT Code Review
-                uses: anc95/ChatGPT-CodeReview@main
+                uses: anc95/ChatGPT-CodeReview@763282a7d171b9a8224bb2590803eed11b918837 # main latest
                 env:
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

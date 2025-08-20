@@ -1,0 +1,135 @@
+[versions]
+kotlin = "2.0.10"
+springBoot = "3.4.5"
+springFramework = "6.2.1"
+springDependencyManagement = "1.1.6"
+
+# Database
+querydsl = "5.1.0"
+mysql = "8.0.33"
+h2 = "2.2.224"
+flyway = "10.0.0"
+jakarta-annotation = "3.0.0"
+jakarta-persistence = "3.1.0"
+
+# Testing
+junit = "5.10.2"
+kotest = "5.9.0"
+mockk = "1.13.10"
+springmockk = "4.0.2"
+assertj = "3.24.2"
+testcontainers = "1.20.1"
+fixtureMonkey = "1.1.11"
+
+# Code Quality
+detekt = "1.23.7"
+spotless = "6.25.0"
+ktlint = "1.2.1"
+jacoco = "0.8.11"
+
+# Documentation
+springdoc = "2.6.0"
+asciidoctor = "4.0.2"
+restdocsApiSpec = "0.19.4"
+
+# Security & Utilities
+jjwt = "0.12.6"
+springSecurity = "6.4.2"
+hibernateValidator = "8.0.1.Final"
+jakartaValidation = "3.0.2"
+uuidGenerator = "4.3.0"
+p6spy = "1.10.0"
+
+[libraries]
+# Kotlin
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
+jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
+
+# Spring Boot Starters
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
+spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis" }
+spring-boot-starter-data-jdbc = { module = "org.springframework.boot:spring-boot-starter-data-jdbc" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }
+spring-boot-docker-compose = { module = "org.springframework.boot:spring-boot-docker-compose" }
+
+# Spring Framework
+spring-web = { module = "org.springframework:spring-web", version.ref = "springFramework" }
+spring-tx = { module = "org.springframework:spring-tx", version.ref = "springFramework" }
+
+# Database
+querydsl-jpa = { module = "com.querydsl:querydsl-jpa", version.ref = "querydsl" }
+querydsl-apt = { module = "com.querydsl:querydsl-apt", version.ref = "querydsl" }
+jakarta-annotation-api = { module = "jakarta.annotation:jakarta.annotation-api", version.ref = "jakarta-annotation" }
+jakarta-persistence-api = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-persistence" }
+mysql-connector = { module = "com.mysql:mysql-connector-j" }
+h2-database = { module = "com.h2database:h2" }
+flyway-core = { module = "org.flywaydb:flyway-core" }
+flyway-mysql = { module = "org.flywaydb:flyway-mysql" }
+
+# Testing
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+kotest-runner = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotest-assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-framework = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+kotest-spring = { module = "io.kotest.extensions:kotest-extensions-spring", version = "1.3.0" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+springmockk = { module = "com.ninja-squad:springmockk", version.ref = "springmockk" }
+assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+testcontainers-mysql = { module = "org.testcontainers:mysql" }
+testcontainers-junit = { module = "org.testcontainers:junit-jupiter" }
+fixture-monkey-kotlin = { module = "com.navercorp.fixturemonkey:fixture-monkey-starter-kotlin", version.ref = "fixtureMonkey" }
+fixture-monkey-kotest = { module = "com.navercorp.fixturemonkey:fixture-monkey-kotest", version.ref = "fixtureMonkey" }
+
+# Security & Utilities
+jjwt = { module = "io.jsonwebtoken:jjwt", version.ref = "jjwt" }
+spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version.ref = "springSecurity" }
+spring-security-test = { module = "org.springframework.security:spring-security-test" }
+hibernate-validator = { module = "org.hibernate.validator:hibernate-validator", version.ref = "hibernateValidator" }
+jakarta-validation = { module = "jakarta.validation:jakarta.validation-api", version.ref = "jakartaValidation" }
+uuid-generator = { module = "com.fasterxml.uuid:java-uuid-generator", version.ref = "uuidGenerator" }
+
+# Documentation
+springdoc-openapi = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+restdocs-mockmvc = { module = "org.springframework.restdocs:spring-restdocs-mockmvc" }
+restdocs-asciidoctor = { module = "org.springframework.restdocs:spring-restdocs-asciidoctor" }
+restdocs-api-spec = { module = "com.epages:restdocs-api-spec-mockmvc", version.ref = "restdocsApiSpec" }
+
+# Development Tools
+p6spy = { module = "com.github.gavlyukovskiy:p6spy-spring-boot-starter", version.ref = "p6spy" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+kotlin-jpa = { id = "org.jetbrains.kotlin.plugin.jpa", version.ref = "kotlin" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+asciidoctor = { id = "org.asciidoctor.jvm.convert", version.ref = "asciidoctor" }
+restdocs-api-spec = { id = "com.epages.restdocs-api-spec", version.ref = "restdocsApiSpec" }
+swagger-generator = { id = "org.hidetake.swagger.generator", version = "2.19.2" }
+flyway = { id = "org.flywaydb.flyway", version.ref = "flyway" }
+
+[bundles]
+spring-web = ["spring-boot-starter-web", "spring-boot-starter-validation", "spring-boot-starter-security", "spring-boot-starter-actuator"]
+spring-data = ["spring-boot-starter-data-jpa", "spring-boot-starter-data-redis", "spring-boot-starter-data-jdbc"]
+database = ["flyway-core", "flyway-mysql", "mysql-connector", "h2-database"]
+querydsl-kapt = ["jakarta-annotation-api", "jakarta-persistence-api"]
+testing-junit = ["junit-jupiter", "junit-platform-launcher"]
+testing-kotest = ["kotest-runner", "kotest-assertions", "kotest-framework", "kotest-spring"]
+testing-mock = ["mockk", "springmockk"]
+testing-containers = ["testcontainers-mysql", "testcontainers-junit", "spring-boot-testcontainers"]
+testing-fixtures = ["fixture-monkey-kotlin", "fixture-monkey-kotest"]
+security = ["jjwt", "spring-security-crypto"]
+validation = ["hibernate-validator", "jakarta-validation"]
+documentation = ["springdoc-openapi", "restdocs-mockmvc", "restdocs-asciidoctor", "restdocs-api-spec"]

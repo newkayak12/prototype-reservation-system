@@ -1,5 +1,8 @@
 import io.gitlab.arturbosch.detekt.Detekt
 
+tasks.named("bootJar") { enabled = false }
+tasks.named("jar") { enabled = true }
+
 tasks.named<Detekt>("detekt") {
     reports {
         html.required.set(true)
@@ -17,6 +20,5 @@ configurations.all {
 }
 
 dependencies {
-    implementation("com.navercorp.fixturemonkey:fixture-monkey-starter-kotlin:1.1.11")
-    implementation("com.navercorp.fixturemonkey:fixture-monkey-kotest:1.1.11")
+    implementation(libs.bundles.testing.fixtures)
 }

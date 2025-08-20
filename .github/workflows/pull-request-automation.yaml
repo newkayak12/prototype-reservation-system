@@ -15,10 +15,10 @@ jobs:
 
         steps:
             -   name: Check out repository
-                uses: actions/checkout@v2
+                uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v5.0.0
 
             -   name: Add Label
-                uses: actions/github-script@v6
+                uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.1.0
                 with:
                     script: |
                         const title = context.payload.pull_request.title;
@@ -79,7 +79,7 @@ jobs:
                         }
 
             -   name: Add Assign Creator
-                uses: actions/github-script@v6
+                uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.1.0
                 with:
                     script: |
                         const creator = context.payload.pull_request.user.login;
