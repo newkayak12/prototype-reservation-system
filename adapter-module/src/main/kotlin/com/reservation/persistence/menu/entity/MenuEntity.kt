@@ -1,8 +1,10 @@
 package com.reservation.persistence.menu.entity
 
+import com.reservation.persistence.common.LogicalDelete
 import com.reservation.persistence.common.TimeBasedPrimaryKey
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
+import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.Index
@@ -11,7 +13,6 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.Comment
 import org.hibernate.annotations.DynamicUpdate
 import org.hibernate.annotations.Filter
-import org.hibernate.annotations.FilterDef
 import java.math.BigDecimal
 
 @Table(
@@ -19,12 +20,12 @@ import java.math.BigDecimal
     name = "menu",
     indexes = [
         Index(columnList = "title, is_deleted", unique = false, name = "index_title_is_deleted"),
+        Index(columnList = "restaurant_id", unique = false, name = "index_restaurant_id"),
     ],
 )
 @Entity
 @DynamicUpdate
 @Suppress("LongParameterList", "TooManyFunctions")
-@FilterDef(name = "is_not_deleted", defaultCondition = "is_deleted = false")
 @Filter(name = "is_not_deleted")
 class MenuEntity(
     restaurantId: String,
@@ -73,7 +74,11 @@ class MenuEntity(
         targetEntity = MenuPhotoEntity::class,
         orphanRemoval = true,
     )
-    private val photos = mutableListOf<MenuPhotoEntity>()
+    val photos = mutableListOf<MenuPhotoEntity>()
+
+    @Embedded
+    var logicalDelete: LogicalDelete = LogicalDelete()
+        protected set
 
 //    private fun Boolean.toggle(): Boolean = !this
 //    fun toggleRepresentative() {

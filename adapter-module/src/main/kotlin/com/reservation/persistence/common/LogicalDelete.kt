@@ -3,8 +3,10 @@ package com.reservation.persistence.common
 import jakarta.persistence.Column
 import jakarta.persistence.Embeddable
 import org.hibernate.annotations.Comment
+import org.hibernate.annotations.FilterDef
 
 @Embeddable
+@FilterDef(name = "is_not_deleted", defaultCondition = "is_deleted = false")
 class LogicalDelete(
     isDeleted: Boolean = false,
 ) {

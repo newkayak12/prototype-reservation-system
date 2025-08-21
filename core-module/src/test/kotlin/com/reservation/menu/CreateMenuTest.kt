@@ -136,10 +136,11 @@ class CreateMenuTest : BehaviorSpec(
         private val stringArbitrary =
             Arbitraries.strings()
                 .withCharRange('A', 'Z')
-                .ofMinLength(0)
+                .ofMinLength(1)
                 .ofMaxLength(30)
         private val bigDecimalArbitrary =
             Arbitraries.bigDecimals()
+                .greaterThan(BigDecimal.ZERO)
                 .lessThan(BigDecimal.valueOf(999999999L))
                 .greaterThan(BigDecimal.ZERO)
 

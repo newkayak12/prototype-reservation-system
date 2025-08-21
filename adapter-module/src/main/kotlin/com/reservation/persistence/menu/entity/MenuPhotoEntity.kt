@@ -12,7 +12,7 @@ import org.hibernate.annotations.Comment
 
 @Table(
     catalog = "prototype_reservation",
-    name = "restaurant_photo",
+    name = "menu_photo",
     indexes = [],
 )
 @Entity
