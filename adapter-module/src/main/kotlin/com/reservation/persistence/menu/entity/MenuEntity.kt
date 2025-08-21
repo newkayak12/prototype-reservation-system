@@ -1,4 +1,4 @@
-package com.reservation.persistence.menu
+package com.reservation.persistence.menu.entity
 
 import com.reservation.persistence.common.TimeBasedPrimaryKey
 import jakarta.persistence.CascadeType
@@ -75,24 +75,23 @@ class MenuEntity(
     )
     private val photos = mutableListOf<MenuPhotoEntity>()
 
-    private fun Boolean.toggle(): Boolean = !this
-
-    fun toggleRepresentative() {
-        isRepresentative = isRepresentative.toggle()
-    }
-
-    fun toggleRecommended() {
-        isRecommended = isRecommended.toggle()
-    }
-
-    fun toggleVisible() {
-        isVisible = isVisible.toggle()
-    }
-
-    fun adjustPrice(price: BigDecimal) {
-        if (price < BigDecimal.ZERO) return
-        this.price = price
-    }
+//    private fun Boolean.toggle(): Boolean = !this
+//    fun toggleRepresentative() {
+//        isRepresentative = isRepresentative.toggle()
+//    }
+//
+//    fun toggleRecommended() {
+//        isRecommended = isRecommended.toggle()
+//    }
+//
+//    fun toggleVisible() {
+//        isVisible = isVisible.toggle()
+//    }
+//
+//    fun adjustPrice(price: BigDecimal) {
+//        if (price < BigDecimal.ZERO) return
+//        this.price = price
+//    }
 
     fun adjustPhotos(block: MutableList<MenuPhotoEntity>.() -> Unit) = photos.apply(block)
 }

@@ -1,4 +1,4 @@
-package com.reservation.persistence.menu
+package com.reservation.persistence.menu.entity
 
 import com.reservation.persistence.common.TimeBasedPrimaryKey
 import jakarta.persistence.Column
