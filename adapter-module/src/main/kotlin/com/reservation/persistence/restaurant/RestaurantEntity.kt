@@ -13,8 +13,7 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.Comment
 import org.hibernate.annotations.DynamicUpdate
-import org.hibernate.annotations.Filter
-import org.hibernate.annotations.FilterDef
+import org.hibernate.annotations.SQLRestriction
 import java.math.BigDecimal
 
 @Table(
@@ -27,8 +26,7 @@ import java.math.BigDecimal
 @Entity
 @DynamicUpdate
 @Suppress("LongParameterList", "TooManyFunctions")
-@FilterDef(name = "is_not_deleted", defaultCondition = "is_deleted = false")
-@Filter(name = "is_not_deleted")
+@SQLRestriction(value = "is_deleted = false")
 class RestaurantEntity(
     companyId: String,
     userId: String,
