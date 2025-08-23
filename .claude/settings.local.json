@@ -5,7 +5,16 @@
       "Bash(mkdir:*)",
       "Bash(find:*)",
       "mcp__sequential-thinking__sequentialthinking",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "mcp__taskmanager__request_planning",
+      "mcp__taskmanager__get_next_task",
+      "mcp__filesystem__directory_tree",
+      "mcp__filesystem__list_directory",
+      "mcp__desktop-commander__search_files",
+      "mcp__filesystem__read_multiple_files",
+      "mcp__taskmanager__mark_task_done",
+      "mcp__filesystem__write_file",
+      "mcp__filesystem__create_directory"
     ],
     "deny": []
   }
