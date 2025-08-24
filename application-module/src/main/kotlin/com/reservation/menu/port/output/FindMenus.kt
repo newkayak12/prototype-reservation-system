@@ -8,7 +8,7 @@ interface FindMenus {
     fun query(restaurantId: String): List<FindMenusResult>
 
     data class FindMenusResult(
-        val id: String,
+        val identifier: String,
         val restaurantId: String,
         val title: String,
         val description: String,
@@ -16,11 +16,11 @@ interface FindMenus {
         val isRepresentative: Boolean,
         val isRecommended: Boolean,
         val isVisible: Boolean,
-        val photos: List<FindMenusPhotoResult>,
+        val photos: MutableList<FindMenusPhotoResult> = mutableListOf(),
     ) {
         fun toQuery(): FindMenusQueryResult =
             FindMenusQueryResult(
-                id = id,
+                id = identifier,
                 restaurantId = restaurantId,
                 title = title,
                 description = description,
@@ -30,6 +30,10 @@ interface FindMenus {
                 isVisible = isVisible,
                 photos = photos.map { it.toQuery() },
             )
+
+        fun bind(incoming: List<FindMenusPhotoResult>) {
+            this.photos.addAll(incoming)
+        }
     }
 
     data class FindMenusPhotoResult(
