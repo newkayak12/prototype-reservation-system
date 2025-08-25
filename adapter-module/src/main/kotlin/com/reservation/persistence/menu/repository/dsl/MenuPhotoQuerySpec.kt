@@ -5,7 +5,7 @@ import com.querydsl.core.types.dsl.Expressions
 import com.reservation.persistence.menu.entity.QMenuPhotoEntity.menuPhotoEntity
 
 object MenuPhotoQuerySpec {
-    fun restaurantIdEq(menuIdentifiers: Set<String>?): BooleanExpression? =
+    fun restaurantIdsIn(menuIdentifiers: Set<String>?): BooleanExpression? =
         menuIdentifiers?.let {
             if (it.isEmpty()) return@let Expressions.FALSE
 

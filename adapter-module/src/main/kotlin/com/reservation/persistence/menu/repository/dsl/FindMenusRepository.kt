@@ -23,7 +23,7 @@ class FindMenusRepository(
         )
             .from(menuPhotoEntity)
             .where(
-                MenuPhotoQuerySpec.restaurantIdEq(identifiers),
+                MenuPhotoQuerySpec.restaurantIdsIn(identifiers),
             )
             .fetch()
             .filter {
