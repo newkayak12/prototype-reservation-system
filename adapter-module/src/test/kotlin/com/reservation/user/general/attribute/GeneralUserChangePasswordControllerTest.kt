@@ -7,7 +7,7 @@ import com.reservation.config.restdoc.PathParameter
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
-import com.reservation.rest.user.general.attribute.GeneralUserChangePasswordController
+import com.reservation.rest.user.general.attribute.change.password.GeneralUserChangePasswordController
 import com.reservation.rest.user.general.request.GeneralUserChangePasswordRequest
 import com.reservation.user.self.port.input.ChangeGeneralUserPasswordUseCase
 import com.reservation.utilities.generator.uuid.UuidGenerator

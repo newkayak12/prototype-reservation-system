@@ -1,4 +1,4 @@
-package com.reservation.rest.user.general.sign
+package com.reservation.rest.user.general.sign.income
 
 import com.reservation.authenticate.port.input.AuthenticateGeneralUserUseCase
 import com.reservation.rest.user.RefreshTokenDefinitions

@@ -9,7 +9,7 @@ import com.reservation.exceptions.UnauthorizedException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.rest.user.RefreshTokenDefinitions
 import com.reservation.rest.user.general.GeneralUserUrl
-import com.reservation.rest.user.general.sign.RefreshGeneralUserController
+import com.reservation.rest.user.general.sign.refresh.RefreshGeneralUserController
 import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenUseCase
 import com.reservation.user.self.port.input.query.response.RefreshResult
 import io.kotest.core.spec.style.FunSpec

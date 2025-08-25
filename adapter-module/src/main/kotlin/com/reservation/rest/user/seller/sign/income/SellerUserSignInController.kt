@@ -1,4 +1,4 @@
-package com.reservation.rest.user.seller.sign
+package com.reservation.rest.user.seller.sign.income
 
 import com.reservation.authenticate.port.input.AuthenticateSellerUserUseCase
 import com.reservation.rest.user.RefreshTokenDefinitions

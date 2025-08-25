@@ -8,7 +8,7 @@ import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.request.GeneralUserSignUpRequest
-import com.reservation.rest.user.general.sign.GeneralUserSignUpController
+import com.reservation.rest.user.general.sign.up.GeneralUserSignUpController
 import com.reservation.user.self.port.input.CreateGeneralUserUseCase
 import com.reservation.user.self.port.input.command.request.CreateGeneralUserCommand
 import io.kotest.core.spec.style.FunSpec

@@ -13,7 +13,7 @@ import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.request.GeneralUserLoginRequest
 import com.reservation.rest.user.seller.SellerUserUrl
 import com.reservation.rest.user.seller.request.SellerUserLoginRequest
-import com.reservation.rest.user.seller.sign.SellerUserSignInController
+import com.reservation.rest.user.seller.sign.income.SellerUserSignInController
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.data.row
 import io.kotest.extensions.spring.SpringExtension
