@@ -1,7 +1,7 @@
-package com.reservation.rest.user.general.sign
+package com.reservation.rest.user.seller.sign.outcome
 
 import com.reservation.rest.user.RefreshTokenDefinitions
-import com.reservation.rest.user.general.GeneralUserUrl
+import com.reservation.rest.user.seller.SellerUserUrl
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class GeneralUserSignOutController {
-    @PatchMapping(GeneralUserUrl.USER_SIGN_OUT)
+class SellerUserSignOutController {
+    @PatchMapping(SellerUserUrl.USER_SIGN_OUT)
     fun signOut(httpServletResponse: HttpServletResponse) {
         val refreshTokenCookie = Cookie(RefreshTokenDefinitions.REFRESH_TOKEN_KEY, null)
 

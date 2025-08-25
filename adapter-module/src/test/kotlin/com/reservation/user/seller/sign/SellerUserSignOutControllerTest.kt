@@ -4,7 +4,7 @@ import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
 import com.reservation.rest.user.RefreshTokenDefinitions
 import com.reservation.rest.user.seller.SellerUserUrl
-import com.reservation.rest.user.seller.sign.SellerUserSignOutController
+import com.reservation.rest.user.seller.sign.outcome.SellerUserSignOutController
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
 import jakarta.servlet.http.Cookie

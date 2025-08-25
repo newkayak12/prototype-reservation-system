@@ -11,7 +11,7 @@ import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.user.general.GeneralUserUrl
-import com.reservation.rest.user.general.self.FindGeneralUserController
+import com.reservation.rest.user.general.find.one.FindGeneralUserController
 import com.reservation.user.self.port.input.FindGeneralUserUseCase
 import com.reservation.user.self.port.input.query.response.FindGeneralUserQueryResult
 import com.reservation.utilities.generator.uuid.UuidGenerator

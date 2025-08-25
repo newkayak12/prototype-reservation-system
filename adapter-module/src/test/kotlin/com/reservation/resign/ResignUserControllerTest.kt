@@ -1,4 +1,4 @@
-package com.reservation.resign.self
+package com.reservation.resign
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
@@ -8,7 +8,7 @@ import com.reservation.config.restdoc.RestDocuments
 import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.rest.resign.ResignUrl
-import com.reservation.rest.resign.self.ResignUserController
+import com.reservation.rest.resign.remove.ResignUserController
 import com.reservation.user.resign.port.input.ResignUserUseCase
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec

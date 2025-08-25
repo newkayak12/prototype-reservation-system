@@ -1,4 +1,4 @@
-package com.reservation.rest.resign.self
+package com.reservation.rest.resign.remove
 
 import com.reservation.rest.common.response.BooleanResponse
 import com.reservation.rest.resign.ResignUrl

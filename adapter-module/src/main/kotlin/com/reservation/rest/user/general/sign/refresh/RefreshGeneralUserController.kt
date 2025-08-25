@@ -1,4 +1,4 @@
-package com.reservation.rest.user.general.sign
+package com.reservation.rest.user.general.sign.refresh
 
 import com.reservation.rest.user.RefreshTokenDefinitions
 import com.reservation.rest.user.general.GeneralUserUrl
