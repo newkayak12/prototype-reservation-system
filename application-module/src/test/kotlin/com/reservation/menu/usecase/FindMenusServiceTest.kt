@@ -53,9 +53,9 @@ class FindMenusServiceTest {
         @InjectMockKs
         private lateinit var useCase: FindMenusService
 
-        @DisplayName("조회되는 사항이 아무것도 없다.")
+        @DisplayName("12개의 아이템이 조회된다. 없다.")
         @Test
-        fun `Empty Result`() {
+        fun `Find 12 Result`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             val id = pureMonkey.giveMeOne<String>()
             val size = 12
