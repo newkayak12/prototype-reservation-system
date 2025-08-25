@@ -50,24 +50,33 @@ fun String.runCommand(): String =
         .bufferedReader()
         .readText()
 
-tasks.register<Exec>("preCommitApplySpotless") {
+tasks.register("preCommitApplySpotless") {
     description = "Pre-commit code applying spotless."
     group = LifecycleBasePlugin.VERIFICATION_GROUP
 
-    commandLine("bash", "./gradlew", "spotlessKotlinApply")
+    outputs.cacheIf { false }
+    outputs.upToDateWhen { false }
+
+    dependsOn("spotlessKotlinApply")
 }
 
-tasks.register<Exec>("preCommitDetekt") {
+tasks.register("preCommitDetekt") {
     description = "Pre-commit code applying detekt."
     group = LifecycleBasePlugin.VERIFICATION_GROUP
 
-    commandLine("bash", "./gradlew", "detekt")
+    outputs.cacheIf { false }
+    outputs.upToDateWhen { false }
+
+    dependsOn("detekt")
     mustRunAfter("preCommitApplySpotless")
 }
 
 tasks.register<Exec>("preCommitAddCommit") {
     description = "Pre-commit code adding commit."
     group = LifecycleBasePlugin.VERIFICATION_GROUP
+
+    outputs.cacheIf { false }
+    outputs.upToDateWhen { false }
 
     val stagedFiles = "git diff --cached --name-only"
         .runCommand()
@@ -85,6 +94,7 @@ tasks.register("gitPreCommitHook") {
     description = "Git hook commit."
     group = LifecycleBasePlugin.VERIFICATION_GROUP
 
+
     dependsOn("preCommitApplySpotless", "preCommitDetekt", "preCommitAddCommit")
     doLast {
         println("Running spotlessKotlinGradleApply and detekt before commit...")
@@ -93,9 +103,12 @@ tasks.register("gitPreCommitHook") {
 
 // pre-commit 후크 설정
 tasks.named("gitPreCommitHook") {
+    outputs.cacheIf { false }
+    outputs.upToDateWhen { false }
     doLast {
-        val hookFile = file(".git/hooks/pre-commit")
+        val hookFile = File(project.rootDir, ".git/hooks/pre-commit")
         if (!hookFile.exists()) {
+            hookFile.parentFile.mkdirs()
             hookFile.writeText(
                 """
                 #!/bin/sh
@@ -157,6 +170,26 @@ subprojects {
     extra["snippetsDir"] = file("build/generated-snippets")
     tasks.withType<Test> {
         useJUnitPlatform()
+
+        failFast = true
+        outputs.cacheIf { false }
+        outputs.upToDateWhen { false }
+
+        jvmArgs(
+            "-Xmx2g", "-XX:+UseG1GC", "-XX:+UseStringDeduplication",
+            "-Djava.awt.headless=true"
+        )
+
+        systemProperties(
+            "spring.test.context.cache.maxSize" to "30",
+            "spring.main.lazy-initialization" to "true",
+            "spring.main.banner-mode" to "off",
+            "spring.jmx.enabled" to "false",
+            "junit.jupiter.execution.parallel.enabled" to "false",
+            "logging.level.root" to "WARN",
+            "java.security.egd" to "file:/dev/./urandom"
+        )
+
     }
     tasks.test {
         outputs.dir(project.extra["snippetsDir"]!!)
