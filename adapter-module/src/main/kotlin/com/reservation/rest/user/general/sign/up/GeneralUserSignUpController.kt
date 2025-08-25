@@ -1,4 +1,4 @@
-package com.reservation.rest.user.general.sign
+package com.reservation.rest.user.general.sign.up
 
 import com.reservation.rest.common.response.BooleanResponse
 import com.reservation.rest.user.general.GeneralUserUrl

@@ -1,4 +1,4 @@
-package com.reservation.rest.user.general.attribute
+package com.reservation.rest.user.general.attribute.change.nickname
 
 import com.reservation.rest.common.response.BooleanResponse
 import com.reservation.rest.user.general.GeneralUserUrl

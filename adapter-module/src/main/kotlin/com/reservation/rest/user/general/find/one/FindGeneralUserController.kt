@@ -1,4 +1,4 @@
-package com.reservation.rest.user.general.self
+package com.reservation.rest.user.general.find.one
 
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.response.FindGeneralUserResponse

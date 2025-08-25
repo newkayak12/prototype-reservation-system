@@ -11,7 +11,7 @@ import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.request.GeneralUserLoginRequest
-import com.reservation.rest.user.general.sign.GeneralUserSignInController
+import com.reservation.rest.user.general.sign.income.GeneralUserSignInController
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.data.forAll
 import io.kotest.data.row
