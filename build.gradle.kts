@@ -102,6 +102,7 @@ tasks.register("gitPreCommitHook") {
 }
 
 // pre-commit 후크 설정
+
 tasks.named("gitPreCommitHook") {
     outputs.cacheIf { false }
     outputs.upToDateWhen { false }
