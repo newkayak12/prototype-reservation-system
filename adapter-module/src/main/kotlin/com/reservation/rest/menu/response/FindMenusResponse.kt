@@ -1,10 +1,10 @@
 package com.reservation.rest.menu.response
 
-import com.reservation.menu.port.input.response.FindMenuQueryResult
-import com.reservation.menu.port.input.response.FindMenuQueryResult.FindMenusPhotoQueryResult
+import com.reservation.menu.port.input.response.FindMenusQueryResult
+import com.reservation.menu.port.input.response.FindMenusQueryResult.FindMenusPhotoQueryResult
 import java.math.BigDecimal
 
-data class FindMenuResponse(
+data class FindMenusResponse(
     val id: String,
     val restaurantId: String,
     val title: String,
@@ -13,21 +13,21 @@ data class FindMenuResponse(
     val isRepresentative: Boolean,
     val isRecommended: Boolean,
     val isVisible: Boolean,
-    val photos: List<FindMenuPhotoResponse>,
+    val photos: List<FindMenusPhotoResponse>,
 ) {
-    data class FindMenuPhotoResponse(
+    data class FindMenusPhotoResponse(
         val id: String,
         val url: String,
     ) {
         companion object {
             fun from(element: FindMenusPhotoQueryResult) =
-                FindMenuPhotoResponse(element.id, element.url)
+                FindMenusPhotoResponse(element.id, element.url)
         }
     }
 
     companion object {
-        fun from(element: FindMenuQueryResult) =
-            FindMenuResponse(
+        fun from(element: FindMenusQueryResult) =
+            FindMenusResponse(
                 id = element.id,
                 restaurantId = element.restaurantId,
                 title = element.title,
@@ -36,7 +36,7 @@ data class FindMenuResponse(
                 isRepresentative = element.isRepresentative,
                 isRecommended = element.isRecommended,
                 isVisible = element.isVisible,
-                photos = element.photos.map { FindMenuPhotoResponse.from(it) },
+                photos = element.photos.map { FindMenusPhotoResponse.from(it) },
             )
     }
 }
