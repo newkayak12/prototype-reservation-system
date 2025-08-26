@@ -30,10 +30,6 @@ interface FindMenu {
                 isVisible = isVisible,
                 photos = photos.map { it.toQuery() },
             )
-
-        fun bind(incoming: List<FindMenuPhotoResult>) {
-            this.photos.addAll(incoming)
-        }
     }
 
     data class FindMenuPhotoResult(
