@@ -113,7 +113,7 @@ tasks.named("gitPreCommitHook") {
             hookFile.writeText(
                 """
                 #!/bin/sh
-                ./gradlew gitPreCommitHook
+                ./gradlew gitPreCommitHook --rerun-tasks --no-build-cache
                 """.trimIndent(),
             )
             hookFile.setExecutable(true)
