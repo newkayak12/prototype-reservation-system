@@ -11,5 +11,5 @@ object MenuQuerySpec {
 
     fun menuIdEq(menuId: String?): BooleanExpression =
         menuId?.let { menuEntity.identifier.eq(it) }
-            ?:Expressions.FALSE
+            ?: Expressions.FALSE
 }

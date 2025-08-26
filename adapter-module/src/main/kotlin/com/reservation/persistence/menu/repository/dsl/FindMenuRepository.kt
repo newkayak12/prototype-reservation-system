@@ -14,27 +14,26 @@ import java.math.BigDecimal
 class FindMenuRepository(
     private val query: JPAQueryFactory,
 ) : FindMenu {
-
     override fun query(menuId: String): FindMenuResult? {
-        val queryResult =  query.select(
-            menuEntity.identifier,
-            menuEntity.restaurantId,
-            menuEntity.title,
-            menuEntity.description,
-            menuEntity.price,
-            menuEntity.isRepresentative,
-            menuEntity.isRecommended,
-            menuEntity.isVisible,
-            menuPhotoEntity.identifier,
-            menuPhotoEntity.url,
-        )
-            .from(menuEntity)
-            .where(MenuQuerySpec.menuIdEq(menuId))
-            .fetch()
-            .filter { it[menuEntity.identifier] != null }
+        val queryResult =
+            query.select(
+                menuEntity.identifier,
+                menuEntity.restaurantId,
+                menuEntity.title,
+                menuEntity.description,
+                menuEntity.price,
+                menuEntity.isRepresentative,
+                menuEntity.isRecommended,
+                menuEntity.isVisible,
+                menuPhotoEntity.identifier,
+                menuPhotoEntity.url,
+            )
+                .from(menuEntity)
+                .where(MenuQuerySpec.menuIdEq(menuId))
+                .fetch()
+                .filter { it[menuEntity.identifier] != null }
 
-
-        if(queryResult.isEmpty()) return null
+        if (queryResult.isEmpty()) return null
 
         val photos = transformPhotos(queryResult)
         return transformMenu(queryResult, photos)
@@ -49,7 +48,7 @@ class FindMenuRepository(
             .map {
                 FindMenuPhotoResult(
                     it[menuPhotoEntity.identifier] ?: "",
-                    it[menuPhotoEntity.url] ?: ""
+                    it[menuPhotoEntity.url] ?: "",
                 )
             }
 
@@ -58,7 +57,6 @@ class FindMenuRepository(
         photos: List<FindMenuPhotoResult>,
     ): FindMenuResult {
         val it = values.first()
-
 
         return FindMenuResult(
             identifier = it[menuEntity.identifier] ?: "",
@@ -69,8 +67,7 @@ class FindMenuRepository(
             isRepresentative = it[menuEntity.isRepresentative] ?: false,
             isRecommended = it[menuEntity.isRecommended] ?: false,
             isVisible = it[menuEntity.isVisible] ?: false,
-            photos = photos
+            photos = photos,
         )
     }
-
 }
