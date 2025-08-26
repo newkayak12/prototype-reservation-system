@@ -5,7 +5,7 @@ import com.reservation.menu.port.input.response.FindMenuQueryResult.FindMenusPho
 import java.math.BigDecimal
 
 interface FindMenu {
-    fun query(restaurantId: String): FindMenuResult?
+    fun query(menuId: String): FindMenuResult?
 
     data class FindMenuResult(
         val identifier: String,
@@ -16,7 +16,7 @@ interface FindMenu {
         val isRepresentative: Boolean,
         val isRecommended: Boolean,
         val isVisible: Boolean,
-        val photos: MutableList<FindMenuPhotoResult> = mutableListOf(),
+        val photos: List<FindMenuPhotoResult> = mutableListOf(),
     ) {
         fun toQuery(): FindMenuQueryResult =
             FindMenuQueryResult(

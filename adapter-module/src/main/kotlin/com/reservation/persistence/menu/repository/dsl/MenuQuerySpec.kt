@@ -8,4 +8,8 @@ object MenuQuerySpec {
     fun restaurantIdEq(restaurantId: String?): BooleanExpression =
         restaurantId?.let { menuEntity.restaurantId.eq(it) }
             ?: Expressions.FALSE
+
+    fun menuIdEq(menuId: String?): BooleanExpression =
+        menuId?.let { menuEntity.identifier.eq(it) }
+            ?:Expressions.FALSE
 }
