@@ -23,11 +23,9 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(MockKExtension::class)
 @DisplayName("메뉴 리스트 중 하나의 메뉴를 조회한다.")
 class FindMenuServiceTest {
-
     @DisplayName("없는 식별 값으로 메뉴 조회 요청을 하고 ")
     @Nested
     inner class `Request not exists item` {
-
         @MockK
         private lateinit var findMenu: FindMenu
 
@@ -63,13 +61,14 @@ class FindMenuServiceTest {
         fun `return no photo result`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             val id = UuidGenerator.generate()
-            val item = pureMonkey.giveMeBuilder<FindMenuResult>()
-                .set("photos", listOf<FindMenuPhotoResult>())
-                .sample()
+            val item =
+                pureMonkey.giveMeBuilder<FindMenuResult>()
+                    .set("photos", listOf<FindMenuPhotoResult>())
+                    .sample()
 
             every { findMenu.query(any()) } returns item
 
-            val result =  service.execute(id)
+            val result = service.execute(id)
 
             assertThat(result).isNotNull
             assertThat(result.photos).isEmpty()
@@ -81,13 +80,14 @@ class FindMenuServiceTest {
         fun `return result`() {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             val id = UuidGenerator.generate()
-            val item = pureMonkey.giveMeBuilder<FindMenuResult>()
-                .set("photos", pureMonkey.giveMe<FindMenuPhotoResult>(5))
-                .sample()
+            val item =
+                pureMonkey.giveMeBuilder<FindMenuResult>()
+                    .set("photos", pureMonkey.giveMe<FindMenuPhotoResult>(5))
+                    .sample()
 
             every { findMenu.query(any()) } returns item
 
-            val result =  service.execute(id)
+            val result = service.execute(id)
 
             assertThat(result).isNotNull
             assertThat(result.photos).isNotEmpty()
