@@ -1,0 +1,40 @@
+package com.reservation.config
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import jakarta.validation.Validation
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
+import org.springframework.restdocs.ManualRestDocumentation
+import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.validation.beanvalidation.SpringValidatorAdapter
+
+object MockMvcFactory {
+    private val jacksonObjectMapper =
+        ObjectMapper().apply {
+            registerModule(JavaTimeModule())
+            configure(WRITE_DATES_AS_TIMESTAMPS, false)
+        }
+    private val validator = Validation.buildDefaultValidatorFactory().validator
+    private val converter = MappingJackson2HttpMessageConverter(jacksonObjectMapper)
+    private val springValidator = SpringValidatorAdapter(validator)
+
+    val objectMapper
+        get() = jacksonObjectMapper
+
+    private fun <T> getStandAloneSetup(controller: T) =
+        MockMvcBuilders.standaloneSetup(controller)
+            .setMessageConverters(converter)
+            .setValidator(springValidator)
+
+    fun <T> buildMockMvc(controller: T): MockMvc = getStandAloneSetup(controller).build()
+
+    fun <T> buildMockMvc(
+        controller: T,
+        restDocumentation: ManualRestDocumentation,
+    ) = getStandAloneSetup(controller)
+        .apply { (MockMvcRestDocumentation.documentationConfiguration(restDocumentation)) }
+        .build()
+}
