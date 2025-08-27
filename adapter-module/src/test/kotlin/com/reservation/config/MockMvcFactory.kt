@@ -1,46 +1,43 @@
 package com.reservation.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.reservation.config.mvc.RestControllerExceptionHandler
-import jakarta.validation.Validation
-import org.springframework.core.env.ConfigurableEnvironment
-import org.springframework.core.env.StandardEnvironment
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.restdocs.ManualRestDocumentation
 import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
-import org.springframework.validation.beanvalidation.SpringValidatorAdapter
 
+/**
+ * 병렬 테스트 안전 MockMvc Factory
+ * - Thread-safe 컴포넌트 재사용으로 성능 최적화
+ * - 병렬 테스트 실행에서 안전한 MockMvc 생성
+ */
 object MockMvcFactory {
-    private val jacksonObjectMapper =
-        ObjectMapper().apply {
-            registerModule(JavaTimeModule())
-            configure(WRITE_DATES_AS_TIMESTAMPS, false)
-        }
-
-    private val validatorFactory = Validation.buildDefaultValidatorFactory()
-    private val validator = validatorFactory.validator
-    private val converter = MappingJackson2HttpMessageConverter(jacksonObjectMapper)
-    private val springValidator = SpringValidatorAdapter(validator)
-    private val environment: ConfigurableEnvironment =
-        StandardEnvironment().also { it.setActiveProfiles("test") }
-    private val restControllerExceptionHandler =
-        RestControllerExceptionHandler().also { it.setEnvironment(environment) }
-
+    /**
+     * ObjectMapper 제공 - 직접 사용 권장 (thread-safe)
+     * 복사가 필요한 특별한 경우만 copyObjectMapper() 사용
+     */
     val objectMapper: ObjectMapper
-        get() = jacksonObjectMapper.copy()
+        get() = MockMvcComponent.copyObjectMapper()
 
+    /**
+     * 기본 StandaloneMockMvcBuilder 생성
+     * - 모든 공통 컴포넌트 설정
+     * - Thread-safe 컴포넌트들 재사용
+     */
     private fun <T> getStandAloneSetup(controller: T) =
         MockMvcBuilders.standaloneSetup(controller)
-            .setMessageConverters(converter)
-            .setValidator(springValidator)
-            .setControllerAdvice(restControllerExceptionHandler)
+            .setMessageConverters(MockMvcComponent.converter)
+            .setValidator(MockMvcComponent.springValidator)
+            .setControllerAdvice(MockMvcComponent.restControllerExceptionHandler)
 
+    /**
+     * 기본 MockMvc 생성 (RestDocs 없음)
+     */
     fun <T> buildMockMvc(controller: T): MockMvc = getStandAloneSetup(controller).build()
 
+    /**
+     * RestDocs가 포함된 MockMvc 생성
+     */
     fun <T> buildMockMvc(
         controller: T,
         restDocumentation: ManualRestDocumentation,
