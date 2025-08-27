@@ -12,7 +12,7 @@ import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.menu.port.input.FindMenusUseCase
 import com.reservation.menu.port.input.response.FindMenusQueryResult
 import com.reservation.rest.menu.MenuUrl
-import com.reservation.rest.menu.find.FindMenusController
+import com.reservation.rest.menu.find.all.FindMenusController
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension

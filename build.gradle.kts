@@ -102,6 +102,7 @@ tasks.register("gitPreCommitHook") {
 }
 
 // pre-commit 후크 설정
+
 tasks.named("gitPreCommitHook") {
     outputs.cacheIf { false }
     outputs.upToDateWhen { false }
@@ -112,7 +113,7 @@ tasks.named("gitPreCommitHook") {
             hookFile.writeText(
                 """
                 #!/bin/sh
-                ./gradlew gitPreCommitHook
+                ./gradlew gitPreCommitHook --rerun-tasks --no-build-cache
                 """.trimIndent(),
             )
             hookFile.setExecutable(true)
@@ -221,4 +222,6 @@ subprojects {
         )
     }
 }
+
+
 

@@ -99,30 +99,30 @@ dependencies {
     implementation(project(":shared-module"))
     implementation(project(":application-module"))
     compileOnly(project(":core-module"))
-    
+
     // Kotlin basics
     implementation(libs.kotlin.reflect)
     implementation(libs.jackson.kotlin)
-    
+
     // Spring Boot starters
     implementation(libs.bundles.spring.web)
     implementation(libs.bundles.spring.data)
-    
+
     // Database dependencies
     implementation(libs.bundles.database)
-    
+
     // QueryDSL
     implementation("com.querydsl:querydsl-jpa:${libs.versions.querydsl.get()}:jakarta")
     kapt("com.querydsl:querydsl-apt:${libs.versions.querydsl.get()}:jakarta")
     kapt(libs.bundles.querydsl.kapt)
-    
+
     // Additional dependencies
     implementation(libs.springdoc.openapi)
     implementation(libs.p6spy)
-    
+
     // Development only
     developmentOnly(libs.spring.boot.docker.compose)
-    
+
     // Documentation
     add("asciidoctorExt", libs.restdocs.asciidoctor)
     testImplementation(libs.bundles.documentation)

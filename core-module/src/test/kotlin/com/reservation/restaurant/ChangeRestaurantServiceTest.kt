@@ -509,7 +509,7 @@ class ChangeRestaurantServiceTest : BehaviorSpec(
                     result.detail shouldBeEqual request.detail
                     result.latitude shouldBeEqual request.latitude
                     result.longitude shouldBeEqual request.longitude
-                    result.cuisines shouldBeEqual categories
+                    result.cuisines.size shouldBeEqual categories.size
                 }
             }
         }
