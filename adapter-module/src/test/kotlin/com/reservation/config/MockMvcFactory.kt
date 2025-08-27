@@ -20,19 +20,18 @@ object MockMvcFactory {
             registerModule(JavaTimeModule())
             configure(WRITE_DATES_AS_TIMESTAMPS, false)
         }
-    private val validator = Validation.buildDefaultValidatorFactory().validator
+
+    private val validatorFactory = Validation.buildDefaultValidatorFactory()
+    private val validator = validatorFactory.validator
     private val converter = MappingJackson2HttpMessageConverter(jacksonObjectMapper)
     private val springValidator = SpringValidatorAdapter(validator)
     private val environment: ConfigurableEnvironment =
-        StandardEnvironment().also {
-            it.setActiveProfiles("test")
-        }
+        StandardEnvironment().also { it.setActiveProfiles("test") }
     private val restControllerExceptionHandler =
-        RestControllerExceptionHandler()
-            .also { it.setEnvironment(environment) }
+        RestControllerExceptionHandler().also { it.setEnvironment(environment) }
 
-    val objectMapper
-        get() = jacksonObjectMapper
+    val objectMapper: ObjectMapper
+        get() = jacksonObjectMapper.copy()
 
     private fun <T> getStandAloneSetup(controller: T) =
         MockMvcBuilders.standaloneSetup(controller)
@@ -45,11 +44,9 @@ object MockMvcFactory {
     fun <T> buildMockMvc(
         controller: T,
         restDocumentation: ManualRestDocumentation,
-    ): MockMvc {
-        return getStandAloneSetup(controller)
+    ): MockMvc =
+        getStandAloneSetup(controller)
             .apply<org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder>(
                 MockMvcRestDocumentation.documentationConfiguration(restDocumentation),
-            )
-            .build()
-    }
+            ).build()
 }
