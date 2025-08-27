@@ -5,15 +5,21 @@ import io.kotest.core.test.TestCase
 import io.kotest.core.test.TestResult
 import org.springframework.restdocs.ManualRestDocumentation
 
+/**
+ * Spring REST Docs를 위한 Kotest 확장
+ * 동시성 안전성을 위해 각 테스트마다 별도 인스턴스를 사용해야 함
+ */
 class SpringRestDocsKotestExtension(
     private val outputDirectory: String = "build/generated-snippets",
 ) : TestListener {
-    lateinit var restDocumentation: ManualRestDocumentation
-        protected set
+    private lateinit var manualRestDocumentation: ManualRestDocumentation
+
+    val restDocumentation: ManualRestDocumentation
+        get() = manualRestDocumentation
 
     override suspend fun beforeEach(testCase: TestCase) {
-        restDocumentation = ManualRestDocumentation(outputDirectory)
-        restDocumentation.beforeTest(
+        manualRestDocumentation = ManualRestDocumentation(outputDirectory)
+        manualRestDocumentation.beforeTest(
             testCase.spec::class.java, // testClass
             testCase.name.testName, // testMethodName
         )
@@ -23,6 +29,6 @@ class SpringRestDocsKotestExtension(
         testCase: TestCase,
         result: TestResult,
     ) {
-        restDocumentation.afterTest()
+        manualRestDocumentation.afterTest()
     }
 }
