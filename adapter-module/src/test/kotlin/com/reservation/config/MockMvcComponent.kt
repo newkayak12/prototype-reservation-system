@@ -17,6 +17,7 @@ import org.springframework.validation.beanvalidation.SpringValidatorAdapter
  * - ValidatorFactory 리소스 관리 포함
  */
 object MockMvcComponent {
+
     // Thread-safe ObjectMapper (immutable after creation)
     private val jacksonObjectMapper: ObjectMapper =
         ObjectMapper().apply {
