@@ -17,7 +17,6 @@ import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.jupiter.api.TestInstance
 import org.springframework.http.HttpHeaders
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get
 import org.springframework.restdocs.payload.JsonFieldType.ARRAY
@@ -28,7 +27,6 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class FindMenuControllerTest : FunSpec(
     {
 
@@ -43,8 +41,6 @@ class FindMenuControllerTest : FunSpec(
             findMenuUseCase = mockk<FindMenuUseCase>()
             val controller = FindMenuController(findMenuUseCase)
             mockMvc = MockMvcFactory.buildMockMvc(controller, restDocsExtension.restDocumentation)
-
-            val objectMapper = MockMvcFactory.objectMapper
         }
 
         test("올바르지 않은 id 형식으로 4xxClientError가 발생한다.") {
