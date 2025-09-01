@@ -37,7 +37,7 @@ class FindMenuControllerTest : FunSpec(
         lateinit var findMenuUseCase: FindMenuUseCase
         val url = "${MenuUrl.PREFIX}/{id}"
 
-        beforeTest { testCase ->
+        beforeTest {
             findMenuUseCase = mockk<FindMenuUseCase>()
             val controller = FindMenuController(findMenuUseCase)
             mockMvc = MockMvcFactory.buildMockMvc(controller, restDocsExtension.restDocumentation)
