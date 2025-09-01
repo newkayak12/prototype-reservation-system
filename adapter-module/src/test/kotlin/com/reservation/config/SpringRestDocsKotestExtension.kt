@@ -20,9 +20,7 @@ class SpringRestDocsKotestExtension(
         get() {
             val currentThreadName = Thread.currentThread().name
             return restDocumentationMap[currentThreadName]
-                ?: throw IllegalStateException(
-                    "ManualRestDocumentation not initialized for thread: $currentThreadName",
-                )
+                ?: error("ManualRestDocumentation not initialized for thread: $currentThreadName")
         }
 
     override suspend fun beforeEach(testCase: TestCase) {
