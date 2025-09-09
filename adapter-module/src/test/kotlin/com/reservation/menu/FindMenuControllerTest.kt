@@ -37,10 +37,14 @@ class FindMenuControllerTest : FunSpec(
         lateinit var findMenuUseCase: FindMenuUseCase
         val url = "${MenuUrl.PREFIX}/{id}"
 
-        beforeTest {
+        beforeTest { testCase ->
             findMenuUseCase = mockk<FindMenuUseCase>()
             val controller = FindMenuController(findMenuUseCase)
-            mockMvc = MockMvcFactory.buildMockMvc(controller, restDocsExtension.restDocumentation)
+            mockMvc =
+                MockMvcFactory.buildMockMvc(
+                    controller,
+                    restDocsExtension.restDocumentation(testCase),
+                )
         }
 
         test("올바르지 않은 id 형식으로 4xxClientError가 발생한다.") {

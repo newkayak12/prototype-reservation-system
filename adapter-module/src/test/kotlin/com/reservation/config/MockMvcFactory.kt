@@ -41,7 +41,7 @@ object MockMvcFactory {
      * - ConcurrentHashMap으로 캐싱하여 동시성 이슈 방지
      */
     fun <T> buildMockMvc(controller: T): MockMvc {
-        val controllerKey = controller!!::class.java.name
+        val controllerKey = "${controller!!::class::simpleName.name}@${controller.hashCode()}"
         return mockMvcCache.computeIfAbsent(controllerKey) {
             getStandAloneSetup(controller).build()
         }
@@ -55,7 +55,7 @@ object MockMvcFactory {
         controller: T,
         restDocumentation: ManualRestDocumentation,
     ): MockMvc {
-        val controllerKey = controller!!::class.java.name
+        val controllerKey = "${controller!!::class::simpleName.name}@${controller.hashCode()}"
         val docsKey = restDocumentation.toString()
         val cacheKey = Pair(controllerKey, docsKey)
 

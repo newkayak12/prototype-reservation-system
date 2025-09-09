@@ -16,16 +16,14 @@ class SpringRestDocsKotestExtension(
     // 테스트별로 독립적인 ManualRestDocumentation을 관리하는 ConcurrentHashMap
     private val restDocumentationMap = ConcurrentHashMap<String, ManualRestDocumentation>()
 
-    val restDocumentation: ManualRestDocumentation
-        get() {
-            val currentThreadName = Thread.currentThread().name
-            return restDocumentationMap[currentThreadName]
-                ?: error("ManualRestDocumentation not initialized for thread: $currentThreadName")
-        }
+    fun restDocumentation(testCase: TestCase): ManualRestDocumentation =
+        restDocumentationMap[buildKey(testCase)]!!
+
+    private fun buildKey(testCase: TestCase): String =
+        "${testCase.spec::class.java.simpleName}-${testCase.name.testName}"
 
     override suspend fun beforeEach(testCase: TestCase) {
-        val currentThreadName = Thread.currentThread().name
-        val testKey = "${testCase.spec::class.java.simpleName}-${testCase.name.testName}"
+        val testKey = buildKey(testCase)
 
         val manualRestDocumentation = ManualRestDocumentation(outputDirectory)
         manualRestDocumentation.beforeTest(
@@ -34,20 +32,20 @@ class SpringRestDocsKotestExtension(
         )
 
         // 현재 스레드에 ManualRestDocumentation 매핑
-        restDocumentationMap[currentThreadName] = manualRestDocumentation
+        restDocumentationMap[testKey] = manualRestDocumentation
     }
 
     override suspend fun afterEach(
         testCase: TestCase,
         result: TestResult,
     ) {
-        val currentThreadName = Thread.currentThread().name
-        val manualRestDocumentation = restDocumentationMap[currentThreadName]
+        val testKey = buildKey(testCase)
+        val manualRestDocumentation = restDocumentationMap[testKey]
 
         manualRestDocumentation?.let {
             it.afterTest()
             // 테스트 완료 후 정리
-            restDocumentationMap.remove(currentThreadName)
+            restDocumentationMap.remove(testKey)
         }
     }
 }
