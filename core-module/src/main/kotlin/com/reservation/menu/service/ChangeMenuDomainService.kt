@@ -99,12 +99,14 @@ class ChangeMenuDomainService {
         photoUrl: List<String>,
     ) {
         menu.manipulatePhoto {
-            it.allPhotos()
-                .filter { photoUrl.contains(it.url) }
+            val all = it.allPhotos()
+
+            all.filter { photoUrl.contains(it.url) }
                 .forEach { element -> it.delete(element) }
 
             photoUrl
                 .map { photoUrl -> MenuPhoto(photoUrl) }
+                .filter { !all.contains(it) }
                 .forEach { element -> it.add(element) }
         }
     }

@@ -12,8 +12,8 @@ data class UpdateMenuCommand(
     val isRepresentative: Boolean = false,
     val isRecommended: Boolean = false,
     val isVisible: Boolean = false,
-    val photos: List<UpdateMenuPreviousImage>,
-    val photoUrl: List<MultipartFile> = listOf(),
+    val photoUrl: List<UpdateMenuPreviousImage>,
+    val photos: List<MultipartFile> = listOf(),
 ) {
     data class UpdateMenuPreviousImage(
         val id: String,
