@@ -1,10 +1,9 @@
 package com.reservation.menu.port.output
 
-import com.reservation.menu.Menu
 import java.math.BigDecimal
 
 interface LoadMenuById {
-    fun loadById(id: String): Menu?
+    fun loadById(id: String): LoadMenu?
 
     data class LoadMenu(
         val id: String,

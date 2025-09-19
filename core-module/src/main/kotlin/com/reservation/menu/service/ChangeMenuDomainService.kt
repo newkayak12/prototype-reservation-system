@@ -19,6 +19,7 @@ import com.reservation.menu.vo.MenuPhoto
 import com.reservation.menu.vo.MenuPrice
 import java.math.BigDecimal
 
+@Suppress("TooManyFunctions")
 class ChangeMenuDomainService {
     private val titlePolicy =
         listOf(
