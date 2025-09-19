@@ -80,23 +80,32 @@ class MenuEntity(
     var logicalDelete: LogicalDelete = LogicalDelete()
         protected set
 
-//    private fun Boolean.toggle(): Boolean = !this
-//    fun toggleRepresentative() {
-//        isRepresentative = isRepresentative.toggle()
-//    }
-//
-//    fun toggleRecommended() {
-//        isRecommended = isRecommended.toggle()
-//    }
-//
-//    fun toggleVisible() {
-//        isVisible = isVisible.toggle()
-//    }
-//
-//    fun adjustPrice(price: BigDecimal) {
-//        if (price < BigDecimal.ZERO) return
-//        this.price = price
-//    }
+    fun updateTitle(title: String) {
+        this.title = title
+    }
+
+    fun updateDescription(description: String) {
+        this.description = description
+    }
+
+    fun updatePrice(price: BigDecimal) {
+        if (price < BigDecimal.ZERO) return
+        this.price = price
+    }
 
     fun adjustPhotos(block: MutableList<MenuPhotoEntity>.() -> Unit) = photos.apply(block)
+
+    private fun Boolean.toggle(): Boolean = !this
+
+    fun toggleRepresentative() {
+        isRepresentative = isRepresentative.toggle()
+    }
+
+    fun toggleRecommended() {
+        isRecommended = isRecommended.toggle()
+    }
+
+    fun toggleVisible() {
+        isVisible = isVisible.toggle()
+    }
 }

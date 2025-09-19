@@ -7,8 +7,11 @@ import com.reservation.menu.policy.format.UpdateMenuForm
 import com.reservation.menu.port.input.UpdateMenuUseCase
 import com.reservation.menu.port.input.request.UpdateMenuCommand
 import com.reservation.menu.port.output.LoadMenuById
+import com.reservation.menu.port.output.UpdateMenu
+import com.reservation.menu.port.output.UpdateMenu.UpdateMenuInquiry
 import com.reservation.menu.port.output.UploadMenuImageFile
 import com.reservation.menu.service.ChangeMenuDomainService
+import com.reservation.menu.snapshot.MenuSnapshot
 import com.reservation.menu.vo.MenuAttributes
 import com.reservation.menu.vo.MenuDescription
 import com.reservation.menu.vo.MenuPhoto
@@ -22,6 +25,7 @@ class UpdateMenuService(
     private val loadMenuById: LoadMenuById,
     private val changeMenuDomainService: ChangeMenuDomainService,
     private val uploadMenuImageFile: UploadMenuImageFile,
+    private val updateMenu: UpdateMenu,
 ) : UpdateMenuUseCase {
     private fun load(id: String): Menu {
         val loadMenu = loadMenuById.loadById(id) ?: throw NoSuchPersistedElementException()
@@ -62,13 +66,30 @@ class UpdateMenuService(
             price = command.price,
         )
 
+    private fun updateMenu(snapshot: MenuSnapshot): Boolean =
+        updateMenu.command(
+            UpdateMenuInquiry(
+                id = snapshot.id!!,
+                restaurantId = snapshot.restaurantId,
+                title = snapshot.title,
+                description = snapshot.description,
+                price = snapshot.price,
+                isRepresentative = snapshot.isRepresentative,
+                isRecommended = snapshot.isRecommended,
+                isVisible = snapshot.isVisible,
+                photoUrl = snapshot.photoUrl,
+            ),
+        )
+
     @Transactional
     override fun execute(command: UpdateMenuCommand): Boolean {
         val menu = load(command.id)
         val newImages = uploadImage(command.photos)
         val form = createForm(command, newImages)
 
-        changeMenuDomainService.updateMenu(menu, form)
+        val snapshot = changeMenuDomainService.updateMenu(menu, form)
+        updateMenu(snapshot)
+
         return true
     }
 }
