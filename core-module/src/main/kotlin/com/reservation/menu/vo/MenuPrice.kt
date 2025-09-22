@@ -1,12 +1,12 @@
 package com.reservation.menu.vo
 
 import java.math.BigDecimal
-import java.math.RoundingMode.UNNECESSARY
+import java.math.RoundingMode.UP
 
 data class MenuPrice(
     val amount: BigDecimal = BigDecimal.ZERO,
 ) {
     init {
-        amount.setScale(0, UNNECESSARY)
+        amount.setScale(0, UP)
     }
 }

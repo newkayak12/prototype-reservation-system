@@ -2,7 +2,7 @@ package com.reservation.menu.policy.format
 
 import java.math.BigDecimal
 
-data class UpdateMenuForm(
+data class ChangeMenuForm(
     val id: String,
     val restaurantId: String,
     val title: String,

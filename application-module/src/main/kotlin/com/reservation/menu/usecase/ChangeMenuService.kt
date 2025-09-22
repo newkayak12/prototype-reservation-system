@@ -3,12 +3,12 @@ package com.reservation.menu.usecase
 import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.annotations.UseCase
 import com.reservation.menu.Menu
-import com.reservation.menu.policy.format.UpdateMenuForm
-import com.reservation.menu.port.input.UpdateMenuUseCase
+import com.reservation.menu.policy.format.ChangeMenuForm
+import com.reservation.menu.port.input.ChangeMenuUseCase
 import com.reservation.menu.port.input.request.UpdateMenuCommand
+import com.reservation.menu.port.output.ChangeMenu
+import com.reservation.menu.port.output.ChangeMenu.UpdateMenuInquiry
 import com.reservation.menu.port.output.LoadMenuById
-import com.reservation.menu.port.output.UpdateMenu
-import com.reservation.menu.port.output.UpdateMenu.UpdateMenuInquiry
 import com.reservation.menu.port.output.UploadMenuImageFile
 import com.reservation.menu.service.ChangeMenuDomainService
 import com.reservation.menu.snapshot.MenuSnapshot
@@ -21,12 +21,12 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 
 @UseCase
-class UpdateMenuService(
+class ChangeMenuService(
     private val loadMenuById: LoadMenuById,
     private val changeMenuDomainService: ChangeMenuDomainService,
     private val uploadMenuImageFile: UploadMenuImageFile,
-    private val updateMenu: UpdateMenu,
-) : UpdateMenuUseCase {
+    private val changeMenu: ChangeMenu,
+) : ChangeMenuUseCase {
     private fun load(id: String): Menu {
         val loadMenu = loadMenuById.loadById(id) ?: throw NoSuchPersistedElementException()
         return Menu(
@@ -53,8 +53,8 @@ class UpdateMenuService(
     private fun createForm(
         command: UpdateMenuCommand,
         newPhotos: List<String>,
-    ): UpdateMenuForm =
-        UpdateMenuForm(
+    ): ChangeMenuForm =
+        ChangeMenuForm(
             id = command.id,
             restaurantId = command.restaurantId,
             title = command.title,
@@ -67,7 +67,7 @@ class UpdateMenuService(
         )
 
     private fun updateMenu(snapshot: MenuSnapshot): Boolean =
-        updateMenu.command(
+        changeMenu.command(
             UpdateMenuInquiry(
                 id = snapshot.id!!,
                 restaurantId = snapshot.restaurantId,
@@ -88,8 +88,6 @@ class UpdateMenuService(
         val form = createForm(command, newImages)
 
         val snapshot = changeMenuDomainService.updateMenu(menu, form)
-        updateMenu(snapshot)
-
-        return true
+        return updateMenu(snapshot)
     }
 }

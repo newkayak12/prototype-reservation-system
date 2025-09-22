@@ -14,6 +14,7 @@ import com.reservation.menu.snapshot.MenuSnapshot
 import com.reservation.menu.vo.MenuAttributes
 import com.reservation.menu.vo.MenuDescription
 import com.reservation.menu.vo.MenuPhoto
+import com.reservation.menu.vo.MenuPhotoBook
 import com.reservation.menu.vo.MenuPrice
 import java.math.BigDecimal
 
@@ -74,7 +75,7 @@ class CreateMenuDomainService {
                         title = form.title,
                         description = form.description,
                     ),
-                photos = form.photoUrl.map { MenuPhoto(it) },
+                menuPhotoBook = MenuPhotoBook(form.photoUrl.map { MenuPhoto(it) }.toMutableList()),
                 attributes =
                     MenuAttributes(
                         isRepresentative = form.isRepresentative,

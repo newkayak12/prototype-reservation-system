@@ -2,7 +2,7 @@ package com.reservation.menu.port.output
 
 import java.math.BigDecimal
 
-interface UpdateMenu {
+interface ChangeMenu {
     fun command(inquiry: UpdateMenuInquiry): Boolean
 
     data class UpdateMenuInquiry(

@@ -2,13 +2,14 @@ package com.reservation.menu.service
 
 import com.reservation.menu.Menu
 import com.reservation.menu.exceptions.InvalidateMenuElementException
-import com.reservation.menu.policy.format.UpdateMenuForm
-import com.reservation.menu.policy.validations.MenIdIsNotEmptyValidationPolicy
+import com.reservation.menu.policy.format.ChangeMenuForm
 import com.reservation.menu.policy.validations.MenuDescriptionEmptyValidationPolicy
 import com.reservation.menu.policy.validations.MenuDescriptionLengthValidationPolicy
 import com.reservation.menu.policy.validations.MenuIdFormatValidationPolicy
+import com.reservation.menu.policy.validations.MenuIdIsNotEmptyValidationPolicy
 import com.reservation.menu.policy.validations.MenuPriceRangeValidationPolicy
 import com.reservation.menu.policy.validations.MenuRestaurantIdEmptyValidationPolicy
+import com.reservation.menu.policy.validations.MenuRestaurantIdFormatValidationPolicy
 import com.reservation.menu.policy.validations.MenuTitleEmptyValidationPolicy
 import com.reservation.menu.policy.validations.MenuTitleLengthValidationPolicy
 import com.reservation.menu.policy.validations.MenuUnifiedValidationPolicy
@@ -32,9 +33,16 @@ class ChangeMenuDomainService {
             MenuDescriptionLengthValidationPolicy(),
         )
     private val pricePolicy = listOf(MenuPriceRangeValidationPolicy())
-    private val restaurantPolicy = listOf(MenuRestaurantIdEmptyValidationPolicy())
+    private val restaurantPolicy =
+        listOf(
+            MenuRestaurantIdEmptyValidationPolicy(),
+            MenuRestaurantIdFormatValidationPolicy(),
+        )
     private val menuIdPolicy =
-        listOf(MenuIdFormatValidationPolicy(), MenIdIsNotEmptyValidationPolicy())
+        listOf(
+            MenuIdIsNotEmptyValidationPolicy(),
+            MenuIdFormatValidationPolicy(),
+        )
 
     private fun <T : MenuUnifiedValidationPolicy<String>> List<T>.validatePolicies(target: String) =
         firstOrNull { !it.validate(target) }
@@ -63,12 +71,12 @@ class ChangeMenuDomainService {
     private fun validateRestaurantId(restaurantId: String) =
         restaurantPolicy.validatePolicies(restaurantId)
 
-    private fun validate(form: UpdateMenuForm) {
+    private fun validate(form: ChangeMenuForm) {
         validateMenuId(form.id)
+        validateRestaurantId(form.restaurantId)
         validateTitle(form.title)
         validateDescription(form.description)
         validatePrice(form.price)
-        validateRestaurantId(form.restaurantId)
     }
 
     private fun changeInformation(
@@ -114,7 +122,7 @@ class ChangeMenuDomainService {
 
     fun updateMenu(
         menu: Menu,
-        form: UpdateMenuForm,
+        form: ChangeMenuForm,
     ): MenuSnapshot {
         validate(form)
         changeInformation(menu, form.title, form.description)
