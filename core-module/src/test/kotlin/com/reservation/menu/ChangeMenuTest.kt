@@ -98,15 +98,95 @@ class ChangeMenuTest : BehaviorSpec(
             }
         }
 
-//        Given("메뉴 이름이 30자 이상인 수정 요청이 전달된다.") {}
+        Given("메뉴 이름이 30자 이상인 수정 요청이 전달된다.") {
+            val title = Arbitraries.strings().ofMinLength(31).sample()
+            val request = giveMePerfectCase().copy(title = title)
+
+            When("이 요청을 바탕으로 수정을 진행하면") {
+                Then("메뉴 이름의 정책과 부합하지 않아서 InvalidateMenuElementException가 발생한다.") {
+                    val exception =
+                        shouldThrow<InvalidateMenuElementException> {
+                            service.updateMenu(menu, request)
+                        }
+
+                    exception.shouldBeInstanceOf<InvalidateMenuElementException>()
+                    exception.message shouldContain "Menu Title has to"
+                }
+            }
+        }
+
+        Given("메뉴 설명이 비어있는 수정 요청이 전달된다.") {
+            val request = giveMePerfectCase().copy(description = "")
+
+            When("이 요청을 바탕으로 수정을 진행하면") {
+                Then("메뉴 설명이 비어있어 정책에 부합하지 않아서 InvalidateMenuElementException가 발생한다.") {
+                    val exception =
+                        shouldThrow<InvalidateMenuElementException> {
+                            service.updateMenu(menu, request)
+                        }
+
+                    exception.shouldBeInstanceOf<InvalidateMenuElementException>()
+                    exception.message shouldContain "Menu Description must not empty."
+                }
+            }
+        }
 //
-//        Given("메뉴 설명이 비어있는 수정 요청이 전달된다.") {}
+        Given("메뉴 설명이 255자 이상인 수정 요청이 전달된다.") {
+            val description = Arbitraries.strings().ofMinLength(256).sample()
+            val request = giveMePerfectCase().copy(description = description)
+
+            When("이 요청을 바탕으로 수정을 진행하면") {
+                Then("메뉴 설명이 길이가 255를 넘어서 정책에 부합하지 않아서 InvalidateMenuElementException가 발생한다.") {
+                    val exception =
+                        shouldThrow<InvalidateMenuElementException> {
+                            service.updateMenu(menu, request)
+                        }
+
+                    exception.shouldBeInstanceOf<InvalidateMenuElementException>()
+                    exception.message shouldContain "Menu Description has to between"
+                }
+            }
+        }
 //
-//        Given("메뉴 설명이 255자 이상인 수정 요청이 전달된다.") {}
+        Given("메뉴 가격이 음수인 수정 요청이 전달된다.") {
+            val price =
+                Arbitraries.bigDecimals()
+                    .lessThan(BigDecimal.ZERO)
+                    .sample()
+            val request = giveMePerfectCase().copy(price = price)
+
+            When("이 요청을 바탕으로 수정을 진행하면") {
+                Then("메뉴 가격이 음수이므로 정책에 부합하지 않아서 InvalidateMenuElementException가 발생한다.") {
+                    val exception =
+                        shouldThrow<InvalidateMenuElementException> {
+                            service.updateMenu(menu, request)
+                        }
+
+                    exception.shouldBeInstanceOf<InvalidateMenuElementException>()
+                    exception.message shouldContain "Menu price has to between"
+                }
+            }
+        }
 //
-//        Given("메뉴 가격이 음수인 수정 요청이 전달된다.") {}
-//
-//        Given("메뉴 가격이 999_999_999 이상인 수정 요청이 전달된다.") {}
+        Given("메뉴 가격이 999_999_999 이상인 수정 요청이 전달된다.") {
+            val price =
+                Arbitraries.bigDecimals()
+                    .greaterThan(BigDecimal.valueOf(999_999_999L))
+                    .sample()
+            val request = giveMePerfectCase().copy(price = price)
+
+            When("이 요청을 바탕으로 수정을 진행하면") {
+                Then("메뉴 가격이 음수이므로 정책에 부합하지 않아서 InvalidateMenuElementException가 발생한다.") {
+                    val exception =
+                        shouldThrow<InvalidateMenuElementException> {
+                            service.updateMenu(menu, request)
+                        }
+
+                    exception.shouldBeInstanceOf<InvalidateMenuElementException>()
+                    exception.message shouldContain "Menu price has to between"
+                }
+            }
+        }
 //
     },
 ) {
