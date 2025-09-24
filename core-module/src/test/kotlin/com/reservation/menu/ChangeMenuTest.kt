@@ -77,7 +77,7 @@ class ChangeMenuTest : BehaviorSpec(
                         }
 
                     exception.shouldBeInstanceOf<InvalidateMenuElementException>()
-                    exception.message shouldContain "Invalid ID Format"
+                    exception.message shouldContain "Invalid Menu-RestaurantId format"
                 }
             }
         }

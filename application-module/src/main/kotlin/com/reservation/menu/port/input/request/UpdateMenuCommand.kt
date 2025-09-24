@@ -16,7 +16,6 @@ data class UpdateMenuCommand(
     val photos: List<MultipartFile> = listOf(),
 ) {
     data class UpdateMenuPreviousImage(
-        val id: String,
         val url: String,
     )
 }
