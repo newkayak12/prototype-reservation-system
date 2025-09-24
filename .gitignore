@@ -205,5 +205,6 @@ mysql_data
 # End of https://www.toptal.com/developers/gitignore/api/kotlin,intellij,macos,gradle
 
 
+.kotlin
 .gemini
 .claude/settings.local.json

@@ -62,7 +62,5 @@ class ChangeMenuControllerTest : FunSpec() {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is4xxClientError)
         }
-
-        test("") {}
     }
 }
