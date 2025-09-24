@@ -22,7 +22,7 @@ data class ChangeMenuRequest(
     val isRepresentative: Boolean = false,
     val isRecommended: Boolean = false,
     val isVisible: Boolean = false,
-    val photoUrl: List<String>,
+    val photoUrl: List<String> = listOf(),
 ) {
     fun toCommand(
         id: String,

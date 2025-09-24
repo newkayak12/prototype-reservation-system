@@ -7,7 +7,7 @@ import com.reservation.rest.menu.request.ChangeMenuRequest
 import jakarta.validation.Valid
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile
 class ChangeMenuController(
     private val changeMenuUseCase: ChangeMenuUseCase,
 ) {
-    @PostMapping(MenuUrl.CHANGE, consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @PutMapping(MenuUrl.CHANGE, consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun changeMenu(
         @PathVariable(name = "id") id: String,
         @RequestPart(name = "request") @Valid request: ChangeMenuRequest,
