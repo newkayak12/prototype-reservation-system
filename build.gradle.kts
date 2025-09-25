@@ -35,7 +35,18 @@ spotless {
         indentWithSpaces(4)
         endWithNewline()
     }
+}
 
+// Spotless 태스크들이 캐시를 사용하지 않도록 설정
+tasks.withType<com.diffplug.gradle.spotless.SpotlessTask> {
+    outputs.cacheIf { false }
+    outputs.upToDateWhen { false }
+}
+
+// Detekt 태스크들이 캐시를 사용하지 않도록 설정
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt> {
+    outputs.cacheIf { false }
+    outputs.upToDateWhen { false }
 }
 
 jacoco {
@@ -151,6 +162,12 @@ subprojects {
     detekt {
         config.setFrom(files("$rootDir/detekt.yaml"))
         buildUponDefaultConfig = true
+    }
+
+    // 서브프로젝트의 Detekt 태스크들도 캐시를 사용하지 않도록 설정
+    tasks.withType<io.gitlab.arturbosch.detekt.Detekt> {
+        outputs.cacheIf { false }
+        outputs.upToDateWhen { false }
     }
 
     configurations.named("detekt").configure {

@@ -3,6 +3,7 @@ package com.reservation.config
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.reservation.config.mvc.RestControllerExceptionHandler
 import jakarta.validation.Validation
 import org.springframework.core.env.ConfigurableEnvironment
@@ -20,6 +21,10 @@ object MockMvcComponent {
     // Thread-safe ObjectMapper (immutable after creation)
     private val jacksonObjectMapper: ObjectMapper =
         ObjectMapper().apply {
+            // Kotlin 지원 - 기본값 처리 개선
+            registerModule(KotlinModule.Builder().build())
+
+            // Java Time 지원
             registerModule(JavaTimeModule())
             configure(WRITE_DATES_AS_TIMESTAMPS, false)
         }

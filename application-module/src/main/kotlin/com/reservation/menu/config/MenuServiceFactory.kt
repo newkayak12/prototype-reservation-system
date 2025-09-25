@@ -1,5 +1,6 @@
 package com.reservation.menu.config
 
+import com.reservation.menu.service.ChangeMenuDomainService
 import com.reservation.menu.service.CreateMenuDomainService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -8,4 +9,7 @@ import org.springframework.context.annotation.Configuration
 class MenuServiceFactory {
     @Bean
     fun createMenuDomainService(): CreateMenuDomainService = CreateMenuDomainService()
+
+    @Bean
+    fun changeMenuDomainService(): ChangeMenuDomainService = ChangeMenuDomainService()
 }
