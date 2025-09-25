@@ -12,7 +12,10 @@ import com.reservation.rest.menu.change.ChangeMenuController
 import com.reservation.rest.menu.request.ChangeMenuRequest
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
+import io.mockk.every
 import io.mockk.mockk
+import net.jqwik.api.Arbitraries
+import org.mockito.ArgumentMatchers.any
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockPart
@@ -20,6 +23,7 @@ import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.mul
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.math.BigDecimal
 
 class ChangeMenuControllerTest : FunSpec() {
     init {
@@ -61,6 +65,194 @@ class ChangeMenuControllerTest : FunSpec() {
             )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is4xxClientError)
+        }
+
+        test("요청을 전달했지만 title이 공백이어서 실패한다.") {
+            val id = UuidGenerator.generate()
+            val requestBody = perfectCase.copy(title = "")
+            val requestPart =
+                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                    .apply { headers.contentType = MediaType.APPLICATION_JSON }
+
+            mockMvc.perform(
+                multipart(url, id)
+                    .part(requestPart)
+                    .header(
+                        HttpHeaders.AUTHORIZATION,
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                    )
+                    .with {
+                        it.method = "PUT"
+                        it
+                    }
+                    .contentType(MediaType.MULTIPART_FORM_DATA),
+            )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is4xxClientError)
+        }
+
+        test("요청을 전달했지만 title이 30자 초과여서  실패한다.") {
+            val id = UuidGenerator.generate()
+            val requestBody =
+                perfectCase.copy(
+                    title = Arbitraries.strings().ofMinLength(31).sample(),
+                )
+            val requestPart =
+                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                    .apply { headers.contentType = MediaType.APPLICATION_JSON }
+
+            mockMvc.perform(
+                multipart(url, id)
+                    .part(requestPart)
+                    .header(
+                        HttpHeaders.AUTHORIZATION,
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                    )
+                    .with {
+                        it.method = "PUT"
+                        it
+                    }
+                    .contentType(MediaType.MULTIPART_FORM_DATA),
+            )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is4xxClientError)
+        }
+
+        test("요청을 전달했지만 description이 공백이어서 실패한다.") {
+            val id = UuidGenerator.generate()
+            val requestBody = perfectCase.copy(description = "")
+            val requestPart =
+                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                    .apply { headers.contentType = MediaType.APPLICATION_JSON }
+
+            mockMvc.perform(
+                multipart(url, id)
+                    .part(requestPart)
+                    .header(
+                        HttpHeaders.AUTHORIZATION,
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                    )
+                    .with {
+                        it.method = "PUT"
+                        it
+                    }
+                    .contentType(MediaType.MULTIPART_FORM_DATA),
+            )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is4xxClientError)
+        }
+
+        test("요청을 전달했지만 description이 255자 초과여서  실패한다.") {
+            val id = UuidGenerator.generate()
+            val requestBody =
+                perfectCase.copy(
+                    description = Arbitraries.strings().ofMinLength(256).sample(),
+                )
+            val requestPart =
+                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                    .apply { headers.contentType = MediaType.APPLICATION_JSON }
+
+            mockMvc.perform(
+                multipart(url, id)
+                    .part(requestPart)
+                    .header(
+                        HttpHeaders.AUTHORIZATION,
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                    )
+                    .with {
+                        it.method = "PUT"
+                        it
+                    }
+                    .contentType(MediaType.MULTIPART_FORM_DATA),
+            )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is4xxClientError)
+        }
+
+        test("요청을 전달했지만 price가 음수여서 실패한다.") {
+            val id = UuidGenerator.generate()
+            val requestBody =
+                perfectCase.copy(
+                    price =
+                        Arbitraries.bigDecimals().lessThan(BigDecimal.ZERO).sample(),
+                )
+            val requestPart =
+                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                    .apply { headers.contentType = MediaType.APPLICATION_JSON }
+
+            mockMvc.perform(
+                multipart(url, id)
+                    .part(requestPart)
+                    .header(
+                        HttpHeaders.AUTHORIZATION,
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                    )
+                    .with {
+                        it.method = "PUT"
+                        it
+                    }
+                    .contentType(MediaType.MULTIPART_FORM_DATA),
+            )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is4xxClientError)
+        }
+
+        test("요청을 전달했지만 price가 999_999_999보다 커서 실패한다.") {
+            val id = UuidGenerator.generate()
+            val requestBody =
+                perfectCase.copy(
+                    price =
+                        Arbitraries.bigDecimals()
+                            .greaterThan(BigDecimal.valueOf(999_999_999L))
+                            .sample(),
+                )
+            val requestPart =
+                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                    .apply { headers.contentType = MediaType.APPLICATION_JSON }
+
+            mockMvc.perform(
+                multipart(url, id)
+                    .part(requestPart)
+                    .header(
+                        HttpHeaders.AUTHORIZATION,
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                    )
+                    .with {
+                        it.method = "PUT"
+                        it
+                    }
+                    .contentType(MediaType.MULTIPART_FORM_DATA),
+            )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is4xxClientError)
+        }
+
+        test("요청을 전달하고 JakartaValidation을 통과해서 성공한다.") {
+            val id = UuidGenerator.generate()
+            val requestBody = perfectCase
+            val requestPart =
+                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                    .apply { headers.contentType = MediaType.APPLICATION_JSON }
+
+            every {
+                changeMenuUseCase.execute(any())
+            } returns true
+
+            mockMvc.perform(
+                multipart(url, id)
+                    .part(requestPart)
+                    .header(
+                        HttpHeaders.AUTHORIZATION,
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                    )
+                    .with {
+                        it.method = "PUT"
+                        it
+                    }
+                    .contentType(MediaType.MULTIPART_FORM_DATA),
+            )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is2xxSuccessful)
         }
     }
 }
