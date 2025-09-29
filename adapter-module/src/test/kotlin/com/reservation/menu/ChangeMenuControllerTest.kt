@@ -15,7 +15,6 @@ import io.kotest.core.spec.style.FunSpec
 import io.mockk.every
 import io.mockk.mockk
 import net.jqwik.api.Arbitraries
-import org.mockito.ArgumentMatchers.any
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockPart
@@ -40,7 +39,11 @@ class ChangeMenuControllerTest : FunSpec() {
         beforeTest { testCase ->
             changeMenuUseCase = mockk<ChangeMenuUseCase>()
             val controller = ChangeMenuController(changeMenuUseCase)
-            mockMvc = MockMvcFactory.buildMockMvc(controller, restDocsExtension.restDocumentation)
+            mockMvc =
+                MockMvcFactory.buildMockMvc(
+                    controller,
+                    restDocsExtension.restDocumentation(testCase),
+                )
         }
 
         test("요청을 전달했지만 restaurantId가 없어 실패한다.") {
