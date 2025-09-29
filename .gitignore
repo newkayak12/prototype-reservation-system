@@ -209,3 +209,5 @@ mysql_data
 .gemini
 .claude/settings.local.json
 .claude/settings.json
+.kotlin
+
