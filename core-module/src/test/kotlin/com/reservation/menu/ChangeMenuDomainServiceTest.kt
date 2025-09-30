@@ -8,13 +8,14 @@ import com.reservation.menu.service.ChangeMenuDomainService
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import net.jqwik.api.Arbitraries
 import java.math.BigDecimal
 import java.math.RoundingMode.UP
 
-class ChangeMenuTest : BehaviorSpec(
+class ChangeMenuDomainServiceTest : BehaviorSpec(
     {
         val service = ChangeMenuDomainService()
 
@@ -188,6 +189,23 @@ class ChangeMenuTest : BehaviorSpec(
             }
         }
 //
+        Given("정상적인 수정 요청이 전달된다.") {
+
+            val request = giveMePerfectCase()
+
+            When("이 요청을 바탕으로 수정을 진행하면") {
+                val snapshot = service.updateMenu(menu, request)
+
+                Then("정상적으로 서정이 된다..") {
+                    snapshot.title shouldBe request.title
+                    snapshot.description shouldBe request.description
+                    snapshot.price shouldBe request.price
+                    snapshot.isRepresentative shouldBe request.isRepresentative
+                    snapshot.isRecommended shouldBe request.isRecommended
+                    snapshot.isVisible shouldBe request.isVisible
+                }
+            }
+        }
     },
 ) {
     companion object {

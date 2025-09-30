@@ -59,7 +59,12 @@ class ChangeMenuControllerTest : FunSpec() {
             val id = UuidGenerator.generate()
             val requestBody = perfectCase.copy(restaurantId = "")
             val requestPart =
-                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                MockPart(
+                    "request",
+                    "request.json",
+                    objectMapper.writeValueAsBytes(requestBody),
+                    MediaType.APPLICATION_JSON,
+                )
                     .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
             mockMvc.perform(
@@ -83,7 +88,12 @@ class ChangeMenuControllerTest : FunSpec() {
             val id = UuidGenerator.generate()
             val requestBody = perfectCase.copy(title = "")
             val requestPart =
-                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                MockPart(
+                    "request",
+                    "request.json",
+                    objectMapper.writeValueAsBytes(requestBody),
+                    MediaType.APPLICATION_JSON,
+                )
                     .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
             mockMvc.perform(
@@ -110,7 +120,12 @@ class ChangeMenuControllerTest : FunSpec() {
                     title = Arbitraries.strings().ofMinLength(31).sample(),
                 )
             val requestPart =
-                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                MockPart(
+                    "request",
+                    "request.json",
+                    objectMapper.writeValueAsBytes(requestBody),
+                    MediaType.APPLICATION_JSON,
+                )
                     .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
             mockMvc.perform(
@@ -134,7 +149,12 @@ class ChangeMenuControllerTest : FunSpec() {
             val id = UuidGenerator.generate()
             val requestBody = perfectCase.copy(description = "")
             val requestPart =
-                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                MockPart(
+                    "request",
+                    "request.json",
+                    objectMapper.writeValueAsBytes(requestBody),
+                    MediaType.APPLICATION_JSON,
+                )
                     .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
             mockMvc.perform(
@@ -161,7 +181,12 @@ class ChangeMenuControllerTest : FunSpec() {
                     description = Arbitraries.strings().ofMinLength(256).sample(),
                 )
             val requestPart =
-                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                MockPart(
+                    "request",
+                    "request.json",
+                    objectMapper.writeValueAsBytes(requestBody),
+                    MediaType.APPLICATION_JSON,
+                )
                     .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
             mockMvc.perform(
@@ -189,7 +214,12 @@ class ChangeMenuControllerTest : FunSpec() {
                         Arbitraries.bigDecimals().lessThan(BigDecimal.ZERO).sample(),
                 )
             val requestPart =
-                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                MockPart(
+                    "request",
+                    "request.json",
+                    objectMapper.writeValueAsBytes(requestBody),
+                    MediaType.APPLICATION_JSON,
+                )
                     .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
             mockMvc.perform(
@@ -219,7 +249,12 @@ class ChangeMenuControllerTest : FunSpec() {
                             .sample(),
                 )
             val requestPart =
-                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                MockPart(
+                    "request",
+                    "request.json",
+                    objectMapper.writeValueAsBytes(requestBody),
+                    MediaType.APPLICATION_JSON,
+                )
                     .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
             mockMvc.perform(
@@ -243,7 +278,12 @@ class ChangeMenuControllerTest : FunSpec() {
             val id = UuidGenerator.generate()
             val requestBody = perfectCase
             val requestPart =
-                MockPart("request", objectMapper.writeValueAsBytes(requestBody))
+                MockPart(
+                    "request",
+                    "request.json",
+                    objectMapper.writeValueAsBytes(requestBody),
+                    MediaType.APPLICATION_JSON,
+                )
                     .apply { headers.contentType = MediaType.APPLICATION_JSON }
 
             every {
