@@ -196,7 +196,7 @@ class ChangeMenuDomainServiceTest : BehaviorSpec(
             When("이 요청을 바탕으로 수정을 진행하면") {
                 val snapshot = service.updateMenu(menu, request)
 
-                Then("정상적으로 서정이 된다..") {
+                Then("정상적으로 수정이 된다.") {
                     snapshot.title shouldBe request.title
                     snapshot.description shouldBe request.description
                     snapshot.price shouldBe request.price
