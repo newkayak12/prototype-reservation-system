@@ -5,4 +5,6 @@ import org.springframework.data.repository.CrudRepository
 
 interface MenuJpaRepository : CrudRepository<MenuEntity, String> {
     fun save(entity: MenuEntity): MenuEntity
+
+    fun findByIdEquals(id: String): MenuEntity?
 }
