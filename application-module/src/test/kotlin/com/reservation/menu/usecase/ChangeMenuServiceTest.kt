@@ -13,6 +13,7 @@ import com.reservation.menu.port.output.LoadMenuById.LoadMenu
 import com.reservation.menu.port.output.UploadMenuImageFile
 import com.reservation.menu.service.ChangeMenuDomainService
 import com.reservation.menu.snapshot.MenuSnapshot
+import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
@@ -85,7 +86,10 @@ class ChangeMenuServiceTest {
         @Test
         fun `apply update request`() {
             val menu = pureMonkey.giveMeOne<LoadMenu>()
-            val snapshot = pureMonkey.giveMeOne<MenuSnapshot>()
+            val snapshot =
+                pureMonkey.giveMeBuilder<MenuSnapshot>()
+                    .set("id", UuidGenerator.generate())
+                    .sample()
             val command =
                 pureMonkey.giveMeBuilder<UpdateMenuCommand>()
                     .set("photos", listOf<MultipartFile>())
@@ -163,7 +167,10 @@ class ChangeMenuServiceTest {
         @Test
         fun `apply update request`() {
             val menu = pureMonkey.giveMeOne<LoadMenu>()
-            val snapshot = pureMonkey.giveMeOne<MenuSnapshot>()
+            val snapshot =
+                pureMonkey.giveMeBuilder<MenuSnapshot>()
+                    .set("id", UuidGenerator.generate())
+                    .sample()
             val command =
                 pureMonkey.giveMeBuilder<UpdateMenuCommand>()
                     .set(
