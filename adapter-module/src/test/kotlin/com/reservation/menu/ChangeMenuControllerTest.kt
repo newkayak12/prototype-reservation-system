@@ -4,6 +4,11 @@ import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.config.MockMvcFactory
 import com.reservation.config.MockMvcFactory.objectMapper
 import com.reservation.config.SpringRestDocsKotestExtension
+import com.reservation.config.restdoc.Body
+import com.reservation.config.restdoc.Part
+import com.reservation.config.restdoc.PathParameter
+import com.reservation.config.restdoc.RequestPartFields
+import com.reservation.config.restdoc.RestDocuments
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.menu.port.input.ChangeMenuUseCase
@@ -19,6 +24,10 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockPart
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.multipart
+import org.springframework.restdocs.payload.JsonFieldType.ARRAY
+import org.springframework.restdocs.payload.JsonFieldType.BOOLEAN
+import org.springframework.restdocs.payload.JsonFieldType.NUMBER
+import org.springframework.restdocs.payload.JsonFieldType.STRING
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -256,6 +265,94 @@ class ChangeMenuControllerTest : FunSpec() {
             )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is2xxSuccessful)
+                .andDo(
+                    RestDocuments(
+                        identifier = "changeMenu",
+                        documentTags =
+                            listOf(
+                                "menu",
+                                "change",
+                            ),
+                        summary = "메뉴 수정",
+                        description = "사진과 함께 메뉴를 수정한다.",
+                        pathParameter =
+                            arrayOf(
+                                PathParameter(
+                                    name = "id",
+                                    optional = false,
+                                    description = "메뉴 id",
+                                ),
+                            ),
+                        requestPart =
+                            arrayOf(
+                                Part("request", false, "JSON 요청"),
+                                Part("photos", true, "이미지 파일"),
+                            ),
+                        requestPartBody =
+                            arrayOf(
+                                RequestPartFields(
+                                    partName = "request",
+                                    jsonFields =
+                                        arrayOf(
+                                            Body(
+                                                name = "restaurantId",
+                                                jsonType = STRING,
+                                                optional = false,
+                                                description = "음식점 식별자",
+                                            ),
+                                            Body(
+                                                name = "title",
+                                                jsonType = STRING,
+                                                optional = false,
+                                                description = "메뉴 이름",
+                                            ),
+                                            Body(
+                                                name = "description",
+                                                jsonType = STRING,
+                                                optional = false,
+                                                description = "메뉴 설명",
+                                            ),
+                                            Body(
+                                                name = "price",
+                                                jsonType = NUMBER,
+                                                optional = false,
+                                                description = "가격",
+                                            ),
+                                            Body(
+                                                name = "isRepresentative",
+                                                jsonType = BOOLEAN,
+                                                optional = true,
+                                                description = "대표 여부",
+                                            ),
+                                            Body(
+                                                name = "isRecommended",
+                                                jsonType = BOOLEAN,
+                                                optional = true,
+                                                description = "추천 여부",
+                                            ),
+                                            Body(
+                                                name = "isVisible",
+                                                jsonType = BOOLEAN,
+                                                optional = true,
+                                                description = "노출 여부",
+                                            ),
+                                            Body(
+                                                name = "photoUrl",
+                                                jsonType = ARRAY,
+                                                optional = true,
+                                                description = "기존 이미지",
+                                            ),
+                                        ),
+                                ),
+                            ),
+                        responseBody =
+                            arrayOf(
+                                Body("result", BOOLEAN, false, "결과"),
+                            ),
+                    )
+                        .authorizedRequestHeader()
+                        .create(),
+                )
         }
     }
 }
