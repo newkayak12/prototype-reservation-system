@@ -47,8 +47,11 @@ class ChangeMenuService(
         )
     }
 
-    private fun uploadImage(files: List<MultipartFile>): List<String> =
-        uploadMenuImageFile.execute(files)
+    private fun uploadImage(files: List<MultipartFile>): List<String> {
+        if (files.isEmpty()) return emptyList()
+
+        return uploadMenuImageFile.execute(files)
+    }
 
     private fun createForm(
         command: UpdateMenuCommand,
