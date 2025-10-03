@@ -1,10 +1,9 @@
-package com.reservation.schedule
+package com.reservation.schedule.snapshot
 
-import com.reservation.schedule.snapshot.TimeSpanSnapshot
 import java.time.DayOfWeek
 import java.time.LocalTime
 
-class TimeSpan(
+class TimeSpanSnapshot(
     private val id: String? = null,
     private val restaurantId: String,
     private val day: DayOfWeek,
@@ -16,7 +15,7 @@ class TimeSpan(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as TimeSpan
+        other as TimeSpanSnapshot
 
         if (restaurantId != other.restaurantId) return false
         if (day != other.day) return false
@@ -34,11 +33,5 @@ class TimeSpan(
         return result
     }
 
-    fun snapshot() = TimeSpanSnapshot(
-        id = id,
-        restaurantId = restaurantId,
-        day = day,
-        startTime = startTime,
-        endTime = endTime,
-    )
+
 }
