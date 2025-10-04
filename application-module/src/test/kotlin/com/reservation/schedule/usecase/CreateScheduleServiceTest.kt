@@ -58,12 +58,8 @@ class CreateScheduleServiceTest {
                 createScheduleService.execute(command)
             }
 
-            verify(exactly = 1) {
-                createScheduleDomainService.create(any())
-            }
-            verify(exactly = 0) {
-                createSchedule.command(any())
-            }
+            verify(exactly = 1) { createScheduleDomainService.create(any()) }
+            verify(exactly = 0) { createSchedule.command(any()) }
         }
     }
 
@@ -95,10 +91,8 @@ class CreateScheduleServiceTest {
                 createScheduleService.execute(command)
             }
 
-            verify(exactly = 1) {
-                createScheduleDomainService.create(any())
-                createSchedule.command(any())
-            }
+            verify(exactly = 1) { createScheduleDomainService.create(any()) }
+            verify(exactly = 1) { createSchedule.command(any()) }
         }
 
         @DisplayName("스케쥴이 생성된다.")
@@ -118,10 +112,8 @@ class CreateScheduleServiceTest {
             val result = createScheduleService.execute(command)
 
             assertTrue(result)
-            verify(exactly = 1) {
-                createScheduleDomainService.create(any())
-                createSchedule.command(any())
-            }
+            verify(exactly = 1) { createScheduleDomainService.create(any()) }
+            verify(exactly = 1) { createSchedule.command(any()) }
         }
     }
 }
