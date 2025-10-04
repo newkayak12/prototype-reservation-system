@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.dao.DataIntegrityViolationException
 
 @ExtendWith(MockKExtension::class)
 @DisplayName("스케쥴을 생성할 때, ")
@@ -74,6 +75,30 @@ class CreateScheduleServiceTest {
         @BeforeEach
         fun setPureMonkey() {
             pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
+        }
+
+        @DisplayName("데이터 저장에 문제가 생겨 DataIntegrityViolationException가 발생한다.")
+        @Test
+        fun `throw DataIntegrityViolationException`(){
+            val command = pureMonkey.giveMeOne<CreateScheduleCommand>()
+            val snapshot = pureMonkey.giveMeOne<ScheduleSnapshot>()
+
+            every {
+                createScheduleDomainService.create(any())
+            } returns snapshot
+
+            every {
+                createSchedule.command(any())
+            } throws  DataIntegrityViolationException(Arbitraries.strings().sample())
+
+            assertThrows<DataIntegrityViolationException> {
+                createScheduleService.execute(command)
+            }
+
+            verify(exactly = 1) {
+                createScheduleDomainService.create(any())
+                createSchedule.command(any())
+            }
         }
 
         @DisplayName("스케쥴이 생성된다.")
