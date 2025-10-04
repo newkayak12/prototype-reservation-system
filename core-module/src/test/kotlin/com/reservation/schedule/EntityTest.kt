@@ -15,12 +15,13 @@ class EntityTest : BehaviorSpec({
     given("Table 엔티티가 주어졌을 때") {
         `when`("snapshot을 생성하면") {
             then("모든 필드가 올바르게 매핑된다") {
-                val table = Table(
-                    id = "table-id",
-                    restaurantId = "restaurant-id",
-                    tableNumber = 1,
-                    tableSize = 4
-                )
+                val table =
+                    Table(
+                        id = "table-id",
+                        restaurantId = "restaurant-id",
+                        tableNumber = 1,
+                        tableSize = 4,
+                    )
 
                 val snapshot = table.snapshot()
 
@@ -37,11 +38,12 @@ class EntityTest : BehaviorSpec({
                 val tableNumber = fixtureMonkey.giveMeOne<Int>()
                 val tableSize = fixtureMonkey.giveMeOne<Int>()
 
-                val table = Table(
-                    restaurantId = restaurantId,
-                    tableNumber = tableNumber,
-                    tableSize = tableSize
-                )
+                val table =
+                    Table(
+                        restaurantId = restaurantId,
+                        tableNumber = tableNumber,
+                        tableSize = tableSize,
+                    )
 
                 val snapshot = table.snapshot()
 
@@ -56,13 +58,14 @@ class EntityTest : BehaviorSpec({
     given("TimeSpan 엔티티가 주어졌을 때") {
         `when`("snapshot을 생성하면") {
             then("모든 필드가 올바르게 매핑된다") {
-                val timeSpan = TimeSpan(
-                    id = "timespan-id",
-                    restaurantId = "restaurant-id",
-                    day = DayOfWeek.MONDAY,
-                    startTime = LocalTime.of(9, 0),
-                    endTime = LocalTime.of(18, 0)
-                )
+                val timeSpan =
+                    TimeSpan(
+                        id = "timespan-id",
+                        restaurantId = "restaurant-id",
+                        day = DayOfWeek.MONDAY,
+                        startTime = LocalTime.of(9, 0),
+                        endTime = LocalTime.of(18, 0),
+                    )
 
                 val snapshot = timeSpan.snapshot()
 
@@ -81,12 +84,13 @@ class EntityTest : BehaviorSpec({
                 val startTime = fixtureMonkey.giveMeOne<LocalTime>()
                 val endTime = fixtureMonkey.giveMeOne<LocalTime>()
 
-                val timeSpan = TimeSpan(
-                    restaurantId = restaurantId,
-                    day = day,
-                    startTime = startTime,
-                    endTime = endTime
-                )
+                val timeSpan =
+                    TimeSpan(
+                        restaurantId = restaurantId,
+                        day = day,
+                        startTime = startTime,
+                        endTime = endTime,
+                    )
 
                 val snapshot = timeSpan.snapshot()
 
@@ -100,36 +104,40 @@ class EntityTest : BehaviorSpec({
 
         `when`("equals와 hashCode를 테스트하면") {
             then("같은 값으로 생성된 객체들은 동등하다") {
-                val timeSpan1 = TimeSpan(
-                    restaurantId = "restaurant-id",
-                    day = DayOfWeek.MONDAY,
-                    startTime = LocalTime.of(9, 0),
-                    endTime = LocalTime.of(18, 0)
-                )
-                val timeSpan2 = TimeSpan(
-                    restaurantId = "restaurant-id",
-                    day = DayOfWeek.MONDAY,
-                    startTime = LocalTime.of(9, 0),
-                    endTime = LocalTime.of(18, 0)
-                )
+                val timeSpan1 =
+                    TimeSpan(
+                        restaurantId = "restaurant-id",
+                        day = DayOfWeek.MONDAY,
+                        startTime = LocalTime.of(9, 0),
+                        endTime = LocalTime.of(18, 0),
+                    )
+                val timeSpan2 =
+                    TimeSpan(
+                        restaurantId = "restaurant-id",
+                        day = DayOfWeek.MONDAY,
+                        startTime = LocalTime.of(9, 0),
+                        endTime = LocalTime.of(18, 0),
+                    )
 
                 (timeSpan1 == timeSpan2) shouldBe true
                 timeSpan1.hashCode() shouldBe timeSpan2.hashCode()
             }
 
             then("다른 값으로 생성된 객체들은 동등하지 않다") {
-                val timeSpan1 = TimeSpan(
-                    restaurantId = "restaurant-id-1",
-                    day = DayOfWeek.MONDAY,
-                    startTime = LocalTime.of(9, 0),
-                    endTime = LocalTime.of(18, 0)
-                )
-                val timeSpan2 = TimeSpan(
-                    restaurantId = "restaurant-id-2",
-                    day = DayOfWeek.MONDAY,
-                    startTime = LocalTime.of(9, 0),
-                    endTime = LocalTime.of(18, 0)
-                )
+                val timeSpan1 =
+                    TimeSpan(
+                        restaurantId = "restaurant-id-1",
+                        day = DayOfWeek.MONDAY,
+                        startTime = LocalTime.of(9, 0),
+                        endTime = LocalTime.of(18, 0),
+                    )
+                val timeSpan2 =
+                    TimeSpan(
+                        restaurantId = "restaurant-id-2",
+                        day = DayOfWeek.MONDAY,
+                        startTime = LocalTime.of(9, 0),
+                        endTime = LocalTime.of(18, 0),
+                    )
 
                 (timeSpan1 == timeSpan2) shouldBe false
             }
@@ -139,11 +147,12 @@ class EntityTest : BehaviorSpec({
     given("Holiday 엔티티가 주어졌을 때") {
         `when`("snapshot을 생성하면") {
             then("모든 필드가 올바르게 매핑된다") {
-                val holiday = Holiday(
-                    id = "holiday-id",
-                    restaurantId = "restaurant-id",
-                    date = LocalDate.of(2024, 12, 25)
-                )
+                val holiday =
+                    Holiday(
+                        id = "holiday-id",
+                        restaurantId = "restaurant-id",
+                        date = LocalDate.of(2024, 12, 25),
+                    )
 
                 val snapshot = holiday.snapshot()
 
@@ -158,10 +167,11 @@ class EntityTest : BehaviorSpec({
                 val restaurantId = fixtureMonkey.giveMeOne<String>()
                 val date = fixtureMonkey.giveMeOne<LocalDate>()
 
-                val holiday = Holiday(
-                    restaurantId = restaurantId,
-                    date = date
-                )
+                val holiday =
+                    Holiday(
+                        restaurantId = restaurantId,
+                        date = date,
+                    )
 
                 val snapshot = holiday.snapshot()
 
@@ -173,30 +183,34 @@ class EntityTest : BehaviorSpec({
 
         `when`("equals와 hashCode를 테스트하면") {
             then("같은 값으로 생성된 객체들은 동등하다") {
-                val holiday1 = Holiday(
-                    id = "holiday-id",
-                    restaurantId = "restaurant-id",
-                    date = LocalDate.of(2024, 12, 25)
-                )
-                val holiday2 = Holiday(
-                    id = "holiday-id",
-                    restaurantId = "restaurant-id",
-                    date = LocalDate.of(2024, 12, 25)
-                )
+                val holiday1 =
+                    Holiday(
+                        id = "holiday-id",
+                        restaurantId = "restaurant-id",
+                        date = LocalDate.of(2024, 12, 25),
+                    )
+                val holiday2 =
+                    Holiday(
+                        id = "holiday-id",
+                        restaurantId = "restaurant-id",
+                        date = LocalDate.of(2024, 12, 25),
+                    )
 
                 (holiday1 == holiday2) shouldBe true
                 holiday1.hashCode() shouldBe holiday2.hashCode()
             }
 
             then("다른 값으로 생성된 객체들은 동등하지 않다") {
-                val holiday1 = Holiday(
-                    restaurantId = "restaurant-id",
-                    date = LocalDate.of(2024, 12, 25)
-                )
-                val holiday2 = Holiday(
-                    restaurantId = "restaurant-id",
-                    date = LocalDate.of(2024, 12, 24)
-                )
+                val holiday1 =
+                    Holiday(
+                        restaurantId = "restaurant-id",
+                        date = LocalDate.of(2024, 12, 25),
+                    )
+                val holiday2 =
+                    Holiday(
+                        restaurantId = "restaurant-id",
+                        date = LocalDate.of(2024, 12, 24),
+                    )
 
                 (holiday1 == holiday2) shouldBe false
             }
