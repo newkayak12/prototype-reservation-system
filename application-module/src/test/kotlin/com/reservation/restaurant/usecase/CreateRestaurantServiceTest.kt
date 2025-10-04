@@ -157,9 +157,12 @@ class CreateRestaurantServiceTest {
 
             val result = useCase.execute(request)
 
-            verify(exactly = 1) { checkRestaurantDuplicated.query(any()) }
-            verify(exactly = 1) { createRestaurantDomainService.create(any()) }
-            verify(exactly = 1) { createRestaurant.command(any()) }
+            verify(exactly = 1) {
+                checkRestaurantDuplicated.query(any())
+                createRestaurantDomainService.create(any())
+                createRestaurant.command(any())
+                applicationEventPublisher.publishEvent(any<CreateScheduleEvent>())
+            }
             assertThat(result).isTrue()
         }
     }
