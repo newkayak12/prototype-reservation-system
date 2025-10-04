@@ -11,20 +11,17 @@ class CreateScheduleDomainService {
     private val restaurantIdPolicies: List<ScheduleRestaurantIdPolicy> =
         listOf(
             ScheduleRestaurantIdEmptyValidationPolicy(),
-            ScheduleRestaurantIdFormatValidationPolicy()
+            ScheduleRestaurantIdFormatValidationPolicy(),
         )
 
-    private fun <T : ScheduleRestaurantIdPolicy> List<T>.validatePolicies(
-        target: String,
-    ) = firstOrNull { !it.validate(target) }
-        ?.let {
-            throw InvalidateScheduleElementException(it.reason)
-        }
-
+    private fun <T : ScheduleRestaurantIdPolicy> List<T>.validatePolicies(target: String) =
+        firstOrNull { !it.validate(target) }
+            ?.let {
+                throw InvalidateScheduleElementException(it.reason)
+            }
 
     private fun validateRestaurantId(restaurantId: String) =
         restaurantIdPolicies.validatePolicies(restaurantId)
-
 
     fun create(restaurantId: String): ScheduleSnapshot {
         validateRestaurantId(restaurantId)
