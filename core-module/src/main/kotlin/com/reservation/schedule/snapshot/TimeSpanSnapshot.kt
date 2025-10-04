@@ -4,11 +4,11 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 
 class TimeSpanSnapshot(
-    private val id: String? = null,
-    private val restaurantId: String,
-    private val day: DayOfWeek,
-    private val startTime: LocalTime,
-    private val endTime: LocalTime,
+    val id: String? = null,
+    val restaurantId: String,
+    val day: DayOfWeek,
+    val startTime: LocalTime,
+    val endTime: LocalTime,
 ) {
 
     override fun equals(other: Any?): Boolean {

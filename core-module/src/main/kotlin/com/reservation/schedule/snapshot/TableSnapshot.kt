@@ -1,10 +1,9 @@
 package com.reservation.schedule.snapshot
 
-import java.time.LocalDate
-
-class HolidaySnapshot(
+class TableSnapshot(
     val id: String? = null,
     val restaurantId: String,
-    val date: LocalDate,
+    val tableNumber: Int,
+    val tableSize: Int,
 ) {
 }
