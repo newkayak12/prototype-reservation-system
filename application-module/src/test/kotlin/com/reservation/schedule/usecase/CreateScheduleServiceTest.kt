@@ -75,7 +75,7 @@ class CreateScheduleServiceTest {
 
         @DisplayName("데이터 저장에 문제가 생겨 DataIntegrityViolationException가 발생한다.")
         @Test
-        fun `throw DataIntegrityViolationException`()  {
+        fun `throw DataIntegrityViolationException`() {
             val command = pureMonkey.giveMeOne<CreateScheduleCommand>()
             val snapshot = pureMonkey.giveMeOne<ScheduleSnapshot>()
 
