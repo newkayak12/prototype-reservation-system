@@ -12,12 +12,12 @@ class Schedule(
     private val holidays: MutableList<Holiday> = mutableListOf()
     private val tables: MutableList<Table> = mutableListOf()
 
-
-    fun snapshot() = ScheduleSnapshot(
-        restaurantId = restaurantId,
-        status = status,
-        timeSpans = timeSpans.map { it.snapshot() },
-        holidays = holidays.map { it.snapshot() },
-        tables = tables.map { it.snapshot() }
-    )
+    fun snapshot() =
+        ScheduleSnapshot(
+            restaurantId = restaurantId,
+            status = status,
+            timeSpans = timeSpans.map { it.snapshot() },
+            holidays = holidays.map { it.snapshot() },
+            tables = tables.map { it.snapshot() },
+        )
 }

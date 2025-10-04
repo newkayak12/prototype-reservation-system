@@ -11,7 +11,6 @@ class TimeSpan(
     private val startTime: LocalTime,
     private val endTime: LocalTime,
 ) {
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -34,11 +33,12 @@ class TimeSpan(
         return result
     }
 
-    fun snapshot() = TimeSpanSnapshot(
-        id = id,
-        restaurantId = restaurantId,
-        day = day,
-        startTime = startTime,
-        endTime = endTime,
-    )
+    fun snapshot() =
+        TimeSpanSnapshot(
+            id = id,
+            restaurantId = restaurantId,
+            day = day,
+            startTime = startTime,
+            endTime = endTime,
+        )
 }

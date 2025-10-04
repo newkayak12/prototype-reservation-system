@@ -10,7 +10,6 @@ class TimeSpanSnapshot(
     val startTime: LocalTime,
     val endTime: LocalTime,
 ) {
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -32,6 +31,4 @@ class TimeSpanSnapshot(
         result = 31 * result + endTime.hashCode()
         return result
     }
-
-
 }

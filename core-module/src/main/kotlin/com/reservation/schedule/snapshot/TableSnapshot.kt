@@ -5,5 +5,4 @@ class TableSnapshot(
     val restaurantId: String,
     val tableNumber: Int,
     val tableSize: Int,
-) {
-}
+)

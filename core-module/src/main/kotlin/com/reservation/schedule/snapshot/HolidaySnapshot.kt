@@ -6,5 +6,4 @@ class HolidaySnapshot(
     val id: String? = null,
     val restaurantId: String,
     val date: LocalDate,
-) {
-}
+)

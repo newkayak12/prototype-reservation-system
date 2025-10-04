@@ -1,8 +1,9 @@
 package com.reservation.enumeration
 
 enum class ScheduleActiveStatus {
-    ACTIVE, INACTIVE;
-
+    ACTIVE,
+    INACTIVE,
+    ;
 
     fun toggle(
         tablesConfigured: Boolean,
@@ -22,9 +23,6 @@ enum class ScheduleActiveStatus {
     ): ScheduleActiveStatus {
         if (tablesConfigured && workingHoursConfigured && holidaysConfigured) return ACTIVE
 
-
         return INACTIVE
     }
-
-
 }

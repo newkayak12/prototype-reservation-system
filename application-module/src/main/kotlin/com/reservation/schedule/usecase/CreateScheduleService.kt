@@ -19,7 +19,6 @@ class CreateScheduleService(
     private val createSchedule: CreateSchedule,
     private val createScheduleDomainService: CreateScheduleDomainService,
 ) : CreateScheduleUseCase {
-
     private fun mapTimespan(it: TimeSpanSnapshot) =
         CreateTimeSpanInquiry(
             id = it.id,
@@ -46,16 +45,16 @@ class CreateScheduleService(
 
     @Transactional
     override fun execute(command: CreateScheduleCommand): Boolean {
-
         val snapshot = createScheduleDomainService.create(command.restaurantId)
 
-        val inquiry = CreateScheduleInquiry(
-            restaurantId = snapshot.restaurantId,
-            status = snapshot.status,
-            timeSpans = snapshot.timeSpans.map(this::mapTimespan),
-            holidays = snapshot.holidays.map(this::mapHoliday),
-            tables = snapshot.tables.map(this::mapTable)
-        )
+        val inquiry =
+            CreateScheduleInquiry(
+                restaurantId = snapshot.restaurantId,
+                status = snapshot.status,
+                timeSpans = snapshot.timeSpans.map(this::mapTimespan),
+                holidays = snapshot.holidays.map(this::mapHoliday),
+                tables = snapshot.tables.map(this::mapTable),
+            )
 
         return createSchedule.command(inquiry)
     }

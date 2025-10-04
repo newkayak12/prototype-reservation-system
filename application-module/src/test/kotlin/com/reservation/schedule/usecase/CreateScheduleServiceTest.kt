@@ -25,7 +25,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(MockKExtension::class)
 @DisplayName("스케쥴을 생성할 때, ")
 class CreateScheduleServiceTest {
-
     @MockK
     lateinit var createSchedule: CreateSchedule
 

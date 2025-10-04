@@ -17,9 +17,10 @@ class CreateScheduleDomainServiceTest : BehaviorSpec(
             val restaurantId = ""
             When("스케쥴 생성을 요청하면") {
                 Then("InvalidateRestaurantElementException가 발생하며 실패한다.") {
-                    val exception = shouldThrow<InvalidateScheduleElementException> {
-                        service.create(restaurantId)
-                    }
+                    val exception =
+                        shouldThrow<InvalidateScheduleElementException> {
+                            service.create(restaurantId)
+                        }
 
                     exception.message shouldContain "restaurant id must not be null"
                 }
@@ -30,9 +31,10 @@ class CreateScheduleDomainServiceTest : BehaviorSpec(
             val restaurantId = "GENERATED_UUID"
             When("스케쥴 생성을 요청하면") {
                 Then("InvalidateRestaurantElementException가 발생하며 실패한다.") {
-                    val exception = shouldThrow<InvalidateScheduleElementException> {
-                        service.create(restaurantId)
-                    }
+                    val exception =
+                        shouldThrow<InvalidateScheduleElementException> {
+                            service.create(restaurantId)
+                        }
 
                     exception.message shouldContain "Invalid ID Format"
                 }
@@ -49,7 +51,5 @@ class CreateScheduleDomainServiceTest : BehaviorSpec(
                 }
             }
         }
-
-    }
-) {
-}
+    },
+)

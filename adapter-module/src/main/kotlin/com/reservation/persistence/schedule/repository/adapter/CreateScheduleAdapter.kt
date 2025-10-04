@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component
 class CreateScheduleAdapter(
     private val jpaRepository: ScheduleJpaRepository,
 ) : CreateSchedule {
-
     override fun command(command: CreateScheduleInquiry): Boolean {
         val schedule = ScheduleEntity(restaurantId = command.restaurantId)
 

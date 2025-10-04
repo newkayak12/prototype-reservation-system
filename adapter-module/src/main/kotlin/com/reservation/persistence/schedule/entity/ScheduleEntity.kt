@@ -21,12 +21,11 @@ class ScheduleEntity(
     val restaurantId: String,
     tablesConfigured: Boolean = false,
     workingHoursConfigured: Boolean = false,
-    holidaysConfigured: Boolean =false,
+    holidaysConfigured: Boolean = false,
     status: ScheduleActiveStatus = INACTIVE,
     totalTables: Int = 0,
     totalCapacity: Int = 0,
 ) {
-
     @Column(name = "tables_configured")
     var tablesConfigured: Boolean = tablesConfigured
         protected set
@@ -51,5 +50,4 @@ class ScheduleEntity(
     @Column(name = "total_capacity")
     var totalCapacity: Int = totalCapacity
         protected set
-
 }

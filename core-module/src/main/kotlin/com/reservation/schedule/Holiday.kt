@@ -8,7 +8,6 @@ class Holiday(
     private val restaurantId: String,
     private val date: LocalDate,
 ) {
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -28,9 +27,10 @@ class Holiday(
         return result
     }
 
-    fun snapshot() = HolidaySnapshot(
-        id = id,
-        restaurantId = restaurantId,
-        date = date,
-    )
+    fun snapshot() =
+        HolidaySnapshot(
+            id = id,
+            restaurantId = restaurantId,
+            date = date,
+        )
 }

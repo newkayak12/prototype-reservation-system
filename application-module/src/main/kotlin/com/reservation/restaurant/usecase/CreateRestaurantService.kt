@@ -25,7 +25,7 @@ class CreateRestaurantService(
     private val checkRestaurantDuplicated: CheckRestaurantDuplicated,
     private val createRestaurantDomainService: CreateRestaurantDomainService,
     private val uploadRestaurantImageFile: UploadRestaurantImageFile,
-    private val applicationEventPublisher: ApplicationEventPublisher
+    private val applicationEventPublisher: ApplicationEventPublisher,
 ) : CreateRestaurantUseCase {
     private fun checkDuplicated(
         companyId: String,

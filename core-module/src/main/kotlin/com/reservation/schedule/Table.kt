@@ -8,11 +8,11 @@ class Table(
     private val tableNumber: Int,
     private val tableSize: Int,
 ) {
-
-    fun snapshot() = TableSnapshot(
-        id = id,
-        restaurantId = restaurantId,
-        tableNumber = tableNumber,
-        tableSize = tableSize,
-    )
+    fun snapshot() =
+        TableSnapshot(
+            id = id,
+            restaurantId = restaurantId,
+            tableNumber = tableNumber,
+            tableSize = tableSize,
+        )
 }

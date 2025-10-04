@@ -7,7 +7,6 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 interface CreateSchedule {
-
     fun command(command: CreateScheduleInquiry): Boolean
 
     class CreateScheduleInquiry(

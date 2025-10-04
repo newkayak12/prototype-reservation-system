@@ -21,7 +21,6 @@ class ScheduleEventListenerTest : BehaviorSpec(
             applicationContextRunner = ApplicationContextRunner()
         }
 
-
         Given("CreateScheduleEvent가 발행되었을 때") {
             val restaurantId = "restaurant-123"
             val event = CreateScheduleEvent(restaurantId)
@@ -42,12 +41,11 @@ class ScheduleEventListenerTest : BehaviorSpec(
                 Then("리스너가 호출되어 UseCase가 실행되어야 함") {
                     verify(exactly = 1) {
                         mockCreateScheduleUseCase.execute(
-                            CreateScheduleCommand(restaurantId)
+                            CreateScheduleCommand(restaurantId),
                         )
                     }
                 }
             }
         }
-
-    }
+    },
 )

@@ -10,13 +10,10 @@ import org.springframework.stereotype.Component
 class ScheduleEventListener(
     private val createScheduleUseCase: CreateScheduleUseCase,
 ) {
-
     @EventListener
     fun handleCreateScheduleEvent(event: CreateScheduleEvent) {
-
         val restaurantId = event.restaurantId
         val command = CreateScheduleCommand(restaurantId)
-
 
         createScheduleUseCase.execute(command)
     }
