@@ -4,7 +4,7 @@ import com.reservation.enumeration.ScheduleActiveStatus
 import com.reservation.enumeration.ScheduleActiveStatus.INACTIVE
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.EnumType.STRING
+import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
@@ -39,7 +39,7 @@ class ScheduleEntity(
         protected set
 
     @Column(name = "status")
-    @Enumerated(STRING)
+    @field:Enumerated(EnumType.STRING)
     var status: ScheduleActiveStatus = status
         protected set
 
