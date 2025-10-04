@@ -15,6 +15,7 @@ import jakarta.persistence.Table
     indexes = [],
 )
 @Entity
+@Suppress("LongParameterList")
 class ScheduleEntity(
     @Id
     @Column(name = "id")
