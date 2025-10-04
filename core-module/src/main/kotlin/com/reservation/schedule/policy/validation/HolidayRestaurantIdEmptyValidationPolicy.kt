@@ -1,7 +1,7 @@
 package com.reservation.schedule.policy.validation
 
-class ScheduleRestaurantIdEmptyValidationPolicy(
+class HolidayRestaurantIdEmptyValidationPolicy(
     override val reason: String = "restaurant id must not be null",
-) : ScheduleRestaurantIdPolicy {
+) : HolidayRestaurantIdPolicy {
     override fun validate(restaurantId: String): Boolean = !restaurantId.isNullOrBlank()
 }

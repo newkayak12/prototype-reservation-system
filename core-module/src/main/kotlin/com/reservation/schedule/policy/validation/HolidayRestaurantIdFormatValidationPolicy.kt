@@ -1,8 +1,8 @@
 package com.reservation.schedule.policy.validation
 
-class ScheduleRestaurantIdFormatValidationPolicy(
+class HolidayRestaurantIdFormatValidationPolicy(
     override val reason: String = "Invalid ID Format",
-) : ScheduleRestaurantIdPolicy {
+) : HolidayRestaurantIdPolicy {
     companion object {
         private const val FORMAT =
             "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"

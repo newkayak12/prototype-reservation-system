@@ -12,6 +12,12 @@ class Schedule(
     private val holidays: MutableList<Holiday> = mutableListOf()
     private val tables: MutableList<Table> = mutableListOf()
 
+    fun addHoliday(holiday: Holiday) {
+        if(holidays.contains(holiday)) return
+
+        holidays.add(holiday)
+    }
+
     fun snapshot() =
         ScheduleSnapshot(
             restaurantId = restaurantId,
