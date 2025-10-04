@@ -14,7 +14,7 @@ class CreateScheduleDomainService {
             ScheduleRestaurantIdFormatValidationPolicy(),
         )
 
-    private fun <T : ScheduleRestaurantIdPolicy> List<T>.validatePolicies(target: String)=
+    private fun <T : ScheduleRestaurantIdPolicy> List<T>.validatePolicies(target: String) =
         firstOrNull { !it.validate(target) }
             ?.let {
                 throw InvalidateScheduleElementException(it.reason)
