@@ -5,7 +5,7 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 
 interface CreateRestaurant {
-    fun command(inquiry: CreateProductInquiry): Boolean
+    fun command(inquiry: CreateProductInquiry): String
 
     data class CreateProductInquiry(
         val companyId: String,

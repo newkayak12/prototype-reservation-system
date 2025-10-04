@@ -2,6 +2,7 @@ package com.reservation.restaurant.usecase
 
 import com.reservation.common.exceptions.AlreadyPersistedException
 import com.reservation.config.annotations.UseCase
+import com.reservation.restaurant.event.CreateScheduleEvent
 import com.reservation.restaurant.policy.format.CreateRestaurantForm
 import com.reservation.restaurant.port.input.CreateRestaurantUseCase
 import com.reservation.restaurant.port.input.command.request.CreateProductCommand
@@ -14,6 +15,7 @@ import com.reservation.restaurant.port.output.CreateRestaurant.WorkingDay
 import com.reservation.restaurant.port.output.UploadRestaurantImageFile
 import com.reservation.restaurant.service.CreateRestaurantDomainService
 import com.reservation.restaurant.snapshot.RestaurantSnapshot
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 
@@ -23,6 +25,7 @@ class CreateRestaurantService(
     private val checkRestaurantDuplicated: CheckRestaurantDuplicated,
     private val createRestaurantDomainService: CreateRestaurantDomainService,
     private val uploadRestaurantImageFile: UploadRestaurantImageFile,
+    private val applicationEventPublisher: ApplicationEventPublisher,
 ) : CreateRestaurantUseCase {
     private fun checkDuplicated(
         companyId: String,
@@ -66,7 +69,7 @@ class CreateRestaurantService(
         return createRestaurantDomainService.create(form)
     }
 
-    private fun insertRestaurant(snapshot: RestaurantSnapshot): Boolean {
+    private fun insertRestaurant(snapshot: RestaurantSnapshot): String {
         val inquiry =
             CreateProductInquiry(
                 companyId = snapshot.companyId,
@@ -97,7 +100,9 @@ class CreateRestaurantService(
         checkDuplicated(request.companyId, request.name)
 
         val snapshot = createRestaurant(request)
+        val restaurantId = insertRestaurant(snapshot)
 
-        return insertRestaurant(snapshot)
+        applicationEventPublisher.publishEvent(CreateScheduleEvent(restaurantId))
+        return restaurantId != null
     }
 }

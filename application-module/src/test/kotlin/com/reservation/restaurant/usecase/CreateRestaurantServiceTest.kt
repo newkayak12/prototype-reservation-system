@@ -4,6 +4,7 @@ import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.common.exceptions.AlreadyPersistedException
 import com.reservation.fixture.FixtureMonkeyFactory
+import com.reservation.restaurant.event.CreateScheduleEvent
 import com.reservation.restaurant.exceptions.InvalidateRestaurantElementException
 import com.reservation.restaurant.port.input.command.request.CreateProductCommand
 import com.reservation.restaurant.port.output.CheckRestaurantDuplicated
@@ -11,10 +12,13 @@ import com.reservation.restaurant.port.output.CreateRestaurant
 import com.reservation.restaurant.port.output.UploadRestaurantImageFile
 import com.reservation.restaurant.service.CreateRestaurantDomainService
 import com.reservation.restaurant.snapshot.RestaurantSnapshot
+import com.reservation.utilities.generator.uuid.UuidGenerator
+import io.mockk.Runs
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.just
 import io.mockk.verify
 import net.jqwik.api.Arbitraries
 import org.assertj.core.api.Assertions.assertThat
@@ -23,6 +27,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.context.ApplicationEventPublisher
 
 @ExtendWith(MockKExtension::class)
 class CreateRestaurantServiceTest {
@@ -37,6 +42,9 @@ class CreateRestaurantServiceTest {
 
     @MockK
     private lateinit var uploadRestaurantImageFile: UploadRestaurantImageFile
+
+    @MockK
+    private lateinit var applicationEventPublisher: ApplicationEventPublisher
 
     @InjectMockKs
     private lateinit var useCase: CreateRestaurantService
@@ -141,13 +149,20 @@ class CreateRestaurantServiceTest {
 
             every {
                 createRestaurant.command(any())
-            } returns true
+            } returns UuidGenerator.generate()
+
+            every {
+                applicationEventPublisher.publishEvent(any<CreateScheduleEvent>())
+            } just Runs
 
             val result = useCase.execute(request)
 
-            verify(exactly = 1) { checkRestaurantDuplicated.query(any()) }
-            verify(exactly = 1) { createRestaurantDomainService.create(any()) }
-            verify(exactly = 1) { createRestaurant.command(any()) }
+            verify(exactly = 1) {
+                checkRestaurantDuplicated.query(any())
+                createRestaurantDomainService.create(any())
+                createRestaurant.command(any())
+                applicationEventPublisher.publishEvent(any<CreateScheduleEvent>())
+            }
             assertThat(result).isTrue()
         }
     }

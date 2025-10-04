@@ -99,6 +99,7 @@ dependencies {
     implementation(project(":shared-module"))
     implementation(project(":application-module"))
     compileOnly(project(":core-module"))
+    testImplementation(project(":core-module"))
 
     // Kotlin basics
     implementation(libs.kotlin.reflect)

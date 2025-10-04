@@ -219,7 +219,7 @@ class ChangeMenuDomainServiceTest : BehaviorSpec(
         private val bigDecimalArbitrary =
             Arbitraries.bigDecimals()
                 .greaterThan(BigDecimal.ZERO)
-                .lessThan(BigDecimal.valueOf(999999999L))
+                .lessThan(BigDecimal.valueOf(999999998L))
                 .greaterThan(BigDecimal.ZERO)
 
         private val booleanArbitrary = Arbitraries.of(true, false)

@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component
 class CreateRestaurantAdapter(
     private val jpaRepository: RestaurantJpaRepository,
 ) : CreateRestaurant {
-    override fun command(inquiry: CreateProductInquiry): Boolean {
+    override fun command(inquiry: CreateProductInquiry): String {
         val entity =
             RestaurantEntity(
                 companyId = inquiry.companyId,
@@ -41,6 +41,6 @@ class CreateRestaurantAdapter(
         RestaurantCuisinesMutator.appendCuisine(entity, inquiry.cuisines)
 
         val result = jpaRepository.save(entity)
-        return result.isPersisted()
+        return result.id!!
     }
 }
