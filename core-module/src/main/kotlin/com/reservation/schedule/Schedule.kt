@@ -7,13 +7,14 @@ import com.reservation.schedule.snapshot.ScheduleSnapshot
 class Schedule(
     private val restaurantId: String,
     private val status: ScheduleActiveStatus = INACTIVE,
+    private val timeSpans: MutableList<TimeSpan> = mutableListOf(),
+    private val holidays: MutableList<Holiday> = mutableListOf(),
+    private val tables: MutableList<Table> = mutableListOf(),
 ) {
-    private val timeSpans: MutableList<TimeSpan> = mutableListOf()
-    private val holidays: MutableList<Holiday> = mutableListOf()
-    private val tables: MutableList<Table> = mutableListOf()
+
 
     fun addHoliday(holiday: Holiday) {
-        if(holidays.contains(holiday)) return
+        if (holidays.contains(holiday)) return
 
         holidays.add(holiday)
     }
