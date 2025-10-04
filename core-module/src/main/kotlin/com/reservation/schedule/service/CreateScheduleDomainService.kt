@@ -1,20 +1,24 @@
 package com.reservation.schedule.service
 
-import com.reservation.restaurant.exceptions.InvalidateRestaurantElementException
 import com.reservation.schedule.Schedule
+import com.reservation.schedule.exceptions.InvalidateScheduleElementException
 import com.reservation.schedule.policy.validation.ScheduleRestaurantIdEmptyValidationPolicy
+import com.reservation.schedule.policy.validation.ScheduleRestaurantIdFormatValidationPolicy
 import com.reservation.schedule.policy.validation.ScheduleRestaurantIdPolicy
 import com.reservation.schedule.snapshot.ScheduleSnapshot
 
 class CreateScheduleDomainService {
-    private val restaurantIdPolicies: List<ScheduleRestaurantIdPolicy>
-    = listOf(ScheduleRestaurantIdEmptyValidationPolicy())
+    private val restaurantIdPolicies: List<ScheduleRestaurantIdPolicy> =
+        listOf(
+            ScheduleRestaurantIdEmptyValidationPolicy(),
+            ScheduleRestaurantIdFormatValidationPolicy()
+        )
 
     private fun <T : ScheduleRestaurantIdPolicy> List<T>.validatePolicies(
         target: String,
     ) = firstOrNull { !it.validate(target) }
         ?.let {
-            throw InvalidateRestaurantElementException(it.reason)
+            throw InvalidateScheduleElementException(it.reason)
         }
 
 
