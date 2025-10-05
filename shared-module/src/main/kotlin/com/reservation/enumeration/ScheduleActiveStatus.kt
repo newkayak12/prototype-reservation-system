@@ -5,7 +5,7 @@ enum class ScheduleActiveStatus {
     INACTIVE,
     ;
 
-    fun toggle(
+    fun rebalance(
         tablesConfigured: Boolean,
         workingHoursConfigured: Boolean,
         holidaysConfigured: Boolean,

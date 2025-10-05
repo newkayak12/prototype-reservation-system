@@ -51,4 +51,31 @@ class ScheduleEntity(
     @Column(name = "total_capacity")
     var totalCapacity: Int = totalCapacity
         protected set
+
+
+    fun checkTablesConfigured(count: Int) {
+        this.tablesConfigured = count > 0
+        toggleActiveState()
+    }
+    fun checkWorkingHoursConfigured(count: Int) {
+        this.workingHoursConfigured = count > 0
+        toggleActiveState()
+    }
+    fun checkHolidaysConfigured(count: Int) {
+        this.holidaysConfigured = count > 0
+        toggleActiveState()
+    }
+
+    fun adjustTableInformation(totalTables: Int, totalCapacity: Int) {
+        this.totalTables = totalTables
+        this.totalCapacity = totalCapacity
+    }
+
+    private fun toggleActiveState() {
+        this.status = this.status.rebalance(
+            this.tablesConfigured,
+            this.workingHoursConfigured,
+            this.holidaysConfigured
+        )
+    }
 }
