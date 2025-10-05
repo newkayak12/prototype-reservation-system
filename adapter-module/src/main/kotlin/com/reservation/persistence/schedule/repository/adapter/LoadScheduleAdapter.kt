@@ -20,7 +20,6 @@ class LoadScheduleAdapter(
     private val tableJpaRepository: TableJpaRepository,
     private val timeSpanJpaRepository: TimeSpanJpaRepository,
 ) : LoadSchedule {
-
     private fun loadHolidays(restaurantId: String) =
         holidayJpaRepository.findAllByRestaurantId(restaurantId)
 
@@ -31,16 +30,19 @@ class LoadScheduleAdapter(
         timeSpanJpaRepository.findAllByRestaurantId(restaurantId)
 
     override fun query(restaurantId: String): LoadScheduleResult? {
-        val schedule: ScheduleEntity = scheduleJpaRepository.findByRestaurantId(restaurantId)
-            ?: return null
+        val schedule: ScheduleEntity =
+            scheduleJpaRepository.findByRestaurantId(restaurantId)
+                ?: return null
 
         val holidays: List<HolidayEntity> = loadHolidays(restaurantId)
         val tables: List<TableEntity> = loadTables(restaurantId)
         val timeSpans: List<TimeSpanEntity> = loadTimeSpans(restaurantId)
 
-
         return LoadScheduleResultMutator.mapLoadScheduleResult(
-            schedule, holidays, tables, timeSpans
+            schedule,
+            holidays,
+            tables,
+            timeSpans,
         )
     }
 }

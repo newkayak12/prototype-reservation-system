@@ -20,7 +20,6 @@ class CreateHolidayService(
     private val loadSchedule: LoadSchedule,
     private val changeSchedule: ChangeSchedule,
 ) : CreateHolidayUseCase {
-
     private fun createHolidayForm(command: CreateHolidayCommand): CreateHolidayForm =
         CreateHolidayForm(command.restaurantId, command.date)
 

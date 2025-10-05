@@ -17,7 +17,6 @@ class TableEntity(
     tableNumber: Int,
     tableSize: Int,
 ) : TimeBasedPrimaryKey() {
-
     @Column(name = "table_number")
     var tableNumber: Int = tableNumber
         protected set

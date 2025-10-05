@@ -18,12 +18,10 @@ import java.time.LocalTime
 class TimeSpanEntity(
     @Column(name = "restaurant_id")
     val restaurantId: String,
-
     day: DayOfWeek,
     startTime: LocalTime,
     endTime: LocalTime,
 ) : TimeBasedPrimaryKey() {
-
     @field:Enumerated(STRING)
     @Column(name = "day")
     var day: DayOfWeek = day

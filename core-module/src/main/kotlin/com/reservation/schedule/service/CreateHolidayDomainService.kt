@@ -13,11 +13,10 @@ import com.reservation.schedule.snapshot.ScheduleSnapshot
 import java.time.LocalDate
 
 class CreateHolidayDomainService {
-
     private val restaurantIdPolicy: List<HolidayRestaurantIdPolicy> =
         listOf(
             HolidayRestaurantIdEmptyValidationPolicy(),
-            HolidayRestaurantIdFormatValidationPolicy()
+            HolidayRestaurantIdFormatValidationPolicy(),
         )
     private val datePolicy: List<HolidayDatePolicy> =
         listOf(HolidayDateMustNotBePassedValidationPolicy())
@@ -44,7 +43,10 @@ class CreateHolidayDomainService {
 
     private fun validateDate(date: LocalDate) = datePolicy.validatePolicies(date)
 
-    fun create(schedule: Schedule, form: CreateHolidayForm): ScheduleSnapshot {
+    fun create(
+        schedule: Schedule,
+        form: CreateHolidayForm,
+    ): ScheduleSnapshot {
         validate(form)
 
         val holiday = Holiday(restaurantId = form.restaurantId, date = form.date)

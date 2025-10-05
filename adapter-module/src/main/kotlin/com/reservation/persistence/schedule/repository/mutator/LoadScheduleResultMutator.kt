@@ -10,20 +10,19 @@ import com.reservation.schedule.port.output.LoadSchedule.LoadTableResult
 import com.reservation.schedule.port.output.LoadSchedule.LoadTimeSpanResult
 
 object LoadScheduleResultMutator {
-
     fun mapLoadScheduleResult(
         schedule: ScheduleEntity,
         holidays: List<HolidayEntity>,
         tables: List<TableEntity>,
         timeSpans: List<TimeSpanEntity>,
-    ): LoadScheduleResult = LoadScheduleResult(
-        restaurantId = schedule.restaurantId,
-        status = schedule.status,
-        timeSpans = timeSpans.map(this::mapLoadTimeSpanResult),
-        holidays = holidays.map(this::mapLoadHolidayResult),
-        tables = tables.map(this::mapLoadTableResult),
-    )
-
+    ): LoadScheduleResult =
+        LoadScheduleResult(
+            restaurantId = schedule.restaurantId,
+            status = schedule.status,
+            timeSpans = timeSpans.map(this::mapLoadTimeSpanResult),
+            holidays = holidays.map(this::mapLoadHolidayResult),
+            tables = tables.map(this::mapLoadTableResult),
+        )
 
     private fun mapLoadHolidayResult(it: HolidayEntity): LoadHolidayResult =
         LoadHolidayResult(

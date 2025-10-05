@@ -23,7 +23,6 @@ class ChangeScheduleAdapter(
     private val tableJpaRepository: TableJpaRepository,
     private val timeSpanJpaRepository: TimeSpanJpaRepository,
 ) : ChangeSchedule {
-
     private fun <T> delete(
         repository: CrudRepository<T, String>,
         entities: List<T>,
@@ -47,7 +46,6 @@ class ChangeScheduleAdapter(
     }
 
     override fun command(inquiry: ScheduleInquiry): Boolean {
-
         adjustHoliday(inquiry.restaurantId, inquiry.holidays)
         adjustTimeSpan(inquiry.restaurantId, inquiry.timeSpans)
         adjustTable(inquiry.restaurantId, inquiry.tables)
@@ -56,8 +54,9 @@ class ChangeScheduleAdapter(
     }
 
     private fun adjustSchedule(inquiry: ScheduleInquiry): Boolean {
-        val schedule = scheduleJpaRepository.findByRestaurantId(inquiry.restaurantId)
-            ?: throw NoSuchPersistedElementException()
+        val schedule =
+            scheduleJpaRepository.findByRestaurantId(inquiry.restaurantId)
+                ?: throw NoSuchPersistedElementException()
 
         var totalTables = 0
         var totalCapacity = 0
@@ -72,15 +71,18 @@ class ChangeScheduleAdapter(
         schedule.checkHolidaysConfigured(inquiry.holidays.size)
         schedule.adjustTableInformation(totalTables, totalCapacity)
 
-        return true;
+        return true
     }
 
-    private fun adjustHoliday(restaurantId: String, inquiries: List<HolidayInquiry>) {
+    private fun adjustHoliday(
+        restaurantId: String,
+        inquiries: List<HolidayInquiry>,
+    ) {
         val entities = holidayJpaRepository.findAllByRestaurantId(restaurantId)
         val latestIds = inquiries.filter { it.id != null }.mapNotNull { it.id }
 
         delete(holidayJpaRepository, entities) { latestIds.contains(it.id) }
-        insert(holidayJpaRepository,inquiries) {
+        insert(holidayJpaRepository, inquiries) {
             HolidayEntity(
                 restaurantId = it.restaurantId,
                 date = it.date,
@@ -88,7 +90,10 @@ class ChangeScheduleAdapter(
         }
     }
 
-    private fun adjustTimeSpan(restaurantId: String, inquiries: List<TimeSpanInquiry>) {
+    private fun adjustTimeSpan(
+        restaurantId: String,
+        inquiries: List<TimeSpanInquiry>,
+    ) {
         val entities = timeSpanJpaRepository.findAllByRestaurantId(restaurantId)
         val latestIds = inquiries.filter { it.id != null }.mapNotNull { it.id }
 
@@ -103,10 +108,12 @@ class ChangeScheduleAdapter(
         }
     }
 
-    private fun adjustTable(restaurantId: String, inquiries: List<TableInquiry>) {
+    private fun adjustTable(
+        restaurantId: String,
+        inquiries: List<TableInquiry>,
+    ) {
         val entities = tableJpaRepository.findAllByRestaurantId(restaurantId)
         val latestIds = inquiries.filter { it.id != null }.mapNotNull { it.id }
-
 
         delete(tableJpaRepository, entities) { latestIds.contains(it.id) }
         insert(tableJpaRepository, inquiries) {
@@ -117,8 +124,4 @@ class ChangeScheduleAdapter(
             )
         }
     }
-
-
-
-
 }

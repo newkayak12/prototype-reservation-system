@@ -25,7 +25,7 @@ class TimeSpan(
     }
 
     override fun hashCode(): Int {
-        var result =  day.hashCode()
+        var result = day.hashCode()
         result = 31 * result + startTime.hashCode()
         result = 31 * result + endTime.hashCode()
         return result

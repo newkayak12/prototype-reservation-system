@@ -17,9 +17,7 @@ class HolidayEntity(
     val restaurantId: String,
     date: LocalDate,
 ) : TimeBasedPrimaryKey() {
-
     @Column(name = "date")
     var date: LocalDate = date
         protected set
-
 }

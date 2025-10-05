@@ -42,16 +42,18 @@ class CreateHolidayControllerTest : FunSpec(
         beforeTest { testCase ->
             createHolidayUseCase = mockk<CreateHolidayUseCase>()
             val controller = CreateHolidayController(createHolidayUseCase)
-            mockMvc = MockMvcFactory.buildMockMvc(
-                controller,
-                restDocsExtension.restDocumentation(testCase),
-            )
+            mockMvc =
+                MockMvcFactory.buildMockMvc(
+                    controller,
+                    restDocsExtension.restDocumentation(testCase),
+                )
         }
 
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-        val objectMapper = ObjectMapper()
-            .registerModule(JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        val objectMapper =
+            ObjectMapper()
+                .registerModule(JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
         fun perfectCase() =
             pureMonkey.giveMeBuilder<CreateHolidayRequest>()
@@ -59,7 +61,7 @@ class CreateHolidayControllerTest : FunSpec(
                     LocalDate.of(
                         Arbitraries.integers().between(2024, 2030).sample(),
                         Arbitraries.integers().between(1, 12).sample(),
-                        Arbitraries.integers().between(1, 28).sample()
+                        Arbitraries.integers().between(1, 28).sample(),
                     )
                 }
                 .sample()
@@ -79,7 +81,7 @@ class CreateHolidayControllerTest : FunSpec(
                     .header(
                         HttpHeaders.AUTHORIZATION,
                         CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
-                    )
+                    ),
             )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is4xxClientError)
@@ -98,7 +100,7 @@ class CreateHolidayControllerTest : FunSpec(
                     .header(
                         HttpHeaders.AUTHORIZATION,
                         CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
-                    )
+                    ),
             )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is4xxClientError)
@@ -113,7 +115,7 @@ class CreateHolidayControllerTest : FunSpec(
             mockMvc.perform(
                 post(url, restaurantId)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(requestBody))
+                    .content(objectMapper.writeValueAsString(requestBody)),
             )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isCreated)
@@ -132,7 +134,7 @@ class CreateHolidayControllerTest : FunSpec(
                     .header(
                         HttpHeaders.AUTHORIZATION,
                         CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
-                    )
+                    ),
             )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isCreated)
@@ -144,23 +146,26 @@ class CreateHolidayControllerTest : FunSpec(
                         documentTags = listOf("schedule", "holiday", "create"),
                         summary = "휴일 생성",
                         description = "레스토랑의 휴일을 생성합니다.",
-                        requestBody = arrayOf(
-                            Body(
-                                name = "date",
-                                jsonType = STRING,
-                                optional = false,
-                                description = "휴일 날짜 (YYYY-MM-DD 형식)"
-                            )
-                        ),
-                        responseBody = arrayOf(
-                            Body("result", BOOLEAN, false, "생성 성공 여부")
-                        ),
-                        pathParameter = arrayOf(
-                            PathParameter("id", false, "레스토랑 식별값")
-                        )
+                        requestBody =
+                            arrayOf(
+                                Body(
+                                    name = "date",
+                                    jsonType = STRING,
+                                    optional = false,
+                                    description = "휴일 날짜 (YYYY-MM-DD 형식)",
+                                ),
+                            ),
+                        responseBody =
+                            arrayOf(
+                                Body("result", BOOLEAN, false, "생성 성공 여부"),
+                            ),
+                        pathParameter =
+                            arrayOf(
+                                PathParameter("id", false, "레스토랑 식별값"),
+                            ),
                     )
                         .authorizedRequestHeader()
-                        .create()
+                        .create(),
                 )
         }
 
@@ -177,12 +182,13 @@ class CreateHolidayControllerTest : FunSpec(
                     .header(
                         HttpHeaders.AUTHORIZATION,
                         CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
-                    )
+                    ),
             )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isCreated)
                 .andExpect(jsonPath("$.result").isBoolean)
                 .andExpect(jsonPath("$.result").value(false))
         }
-    }
+    },
 )
+

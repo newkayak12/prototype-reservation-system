@@ -7,9 +7,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 interface LoadSchedule {
-
     fun query(restaurantId: String): LoadScheduleResult?
-
 
     data class LoadScheduleResult(
         val restaurantId: String,
@@ -18,7 +16,6 @@ interface LoadSchedule {
         val holidays: List<LoadHolidayResult> = listOf(),
         val tables: List<LoadTableResult> = listOf(),
     )
-
 
     data class LoadHolidayResult(
         val id: String,

@@ -27,7 +27,6 @@ import org.springframework.dao.DataIntegrityViolationException
 @ExtendWith(MockKExtension::class)
 @DisplayName("휴일을 생성할 때, ")
 class CreateHolidayServiceTest {
-
     @MockK
     lateinit var createHolidayDomainService: CreateHolidayDomainService
 
@@ -39,7 +38,6 @@ class CreateHolidayServiceTest {
 
     @InjectMockKs
     lateinit var service: CreateHolidayService
-
 
     @DisplayName("저장된 Schedule이 없는 경우에")
     @Nested
@@ -65,10 +63,9 @@ class CreateHolidayServiceTest {
             verify(exactly = 0) {
                 createHolidayDomainService.create(any(), any())
             }
-            verify(exactly = 0){
+            verify(exactly = 0) {
                 changeSchedule.command(any())
             }
-
         }
     }
 
@@ -101,7 +98,7 @@ class CreateHolidayServiceTest {
             verify(exactly = 1) {
                 createHolidayDomainService.create(any(), any())
             }
-            verify(exactly = 0){
+            verify(exactly = 0) {
                 changeSchedule.command(any())
             }
         }
@@ -141,7 +138,7 @@ class CreateHolidayServiceTest {
             verify(exactly = 1) {
                 createHolidayDomainService.create(any(), any())
             }
-            verify(exactly = 1){
+            verify(exactly = 1) {
                 changeSchedule.command(any())
             }
         }
@@ -181,10 +178,9 @@ class CreateHolidayServiceTest {
             verify(exactly = 1) {
                 createHolidayDomainService.create(any(), any())
             }
-            verify(exactly = 1){
+            verify(exactly = 1) {
                 changeSchedule.command(any())
             }
         }
     }
-
 }

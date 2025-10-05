@@ -7,11 +7,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 interface ChangeSchedule {
-
-
     fun command(inquiry: ScheduleInquiry): Boolean
-
-
 
     data class ScheduleInquiry(
         val restaurantId: String,
@@ -20,7 +16,6 @@ interface ChangeSchedule {
         val holidays: List<HolidayInquiry> = listOf(),
         val tables: List<TableInquiry> = listOf(),
     )
-
 
     data class HolidayInquiry(
         val id: String? = null,

@@ -23,9 +23,10 @@ class CreateHolidayDomainServiceTest : BehaviorSpec(
 
             When("휴일 생성 요청을 보내면 ") {
                 Then("InvalidateHolidayElementException를 반환하며 실패한다.") {
-                    val exception = shouldThrow<InvalidateHolidayElementException> {
-                        service.create(schedule, form)
-                    }
+                    val exception =
+                        shouldThrow<InvalidateHolidayElementException> {
+                            service.create(schedule, form)
+                        }
 
                     exception.message shouldContain "restaurant id must not be null"
                 }
@@ -34,15 +35,17 @@ class CreateHolidayDomainServiceTest : BehaviorSpec(
 
         Given("restaurantId가 UUID 형식이 아닌 요청으로") {
             val schedule = giveMeSchedule()
-            val form = giveMePerfectCase().copy(
-                restaurantId = Arbitraries.strings().ofMinLength(10).sample()
-            )
+            val form =
+                giveMePerfectCase().copy(
+                    restaurantId = Arbitraries.strings().ofMinLength(10).sample(),
+                )
 
             When("휴일 생성 요청을 보내면 ") {
                 Then("InvalidateHolidayElementException를 반환하며 실패한다.") {
-                    val exception = shouldThrow<InvalidateHolidayElementException> {
-                        service.create(schedule, form)
-                    }
+                    val exception =
+                        shouldThrow<InvalidateHolidayElementException> {
+                            service.create(schedule, form)
+                        }
 
                     exception.message shouldContain "Invalid ID Format"
                 }
@@ -51,15 +54,17 @@ class CreateHolidayDomainServiceTest : BehaviorSpec(
 
         Given("date가 없는 요청으로") {
             val schedule = giveMeSchedule()
-            val form = giveMePerfectCase().copy(
-                date = LocalDate.now().minusDays(10)
-            )
+            val form =
+                giveMePerfectCase().copy(
+                    date = LocalDate.now().minusDays(10),
+                )
 
             When("휴일 생성 요청을 보내면 ") {
                 Then("InvalidateHolidayElementException를 반환하며 실패한다.") {
-                    val exception = shouldThrow<InvalidateHolidayElementException> {
-                        service.create(schedule, form)
-                    }
+                    val exception =
+                        shouldThrow<InvalidateHolidayElementException> {
+                            service.create(schedule, form)
+                        }
 
                     exception.message shouldContain "date must not be passed"
                 }
@@ -73,28 +78,28 @@ class CreateHolidayDomainServiceTest : BehaviorSpec(
             When("휴일 생성 요청을 보내면 ") {
                 val snapshot = service.create(schedule, form)
                 Then("휴일 생성에 성공한다.") {
-                    val count = snapshot.holidays.count {
-                        it.id == null
-                        it.restaurantId == form.restaurantId
-                        it.date == form.date
-                    }
+                    val count =
+                        snapshot.holidays.count {
+                            it.id == null
+                            it.restaurantId == form.restaurantId
+                            it.date == form.date
+                        }
 
                     count shouldBeGreaterThanOrEqual 1
                 }
             }
         }
-
-
-    }
+    },
 ) {
     companion object {
         private val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
         private fun giveMeSchedule(): Schedule = pureMonkey.giveMeOne<Schedule>()
 
-        private fun giveMePerfectCase(): CreateHolidayForm = CreateHolidayForm(
-            restaurantId = UuidGenerator.generate(),
-            date = LocalDate.now().plusDays(1)
-        )
+        private fun giveMePerfectCase(): CreateHolidayForm =
+            CreateHolidayForm(
+                restaurantId = UuidGenerator.generate(),
+                date = LocalDate.now().plusDays(1),
+            )
     }
 }

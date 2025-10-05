@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.RestController
 class CreateHolidayController(
     private val createHolidayUseCase: CreateHolidayUseCase,
 ) {
-
     @PostMapping(HolidayUrl.CREATE)
     fun createHoliday(
         @PathVariable(name = "id") id: String,
         @RequestBody @Valid createHolidayRequest: CreateHolidayRequest,
-    ): BooleanResponse = BooleanResponse.created(
-        createHolidayUseCase.execute(CreateHolidayCommand(id, createHolidayRequest.date))
-    )
+    ): BooleanResponse =
+        BooleanResponse.created(
+            createHolidayUseCase.execute(CreateHolidayCommand(id, createHolidayRequest.date)),
+        )
 }
