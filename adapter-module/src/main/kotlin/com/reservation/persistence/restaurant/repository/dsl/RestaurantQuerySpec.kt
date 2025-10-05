@@ -1,7 +1,7 @@
 package com.reservation.persistence.restaurant.repository.dsl
 
 import com.querydsl.core.types.dsl.BooleanExpression
-import com.reservation.persistence.restaurant.QRestaurantEntity.restaurantEntity
+import com.reservation.persistence.restaurant.entity.QRestaurantEntity.restaurantEntity
 import org.springframework.util.StringUtils
 
 object RestaurantQuerySpec {

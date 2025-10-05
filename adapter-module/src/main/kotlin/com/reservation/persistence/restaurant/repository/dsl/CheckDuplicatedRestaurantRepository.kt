@@ -1,7 +1,7 @@
 package com.reservation.persistence.restaurant.repository.dsl
 
 import com.querydsl.jpa.impl.JPAQueryFactory
-import com.reservation.persistence.restaurant.QRestaurantEntity.restaurantEntity
+import com.reservation.persistence.restaurant.entity.QRestaurantEntity.restaurantEntity
 import com.reservation.restaurant.port.output.CheckRestaurantDuplicated
 import com.reservation.restaurant.port.output.CheckRestaurantDuplicated.CheckRestaurantDuplicatedInquiry
 import org.springframework.stereotype.Component

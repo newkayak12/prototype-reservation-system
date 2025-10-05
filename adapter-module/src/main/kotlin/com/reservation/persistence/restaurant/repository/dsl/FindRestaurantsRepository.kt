@@ -2,12 +2,12 @@ package com.reservation.persistence.restaurant.repository.dsl
 
 import com.querydsl.core.Tuple
 import com.querydsl.jpa.impl.JPAQueryFactory
-import com.reservation.persistence.restaurant.QRestaurantCuisinesEntity.restaurantCuisinesEntity
-import com.reservation.persistence.restaurant.QRestaurantEntity.restaurantEntity
-import com.reservation.persistence.restaurant.QRestaurantNationalitiesEntity.restaurantNationalitiesEntity
-import com.reservation.persistence.restaurant.QRestaurantPhotoEntity.restaurantPhotoEntity
-import com.reservation.persistence.restaurant.QRestaurantTagsEntity.restaurantTagsEntity
-import com.reservation.persistence.restaurant.QRestaurantWorkingDayEntity.restaurantWorkingDayEntity
+import com.reservation.persistence.restaurant.entity.QRestaurantCuisinesEntity.restaurantCuisinesEntity
+import com.reservation.persistence.restaurant.entity.QRestaurantEntity.restaurantEntity
+import com.reservation.persistence.restaurant.entity.QRestaurantNationalitiesEntity.restaurantNationalitiesEntity
+import com.reservation.persistence.restaurant.entity.QRestaurantPhotoEntity.restaurantPhotoEntity
+import com.reservation.persistence.restaurant.entity.QRestaurantTagsEntity.restaurantTagsEntity
+import com.reservation.persistence.restaurant.entity.QRestaurantWorkingDayEntity.restaurantWorkingDayEntity
 import com.reservation.restaurant.port.output.FindRestaurants
 import com.reservation.restaurant.port.output.FindRestaurants.FindRestaurantsInquiry
 import com.reservation.restaurant.port.output.FindRestaurants.FindRestaurantsResult

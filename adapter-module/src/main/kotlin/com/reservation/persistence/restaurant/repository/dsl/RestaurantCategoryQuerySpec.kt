@@ -1,9 +1,9 @@
 package com.reservation.persistence.restaurant.repository.dsl
 
 import com.querydsl.core.types.dsl.BooleanExpression
-import com.reservation.persistence.restaurant.QRestaurantCuisinesEntity.restaurantCuisinesEntity
-import com.reservation.persistence.restaurant.QRestaurantNationalitiesEntity.restaurantNationalitiesEntity
-import com.reservation.persistence.restaurant.QRestaurantTagsEntity.restaurantTagsEntity
+import com.reservation.persistence.restaurant.entity.QRestaurantCuisinesEntity.restaurantCuisinesEntity
+import com.reservation.persistence.restaurant.entity.QRestaurantNationalitiesEntity.restaurantNationalitiesEntity
+import com.reservation.persistence.restaurant.entity.QRestaurantTagsEntity.restaurantTagsEntity
 
 object RestaurantCategoryQuerySpec {
     fun tagsIn(ids: Set<Long>): BooleanExpression? =
