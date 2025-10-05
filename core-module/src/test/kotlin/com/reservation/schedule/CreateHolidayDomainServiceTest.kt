@@ -81,8 +81,8 @@ class CreateHolidayDomainServiceTest : BehaviorSpec(
                     val count =
                         snapshot.holidays.count {
                             it.id == null &&
-                            it.restaurantId == form.restaurantId &&
-                            it.date == form.date
+                                it.restaurantId == form.restaurantId &&
+                                it.date == form.date
                         }
 
                     count shouldBeGreaterThanOrEqual 1
