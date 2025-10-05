@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: "reservation-system-batch"
+  data:
+    web:
+      pageable:
+        default-page-size: 10
+        page-parameter: pageNumber
+        size-parameter: pageSize
+        max-page-size: 100
+        one-indexed-parameters: true
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    datasource:
+      hikari:
+      driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+      url: jdbc:mysql://localhost:3306/prototype_reservation?serverTimezone=UTC&characterEncoding=UTF-8
+      username: temporary
+      password: temporary
+    open-in-view: false
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        use-new-id-generator-mapping: false
+      ddl-auto: none
+    generate-ddl: true
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+  docker:
+    compose:
+      enabled: false
+
+
+logging:
+  level:
+    p6spy: DEBUG
+    com.p6spy: DEBUG
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true
+
+key:
+  bidirectional:
+    secret: d6fe589c69bf2edfb795b1a37e977dd7e98ce3c3aff17b095b4129588d994f02

@@ -1,0 +1,11 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: none
+      datasource:
+        hikari:
+          driver-class-name: com.p6spy.engine.spy.P6SpyDriver

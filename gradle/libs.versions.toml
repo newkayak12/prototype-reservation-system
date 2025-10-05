@@ -32,6 +32,9 @@ springdoc = "2.6.0"
 asciidoctor = "4.0.2"
 restdocsApiSpec = "0.19.4"
 
+# Batch
+springBatch = "5.1.2"
+
 # Security & Utilities
 jjwt = "0.12.6"
 springSecurity = "6.4.2"
@@ -105,6 +108,9 @@ restdocs-api-spec = { module = "com.epages:restdocs-api-spec-mockmvc", version.r
 
 # Development Tools
 p6spy = { module = "com.github.gavlyukovskiy:p6spy-spring-boot-starter", version.ref = "p6spy" }
+
+# Batch
+spring-boot-starter-batch = { module = "org.springframework.boot:spring-boot-starter-batch" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
