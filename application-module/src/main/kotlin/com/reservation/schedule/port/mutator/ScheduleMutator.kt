@@ -34,7 +34,7 @@ object ScheduleMutator {
             tableSize = it.tableSize,
         )
 
-    fun mutate(result: LoadScheduleResult): Schedule  {
+    fun mutate(result: LoadScheduleResult): Schedule {
         val timespan = result.timeSpans.map(this::mapTimespan).toMutableList()
         val holiday = result.holidays.map(this::mapHoliday).toMutableList()
         val table = result.tables.map(this::mapTable).toMutableList()
