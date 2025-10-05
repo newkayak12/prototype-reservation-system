@@ -1,4 +1,4 @@
-package com.reservation.persistence.restaurant
+package com.reservation.persistence.restaurant.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Embeddable

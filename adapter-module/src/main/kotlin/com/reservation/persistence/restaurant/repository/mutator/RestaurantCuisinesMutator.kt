@@ -1,7 +1,7 @@
 package com.reservation.persistence.restaurant.repository.mutator
 
-import com.reservation.persistence.restaurant.RestaurantCuisinesEntity
-import com.reservation.persistence.restaurant.RestaurantEntity
+import com.reservation.persistence.restaurant.entity.RestaurantCuisinesEntity
+import com.reservation.persistence.restaurant.entity.RestaurantEntity
 
 object RestaurantCuisinesMutator {
     private fun RestaurantEntity.removeCuisine(cuisinesId: Long) {
