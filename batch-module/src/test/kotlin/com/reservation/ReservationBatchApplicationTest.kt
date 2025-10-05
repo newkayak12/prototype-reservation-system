@@ -36,10 +36,6 @@ class ReservationBatchApplicationTest {
             registry.add("spring.datasource.url") { mysqlContainer.jdbcUrl }
             registry.add("spring.datasource.username") { mysqlContainer.username }
             registry.add("spring.datasource.password") { mysqlContainer.password }
-
-            registry.add("spring.flyway.url") { mysqlContainer.jdbcUrl }
-            registry.add("spring.flyway.user") { mysqlContainer.username }
-            registry.add("spring.flyway.password") { mysqlContainer.password }
         }
     }
 
