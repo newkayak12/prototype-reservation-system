@@ -80,8 +80,8 @@ class CreateHolidayDomainServiceTest : BehaviorSpec(
                 Then("휴일 생성에 성공한다.") {
                     val count =
                         snapshot.holidays.count {
-                            it.id == null
-                            it.restaurantId == form.restaurantId
+                            it.id == null &&
+                            it.restaurantId == form.restaurantId &&
                             it.date == form.date
                         }
 
