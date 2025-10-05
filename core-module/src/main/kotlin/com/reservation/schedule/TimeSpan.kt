@@ -17,6 +17,7 @@ class TimeSpan(
 
         other as TimeSpan
 
+        if (restaurantId != other.restaurantId) return false
         if (day != other.day) return false
         if (startTime != other.startTime) return false
         if (endTime != other.endTime) return false
@@ -25,7 +26,8 @@ class TimeSpan(
     }
 
     override fun hashCode(): Int {
-        var result = day.hashCode()
+        var result = restaurantId.hashCode()
+        result = 31 * result + day.hashCode()
         result = 31 * result + startTime.hashCode()
         result = 31 * result + endTime.hashCode()
         return result
