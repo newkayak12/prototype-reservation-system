@@ -1,4 +1,4 @@
-package com.reservation.persistence.restaurant
+package com.reservation.persistence.restaurant.entity
 
 import com.reservation.persistence.common.AuditDateTime
 import com.reservation.persistence.common.TimeBasedPrimaryKey
@@ -15,17 +15,17 @@ import org.hibernate.annotations.Comment
 
 @Table(
     catalog = "prototype_reservation",
-    name = "restaurant_nationalities",
+    name = "restaurant_tags",
     indexes = [
         Index(
-            columnList = "restaurant_id, nationalities_id",
+            columnList = "restaurant_id,tags_id",
             unique = false,
-            name = "index_restaurant_nationalities",
+            name = "index_restaurant_tags",
         ),
     ],
 )
 @Entity
-class RestaurantNationalitiesEntity(
+class RestaurantTagsEntity(
     @ManyToOne(targetEntity = RestaurantEntity::class)
     @JoinColumn(
         name = "restaurant_id",
@@ -34,9 +34,9 @@ class RestaurantNationalitiesEntity(
     )
     @Comment("음식점 식별자")
     private val restaurant: RestaurantEntity,
-    @Column(name = "nationalities_id")
+    @Column(name = "tags_id")
     @Comment("카테고리 식별자")
-    val nationalitiesId: Long,
+    val tagsId: Long,
 ) : TimeBasedPrimaryKey() {
     @Embedded
     var auditDateTime: AuditDateTime = AuditDateTime()

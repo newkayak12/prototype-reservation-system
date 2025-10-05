@@ -1,7 +1,7 @@
 package com.reservation.persistence.restaurant.repository.mutator
 
-import com.reservation.persistence.restaurant.RestaurantEntity
-import com.reservation.persistence.restaurant.RestaurantPhotoEntity
+import com.reservation.persistence.restaurant.entity.RestaurantEntity
+import com.reservation.persistence.restaurant.entity.RestaurantPhotoEntity
 
 object RestaurantPhotosMutator {
     private fun RestaurantEntity.removePhoto(photoId: String) {

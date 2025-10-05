@@ -1,8 +1,8 @@
 package com.reservation.persistence.restaurant.repository.mutator
 
-import com.reservation.persistence.restaurant.RestaurantEntity
-import com.reservation.persistence.restaurant.RestaurantWorkingDayEntity
-import com.reservation.persistence.restaurant.RestaurantWorkingDayId
+import com.reservation.persistence.restaurant.entity.RestaurantEntity
+import com.reservation.persistence.restaurant.entity.RestaurantWorkingDayEntity
+import com.reservation.persistence.restaurant.entity.RestaurantWorkingDayId
 import java.time.DayOfWeek
 import java.time.LocalTime
 

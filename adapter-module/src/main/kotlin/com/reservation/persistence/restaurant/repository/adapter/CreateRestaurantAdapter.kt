@@ -1,6 +1,6 @@
 package com.reservation.persistence.restaurant.repository.adapter
 
-import com.reservation.persistence.restaurant.RestaurantEntity
+import com.reservation.persistence.restaurant.entity.RestaurantEntity
 import com.reservation.persistence.restaurant.repository.jpa.RestaurantJpaRepository
 import com.reservation.persistence.restaurant.repository.mutator.RestaurantCuisinesMutator
 import com.reservation.persistence.restaurant.repository.mutator.RestaurantNationalitiesMutator
