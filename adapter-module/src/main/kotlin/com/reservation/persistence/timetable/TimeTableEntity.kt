@@ -8,6 +8,7 @@ import jakarta.persistence.EnumType.STRING
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Table
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalTime
 
 @Table(
@@ -19,6 +20,8 @@ import java.time.LocalTime
 class TimeTableEntity(
     @Column(name = "restaurant_id")
     val restaurantId: String,
+    @Column(name = "date")
+    val date: LocalDate,
     @field:Enumerated(STRING)
     @Column(name = "day")
     val day: DayOfWeek,
