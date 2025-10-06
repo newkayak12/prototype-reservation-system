@@ -1,5 +1,6 @@
 package com.reservation.batch.timetable.step.processor
 
+import com.reservation.batch.timetable.constants.TimeTableBatchConstants.JobParameter
 import com.reservation.batch.timetable.dto.ScheduleWithData
 import com.reservation.persistence.timetable.entity.TimeTableEntity
 import org.springframework.batch.core.StepExecution
@@ -15,13 +16,12 @@ class TimeTableItemProcessor : ItemProcessor<ScheduleWithData, List<TimeTableEnt
     companion object {
         private const val YEAR_MONTH_PATTERN = "yyyy-MM"
         private val FORMAT = DateTimeFormatter.ofPattern(YEAR_MONTH_PATTERN)
-        private const val DATE_KEY = "date"
     }
 
     @BeforeStep
     fun beforeStep(stepExecution: StepExecution) {
         val month =
-            stepExecution.jobParameters.getString(DATE_KEY)
+            stepExecution.jobParameters.getString(JobParameter.DATE_KEY)
                 ?: LocalDate.now().format(FORMAT)
 
         targetYearMonth = YearMonth.parse(month)

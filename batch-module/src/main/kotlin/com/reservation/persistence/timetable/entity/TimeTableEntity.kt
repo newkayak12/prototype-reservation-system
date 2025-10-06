@@ -18,6 +18,7 @@ import java.time.LocalTime
     indexes = [],
 )
 @Entity
+@Suppress("LongParameterList")
 class TimeTableEntity(
     @Column(name = "restaurant_id")
     val restaurantId: String,
