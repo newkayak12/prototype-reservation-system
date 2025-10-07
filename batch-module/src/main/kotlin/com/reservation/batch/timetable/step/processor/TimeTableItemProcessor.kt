@@ -10,7 +10,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
-class TimeTableItemProcessor : ItemProcessor<ScheduleWithData, List<TimeTableEntity>> {
+open class TimeTableItemProcessor : ItemProcessor<ScheduleWithData, List<TimeTableEntity>> {
     private lateinit var targetYearMonth: YearMonth
 
     companion object {
