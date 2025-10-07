@@ -261,6 +261,10 @@ class CompositeItemReaderTest {
 
             // then
             assertThat(result).isNotNull
+            assertThat(result?.schedule).isNotNull
+            assertThat(result?.holidays).isEmpty()
+            assertThat(result?.tables).isNotEmpty
+            assertThat(result?.timeSpans).isNotEmpty
         }
     }
 }
