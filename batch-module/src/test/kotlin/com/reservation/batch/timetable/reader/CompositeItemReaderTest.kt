@@ -25,7 +25,6 @@ import org.springframework.batch.test.context.SpringBatchTest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.jdbc.DataSourceBuilder
-import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
@@ -56,7 +55,6 @@ class CompositeItemReaderTest {
                 }
     }
 
-    @TestConfiguration
     class TestReaderConfig {
         @Bean
         fun dataSource(): DataSource {
