@@ -3,17 +3,15 @@ package com.reservation.batch.querydsl
 import com.querydsl.jpa.impl.JPAQuery
 import com.querydsl.jpa.impl.JPAQueryFactory
 import jakarta.persistence.EntityManager
-import jakarta.persistence.EntityManagerFactory
 import org.springframework.batch.item.ExecutionContext
 import org.springframework.batch.item.ItemStreamReader
 
-class QueryDslCursorItemReader<T>(
-    private val entityManagerFactory: EntityManagerFactory,
+open class QueryDslCursorItemReader<T>(
+    private val entityManager: EntityManager,
     private val queryFunction: (JPAQueryFactory, String?) -> JPAQuery<T>,
     private val idExtractor: (T) -> String,
     private val chunkSize: Int = 1000,
 ) : ItemStreamReader<T> {
-    private lateinit var entityManager: EntityManager
     private var lastId: String? = null
     private var buffer: MutableList<T> = mutableListOf()
     private var currentIndex = 0
@@ -41,8 +39,7 @@ class QueryDslCursorItemReader<T>(
     }
 
     override fun open(executionContext: ExecutionContext) {
-        entityManager = entityManagerFactory.createEntityManager()
-        lastId = executionContext.getString("lastId")
+        lastId = executionContext.getString("lastId", null)
     }
 
     override fun update(executionContext: ExecutionContext) {

@@ -10,7 +10,7 @@ import com.reservation.enumeration.ScheduleActiveStatus.ACTIVE
 import com.reservation.persistence.schedule.entity.QScheduleEntity.scheduleEntity
 import com.reservation.persistence.schedule.entity.ScheduleEntity
 import com.reservation.persistence.timetable.entity.TimeTableEntity
-import jakarta.persistence.EntityManagerFactory
+import jakarta.persistence.EntityManager
 import org.springframework.batch.core.Step
 import org.springframework.batch.core.configuration.annotation.StepScope
 import org.springframework.batch.core.repository.JobRepository
@@ -35,10 +35,10 @@ class TimeTableStepConfig(
     @Bean
     @StepScope
     fun scheduleEntityItemReader(
-        entityManagerFactory: EntityManagerFactory,
+        entityManager: EntityManager,
     ): QueryDslCursorItemReader<ScheduleEntity> {
         return QueryDslCursorItemReader(
-            entityManagerFactory = entityManagerFactory,
+            entityManager = entityManager,
             queryFunction = { query, id ->
                 query
                     .selectFrom(scheduleEntity)
@@ -60,9 +60,9 @@ class TimeTableStepConfig(
     @StepScope
     fun compositeTimeTableItemReader(
         scheduleReader: QueryDslCursorItemReader<ScheduleEntity>,
-        entityManagerFactory: EntityManagerFactory,
+        entityManager: EntityManager,
     ): ItemStreamReader<ScheduleWithData> =
-        TimeTableCompositeItemReader(scheduleReader, entityManagerFactory)
+        TimeTableCompositeItemReader(scheduleReader, entityManager)
 
     @Bean
     @StepScope

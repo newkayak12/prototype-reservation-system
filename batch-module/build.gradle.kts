@@ -56,6 +56,7 @@ dependencies {
 
     // Spring Batch for long-running jobs
     implementation(libs.spring.boot.starter.batch)
+    implementation(libs.spring.boot.starter.batch.test)
 
     // Database dependencies
     implementation(libs.bundles.database)

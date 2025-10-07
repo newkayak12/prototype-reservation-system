@@ -111,6 +111,7 @@ p6spy = { module = "com.github.gavlyukovskiy:p6spy-spring-boot-starter", version
 
 # Batch
 spring-boot-starter-batch = { module = "org.springframework.boot:spring-boot-starter-batch" }
+spring-boot-starter-batch-test = {module = "org.springframework.batch:spring-batch-test"}
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

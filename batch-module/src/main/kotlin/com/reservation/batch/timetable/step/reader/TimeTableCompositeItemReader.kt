@@ -11,8 +11,8 @@ import com.reservation.persistence.schedule.entity.QTimeSpanEntity.timeSpanEntit
 import com.reservation.persistence.schedule.entity.ScheduleEntity
 import com.reservation.persistence.schedule.entity.TableEntity
 import com.reservation.persistence.schedule.entity.TimeSpanEntity
+import com.reservation.utilities.logger.loggerFactory
 import jakarta.persistence.EntityManager
-import jakarta.persistence.EntityManagerFactory
 import org.springframework.batch.core.StepExecution
 import org.springframework.batch.core.annotation.BeforeStep
 import org.springframework.batch.item.ExecutionContext
@@ -20,13 +20,14 @@ import org.springframework.batch.item.ItemStreamReader
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-class TimeTableCompositeItemReader(
+open class TimeTableCompositeItemReader(
     private val scheduleReader: QueryDslCursorItemReader<ScheduleEntity>,
-    private val entityManagerFactory: EntityManagerFactory,
+    private val entityManager: EntityManager,
 ) : ItemStreamReader<ScheduleWithData> {
-    private lateinit var entityManager: EntityManager
     private lateinit var query: JPAQueryFactory
     private lateinit var targetMonth: LocalDate
+
+    private val logger = loggerFactory<TimeTableCompositeItemReader>()
 
     companion object {
         private val FORMAT = DateTimeFormatter.ISO_DATE
@@ -41,12 +42,12 @@ class TimeTableCompositeItemReader(
 
     override fun open(executionContext: ExecutionContext) {
         scheduleReader.open(executionContext)
-        entityManager = entityManagerFactory.createEntityManager()
         query = JPAQueryFactory(entityManager)
     }
 
     override fun read(): ScheduleWithData? {
         val schedule = scheduleReader.read() ?: return null
+        logger.error("SCHEDULE {}", schedule)
 
         val holidays = findHolidays(schedule.restaurantId)
         val tables = findTables(schedule.restaurantId)
