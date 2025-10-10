@@ -27,6 +27,7 @@ import org.springframework.boot.jdbc.DataSourceBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
+import org.springframework.orm.jpa.SharedEntityManagerCreator
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
@@ -64,7 +65,6 @@ class CompositeItemReaderTest {
                     .username(mysqlContainer.username)
                     .password(mysqlContainer.password)
                     .driverClassName("com.mysql.cj.jdbc.Driver")
-//                .driverClassName("com.p6spy.engine.spy.P6SpyDriver")
                     .build()
             return dataSource
         }
@@ -93,9 +93,6 @@ class CompositeItemReaderTest {
         ): PlatformTransactionManager {
             return JpaTransactionManager(entityManagerFactory)
         }
-
-        @PersistenceContext
-        lateinit var entityManager: EntityManager
 
         @Bean(name = ["schedule-reader"])
         fun scheduleReader(entityManager: EntityManager): QueryDslCursorItemReader<ScheduleEntity> {
@@ -128,7 +125,8 @@ class CompositeItemReaderTest {
         }
 
         @Bean
-        fun exposedEntityManager(): EntityManager = entityManager
+        fun exposedEntityManager(entityManagerFactory: EntityManagerFactory): EntityManager =
+            SharedEntityManagerCreator.createSharedEntityManager(entityManagerFactory)
     }
 
     @Autowired
@@ -136,9 +134,6 @@ class CompositeItemReaderTest {
 
     @Autowired
     private lateinit var entityManager: EntityManager
-
-    @Autowired
-    private lateinit var transactionManager: PlatformTransactionManager
 
     @Test
     @Suppress("EmptyFunctionBlock")
