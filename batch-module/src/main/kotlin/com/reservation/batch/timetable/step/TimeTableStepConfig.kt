@@ -60,27 +60,25 @@ class TimeTableStepConfig(
         @Qualifier(TimeTableBatchConstants.Reader.SCHEDULE_NAME)
         scheduleReader: QueryDslCursorItemReader<ScheduleEntity>,
         entityManager: EntityManager,
-    ): ItemStreamReader<ScheduleWithData> =
-        TimeTableCompositeItemReader(scheduleReader, entityManager)
+    ): TimeTableCompositeItemReader = TimeTableCompositeItemReader(scheduleReader, entityManager)
 
     @Bean(TimeTableBatchConstants.Processor.NAME)
     @StepScope
-    fun timeTableItemProcessor(): ItemProcessor<ScheduleWithData, List<TimeTableEntity>> =
-        TimeTableItemProcessor()
+    fun timeTableItemProcessor(): TimeTableItemProcessor = TimeTableItemProcessor()
 
     @Bean(TimeTableBatchConstants.Writer.NAME)
     @StepScope
-    fun timeTableJdbcItemWriter(dataSource: DataSource): ItemWriter<List<TimeTableEntity>> =
+    fun timeTableJdbcItemWriter(dataSource: DataSource): TimeTableJdbcItemWriter =
         TimeTableJdbcItemWriter(dataSource)
 
     @Bean(TimeTableBatchConstants.Step.NAME)
     fun timeTableStep(
         @Qualifier(TimeTableBatchConstants.Reader.COMPOSITE_NAME)
-        reader: ItemStreamReader<ScheduleWithData>,
+        reader: TimeTableCompositeItemReader,
         @Qualifier(TimeTableBatchConstants.Processor.NAME)
-        processor: ItemProcessor<ScheduleWithData, List<TimeTableEntity>>,
+        processor: TimeTableItemProcessor,
         @Qualifier(TimeTableBatchConstants.Writer.NAME)
-        writer: ItemWriter<List<TimeTableEntity>>,
+        writer: TimeTableJdbcItemWriter,
     ): Step {
         return StepBuilder(TimeTableBatchConstants.Step.NAME, jobRepository)
             .chunk<ScheduleWithData, List<TimeTableEntity>>(CHUNK_SIZE, transactionManager)

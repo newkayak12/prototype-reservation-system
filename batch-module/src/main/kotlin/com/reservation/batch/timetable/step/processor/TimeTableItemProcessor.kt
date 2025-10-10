@@ -1,8 +1,10 @@
 package com.reservation.batch.timetable.step.processor
 
+import com.reservation.batch.annotations.Step
 import com.reservation.batch.timetable.constants.TimeTableBatchConstants.JobParameter
 import com.reservation.batch.timetable.dto.ScheduleWithData
 import com.reservation.persistence.timetable.entity.TimeTableEntity
+import com.reservation.utilities.logger.loggerFactory
 import org.springframework.batch.core.StepExecution
 import org.springframework.batch.core.annotation.BeforeStep
 import org.springframework.batch.item.ItemProcessor
@@ -10,8 +12,10 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
-open class TimeTableItemProcessor : ItemProcessor<ScheduleWithData, List<TimeTableEntity>> {
+@Step
+class TimeTableItemProcessor : ItemProcessor<ScheduleWithData, List<TimeTableEntity>> {
     private lateinit var targetYearMonth: YearMonth
+    private val log = loggerFactory<TimeTableItemProcessor>()
 
     companion object {
         private const val YEAR_MONTH_PATTERN = "yyyy-MM"
@@ -20,8 +24,11 @@ open class TimeTableItemProcessor : ItemProcessor<ScheduleWithData, List<TimeTab
 
     @BeforeStep
     fun beforeStep(stepExecution: StepExecution) {
+        log.error("TimeTableItemProcessor::beforeStep")
+
         val month =
-            stepExecution.jobParameters.getString(JobParameter.DATE_KEY)
+            stepExecution.jobParameters.getLocalDate(JobParameter.DATE_KEY)
+                ?.let { it.format(FORMAT) }
                 ?: LocalDate.now().format(FORMAT)
 
         targetYearMonth = YearMonth.parse(month)

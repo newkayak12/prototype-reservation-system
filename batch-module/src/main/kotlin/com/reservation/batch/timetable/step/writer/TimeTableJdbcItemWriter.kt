@@ -1,10 +1,12 @@
 package com.reservation.batch.timetable.step.writer
 
+import com.reservation.batch.annotations.Step
 import com.reservation.persistence.timetable.entity.TimeTableEntity
 import org.springframework.batch.item.Chunk
 import org.springframework.batch.item.ItemWriter
 import javax.sql.DataSource
 
+@Step
 class TimeTableJdbcItemWriter(
     private val dataSource: DataSource,
 ) : ItemWriter<List<TimeTableEntity>> {
@@ -14,7 +16,7 @@ class TimeTableJdbcItemWriter(
             INSERT INTO timetable (
                 id, restaurant_id, date, day,
                 start_time, end_time, table_number, table_size,
-                tableStatus
+                table_status
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         private const val ID_PLACE_NUMBER = 1

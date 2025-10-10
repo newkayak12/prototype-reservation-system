@@ -19,25 +19,20 @@ import org.springframework.batch.core.annotation.BeforeStep
 import org.springframework.batch.item.ExecutionContext
 import org.springframework.batch.item.ItemStreamReader
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
-open class TimeTableCompositeItemReader(
+@Step
+class TimeTableCompositeItemReader(
     private val scheduleReader: QueryDslCursorItemReader<ScheduleEntity>,
     private val entityManager: EntityManager,
 ) : ItemStreamReader<ScheduleWithData> {
     private lateinit var query: JPAQueryFactory
     private lateinit var targetMonth: LocalDate
-
-    private val logger = loggerFactory<TimeTableCompositeItemReader>()
-
-    companion object {
-        private val FORMAT = DateTimeFormatter.ISO_DATE
-    }
+    private val log = loggerFactory<TimeTableCompositeItemReader>()
 
     @BeforeStep
     fun beforeStep(stepExecution: StepExecution) {
-        targetMonth = stepExecution.jobParameters.getString(JobParameter.DATE_KEY)
-            ?.let { LocalDate.parse(it, FORMAT) }
+        log.error("TimeTableCompositeItemReader::beforeStep")
+        targetMonth = stepExecution.jobParameters.getLocalDate(JobParameter.DATE_KEY)
             ?: LocalDate.now().withDayOfMonth(1)
     }
 
@@ -48,7 +43,6 @@ open class TimeTableCompositeItemReader(
 
     override fun read(): ScheduleWithData? {
         val schedule = scheduleReader.read() ?: return null
-        logger.error("SCHEDULE {}", schedule)
 
         val holidays = findHolidays(schedule.restaurantId)
         val tables = findTables(schedule.restaurantId)
@@ -66,6 +60,7 @@ open class TimeTableCompositeItemReader(
         query.selectFrom(holidayEntity)
             .where(
                 holidayEntity.restaurantId.eq(restaurantId),
+                holidayEntity.date.goe(targetMonth),
             )
             .fetch()
 
@@ -76,7 +71,9 @@ open class TimeTableCompositeItemReader(
 
     private fun findTimeSpans(restaurantId: String): List<TimeSpanEntity> =
         query.selectFrom(timeSpanEntity)
-            .where(timeSpanEntity.restaurantId.eq(restaurantId))
+            .where(
+                timeSpanEntity.restaurantId.eq(restaurantId),
+            )
             .fetch()
 
     override fun update(executionContext: ExecutionContext) {

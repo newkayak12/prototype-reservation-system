@@ -7,4 +7,4 @@ import java.lang.annotation.Target
 
 @Target(TYPE)
 @Retention(RUNTIME)
-annotation class Step()
+annotation class Step

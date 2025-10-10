@@ -1,25 +1,43 @@
-package com.reservation.batch.timetable.step.reader
+package com.reservation.batch.timetable.job
 
 import com.reservation.batch.querydsl.QueryDslCursorItemReader
-import com.reservation.batch.timetable.step.reader.CompositeItemReaderTest.TestReaderConfig
+import com.reservation.batch.timetable.constants.TimeTableBatchConstants
+import com.reservation.batch.timetable.dto.ScheduleWithData
+import com.reservation.batch.timetable.job.TimeTableJobTest.JobConfig
+import com.reservation.batch.timetable.job.TimeTableJobTest.StepConfig
+import com.reservation.batch.timetable.step.processor.TimeTableItemProcessor
+import com.reservation.batch.timetable.step.reader.TimeTableCompositeItemReader
+import com.reservation.batch.timetable.step.writer.TimeTableJdbcItemWriter
 import com.reservation.enumeration.ScheduleActiveStatus.ACTIVE
 import com.reservation.enumeration.ScheduleActiveStatus.INACTIVE
 import com.reservation.persistence.schedule.entity.QScheduleEntity.scheduleEntity
 import com.reservation.persistence.schedule.entity.ScheduleEntity
 import com.reservation.persistence.schedule.entity.TableEntity
 import com.reservation.persistence.schedule.entity.TimeSpanEntity
+import com.reservation.persistence.timetable.entity.TimeTableEntity
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import jakarta.persistence.EntityManager
 import jakarta.persistence.EntityManagerFactory
-import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.batch.core.BatchStatus
+import org.springframework.batch.core.Job
 import org.springframework.batch.core.JobExecution
 import org.springframework.batch.core.JobParametersBuilder
-import org.springframework.batch.core.StepExecution
-import org.springframework.batch.item.ExecutionContext
+import org.springframework.batch.core.Step
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing
+import org.springframework.batch.core.configuration.annotation.StepScope
+import org.springframework.batch.core.job.builder.JobBuilder
+import org.springframework.batch.core.launch.JobLauncher
+import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher
+import org.springframework.batch.core.repository.JobRepository
+import org.springframework.batch.core.repository.support.ResourcelessJobRepository
+import org.springframework.batch.core.step.builder.StepBuilder
+import org.springframework.batch.test.JobLauncherTestUtils
+import org.springframework.batch.test.context.SpringBatchTest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.jdbc.DataSourceBuilder
@@ -29,7 +47,6 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.orm.jpa.SharedEntityManagerCreator
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter
 import org.springframework.test.context.ContextConfiguration
-import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.annotation.Transactional
 import org.testcontainers.containers.MySQLContainer
@@ -39,11 +56,13 @@ import javax.sql.DataSource
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.YearMonth
 
 @Testcontainers
-@ContextConfiguration(classes = [TestReaderConfig::class])
-@ExtendWith(SpringExtension::class)
-class CompositeItemReaderTest {
+@ContextConfiguration(classes = [StepConfig::class, JobConfig::class])
+@SpringBatchTest
+@EnableBatchProcessing
+class TimeTableJobTest {
     companion object {
         @Container
         private val mysqlContainer =
@@ -53,9 +72,24 @@ class CompositeItemReaderTest {
                     withUsername("root")
                     withPassword("root")
                 }
+
+        private const val CHUNK_SIZE = 5
+
+        private object Reader {
+            const val SCHEDULE_NAME = "test_schedule-reader"
+            const val COMPOSITE_NAME = "test_composite_reader"
+        }
+
+        private object Processor {
+            const val NAME = "test_time_table_processor"
+        }
+
+        private object Writer {
+            const val NAME = "test_time_table_writer"
+        }
     }
 
-    class TestReaderConfig {
+    class StepConfig {
         @Bean
         fun dataSource(): DataSource {
             val dataSource =
@@ -93,10 +127,9 @@ class CompositeItemReaderTest {
             return JpaTransactionManager(entityManagerFactory)
         }
 
-        @Bean(name = ["schedule-reader"])
-        open fun scheduleReader(
-            entityManager: EntityManager,
-        ): QueryDslCursorItemReader<ScheduleEntity> {
+        @Bean(name = [Reader.SCHEDULE_NAME])
+        @StepScope
+        fun scheduleReader(entityManager: EntityManager): QueryDslCursorItemReader<ScheduleEntity> {
             return QueryDslCursorItemReader(
                 entityManager = entityManager,
                 queryFunction = { query, id ->
@@ -116,35 +149,89 @@ class CompositeItemReaderTest {
             )
         }
 
-        @Bean
-        open fun timeTableCompositeItemReader(
-            @Qualifier("schedule-reader")
+        @Bean(Reader.COMPOSITE_NAME)
+        @StepScope
+        fun timeTableCompositeItemReader(
+            @Qualifier(Reader.SCHEDULE_NAME)
             scheduleReader: QueryDslCursorItemReader<ScheduleEntity>,
             entityManager: EntityManager,
         ): TimeTableCompositeItemReader {
             return TimeTableCompositeItemReader(scheduleReader, entityManager)
         }
 
+        @Bean(Processor.NAME)
+        @StepScope
+        fun timeTableItemProcessor(): TimeTableItemProcessor = TimeTableItemProcessor()
+
+        @Bean(Writer.NAME)
+        @StepScope
+        fun timeTableJdbcItemWriter(dataSource: DataSource): TimeTableJdbcItemWriter =
+            TimeTableJdbcItemWriter(dataSource)
+
+        @Bean(TimeTableBatchConstants.Step.NAME)
+        fun timeTableStep(
+            @Qualifier(Reader.COMPOSITE_NAME)
+            reader: TimeTableCompositeItemReader,
+            @Qualifier(Processor.NAME)
+            processor: TimeTableItemProcessor,
+            @Qualifier(Writer.NAME)
+            writer: TimeTableJdbcItemWriter,
+            jobRepository: JobRepository,
+            transactionManager: PlatformTransactionManager,
+        ): Step {
+            return StepBuilder(TimeTableBatchConstants.Step.NAME, jobRepository)
+                .chunk<ScheduleWithData, List<TimeTableEntity>>(CHUNK_SIZE, transactionManager)
+                .reader(reader)
+                .processor(processor)
+                .writer(writer)
+                .build()
+        }
+
         @Bean
-        fun exposedEntityManager(entityManagerFactory: EntityManagerFactory): EntityManager =
+        fun entityManager(entityManagerFactory: EntityManagerFactory): EntityManager =
             SharedEntityManagerCreator.createSharedEntityManager(entityManagerFactory)
     }
 
-    @Autowired
-    private lateinit var timeTableCompositeItemReader: TimeTableCompositeItemReader
+    class JobConfig {
+        @Bean
+        fun jobRepository(): JobRepository = ResourcelessJobRepository()
+
+        @Bean
+        fun jobLauncher(jobRepository: JobRepository): JobLauncher =
+            TaskExecutorJobLauncher().apply {
+                this.setJobRepository(jobRepository)
+                this.afterPropertiesSet()
+            }
+
+        @Bean(TimeTableBatchConstants.Job.NAME)
+        fun timeTableInsertJob(
+            @Qualifier(value = TimeTableBatchConstants.Step.NAME) timeTableStep: Step,
+            jobRepository: JobRepository,
+        ): Job {
+            return JobBuilder(TimeTableBatchConstants.Job.NAME, jobRepository)
+                .start(timeTableStep)
+                .build()
+        }
+    }
 
     @Autowired
     private lateinit var entityManager: EntityManager
 
+    @Autowired
+    private lateinit var jobLauncherTestUtils: JobLauncherTestUtils
+
+    @Autowired
+    @Qualifier(TimeTableBatchConstants.Job.NAME)
+    private lateinit var timeTableJob: Job
+
     @Test
     @Suppress("EmptyFunctionBlock")
-    fun contextLoad() {
-        // 단순 컨텍스트 로드 테스트
+    fun contextLoads() {
     }
 
-    @DisplayName("Reader를 호출하며")
+    @DisplayName("배치 작업 테스트")
     @Nested
-    open inner class `Call Reader` {
+    open inner class BatchTest {
         private fun giveMeActiveScheduleFixture(restaurantId: String) =
             ScheduleEntity(
                 restaurantId,
@@ -181,7 +268,7 @@ class CompositeItemReaderTest {
                 TableEntity(restaurantId, 4, 4),
             )
 
-        fun prepareData() {
+        private fun prepareData() {
             val activeUUID = UuidGenerator.generate()
             val inactiveUUID = UuidGenerator.generate()
             val now = LocalDate.now()
@@ -228,37 +315,27 @@ class CompositeItemReaderTest {
             }
         }
 
-        private fun createStepExecutionManually(): StepExecution {
-            val jobParams =
-                JobParametersBuilder()
-                    .addString("DATE_KEY", LocalDate.now().toString())
-                    .toJobParameters()
-
-            val jobExecution = JobExecution(1L, jobParams)
-            return StepExecution("step", jobExecution)
+        @BeforeEach
+        fun jobLauncherTestUtilsSetUp() {
+            jobLauncherTestUtils.job = timeTableJob
         }
 
         @Test
+        @Suppress("EmptyFunctionBlock")
         @Transactional
-        open fun `should read ScheduleWithData correctly`() {
-            // given
+        open fun launchJob() {
             prepareData()
+            val jobParameters =
+                JobParametersBuilder()
+                    .addLocalDate(
+                        TimeTableBatchConstants.JobParameter.DATE_KEY,
+                        YearMonth.now().atDay(1),
+                    )
+                    .toJobParameters()
 
-            // StepExecution 설정
-            val stepExecution = createStepExecutionManually()
-            timeTableCompositeItemReader.beforeStep(stepExecution)
+            val jobExecution: JobExecution = jobLauncherTestUtils.launchJob(jobParameters)
 
-            // when
-            timeTableCompositeItemReader.open(ExecutionContext())
-            val result = timeTableCompositeItemReader.read()
-            timeTableCompositeItemReader.close()
-
-            // then
-            assertThat(result).isNotNull
-            assertThat(result?.schedule).isNotNull
-            assertThat(result?.holidays).isEmpty()
-            assertThat(result?.tables).isNotEmpty
-            assertThat(result?.timeSpans).isNotEmpty
+            assertEquals(jobExecution.status, BatchStatus.COMPLETED)
         }
     }
 }
