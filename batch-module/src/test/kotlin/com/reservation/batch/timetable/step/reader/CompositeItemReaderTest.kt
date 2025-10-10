@@ -1,8 +1,7 @@
-package com.reservation.batch.timetable.reader
+package com.reservation.batch.timetable.step.reader
 
 import com.reservation.batch.querydsl.QueryDslCursorItemReader
-import com.reservation.batch.timetable.reader.CompositeItemReaderTest.TestReaderConfig
-import com.reservation.batch.timetable.step.reader.TimeTableCompositeItemReader
+import com.reservation.batch.timetable.step.reader.CompositeItemReaderTest.TestReaderConfig
 import com.reservation.enumeration.ScheduleActiveStatus.ACTIVE
 import com.reservation.enumeration.ScheduleActiveStatus.INACTIVE
 import com.reservation.persistence.schedule.entity.QScheduleEntity.scheduleEntity

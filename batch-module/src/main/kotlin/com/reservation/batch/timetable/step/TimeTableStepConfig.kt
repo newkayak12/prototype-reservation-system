@@ -18,6 +18,7 @@ import org.springframework.batch.core.step.builder.StepBuilder
 import org.springframework.batch.item.ItemProcessor
 import org.springframework.batch.item.ItemStreamReader
 import org.springframework.batch.item.ItemWriter
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.transaction.PlatformTransactionManager
@@ -32,7 +33,7 @@ class TimeTableStepConfig(
         private const val CHUNK_SIZE = 5
     }
 
-    @Bean
+    @Bean(TimeTableBatchConstants.Reader.SCHEDULE_NAME)
     @StepScope
     fun scheduleEntityItemReader(
         entityManager: EntityManager,
@@ -56,28 +57,32 @@ class TimeTableStepConfig(
         )
     }
 
-    @Bean
+    @Bean(TimeTableBatchConstants.Reader.COMPOSITE_NAME)
     @StepScope
     fun compositeTimeTableItemReader(
+        @Qualifier(TimeTableBatchConstants.Reader.SCHEDULE_NAME)
         scheduleReader: QueryDslCursorItemReader<ScheduleEntity>,
         entityManager: EntityManager,
     ): ItemStreamReader<ScheduleWithData> =
         TimeTableCompositeItemReader(scheduleReader, entityManager)
 
-    @Bean
+    @Bean(TimeTableBatchConstants.Processor.NAME)
     @StepScope
     fun timeTableItemProcessor(): ItemProcessor<ScheduleWithData, List<TimeTableEntity>> =
         TimeTableItemProcessor()
 
-    @Bean
+    @Bean(TimeTableBatchConstants.Writer.NAME)
     @StepScope
     fun timeTableJdbcItemWriter(dataSource: DataSource): ItemWriter<List<TimeTableEntity>> =
         TimeTableJdbcItemWriter(dataSource)
 
     @Bean(TimeTableBatchConstants.Step.NAME)
     fun timeTableStep(
+        @Qualifier(TimeTableBatchConstants.Reader.COMPOSITE_NAME)
         reader: ItemStreamReader<ScheduleWithData>,
+        @Qualifier(TimeTableBatchConstants.Processor.NAME)
         processor: ItemProcessor<ScheduleWithData, List<TimeTableEntity>>,
+        @Qualifier(TimeTableBatchConstants.Writer.NAME)
         writer: ItemWriter<List<TimeTableEntity>>,
     ): Step {
         return StepBuilder(TimeTableBatchConstants.Step.NAME, jobRepository)

@@ -13,5 +13,16 @@ object TimeTableBatchConstants {
         const val NAME = "time_table_step"
     }
 
-    object J
+    object Reader {
+        const val SCHEDULE_NAME = "schedule-reader"
+        const val COMPOSITE_NAME = "composite_reader"
+    }
+
+    object Processor {
+        const val NAME = "time_table_processor"
+    }
+
+    object Writer {
+        const val NAME = "time_table_writer"
+    }
 }

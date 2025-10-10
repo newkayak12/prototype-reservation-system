@@ -3,6 +3,7 @@ package com.reservation.batch.timetable.job
 import com.reservation.batch.timetable.constants.TimeTableBatchConstants
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.Step
+import org.springframework.batch.core.configuration.annotation.JobScope
 import org.springframework.batch.core.job.builder.JobBuilder
 import org.springframework.batch.core.repository.JobRepository
 import org.springframework.beans.factory.annotation.Qualifier
@@ -16,6 +17,7 @@ class TimeTableJobConfig(
     private val jobRepository: JobRepository,
 ) {
     @Bean(TimeTableBatchConstants.Job.NAME)
+    @JobScope
     fun timeTableJob(
         @Qualifier(value = TimeTableBatchConstants.Step.NAME) timeTableStep: Step,
     ): Job {

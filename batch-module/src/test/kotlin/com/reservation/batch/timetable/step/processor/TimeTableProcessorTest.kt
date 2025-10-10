@@ -1,8 +1,7 @@
-package com.reservation.batch.timetable.processor
+package com.reservation.batch.timetable.step.processor
 
 import com.reservation.batch.timetable.dto.ScheduleWithData
-import com.reservation.batch.timetable.processor.TimeTableProcessorTest.TestProcessorConfig
-import com.reservation.batch.timetable.step.processor.TimeTableItemProcessor
+import com.reservation.batch.timetable.step.processor.TimeTableProcessorTest.TestProcessorConfig
 import com.reservation.enumeration.ScheduleActiveStatus.ACTIVE
 import com.reservation.persistence.schedule.entity.ScheduleEntity
 import com.reservation.persistence.schedule.entity.TableEntity
