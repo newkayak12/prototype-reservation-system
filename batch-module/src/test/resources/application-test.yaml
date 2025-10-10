@@ -1,6 +1,9 @@
 spring:
   application:
     name: "reservation-system-batch"
+  batch:
+    jdbc:
+      initialize-schema: always
   data:
     web:
       pageable:

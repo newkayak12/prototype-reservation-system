@@ -11,7 +11,6 @@ import com.reservation.persistence.schedule.entity.TimeSpanEntity
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import jakarta.persistence.EntityManager
 import jakarta.persistence.EntityManagerFactory
-import jakarta.persistence.PersistenceContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested

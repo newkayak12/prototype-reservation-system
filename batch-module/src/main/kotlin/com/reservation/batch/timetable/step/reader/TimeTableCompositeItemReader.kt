@@ -1,6 +1,7 @@
 package com.reservation.batch.timetable.step.reader
 
 import com.querydsl.jpa.impl.JPAQueryFactory
+import com.reservation.batch.annotations.Step
 import com.reservation.batch.querydsl.QueryDslCursorItemReader
 import com.reservation.batch.timetable.constants.TimeTableBatchConstants.JobParameter
 import com.reservation.batch.timetable.dto.ScheduleWithData
