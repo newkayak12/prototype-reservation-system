@@ -13,5 +13,6 @@ include(
     "core-module",
     "application-module",
     "adapter-module",
-    "test-module"
+    "test-module",
+    "batch-module"
 )

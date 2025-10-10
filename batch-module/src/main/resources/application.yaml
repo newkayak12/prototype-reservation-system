@@ -1,0 +1,17 @@
+spring:
+    application:
+        name: "reservation-system-batch"
+    profiles:
+        active:
+            - temporary
+            - local
+            - stage
+            - production
+    config:
+        import:
+            - classpath:persistence/hibernate.yaml
+            - classpath:persistence/datasource/index.yaml
+            - classpath:docker/index.yaml
+            - classpath:common.yaml
+
+
