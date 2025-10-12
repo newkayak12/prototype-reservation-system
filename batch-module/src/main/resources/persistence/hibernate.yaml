@@ -1,0 +1,23 @@
+spring:
+    jpa:
+        open-in-view: false
+        hibernate:
+            naming:
+                physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+                use-new-id-generator-mapping: false
+        generate-ddl: true
+        show-sql: false
+        properties:
+            hibernate:
+                format_sql: true
+                use_sql_comments: true
+
+
+logging:
+    level:
+        p6spy: DEBUG
+        com.p6spy: DEBUG
+decorator:
+    datasource:
+        p6spy:
+            enable-logging: true
