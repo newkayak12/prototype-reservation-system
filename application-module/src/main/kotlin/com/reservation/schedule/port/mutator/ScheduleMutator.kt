@@ -20,7 +20,7 @@ object ScheduleMutator {
         )
 
     private fun mapHoliday(it: LoadHolidayResult) =
-        Holiday(
+      Holiday(
             id = it.id,
             restaurantId = it.restaurantId,
             date = it.date,

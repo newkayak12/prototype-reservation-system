@@ -148,7 +148,7 @@ class EntityTest : BehaviorSpec({
         `when`("snapshot을 생성하면") {
             then("모든 필드가 올바르게 매핑된다") {
                 val holiday =
-                    Holiday(
+                  Holiday(
                         id = "holiday-id",
                         restaurantId = "restaurant-id",
                         date = LocalDate.of(2024, 12, 25),
@@ -168,7 +168,7 @@ class EntityTest : BehaviorSpec({
                 val date = fixtureMonkey.giveMeOne<LocalDate>()
 
                 val holiday =
-                    Holiday(
+                  Holiday(
                         restaurantId = restaurantId,
                         date = date,
                     )
@@ -184,13 +184,13 @@ class EntityTest : BehaviorSpec({
         `when`("equals와 hashCode를 테스트하면") {
             then("같은 값으로 생성된 객체들은 동등하다") {
                 val holiday1 =
-                    Holiday(
+                  Holiday(
                         id = "holiday-id",
                         restaurantId = "restaurant-id",
                         date = LocalDate.of(2024, 12, 25),
                     )
                 val holiday2 =
-                    Holiday(
+                  Holiday(
                         id = "holiday-id",
                         restaurantId = "restaurant-id",
                         date = LocalDate.of(2024, 12, 25),
@@ -202,12 +202,12 @@ class EntityTest : BehaviorSpec({
 
             then("다른 값으로 생성된 객체들은 동등하지 않다") {
                 val holiday1 =
-                    Holiday(
+                  Holiday(
                         restaurantId = "restaurant-id",
                         date = LocalDate.of(2024, 12, 25),
                     )
                 val holiday2 =
-                    Holiday(
+                  Holiday(
                         restaurantId = "restaurant-id",
                         date = LocalDate.of(2024, 12, 24),
                     )
