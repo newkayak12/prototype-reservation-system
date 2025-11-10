@@ -1,6 +1,6 @@
 package com.reservation.schedule.policy.validation
 
-class TimeSpanRestaurantIdFormatValidationPolicy  (
+class TimeSpanRestaurantIdFormatValidationPolicy(
     override val reason: String = "Invalid ID Format",
 ) : TimeSpanRestaurantIdPolicy {
     companion object {
@@ -9,5 +9,5 @@ class TimeSpanRestaurantIdFormatValidationPolicy  (
         private val UUID_REGEX = Regex(FORMAT)
     }
 
-    override fun validate(restaurantId: String): Boolean = UUID_REGEX.matches(restaurantId);
+    override fun validate(restaurantId: String): Boolean = UUID_REGEX.matches(restaurantId)
 }

@@ -15,19 +15,19 @@ import org.springframework.web.bind.annotation.RestController
 class CreateTimeSpanController(
     private val createTimeSpanUseCase: CreateTimeSpanUseCase,
 ) {
-
     @PostMapping(TimeSpanUrl.CREATE)
     fun createTimeSpan(
         @PathVariable(name = "id") id: String,
         @RequestBody @Valid createTimeSpanRequest: CreateTimeSpanRequest,
-    ): BooleanResponse = BooleanResponse.created(
-        createTimeSpanUseCase.execute(
-            CreateTimeSpanCommand(
-                restaurantId = id,
-                day = createTimeSpanRequest.day,
-                startTime = createTimeSpanRequest.startTime,
-                endTime = createTimeSpanRequest.endTime,
-            )
+    ): BooleanResponse =
+        BooleanResponse.created(
+            createTimeSpanUseCase.execute(
+                CreateTimeSpanCommand(
+                    restaurantId = id,
+                    day = createTimeSpanRequest.day,
+                    startTime = createTimeSpanRequest.startTime,
+                    endTime = createTimeSpanRequest.endTime,
+                ),
+            ),
         )
-    )
 }

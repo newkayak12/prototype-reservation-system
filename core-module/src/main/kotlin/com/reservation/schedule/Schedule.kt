@@ -18,11 +18,10 @@ class Schedule(
     }
 
     fun addTimeSpan(timeSpan: TimeSpan) {
-        if(timeSpans.contains(timeSpan)) return
+        if (timeSpans.contains(timeSpan)) return
 
         timeSpans.add(timeSpan)
     }
-
 
     fun snapshot() =
         ScheduleSnapshot(

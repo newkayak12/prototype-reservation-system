@@ -10,8 +10,10 @@ import org.springframework.context.annotation.Configuration
 class ScheduleServiceFactory {
     @Bean
     fun createScheduleDomainService() = CreateScheduleDomainService()
+
     @Bean
     fun createHolidayDomainService() = CreateHolidayDomainService()
+
     @Bean
     fun createTimeSpanDomainService() = CreateTimeSpanDomainService()
 }

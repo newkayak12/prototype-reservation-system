@@ -43,10 +43,10 @@ class CreateTimeSpanControllerTest : FunSpec(
         lateinit var createTimeSpanUseCase: CreateTimeSpanUseCase
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
         var url = TimeSpanUrl.CREATE
-        val objectMapper = ObjectMapper()
-            .registerModule(JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-
+        val objectMapper =
+            ObjectMapper()
+                .registerModule(JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
         beforeTest { testCase ->
             createTimeSpanUseCase = mockk<CreateTimeSpanUseCase>()
@@ -65,6 +65,7 @@ class CreateTimeSpanControllerTest : FunSpec(
                 .set("endTime", now.plusHours(5))
                 .sample()
         }
+
         fun validRestaurantId() = UuidGenerator.generate()
 
         // ## 비정상 요청 케이스
@@ -90,7 +91,6 @@ class CreateTimeSpanControllerTest : FunSpec(
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is4xxClientError)
         }
-
 
         // - test("비정상 요청으로 잘못된 RestaurantId 형식인 경우 실패한다.")
         test("RestaurantId의 형식이 잘못되어 실패한다.") {
@@ -143,42 +143,38 @@ class CreateTimeSpanControllerTest : FunSpec(
                         summary = "시간 생성",
                         description = "레스토랑의 시간을 생성합니다.",
                         requestBody =
-                        arrayOf(
-                            Body(
-                                name = "day",
-                                jsonType = STRING,
-                                optional = false,
-                                description = "요일",
+                            arrayOf(
+                                Body(
+                                    name = "day",
+                                    jsonType = STRING,
+                                    optional = false,
+                                    description = "요일",
+                                ),
+                                Body(
+                                    name = "startTime",
+                                    jsonType = STRING,
+                                    optional = false,
+                                    description = "시작 시간",
+                                ),
+                                Body(
+                                    name = "endTime",
+                                    jsonType = STRING,
+                                    optional = false,
+                                    description = "종료 시간",
+                                ),
                             ),
-                            Body(
-                                name = "startTime",
-                                jsonType = STRING,
-                                optional = false,
-                                description = "시작 시간",
-                            ),
-                            Body(
-                                name = "endTime",
-                                jsonType = STRING,
-                                optional = false,
-                                description = "종료 시간",
-                            ),
-
-                        ),
                         responseBody =
-                        arrayOf(
-                            Body("result", BOOLEAN, false, "생성 성공 여부"),
-                        ),
+                            arrayOf(
+                                Body("result", BOOLEAN, false, "생성 성공 여부"),
+                            ),
                         pathParameter =
-                        arrayOf(
-                            PathParameter("id", false, "레스토랑 식별값"),
-                        ),
+                            arrayOf(
+                                PathParameter("id", false, "레스토랑 식별값"),
+                            ),
                     )
                         .authorizedRequestHeader()
                         .create(),
                 )
         }
-
-    }
-
-) {
-}
+    },
+)

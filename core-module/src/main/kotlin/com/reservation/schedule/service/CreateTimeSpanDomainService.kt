@@ -31,17 +31,18 @@ class CreateTimeSpanDomainService {
     private fun <T : TimeSpanTimePolicy> List<T>.validatePolicies(
         startTime: LocalTime,
         endTime: LocalTime,
-    ) =
-        firstOrNull { !it.validate(startTime, endTime) }
-            ?.let {
-                throw InvalidateTimeSpanElementException(it.reason)
-            }
+    ) = firstOrNull { !it.validate(startTime, endTime) }
+        ?.let {
+            throw InvalidateTimeSpanElementException(it.reason)
+        }
 
     private fun validateRestaurantId(restaurantId: String) =
         restaurantIdPolicies.validatePolicies(restaurantId)
 
-    private fun validateTime(startTime: LocalTime, endTime: LocalTime) =
-        restaurantTimeSpanPolicies.validatePolicies(startTime, endTime)
+    private fun validateTime(
+        startTime: LocalTime,
+        endTime: LocalTime,
+    ) = restaurantTimeSpanPolicies.validatePolicies(startTime, endTime)
 
     private fun validate(form: CreateTimeSpanForm) {
         validateRestaurantId(form.restaurantId)
@@ -54,15 +55,15 @@ class CreateTimeSpanDomainService {
     ): ScheduleSnapshot {
         validate(form)
 
-        val timeSpan = TimeSpan(
-            restaurantId = form.restaurantId,
-            day = form.day,
-            startTime = form.startTime,
-            endTime = form.endTime,
-        )
+        val timeSpan =
+            TimeSpan(
+                restaurantId = form.restaurantId,
+                day = form.day,
+                startTime = form.startTime,
+                endTime = form.endTime,
+            )
         schedule.addTimeSpan(timeSpan)
 
         return schedule.snapshot()
     }
-
 }

@@ -27,7 +27,6 @@ import org.springframework.dao.DataIntegrityViolationException
 @ExtendWith(MockKExtension::class)
 @DisplayName("시간을 생성할 때, ")
 class CreateTimeSpanServiceTest {
-
     @MockK
     private lateinit var createTimeSpanDomainService: CreateTimeSpanDomainService
 
@@ -47,7 +46,7 @@ class CreateTimeSpanServiceTest {
         @DisplayName("NoSuchPersistedElementException이 발생한다")
         @Test
         fun throwNoSuchPersistedElementException() {
-            val fixtureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build();
+            val fixtureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
             val command = fixtureMonkey.giveMeOne<CreateTimeSpanCommand>()
 
             every {
@@ -58,7 +57,6 @@ class CreateTimeSpanServiceTest {
                 createTimeSpanService.execute(command)
             }
 
-
             verify(exactly = 0) {
                 createTimeSpanDomainService.create(any(), any())
                 changeSchedule.command(any())
@@ -67,14 +65,12 @@ class CreateTimeSpanServiceTest {
                 loadSchedule.query(any())
             }
         }
-
     }
 
     // TimeSpan 생성에 문제가 생긴 경우에 InvalidateTimeSpanElementException이 발생한다
     @DisplayName("TimeSpan 생성에 문제가 생겨서")
     @Nested
     inner class CreateTimeSpanFailure {
-
         @DisplayName("InvalidateTimeSpanElementException이 발생한다.")
         @Test
         fun throwInvalidateTimeSpanElementException() {
@@ -124,7 +120,6 @@ class CreateTimeSpanServiceTest {
                 changeSchedule.command(any())
             } throws DataIntegrityViolationException(Arbitraries.strings().sample())
 
-
             assertThrows<DataIntegrityViolationException> {
                 createTimeSpanService.execute(createTimeSpanCommand)
             }
@@ -140,7 +135,6 @@ class CreateTimeSpanServiceTest {
     @DisplayName("TimeSpan 생성에 성공하고")
     @Nested
     inner class CreateTimeSpanSuccessfully {
-
         @DisplayName("스케줄 저장에 성공했을 때 true를 반환한다")
         @Test
         fun success() {
@@ -160,7 +154,6 @@ class CreateTimeSpanServiceTest {
             every {
                 changeSchedule.command(any())
             } returns true
-
 
             val result = createTimeSpanService.execute(createTimeSpanCommand)
 

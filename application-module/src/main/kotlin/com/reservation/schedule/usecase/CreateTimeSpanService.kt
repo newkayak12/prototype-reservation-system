@@ -19,14 +19,13 @@ class CreateTimeSpanService(
     private val createTimeSpanDomainService: CreateTimeSpanDomainService,
     private val loadSchedule: LoadSchedule,
     private val changeSchedule: ChangeSchedule,
-): CreateTimeSpanUseCase {
-
+) : CreateTimeSpanUseCase {
     private fun createHolidayForm(command: CreateTimeSpanCommand): CreateTimeSpanForm =
         CreateTimeSpanForm(
-            restaurantId= command.restaurantId,
-                day= command.day,
-                startTime= command.startTime,
-            endTime= command.endTime,
+            restaurantId = command.restaurantId,
+            day = command.day,
+            startTime = command.startTime,
+            endTime = command.endTime,
         )
 
     private fun load(restaurantId: String): Schedule {
