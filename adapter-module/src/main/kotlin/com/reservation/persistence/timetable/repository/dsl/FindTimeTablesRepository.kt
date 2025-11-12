@@ -2,7 +2,7 @@ package com.reservation.persistence.timetable.repository.dsl
 
 import com.querydsl.core.types.Projections
 import com.querydsl.jpa.impl.JPAQueryFactory
-import com.reservation.persistence.timetable.QTimeTableEntity.timeTableEntity
+import com.reservation.persistence.timetable.entity.QTimeTableEntity.timeTableEntity
 import com.reservation.timetable.port.output.FindTimeTables
 import com.reservation.timetable.port.output.FindTimeTables.FindTimeTableInquiry
 import com.reservation.timetable.port.output.FindTimeTables.FindTimeTableResult
