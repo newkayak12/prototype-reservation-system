@@ -2,6 +2,7 @@ package com.reservation.schedule.config
 
 import com.reservation.schedule.service.CreateHolidayDomainService
 import com.reservation.schedule.service.CreateScheduleDomainService
+import com.reservation.schedule.service.CreateTimeSpanDomainService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -12,4 +13,7 @@ class ScheduleServiceFactory {
 
     @Bean
     fun createHolidayDomainService() = CreateHolidayDomainService()
+
+    @Bean
+    fun createTimeSpanDomainService() = CreateTimeSpanDomainService()
 }

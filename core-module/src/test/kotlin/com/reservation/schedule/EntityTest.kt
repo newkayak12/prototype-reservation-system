@@ -1,9 +1,13 @@
 package com.reservation.schedule
 
 import com.navercorp.fixturemonkey.FixtureMonkey
+import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
+import com.reservation.enumeration.ScheduleActiveStatus.ACTIVE
 import com.reservation.fixture.FixtureMonkeyFactory
+import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -213,6 +217,41 @@ class EntityTest : BehaviorSpec({
                     )
 
                 (holiday1 == holiday2) shouldBe false
+            }
+        }
+    }
+
+    given("Schedule 엔티티가 주어졌을 때") {
+        `when`("timeSpan추가할 때") {
+            val schedule =
+                Schedule(
+                    restaurantId = UuidGenerator.generate(),
+                    status = ACTIVE,
+                )
+
+            val timeSpanList = fixtureMonkey.giveMe<TimeSpan>(3).toSet()
+            for (element in timeSpanList) schedule.addTimeSpan(element)
+            val size = timeSpanList.size
+            then("$size 개가 추가된다.") {
+                val snapshot = schedule.snapshot()
+
+                snapshot.timeSpans.size shouldBeEqual size
+            }
+        }
+        `when`("holiday를 추가할 때") {
+            val schedule =
+                Schedule(
+                    restaurantId = UuidGenerator.generate(),
+                    status = ACTIVE,
+                )
+
+            val holidayList = fixtureMonkey.giveMe<Holiday>(3).toSet()
+            for (element in holidayList) schedule.addHoliday(element)
+            val size = holidayList.size
+            then("$size 개가 추가된다.") {
+                val snapshot = schedule.snapshot()
+
+                snapshot.holidays.size shouldBeEqual size
             }
         }
     }

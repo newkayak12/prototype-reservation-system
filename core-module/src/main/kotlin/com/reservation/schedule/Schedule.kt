@@ -17,6 +17,12 @@ class Schedule(
         holidays.add(holiday)
     }
 
+    fun addTimeSpan(timeSpan: TimeSpan) {
+        if (timeSpans.contains(timeSpan)) return
+
+        timeSpans.add(timeSpan)
+    }
+
     fun snapshot() =
         ScheduleSnapshot(
             restaurantId = restaurantId,

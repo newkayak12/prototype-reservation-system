@@ -11,6 +11,7 @@
   - [2025.06.21 ~ 2025.07.14](https://github.com/users/newkayak12/projects/6): 매장
   - [2025.07.15 ~ 2025.07.28](https://github.com/users/newkayak12/projects/7)
   - [2025.07.29 ~ 2025.08.12](https://github.com/users/newkayak12/projects/9)
+  - [2025.09.30 ~ 2025.10.14](https://github.com/users/newkayak12/projects/11): 휴일/ 시간/ 테이블/ 스케쥴
 
 ## 3. [🎯 프로젝트 목표](/docs/PROJECT.md)
 ## 4. [🧑🏻‍💻 코드 퀄리티를 위한 도구 도입](docs/CODE_STYLE.md)
