@@ -20,7 +20,7 @@ class CreateTimeSpanService(
     private val loadSchedule: LoadSchedule,
     private val changeSchedule: ChangeSchedule,
 ) : CreateTimeSpanUseCase {
-    private fun createHolidayForm(command: CreateTimeSpanCommand): CreateTimeSpanForm =
+    private fun createTimeSpanForm(command: CreateTimeSpanCommand): CreateTimeSpanForm =
         CreateTimeSpanForm(
             restaurantId = command.restaurantId,
             day = command.day,
@@ -41,7 +41,7 @@ class CreateTimeSpanService(
     @Transactional
     override fun execute(command: CreateTimeSpanCommand): Boolean {
         val schedule = load(command.restaurantId)
-        val form = createHolidayForm(command)
+        val form = createTimeSpanForm(command)
         val snapshot = createTimeSpanDomainService.create(schedule, form)
 
         return change(snapshot)

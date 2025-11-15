@@ -3,7 +3,7 @@ package com.reservation.schedule
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.schedule.exceptions.InvalidateTimeSpanElementException
+import com.reservation.schedule.exceptions.InvalidTimeSpanElementException
 import com.reservation.schedule.policy.form.CreateTimeSpanForm
 import com.reservation.schedule.service.CreateTimeSpanDomainService
 import com.reservation.utilities.generator.uuid.UuidGenerator
@@ -17,6 +17,7 @@ class CreateTimeSpanDomainServiceTest : BehaviorSpec(
     {
         val service = CreateTimeSpanDomainService()
 
+
         // restaurantId가 빈 문자열일 때 InvalidateTimeSpanElementException이 발생한다
         Given("restaurantId가 있지만 빈 문자열이고 나머지는 임의의 값일 때") {
             val monkey = FixtureMonkeyFactory.giveMePureMonkey().build()
@@ -28,7 +29,7 @@ class CreateTimeSpanDomainServiceTest : BehaviorSpec(
 
             When("시간을 생성하면 ") {
                 Then("InvalidateTimeSpanElementException이 발생한다.") {
-                    shouldThrow<InvalidateTimeSpanElementException> {
+                    shouldThrow<InvalidTimeSpanElementException> {
                         service.create(schedule, form)
                     }
                 }
@@ -46,7 +47,7 @@ class CreateTimeSpanDomainServiceTest : BehaviorSpec(
 
             When("시간을 생성하면 ") {
                 Then("InvalidateTimeSpanElementException이 발생한다.") {
-                    shouldThrow<InvalidateTimeSpanElementException> {
+                    shouldThrow<InvalidTimeSpanElementException> {
                         service.create(schedule, form)
                     }
                 }
@@ -66,7 +67,7 @@ class CreateTimeSpanDomainServiceTest : BehaviorSpec(
 
             When("시간을 생성하면 ") {
                 Then("InvalidateTimeSpanElementException이 발생한다.") {
-                    shouldThrow<InvalidateTimeSpanElementException> {
+                    shouldThrow<InvalidTimeSpanElementException> {
                         service.create(schedule, form)
                     }
                 }
@@ -86,7 +87,7 @@ class CreateTimeSpanDomainServiceTest : BehaviorSpec(
 
             When("시간을 생성하면 ") {
                 Then("InvalidateTimeSpanElementException이 발생한다.") {
-                    shouldThrow<InvalidateTimeSpanElementException> {
+                    shouldThrow<InvalidTimeSpanElementException> {
                         service.create(schedule, form)
                     }
                 }

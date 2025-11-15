@@ -13,7 +13,7 @@ import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.schedule.timespan.controller.CreateTimeSpanController
 import com.reservation.rest.schedule.timespan.request.CreateTimeSpanRequest
-import com.reservation.schedule.exceptions.InvalidateTimeSpanElementException
+import com.reservation.schedule.exceptions.InvalidTimeSpanElementException
 import com.reservation.schedule.port.input.CreateTimeSpanUseCase
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
@@ -77,7 +77,7 @@ class CreateTimeSpanControllerTest : FunSpec(
 
             every {
                 createTimeSpanUseCase.execute(any())
-            } throws InvalidateTimeSpanElementException(Arbitraries.strings().sample())
+            } throws InvalidTimeSpanElementException(Arbitraries.strings().sample())
 
             mockMvc.perform(
                 post(url, restaurantId)

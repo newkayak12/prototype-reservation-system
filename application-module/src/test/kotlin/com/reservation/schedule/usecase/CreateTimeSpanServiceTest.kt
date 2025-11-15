@@ -3,7 +3,7 @@ package com.reservation.schedule.usecase
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.schedule.exceptions.InvalidateTimeSpanElementException
+import com.reservation.schedule.exceptions.InvalidTimeSpanElementException
 import com.reservation.schedule.port.input.command.request.CreateTimeSpanCommand
 import com.reservation.schedule.port.output.ChangeSchedule
 import com.reservation.schedule.port.output.LoadSchedule
@@ -84,9 +84,9 @@ class CreateTimeSpanServiceTest {
 
             every {
                 createTimeSpanDomainService.create(any(), any())
-            } throws InvalidateTimeSpanElementException(Arbitraries.strings().sample())
+            } throws InvalidTimeSpanElementException(Arbitraries.strings().sample())
 
-            assertThrows<InvalidateTimeSpanElementException> {
+            assertThrows<InvalidTimeSpanElementException> {
                 createTimeSpanService.execute(createTimeSpanCommand)
             }
 

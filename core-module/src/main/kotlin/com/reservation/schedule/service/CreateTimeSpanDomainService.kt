@@ -2,7 +2,7 @@ package com.reservation.schedule.service
 
 import com.reservation.schedule.Schedule
 import com.reservation.schedule.TimeSpan
-import com.reservation.schedule.exceptions.InvalidateTimeSpanElementException
+import com.reservation.schedule.exceptions.InvalidTimeSpanElementException
 import com.reservation.schedule.policy.form.CreateTimeSpanForm
 import com.reservation.schedule.policy.validation.TimeSpanRestaurantIdEmptyValidationPolicy
 import com.reservation.schedule.policy.validation.TimeSpanRestaurantIdFormatValidationPolicy
@@ -25,7 +25,7 @@ class CreateTimeSpanDomainService {
     private fun <T : TimeSpanRestaurantIdPolicy> List<T>.validatePolicies(target: String) =
         firstOrNull { !it.validate(target) }
             ?.let {
-                throw InvalidateTimeSpanElementException(it.reason)
+                throw InvalidTimeSpanElementException(it.reason)
             }
 
     private fun <T : TimeSpanTimePolicy> List<T>.validatePolicies(
@@ -33,7 +33,7 @@ class CreateTimeSpanDomainService {
         endTime: LocalTime,
     ) = firstOrNull { !it.validate(startTime, endTime) }
         ?.let {
-            throw InvalidateTimeSpanElementException(it.reason)
+            throw InvalidTimeSpanElementException(it.reason)
         }
 
     private fun validateRestaurantId(restaurantId: String) =
