@@ -20,7 +20,6 @@ import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.io.path.Path
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get
@@ -44,18 +43,20 @@ class FindTimeTableControllerTest : FunSpec(
         val dateTimeFormat = DateTimeFormatter.ISO_DATE
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
         var url = TimeSpanUrl.CREATE
-        val objectMapper = ObjectMapper()
-            .registerModule(JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        val objectMapper =
+            ObjectMapper()
+                .registerModule(JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
         beforeTest { testCase ->
             findTimeTableUseCase = mockk<FindTimeTableUseCase>()
             val controller = FindTimeTableController(findTimeTableUseCase)
 
-            mockMvc = MockMvcFactory.buildMockMvc(
-                controller,
-                restDocsExtension.restDocumentation(testCase),
-            )
+            mockMvc =
+                MockMvcFactory.buildMockMvc(
+                    controller,
+                    restDocsExtension.restDocumentation(testCase),
+                )
         }
 
         test("조건에 맞춰 조회를 진행했으나 결과가 없어 빈 리스트가 반환된다.") {
@@ -72,7 +73,7 @@ class FindTimeTableControllerTest : FunSpec(
                         HttpHeaders.AUTHORIZATION,
                         CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
                     )
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE),
             )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is2xxSuccessful)
@@ -95,7 +96,7 @@ class FindTimeTableControllerTest : FunSpec(
                         HttpHeaders.AUTHORIZATION,
                         CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
                     )
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE),
             )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is2xxSuccessful)
@@ -106,33 +107,34 @@ class FindTimeTableControllerTest : FunSpec(
                     RestDocuments(
                         identifier = "findTimeTables",
                         documentTags =
-                        listOf(
-                            "timetable",
-                            "find",
-                        ),
+                            listOf(
+                                "timetable",
+                                "find",
+                            ),
                         summary = "시간표 조회",
                         description = "매장의 특정일의 시간표를 조회합니다.",
-                        query = arrayOf(
-                            Query("restaurantId", false, "매장 id"),
-                            Query("date", false, "조회 날짜"),
-                            Query("tableStatus", true, "스케쥴 상태, 기본 값 EMPTY"),
-                        ),
-                        responseBody = arrayOf(
-                            Body("list[].id", STRING, false, "시간표 ID"),
-                            Body("list[].restaurantId", STRING, false, "매장 ID"),
-                            Body("list[].date", STRING, false, "날짜"),
-                            Body("list[].day", STRING, false, "요일"),
-                            Body("list[].startTime", STRING, false, "시작 시간"),
-                            Body("list[].endTime", STRING, false, "종료 시간"),
-                            Body("list[].tableNumber", NUMBER, false, "테이블 번호"),
-                            Body("list[].tableSize", NUMBER, false, "테이블 수용 인원"),
-                            Body("list[].tableStatus", STRING, false, "테이블 상태"),
-                        )
+                        query =
+                            arrayOf(
+                                Query("restaurantId", false, "매장 id"),
+                                Query("date", false, "조회 날짜"),
+                                Query("tableStatus", true, "스케쥴 상태, 기본 값 EMPTY"),
+                            ),
+                        responseBody =
+                            arrayOf(
+                                Body("list[].id", STRING, false, "시간표 ID"),
+                                Body("list[].restaurantId", STRING, false, "매장 ID"),
+                                Body("list[].date", STRING, false, "날짜"),
+                                Body("list[].day", STRING, false, "요일"),
+                                Body("list[].startTime", STRING, false, "시작 시간"),
+                                Body("list[].endTime", STRING, false, "종료 시간"),
+                                Body("list[].tableNumber", NUMBER, false, "테이블 번호"),
+                                Body("list[].tableSize", NUMBER, false, "테이블 수용 인원"),
+                                Body("list[].tableStatus", STRING, false, "테이블 상태"),
+                            ),
                     )
                         .authorizedRequestHeader()
-                        .create()
+                        .create(),
                 )
-
         }
-    }
+    },
 )

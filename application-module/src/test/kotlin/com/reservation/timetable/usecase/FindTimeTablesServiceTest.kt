@@ -21,13 +21,11 @@ import org.junit.jupiter.api.extension.ExtendWith
 @DisplayName("시간표 리스트를 조건에 맞춰서 조회한다.")
 @ExtendWith(MockKExtension::class)
 class FindTimeTablesServiceTest {
-
     @MockK
     private lateinit var findTimeTables: FindTimeTables
 
     @InjectMockKs
     private lateinit var service: FindTimeTablesService
-
 
     @DisplayName("조건에 맞춰 조회한 결과, 결과 값이 없어")
     @Nested

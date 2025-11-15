@@ -5,6 +5,5 @@ import com.reservation.persistence.timetable.entity.QTimeTableEntity.timeTableEn
 import java.time.LocalDate
 
 object TimeTableDateQuerySpec {
-    fun timeTableDateEq(date: LocalDate): BooleanExpression =
-        timeTableEntity.date.eq(date)
+    fun timeTableDateEq(date: LocalDate): BooleanExpression = timeTableEntity.date.eq(date)
 }

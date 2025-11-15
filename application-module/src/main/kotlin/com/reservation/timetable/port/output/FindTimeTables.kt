@@ -8,7 +8,6 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 interface FindTimeTables {
-
     fun query(inquiry: FindTimeTableInquiry): List<FindTimeTableResult>
 
     data class FindTimeTableInquiry(
@@ -41,6 +40,4 @@ interface FindTimeTables {
                 tableStatus = tableStatus,
             )
     }
-
-
 }

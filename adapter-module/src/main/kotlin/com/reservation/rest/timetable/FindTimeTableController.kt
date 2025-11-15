@@ -17,7 +17,6 @@ class FindTimeTableController(
     ): ListResponse<FindTimeTableResponse> =
         ListResponse.ok(
             findTimeTableUseCase.execute(findTimeTableRequest.toQuery())
-            .map { FindTimeTableResponse.from(it) }
+                .map { FindTimeTableResponse.from(it) },
         )
-
 }

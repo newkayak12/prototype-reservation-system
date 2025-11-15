@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component
 class FindTimeTablesRepository(
     private val query: JPAQueryFactory,
 ) : FindTimeTables {
-
     override fun query(inquiry: FindTimeTableInquiry): List<FindTimeTableResult> =
         query.select(
             Projections.constructor(
@@ -25,14 +24,14 @@ class FindTimeTablesRepository(
                 timeTableEntity.endTime,
                 timeTableEntity.tableNumber,
                 timeTableEntity.tableSize,
-                timeTableEntity.tableStatus
+                timeTableEntity.tableStatus,
+            ),
+        )
+            .where(
+                RestaurantQuerySpec.restaurantIdEq(inquiry.restaurantId),
+                TimeTableDateQuerySpec.timeTableDateEq(inquiry.date),
+                TimeTableStatusQuerySpec.timeTableStatusEq(inquiry.tableStatus),
             )
-        )
-        .where(
-            RestaurantQuerySpec.restaurantIdEq(inquiry.restaurantId),
-            TimeTableDateQuerySpec.timeTableDateEq(inquiry.date),
-            TimeTableStatusQuerySpec.timeTableStatusEq(inquiry.tableStatus)
-        )
-        .from(timeTableEntity)
-        .fetch()
+            .from(timeTableEntity)
+            .fetch()
 }
