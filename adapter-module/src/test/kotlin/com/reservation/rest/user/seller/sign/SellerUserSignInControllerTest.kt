@@ -1,13 +1,16 @@
 package com.reservation.rest.user.seller.sign
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
-import com.ninjasquad.springmockk.MockkBean
 import com.reservation.authenticate.port.input.AuthenticateSellerUserUseCase
 import com.reservation.authenticate.port.input.query.response.AuthenticateSellerUserQueryResult
+import com.reservation.config.MockMvcFactory
+import com.reservation.config.SpringRestDocsKotestExtension
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.RestDocuments
-import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.request.GeneralUserLoginRequest
@@ -16,38 +19,40 @@ import com.reservation.rest.user.seller.request.SellerUserLoginRequest
 import com.reservation.rest.user.seller.sign.income.SellerUserSignInController
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.data.row
-import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
+import io.mockk.mockk
 import net.jqwik.api.Arbitraries
-import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
-import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put
 import org.springframework.restdocs.payload.JsonFieldType.STRING
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@AutoConfigureRestDocs
-@ActiveProfiles(value = ["test"])
-@Import(value = [TestSecurity::class])
-@WebMvcTest(SellerUserSignInController::class)
-@ExtendWith(RestDocumentationExtension::class)
-class SellerUserSignInControllerTest(
-    private val mockMvc: MockMvc,
-    private val objectMapper: ObjectMapper,
-) : FunSpec() {
-    override fun extensions() = listOf(SpringExtension)
+class SellerUserSignInControllerTest : FunSpec(
+    {
+        val restDocsExtension = SpringRestDocsKotestExtension()
+        extension(restDocsExtension)
 
-    @MockkBean
-    private lateinit var authenticateSellerUserUseCase: AuthenticateSellerUserUseCase
+        lateinit var mockMvc: MockMvc
 
-    init {
+        lateinit var authenticateSellerUserUseCase: AuthenticateSellerUserUseCase
 
+        beforeTest { testCase ->
+            authenticateSellerUserUseCase = mockk<AuthenticateSellerUserUseCase>()
+            val controller = SellerUserSignInController(authenticateSellerUserUseCase)
+            mockMvc =
+                MockMvcFactory.buildMockMvc(
+                    controller,
+                    restDocsExtension.restDocumentation(testCase),
+                )
+        }
+
+        val objectMapper =
+            ObjectMapper()
+                .registerModule(JavaTimeModule())
+                .registerModules(KotlinModule.Builder().build())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         test("로그인 시도했으나 JakartaAnnotation에서 걸려 실패한다.") {
             io.kotest.data.forAll(
                 row("loginId"),
@@ -109,5 +114,5 @@ class SellerUserSignInControllerTest(
                         .create(),
                 )
         }
-    }
-}
+    },
+)

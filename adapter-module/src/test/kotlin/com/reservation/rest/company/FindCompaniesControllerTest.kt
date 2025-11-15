@@ -1,48 +1,47 @@
 package com.reservation.rest.company
 
 import com.navercorp.fixturemonkey.kotlin.giveMe
-import com.ninjasquad.springmockk.MockkBean
 import com.reservation.company.port.input.FindCompaniesByCompanyNameUseCase
 import com.reservation.company.port.input.query.response.FindCompaniesQueryResult
+import com.reservation.config.MockMvcFactory
+import com.reservation.config.SpringRestDocsKotestExtension
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.Query
 import com.reservation.config.restdoc.RestDocuments
-import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.company.self.FindCompaniesController
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
+import io.mockk.mockk
 import net.jqwik.api.Arbitraries
-import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
-import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.payload.JsonFieldType.STRING
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@AutoConfigureRestDocs
-@ActiveProfiles(value = ["test"])
-@Import(value = [TestSecurity::class])
-@WebMvcTest(FindCompaniesController::class)
-@ExtendWith(RestDocumentationExtension::class)
-class FindCompaniesControllerTest(
-    private val mockMvc: MockMvc,
-) : FunSpec() {
-    override fun extensions() = listOf(SpringExtension)
+class FindCompaniesControllerTest : FunSpec(
+    {
 
-    @MockkBean
-    private lateinit var findCompaniesByCompanyNameUseCase: FindCompaniesByCompanyNameUseCase
+        val restDocsExtension = SpringRestDocsKotestExtension()
+        extension(restDocsExtension)
 
-    init {
+        lateinit var mockMvc: MockMvc
+        lateinit var findCompaniesByCompanyNameUseCase: FindCompaniesByCompanyNameUseCase
+
+        beforeTest { testCase ->
+            findCompaniesByCompanyNameUseCase = mockk<FindCompaniesByCompanyNameUseCase>()
+            val controller = FindCompaniesController(findCompaniesByCompanyNameUseCase)
+            mockMvc =
+                MockMvcFactory.buildMockMvc(
+                    controller,
+                    restDocsExtension.restDocumentation(testCase),
+                )
+        }
+
         test("회사를 조회하고 총 55건의 결과를 반환받는다.") {
 
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
@@ -111,5 +110,5 @@ class FindCompaniesControllerTest(
                         .create(),
                 )
         }
-    }
-}
+    },
+)

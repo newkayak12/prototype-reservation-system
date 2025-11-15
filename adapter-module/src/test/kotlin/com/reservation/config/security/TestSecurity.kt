@@ -12,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles
 @ActiveProfiles(value = ["test"])
 @TestConfiguration
 @EnableWebSecurity
+@Deprecated("Test method has been changed")
 class TestSecurity {
     private val log = LoggerFactory.getLogger(this::class.java.simpleName)
 

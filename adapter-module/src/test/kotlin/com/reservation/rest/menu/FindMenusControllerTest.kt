@@ -1,12 +1,11 @@
 package com.reservation.rest.menu
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.navercorp.fixturemonkey.kotlin.giveMe
-import com.ninjasquad.springmockk.MockkBean
+import com.reservation.config.MockMvcFactory
+import com.reservation.config.SpringRestDocsKotestExtension
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.PathParameter
 import com.reservation.config.restdoc.RestDocuments
-import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.menu.port.input.FindMenusUseCase
@@ -14,42 +13,38 @@ import com.reservation.menu.port.input.response.FindMenusQueryResult
 import com.reservation.rest.menu.find.all.FindMenusController
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
-import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.context.annotation.Import
+import io.mockk.mockk
 import org.springframework.http.HttpHeaders
-import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get
 import org.springframework.restdocs.payload.JsonFieldType.ARRAY
 import org.springframework.restdocs.payload.JsonFieldType.BOOLEAN
 import org.springframework.restdocs.payload.JsonFieldType.NUMBER
 import org.springframework.restdocs.payload.JsonFieldType.STRING
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@AutoConfigureRestDocs
-@ActiveProfiles(value = ["test"])
-@Import(value = [TestSecurity::class])
-@WebMvcTest(FindMenusController::class)
-@ExtendWith(RestDocumentationExtension::class)
-class FindMenusControllerTest(
-    private val objectMapper: ObjectMapper,
-    private val mockMvc: MockMvc,
-) : FunSpec() {
-    override fun extensions() = listOf(SpringExtension)
+class FindMenusControllerTest : FunSpec(
+    {
+        val restDocsExtension = SpringRestDocsKotestExtension()
+        extension(restDocsExtension)
 
-    @MockkBean
-    private lateinit var findMenusUseCase: FindMenusUseCase
+        lateinit var mockMvc: MockMvc
+        lateinit var findMenusUseCase: FindMenusUseCase
 
-    val id = "${MenuUrl.PREFIX}/{id}/all"
+        beforeTest { testCase ->
+            findMenusUseCase = mockk<FindMenusUseCase>()
+            val controller = FindMenusController(findMenusUseCase)
+            mockMvc =
+                MockMvcFactory.buildMockMvc(
+                    controller,
+                    restDocsExtension.restDocumentation(testCase),
+                )
+        }
 
-    init {
+        val id = "${MenuUrl.PREFIX}/{id}/all"
 
         test("메뉴가 없는 레스토랑의 메뉴를 조회하고 결과는 0건이다.") {
             mockMvc.perform(
@@ -173,5 +168,5 @@ class FindMenusControllerTest(
                         .create(),
                 )
         }
-    }
-}
+    },
+)

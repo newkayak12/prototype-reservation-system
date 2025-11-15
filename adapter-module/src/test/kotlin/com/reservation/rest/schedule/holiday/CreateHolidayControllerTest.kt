@@ -3,6 +3,7 @@ package com.reservation.rest.schedule.holiday
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.reservation.config.MockMvcFactory
 import com.reservation.config.SpringRestDocsKotestExtension
@@ -53,6 +54,7 @@ class CreateHolidayControllerTest : FunSpec(
         val objectMapper =
             ObjectMapper()
                 .registerModule(JavaTimeModule())
+                .registerModules(KotlinModule.Builder().build())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
         fun perfectCase() =

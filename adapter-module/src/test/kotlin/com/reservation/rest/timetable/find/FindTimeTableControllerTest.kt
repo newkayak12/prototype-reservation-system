@@ -1,8 +1,5 @@
 package com.reservation.rest.timetable.find
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.navercorp.fixturemonkey.kotlin.giveMe
 import com.reservation.config.MockMvcFactory
 import com.reservation.config.SpringRestDocsKotestExtension
@@ -11,7 +8,6 @@ import com.reservation.config.restdoc.Query
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.rest.schedule.timespan.TimeSpanUrl
 import com.reservation.rest.timetable.FindTimeTableController
 import com.reservation.rest.timetable.TimeTableUrl
 import com.reservation.timetable.port.input.FindTimeTableUseCase
@@ -42,11 +38,6 @@ class FindTimeTableControllerTest : FunSpec(
 
         val dateTimeFormat = DateTimeFormatter.ISO_DATE
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-        var url = TimeSpanUrl.CREATE
-        val objectMapper =
-            ObjectMapper()
-                .registerModule(JavaTimeModule())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
         beforeTest { testCase ->
             findTimeTableUseCase = mockk<FindTimeTableUseCase>()
