@@ -7,4 +7,14 @@ spring:
             host: localhost
             port: 6379
             timeout: 5000ms
+#    data:
+#        redis:
+#            sentinel:
+#                master: main-redis
+#                nodes:
+#                    - localhost:26379
+#                    - localhost:26380
+#                    - localhost:26381
+#            connect-timeout: 3000ms
+#            timeout: 50000ms
 

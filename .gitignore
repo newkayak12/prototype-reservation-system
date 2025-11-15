@@ -204,6 +204,18 @@ mysql_data
 .obsidian
 # End of https://www.toptal.com/developers/gitignore/api/kotlin,intellij,macos,gradle
 
+# Redis 데이터 (디렉토리 전체)
+redis/master-data/
+redis/replica1-data/
+redis/replica2-data/
+redis/sentinel-1/
+redis/sentinel-2/
+redis/sentinel-3/
+
+# 설정 파일만 유지하려면
+!redis/sentinel-1/sentinel.conf
+!redis/sentinel-2/sentinel.conf
+!redis/sentinel-3/sentinel.conf
 
 .kotlin
 .gemini
