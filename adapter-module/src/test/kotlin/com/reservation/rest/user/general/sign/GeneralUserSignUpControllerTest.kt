@@ -1,10 +1,13 @@
 package com.reservation.rest.user.general.sign
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.ninjasquad.springmockk.MockkBean
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.reservation.config.MockMvcFactory
+import com.reservation.config.SpringRestDocsKotestExtension
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.RestDocuments
-import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.rest.user.general.GeneralUserUrl
 import com.reservation.rest.user.general.request.GeneralUserSignUpRequest
@@ -14,38 +17,40 @@ import com.reservation.user.self.port.input.command.request.CreateGeneralUserCom
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.data.forAll
 import io.kotest.data.row
-import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
-import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.context.annotation.Import
+import io.mockk.mockk
 import org.springframework.http.MediaType
-import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post
 import org.springframework.restdocs.payload.JsonFieldType.BOOLEAN
 import org.springframework.restdocs.payload.JsonFieldType.STRING
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@AutoConfigureRestDocs
-@ActiveProfiles(value = ["test"])
-@Import(value = [TestSecurity::class])
-@WebMvcTest(GeneralUserSignUpController::class)
-@ExtendWith(RestDocumentationExtension::class)
-class GeneralUserSignUpControllerTest(
-    private val mockMvc: MockMvc,
-    private val objectMapper: ObjectMapper,
-) : FunSpec() {
-    override fun extensions() = listOf(SpringExtension)
+class GeneralUserSignUpControllerTest : FunSpec(
+    {
+        val restDocsExtension = SpringRestDocsKotestExtension()
+        extension(restDocsExtension)
 
-    @MockkBean
-    private lateinit var createGeneralUserUseCase: CreateGeneralUserUseCase
+        lateinit var mockMvc: MockMvc
+        lateinit var createGeneralUserUseCase: CreateGeneralUserUseCase
 
-    init {
+        beforeTest { testCase ->
+            createGeneralUserUseCase = mockk<CreateGeneralUserUseCase>()
+            val controller = GeneralUserSignUpController(createGeneralUserUseCase)
+            mockMvc =
+                MockMvcFactory.buildMockMvc(
+                    controller,
+                    restDocsExtension.restDocumentation(testCase),
+                )
+        }
+
+        val objectMapper =
+            ObjectMapper()
+                .registerModule(JavaTimeModule())
+                .registerModules(KotlinModule.Builder().build())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
         test("로그인 시도를 진행하며 해당 시도는 성공한다.") {
             val request =
@@ -145,5 +150,5 @@ class GeneralUserSignUpControllerTest(
                     .andExpectAll(status().is4xxClientError)
             }
         }
-    }
-}
+    },
+)

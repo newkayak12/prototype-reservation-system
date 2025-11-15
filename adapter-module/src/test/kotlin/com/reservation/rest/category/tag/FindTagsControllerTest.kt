@@ -1,48 +1,45 @@
 package com.reservation.rest.category.tag
 
 import com.navercorp.fixturemonkey.kotlin.giveMe
-import com.ninjasquad.springmockk.MockkBean
 import com.reservation.category.tag.port.input.FindTagsByTitleUseCase
+import com.reservation.config.MockMvcFactory
+import com.reservation.config.SpringRestDocsKotestExtension
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.Query
 import com.reservation.config.restdoc.RestDocuments
-import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.category.CategoryUrl
 import com.reservation.rest.category.tags.FindTagsController
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
-import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.context.annotation.Import
+import io.mockk.mockk
 import org.springframework.http.HttpHeaders
-import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.payload.JsonFieldType.NUMBER
 import org.springframework.restdocs.payload.JsonFieldType.STRING
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@AutoConfigureRestDocs
-@ActiveProfiles(value = ["test"])
-@Import(value = [TestSecurity::class])
-@WebMvcTest(FindTagsController::class)
-@ExtendWith(RestDocumentationExtension::class)
-class FindTagsControllerTest(
-    private val mockMvc: MockMvc,
-) : FunSpec() {
-    override fun extensions() = listOf(SpringExtension)
+class FindTagsControllerTest : FunSpec(
+    {
+        val restDocsExtension = SpringRestDocsKotestExtension()
+        extension(restDocsExtension)
 
-    @MockkBean
-    private lateinit var findNationalitiesQuery: FindTagsByTitleUseCase
+        lateinit var mockMvc: MockMvc
+        lateinit var findNationalitiesQuery: FindTagsByTitleUseCase
 
-    init {
+        beforeTest { testCase ->
+            findNationalitiesQuery = mockk<FindTagsByTitleUseCase>()
+            val controller = FindTagsController(findNationalitiesQuery)
+            mockMvc =
+                MockMvcFactory.buildMockMvc(
+                    controller,
+                    restDocsExtension.restDocumentation(testCase),
+                )
+        }
 
         test("태크 카테고리를를 조회하여 총 18건의 결과가 노출된다.") {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
@@ -86,5 +83,5 @@ class FindTagsControllerTest(
                         .create(),
                 )
         }
-    }
-}
+    },
+)

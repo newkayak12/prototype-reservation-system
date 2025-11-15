@@ -1,7 +1,8 @@
 package com.reservation.rest.user.seller.sign
 
+import com.reservation.config.MockMvcFactory
+import com.reservation.config.SpringRestDocsKotestExtension
 import com.reservation.config.restdoc.RestDocuments
-import com.reservation.config.security.TestSecurity
 import com.reservation.rest.user.RefreshTokenDefinitions
 import com.reservation.rest.user.seller.SellerUserUrl
 import com.reservation.rest.user.seller.sign.outcome.SellerUserSignOutController
@@ -9,14 +10,8 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.spring.SpringExtension
 import jakarta.servlet.http.Cookie
 import net.jqwik.api.Arbitraries
-import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
-import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.patch
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -24,17 +19,25 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.Base64
 
-@AutoConfigureRestDocs
-@ActiveProfiles(value = ["test"])
-@Import(value = [TestSecurity::class])
-@WebMvcTest(SellerUserSignOutController::class)
-@ExtendWith(RestDocumentationExtension::class)
-class SellerUserSignOutControllerTest(
-    private val mockMvc: MockMvc,
-) : FunSpec() {
+class SellerUserSignOutControllerTest : FunSpec() {
     override fun extensions() = listOf(SpringExtension)
 
     init {
+
+        val restDocsExtension = SpringRestDocsKotestExtension()
+        extension(restDocsExtension)
+
+        lateinit var mockMvc: MockMvc
+
+        beforeTest { testCase ->
+            val controller = SellerUserSignOutController()
+            mockMvc =
+                MockMvcFactory.buildMockMvc(
+                    controller,
+                    restDocsExtension.restDocumentation(testCase),
+                )
+        }
+
         val encoder = Base64.getEncoder()
         val accessToken =
             "Bearer ${

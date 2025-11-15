@@ -1,60 +1,68 @@
 package com.reservation.rest.menu
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
-import com.ninjasquad.springmockk.MockkBean
+import com.reservation.config.MockMvcFactory
+import com.reservation.config.SpringRestDocsKotestExtension
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.Part
 import com.reservation.config.restdoc.RequestPartFields
 import com.reservation.config.restdoc.RestDocuments
-import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.menu.port.input.CreateMenuUseCase
 import com.reservation.rest.menu.create.CreateMenuController
 import com.reservation.rest.menu.request.CreateMenuRequest
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
+import io.mockk.mockk
 import net.jqwik.api.Arbitraries
-import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockPart
-import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.multipart
 import org.springframework.restdocs.payload.JsonFieldType.BOOLEAN
 import org.springframework.restdocs.payload.JsonFieldType.NUMBER
 import org.springframework.restdocs.payload.JsonFieldType.STRING
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.math.BigDecimal
 
-@AutoConfigureRestDocs
-@ActiveProfiles(value = ["test"])
-@Import(value = [TestSecurity::class])
-@WebMvcTest(CreateMenuController::class)
-@ExtendWith(RestDocumentationExtension::class)
-class CreateMenuControllerTest(
-    private val objectMapper: ObjectMapper,
-    private val mockMvc: MockMvc,
-) : FunSpec() {
-    override fun extensions() = listOf(SpringExtension)
+class CreateMenuControllerTest : FunSpec(
+    {
+        val restDocsExtension = SpringRestDocsKotestExtension()
+        extension(restDocsExtension)
 
-    @MockkBean
-    private lateinit var createMenuUseCase: CreateMenuUseCase
+        lateinit var createMenuUseCase: CreateMenuUseCase
+        lateinit var mockMvc: MockMvc
+        lateinit var objectMapper: ObjectMapper
 
-    private val jakartaMonkey = FixtureMonkeyFactory.giveMeJakartaMonkey().build()
+        val jakartaMonkey = FixtureMonkeyFactory.giveMeJakartaMonkey().build()
 
-    private fun perfectCase() = jakartaMonkey.giveMeOne<CreateMenuRequest>()
+        fun perfectCase() = jakartaMonkey.giveMeOne<CreateMenuRequest>()
 
-    init {
+        beforeTest { testCase ->
+            createMenuUseCase = mockk<CreateMenuUseCase>()
+            val controller = CreateMenuController(createMenuUseCase)
+
+            mockMvc =
+                MockMvcFactory.buildMockMvc(
+                    controller,
+                    restDocsExtension.restDocumentation(testCase),
+                )
+
+            objectMapper =
+                ObjectMapper()
+                    .registerModule(JavaTimeModule())
+                    .registerModules(KotlinModule.Builder().build())
+                    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        }
+
         test("올바르지 않은 파라미터(restaurantId - empty)로 등록 요청을 하고 등록에 실패를 한다.") {
             val requestBody = perfectCase().copy(restaurantId = "")
             val request =
@@ -334,5 +342,5 @@ class CreateMenuControllerTest(
                         .create(),
                 )
         }
-    }
-}
+    },
+)

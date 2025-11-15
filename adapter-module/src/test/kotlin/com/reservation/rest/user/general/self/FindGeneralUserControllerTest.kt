@@ -1,13 +1,12 @@
 package com.reservation.rest.user.general.self
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
-import com.ninjasquad.springmockk.MockkBean
 import com.reservation.common.exceptions.NoSuchPersistedElementException
+import com.reservation.config.MockMvcFactory
+import com.reservation.config.SpringRestDocsKotestExtension
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.PathParameter
 import com.reservation.config.restdoc.RestDocuments
-import com.reservation.config.security.TestSecurity
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.user.general.GeneralUserUrl
@@ -16,37 +15,34 @@ import com.reservation.user.self.port.input.FindGeneralUserUseCase
 import com.reservation.user.self.port.input.query.response.FindGeneralUserQueryResult
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
-import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.context.annotation.Import
+import io.mockk.mockk
 import org.springframework.http.HttpHeaders
-import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.payload.JsonFieldType.STRING
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@AutoConfigureRestDocs
-@ActiveProfiles(value = ["test"])
-@Import(value = [TestSecurity::class])
-@WebMvcTest(FindGeneralUserController::class)
-@ExtendWith(RestDocumentationExtension::class)
-class FindGeneralUserControllerTest(
-    private val mockMvc: MockMvc,
-    private val objectMapper: ObjectMapper,
-) : FunSpec() {
-    override fun extensions() = listOf(SpringExtension)
+class FindGeneralUserControllerTest : FunSpec(
+    {
+        val restDocsExtension = SpringRestDocsKotestExtension()
+        extension(restDocsExtension)
 
-    @MockkBean
-    private lateinit var findGeneralUserUseCase: FindGeneralUserUseCase
+        lateinit var mockMvc: MockMvc
+        lateinit var findGeneralUserUseCase: FindGeneralUserUseCase
 
-    init {
+        beforeTest { testCase ->
+            findGeneralUserUseCase = mockk<FindGeneralUserUseCase>()
+            val controller = FindGeneralUserController(findGeneralUserUseCase)
+            mockMvc =
+                MockMvcFactory.buildMockMvc(
+                    controller,
+                    restDocsExtension.restDocumentation(testCase),
+                )
+        }
+
         test("사용자를 찾을 수 없음") {
 
             val id = UuidGenerator.generate()
@@ -120,5 +116,5 @@ class FindGeneralUserControllerTest(
                         .create(),
                 )
         }
-    }
-}
+    },
+)

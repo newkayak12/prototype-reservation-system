@@ -1,10 +1,9 @@
 package com.reservation.rest.user.general.sign
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.ninjasquad.springmockk.MockkBean
+import com.reservation.config.MockMvcFactory
+import com.reservation.config.SpringRestDocsKotestExtension
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.RestDocuments
-import com.reservation.config.security.TestSecurity
 import com.reservation.exceptions.UnauthorizedException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.rest.user.RefreshTokenDefinitions
@@ -13,36 +12,32 @@ import com.reservation.rest.user.general.sign.refresh.RefreshGeneralUserControll
 import com.reservation.user.self.port.input.RefreshGeneralUserAccessTokenUseCase
 import com.reservation.user.self.port.input.query.response.RefreshResult
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.extensions.spring.SpringExtension
 import io.mockk.every
+import io.mockk.mockk
 import jakarta.servlet.http.Cookie
-import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.context.annotation.Import
-import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.payload.JsonFieldType.STRING
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@AutoConfigureRestDocs
-@ActiveProfiles(value = ["test"])
-@Import(value = [TestSecurity::class])
-@WebMvcTest(RefreshGeneralUserController::class)
-@ExtendWith(RestDocumentationExtension::class)
-class RefreshGeneralUserControllerTest(
-    private val mockMvc: MockMvc,
-    private val objectMapper: ObjectMapper,
-) : FunSpec() {
-    override fun extensions() = listOf(SpringExtension)
+class RefreshGeneralUserControllerTest : FunSpec(
+    {
+        val restDocsExtension = SpringRestDocsKotestExtension()
+        extension(restDocsExtension)
 
-    @MockkBean
-    private lateinit var refreshGeneralUserAccessTokenUseCase: RefreshGeneralUserAccessTokenUseCase
+        lateinit var mockMvc: MockMvc
+        lateinit var refreshGeneralUserAccessTokenUseCase: RefreshGeneralUserAccessTokenUseCase
 
-    init {
+        beforeTest { testCase ->
+            refreshGeneralUserAccessTokenUseCase = mockk<RefreshGeneralUserAccessTokenUseCase>()
+            val controller = RefreshGeneralUserController(refreshGeneralUserAccessTokenUseCase)
+            mockMvc =
+                MockMvcFactory.buildMockMvc(
+                    controller,
+                    restDocsExtension.restDocumentation(testCase),
+                )
+        }
 
         test("리프레시에 실패한다.") {
 
@@ -95,5 +90,5 @@ class RefreshGeneralUserControllerTest(
                         .create(),
                 )
         }
-    }
-}
+    },
+)
