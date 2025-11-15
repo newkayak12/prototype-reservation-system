@@ -12,11 +12,11 @@
   - [2025.07.15 ~ 2025.07.28](https://github.com/users/newkayak12/projects/7)
   - [2025.07.29 ~ 2025.08.12](https://github.com/users/newkayak12/projects/9)
 
-## 3. [🎯 프로젝트 목표](/.github/PROJECT.md)
-## 4. [🧑🏻‍💻 코드 퀄리티를 위한 도구 도입](.github/CODE_STYLE.md)
-## 5. [♟️ 테스트 전략 수립](.github/teststrategy/TestStrategy.md)
-## 6. [💻 기술적인 고민](.github/technical/index.md)
-## 7. [📇 비개발적인 부분에 대한 고민](.github/non-technical/index.md)
+## 3. [🎯 프로젝트 목표](/docs/PROJECT.md)
+## 4. [🧑🏻‍💻 코드 퀄리티를 위한 도구 도입](docs/CODE_STYLE.md)
+## 5. [♟️ 테스트 전략 수립](docs/teststrategy/TestStrategy.md)
+## 6. [💻 기술적인 고민](docs/technical/index.md)
+## 7. [📇 비개발적인 부분에 대한 고민](docs/non-technical/index.md)
 
 ---
 
