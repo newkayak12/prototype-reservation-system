@@ -8,3 +8,6 @@ coverage:
     - "**/*Properties"
     - "**/request/*"
     - "**/response/*"
+    - "**/enumerations/*"
+    - "**/exceptions/*"
+    - "**/utilities/*"
