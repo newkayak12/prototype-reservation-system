@@ -1,4 +1,4 @@
-package com.reservation.persistence.timetable
+package com.reservation.persistence.timetable.entity
 
 import com.reservation.enumeration.TableStatus
 import com.reservation.persistence.common.TimeBasedPrimaryKey
