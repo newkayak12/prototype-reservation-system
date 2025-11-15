@@ -17,7 +17,6 @@ class CreateTimeSpanDomainServiceTest : BehaviorSpec(
     {
         val service = CreateTimeSpanDomainService()
 
-
         // restaurantId가 빈 문자열일 때 InvalidateTimeSpanElementException이 발생한다
         Given("restaurantId가 있지만 빈 문자열이고 나머지는 임의의 값일 때") {
             val monkey = FixtureMonkeyFactory.giveMePureMonkey().build()
