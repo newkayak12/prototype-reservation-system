@@ -6,7 +6,6 @@ interface FindFeatureFlag {
     fun query(inquiry: FindFeatureFlagInquiry): FindFeatureFlagResult?
 
     data class FindFeatureFlagInquiry(
-        val userId: String,
         val featureFlagType: FeatureFlagType,
         val featureFlagKey: String,
     )
