@@ -19,6 +19,7 @@ dependencies {
     implementation(libs.kotlin.reflect)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.web)  // For MultipartFile
+    compileOnly(libs.spring.retry)
     testImplementation(project(":test-module"))
     testImplementation(libs.spring.boot.starter.test)  // For MockMultipartFile and Spring test support
     testImplementation(libs.bundles.testing.kotest)
