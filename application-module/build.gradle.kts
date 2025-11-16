@@ -26,4 +26,5 @@ dependencies {
     testImplementation(libs.bundles.testing.mock)
     testImplementation(libs.bundles.testing.fixtures)  // FixtureMonkey includes jqwik
     testImplementation(libs.assertj)
+    testImplementation(libs.spring.retry)
 }

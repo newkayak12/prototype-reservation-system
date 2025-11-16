@@ -21,7 +21,7 @@ class FindFeatureFlagService(
     private val saveFeatureFlagTemplate: SaveFeatureFlag,
 ) : FindFeatureFlagUseCase {
     companion object {
-        private const val FAIL_OVER_USER_ID = 1L
+        private const val FAIL_OVER_ID = -1L
         private const val FAIL_OVER_IS_ENABLED = false
     }
 
@@ -30,7 +30,7 @@ class FindFeatureFlagService(
         maxAttempts = 3,
         backoff = Backoff(delay = 10, multiplier = 2.0, maxDelay = 100),
         label = "feature-flag-redis-retry",
-        listeners = ["ListenRetryReason"],
+        listeners = ["listenRetryReason"],
     )
     override fun execute(request: FindFeatureFlagQuery): FindFeatureFlagQueryResult =
         fetchFromRedis(request)
@@ -53,10 +53,11 @@ class FindFeatureFlagService(
     private fun fetchFromDatabaseAndSaveAtRedis(
         request: FindFeatureFlagQuery,
     ): FindFeatureFlagQueryResult {
-        val fetchFromDB = fetchFromRedis(request)
+        val fetchFromDB = fetchFromDatabase(request)
 
         saveFeatureFlagTemplate.command(
             SaveFeatureFlagInquiry(
+                id = fetchFromDB.id,
                 featureFlagType = fetchFromDB.featureFlagType,
                 featureFlagKey = fetchFromDB.featureFlagKey,
                 isEnabled = fetchFromDB.isEnabled,
@@ -77,14 +78,13 @@ class FindFeatureFlagService(
 
     private fun FindFeatureFlagQuery.toInquiry() =
         FindFeatureFlagInquiry(
-            userId = this.userId,
             featureFlagType = this.featureFlagType,
             featureFlagKey = this.featureFlagKey,
         )
 
     private fun FindFeatureFlagQuery.failOver() =
         FindFeatureFlagQueryResult(
-            id = FAIL_OVER_USER_ID,
+            id = FAIL_OVER_ID,
             featureFlagType = this.featureFlagType,
             featureFlagKey = this.featureFlagKey,
             isEnabled = FAIL_OVER_IS_ENABLED,
