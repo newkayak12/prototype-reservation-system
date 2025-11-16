@@ -5,5 +5,5 @@ import com.reservation.enumeration.FeatureFlagType
 data class FindFeatureFlagQuery(
     val userId: String,
     val featureFlagType: FeatureFlagType,
-    val featureFlagKey: String
+    val featureFlagKey: String,
 )

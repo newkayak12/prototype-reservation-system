@@ -1,5 +1,6 @@
 package com.reservation.enumeration
 
 enum class FeatureFlagType {
-    BACKEND, FRONTEND
+    BACKEND,
+    FRONTEND,
 }

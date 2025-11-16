@@ -20,7 +20,6 @@ class FindFeatureFlagService(
     private val findFeatureFlagRepository: FindFeatureFlag,
     private val saveFeatureFlagTemplate: SaveFeatureFlag,
 ) : FindFeatureFlagUseCase {
-
     companion object {
         private const val FAIL_OVER_USER_ID = 1L
         private const val FAIL_OVER_IS_ENABLED = false
@@ -31,7 +30,7 @@ class FindFeatureFlagService(
         maxAttempts = 3,
         backoff = Backoff(delay = 10, multiplier = 2.0, maxDelay = 100),
         label = "feature-flag-redis-retry",
-        listeners = ["ListenRetryReason"]
+        listeners = ["ListenRetryReason"],
     )
     override fun execute(request: FindFeatureFlagQuery): FindFeatureFlagQueryResult =
         fetchFromRedis(request)
@@ -39,7 +38,7 @@ class FindFeatureFlagService(
     @Recover
     @Transactional(readOnly = true)
     fun executeWithDatabase(
-        e: Exception,
+        @Suppress("UNUSED_PARAMETER") exception: Exception,
         request: FindFeatureFlagQuery,
     ): FindFeatureFlagQueryResult = fetchFromDatabase(request)
 
@@ -58,18 +57,16 @@ class FindFeatureFlagService(
 
         saveFeatureFlagTemplate.command(
             SaveFeatureFlagInquiry(
-                userId = request.userId,
                 featureFlagType = fetchFromDB.featureFlagType,
                 featureFlagKey = fetchFromDB.featureFlagKey,
-                isEnabled = fetchFromDB.isEnabled
-            )
+                isEnabled = fetchFromDB.isEnabled,
+            ),
         )
 
         return fetchFromDB
     }
 
     private fun fetchFromDatabase(request: FindFeatureFlagQuery): FindFeatureFlagQueryResult {
-
         val inquiry = request.toInquiry()
         val failOver = request.failOver()
 
@@ -78,24 +75,26 @@ class FindFeatureFlagService(
             ?: failOver
     }
 
-    private fun FindFeatureFlagQuery.toInquiry() = FindFeatureFlagInquiry(
-        userId = this.userId,
-        featureFlagType = this.featureFlagType,
-        featureFlagKey = this.featureFlagKey,
-    )
+    private fun FindFeatureFlagQuery.toInquiry() =
+        FindFeatureFlagInquiry(
+            userId = this.userId,
+            featureFlagType = this.featureFlagType,
+            featureFlagKey = this.featureFlagKey,
+        )
 
-    private fun FindFeatureFlagQuery.failOver() = FindFeatureFlagQueryResult(
-        id = FAIL_OVER_USER_ID,
-        featureFlagType = this.featureFlagType,
-        featureFlagKey = this.featureFlagKey,
-        isEnabled = FAIL_OVER_IS_ENABLED
-    )
+    private fun FindFeatureFlagQuery.failOver() =
+        FindFeatureFlagQueryResult(
+            id = FAIL_OVER_USER_ID,
+            featureFlagType = this.featureFlagType,
+            featureFlagKey = this.featureFlagKey,
+            isEnabled = FAIL_OVER_IS_ENABLED,
+        )
 
-    private fun FindFeatureFlagResult.toQuery() = FindFeatureFlagQueryResult(
-        id = this.id,
-        featureFlagType = this.featureFlagType,
-        featureFlagKey = this.featureFlagKey,
-        isEnabled = this.isEnabled,
-    )
-
+    private fun FindFeatureFlagResult.toQuery() =
+        FindFeatureFlagQueryResult(
+            id = this.id,
+            featureFlagType = this.featureFlagType,
+            featureFlagKey = this.featureFlagKey,
+            isEnabled = this.isEnabled,
+        )
 }
