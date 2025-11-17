@@ -8,7 +8,6 @@ data class SerializableRetryContext(
     private var lastExceptionMessage: String? = null,
     private var startTime: Long = System.currentTimeMillis(),
     private var exhausted: Boolean = false,
-    private var exhaustedOnly: Boolean = false,
     private var attribute: MutableMap<String, Any> = mutableMapOf(),
 ) : RetryContext {
     override fun getRetryCount() = retryCount
@@ -32,7 +31,7 @@ data class SerializableRetryContext(
 
     override fun attributeNames(): Array<String> = attribute.keys.toTypedArray()
 
-    override fun isExhaustedOnly(): Boolean = exhaustedOnly
+    override fun isExhaustedOnly(): Boolean = exhausted
 
     override fun setExhaustedOnly() {
         exhausted = true

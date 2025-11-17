@@ -4,9 +4,7 @@ import com.reservation.enumeration.FeatureFlagType
 import com.reservation.enumeration.FeatureFlagType.BACKEND
 import kotlin.annotation.AnnotationRetention.RUNTIME
 import kotlin.annotation.AnnotationTarget.FUNCTION
-import org.springframework.stereotype.Component
 
-@Component
 @Target(FUNCTION)
 @Retention(RUNTIME)
 annotation class FeatureFlag(
