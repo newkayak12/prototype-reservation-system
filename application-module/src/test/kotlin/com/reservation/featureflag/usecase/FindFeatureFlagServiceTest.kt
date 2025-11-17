@@ -1,6 +1,7 @@
 package com.reservation.featureflag.usecase
 
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
+import com.reservation.exceptions.InvalidRedisStatusException
 import com.reservation.featureflag.configurations.TestListenRetryReason
 import com.reservation.featureflag.configurations.TestRetryConfig
 import com.reservation.featureflag.port.input.FindFeatureFlagUseCase
@@ -228,9 +229,11 @@ class FindFeatureFlagServiceTest {
                     fetchFeatureFlagTemplate.query(any())
                 } throwsMany
                     listOf(
-                        Exception(),
-                        Exception(),
-                        Exception(),
+                        InvalidRedisStatusException(),
+                        InvalidRedisStatusException(),
+                        InvalidRedisStatusException(),
+                        InvalidRedisStatusException(),
+                        InvalidRedisStatusException(),
                     )
 
                 every {
@@ -271,9 +274,11 @@ class FindFeatureFlagServiceTest {
                     fetchFeatureFlagTemplate.query(any())
                 } throwsMany
                     listOf(
-                        Exception(),
-                        Exception(),
-                        Exception(),
+                        InvalidRedisStatusException(),
+                        InvalidRedisStatusException(),
+                        InvalidRedisStatusException(),
+                        InvalidRedisStatusException(),
+                        InvalidRedisStatusException(),
                     )
 
                 every {

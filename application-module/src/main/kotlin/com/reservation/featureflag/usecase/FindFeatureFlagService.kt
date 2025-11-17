@@ -1,7 +1,7 @@
 package com.reservation.featureflag.usecase
 
 import com.reservation.config.annotations.UseCase
-import com.reservation.exceptions.InvalidRedisConnectException
+import com.reservation.exceptions.InvalidRedisStatusException
 import com.reservation.featureflag.port.input.FindFeatureFlagUseCase
 import com.reservation.featureflag.port.input.query.request.FindFeatureFlagQuery
 import com.reservation.featureflag.port.input.query.response.FindFeatureFlagQueryResult
@@ -27,7 +27,7 @@ class FindFeatureFlagService(
     }
 
     @Retryable(
-        retryFor = [InvalidRedisConnectException::class],
+        retryFor = [InvalidRedisStatusException::class],
         maxAttempts = 5,
         backoff = Backoff(delay = 100, multiplier = 2.0, maxDelay = 500),
         label = "feature-flag-redis-retry",

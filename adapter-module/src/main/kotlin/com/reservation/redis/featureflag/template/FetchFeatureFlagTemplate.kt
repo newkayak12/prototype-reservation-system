@@ -1,10 +1,12 @@
 package com.reservation.redis.featureflag.template
 
+import com.reservation.exceptions.InvalidRedisStatusException
 import com.reservation.featureflag.port.output.FindFeatureFlag
 import com.reservation.featureflag.port.output.FindFeatureFlag.FindFeatureFlagInquiry
 import com.reservation.featureflag.port.output.FindFeatureFlag.FindFeatureFlagResult
 import com.reservation.redis.RedisNameSpace
 import com.reservation.redis.featureflag.entity.FeatureFlagRedisEntity
+import io.lettuce.core.RedisException
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Component
 
@@ -13,9 +15,13 @@ class FetchFeatureFlagTemplate(
     private val featureFlagRedisTemplate: RedisTemplate<String, FeatureFlagRedisEntity>,
 ) : FindFeatureFlag {
     override fun query(inquiry: FindFeatureFlagInquiry): FindFeatureFlagResult? {
-        val opsForValue = featureFlagRedisTemplate.opsForValue()
+        try {
+            val opsForValue = featureFlagRedisTemplate.opsForValue()
 
-        return opsForValue.get(inquiry.toKey())?.let { it.toValue() }
+            return opsForValue.get(inquiry.toKey())?.let { it.toValue() }
+        } catch (_: RedisException) {
+            throw InvalidRedisStatusException()
+        }
     }
 
     private fun FindFeatureFlagInquiry.toKey(): String =
