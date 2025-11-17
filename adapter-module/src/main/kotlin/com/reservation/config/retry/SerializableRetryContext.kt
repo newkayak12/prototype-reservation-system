@@ -19,15 +19,18 @@ data class SerializableRetryContext(
     override fun setAttribute(
         name: String,
         value: Any?,
-    ) {}
+    ) {
+        if (value == null) return
+        attribute[name] = value
+    }
 
-    override fun getAttribute(name: String): Any? = null
+    override fun getAttribute(name: String): Any? = attribute[name]
 
-    override fun removeAttribute(name: String): Any? = null
+    override fun removeAttribute(name: String): Any? = attribute.remove(name)
 
-    override fun hasAttribute(name: String) = false
+    override fun hasAttribute(name: String) = attribute.containsKey(name)
 
-    override fun attributeNames(): Array<String> = emptyArray()
+    override fun attributeNames(): Array<String> = attribute.keys.toTypedArray()
 
     override fun isExhaustedOnly(): Boolean = exhaustedOnly
 

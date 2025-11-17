@@ -20,9 +20,7 @@ class SaveFeatureFlagTemplate(
         val opsForValue = featureFlagRedisTemplate.opsForValue()
         val key = inquiry.toKey()
         val value = inquiry.toValue()
-
-        opsForValue.set(key, value, DURATION_MINUTES, MINUTES)
-        return true
+        return opsForValue.setIfAbsent(key, value, DURATION_MINUTES, MINUTES)
     }
 
     private fun SaveFeatureFlagInquiry.toKey(): String =
