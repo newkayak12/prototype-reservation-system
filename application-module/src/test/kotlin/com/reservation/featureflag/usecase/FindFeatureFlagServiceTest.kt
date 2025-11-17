@@ -14,10 +14,12 @@ import com.reservation.fixture.FixtureMonkeyFactory
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -100,6 +102,11 @@ class FindFeatureFlagServiceTest {
         assertSoftly {
             assertThat(targets).anyMatch { it }
         }
+    }
+
+    @BeforeEach
+    fun beforeEach() {
+        clearAllMocks()
     }
 
     @DisplayName("Redis에 feature flag를 조회할 때")
