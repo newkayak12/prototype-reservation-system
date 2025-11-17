@@ -3,10 +3,10 @@ package com.reservation.user.self.usecase
 import com.reservation.common.exceptions.AlreadyPersistedException
 import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.annotations.UseCase
-import com.reservation.exceptions.InvalidSituationException
 import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryUseCase
 import com.reservation.user.history.change.port.input.command.request.CreateGeneralUserChangeHistoryCommand
 import com.reservation.user.self.User
+import com.reservation.user.self.exceptions.UserFieldMustNotBeNullException
 import com.reservation.user.self.port.input.ChangeGeneralUserNicknameUseCase
 import com.reservation.user.self.port.input.command.request.ChangeGeneralUserNicknameCommand
 import com.reservation.user.self.port.output.ChangeGeneralUserNickname
@@ -71,7 +71,7 @@ class ChangeGeneralUserNicknameService(
 
         return changeGeneralUserNickname.command(
             ChangeGeneralUserNicknameDto(
-                user.identifier ?: run { throw InvalidSituationException() },
+                user.identifier ?: run { throw UserFieldMustNotBeNullException() },
                 user.userNickname,
             ),
         )

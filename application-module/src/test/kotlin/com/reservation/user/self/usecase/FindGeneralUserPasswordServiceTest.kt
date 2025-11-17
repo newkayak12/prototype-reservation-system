@@ -6,6 +6,7 @@ import com.reservation.exceptions.InvalidSituationException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.user.self.User
+import com.reservation.user.self.exceptions.UserFieldMustNotBeNullException
 import com.reservation.user.self.port.input.query.request.FindGeneralUserPasswordCommand
 import com.reservation.user.self.port.output.LoadGeneralUserByLoginIdAndEmail
 import com.reservation.user.self.port.output.SendFindGeneralUserPasswordAsEmail
@@ -177,7 +178,7 @@ class FindGeneralUserPasswordServiceTest {
                 changeGeneralUserPasswordDomainService.changePassword(any(), any(), eq(true))
             } returns changePasswordResult
 
-            assertThrows<InvalidSituationException> {
+            assertThrows<UserFieldMustNotBeNullException> {
                 useCase.execute(command)
             }
         }
