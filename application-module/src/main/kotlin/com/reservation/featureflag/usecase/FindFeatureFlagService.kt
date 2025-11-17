@@ -31,7 +31,7 @@ class FindFeatureFlagService(
         maxAttempts = 5,
         backoff = Backoff(delay = 100, multiplier = 2.0, maxDelay = 2000),
         listeners = ["listenRetryReason"],
-        stateful = true,
+        stateful = false,
     )
     override fun execute(request: FindFeatureFlagQuery): FindFeatureFlagQueryResult =
         fetchFromRedis(request)
