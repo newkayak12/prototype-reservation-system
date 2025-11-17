@@ -30,4 +30,10 @@ class RetryConfig {
 
         return DefaultPointcutAdvisor(pointcut, retryInterceptor)
     }
+
+    @Bean
+    fun retryTemplate(redisRetryContextCache: RedisRetryContextCache): RetryTemplate =
+        RetryTemplate.defaultInstance().apply {
+            setRetryContextCache(redisRetryContextCache)
+        }
 }
