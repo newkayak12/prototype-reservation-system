@@ -27,10 +27,11 @@ class FindFeatureFlagService(
 
     @Retryable(
         retryFor = [Exception::class],
-        maxAttempts = 3,
+        maxAttempts = 5,
         backoff = Backoff(delay = 10, multiplier = 2.0, maxDelay = 100),
         label = "feature-flag-redis-retry",
         listeners = ["listenRetryReason"],
+        stateful = true,
     )
     override fun execute(request: FindFeatureFlagQuery): FindFeatureFlagQueryResult =
         fetchFromRedis(request)

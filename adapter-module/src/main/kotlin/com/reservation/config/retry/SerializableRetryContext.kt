@@ -9,6 +9,7 @@ data class SerializableRetryContext(
     private var startTime: Long = System.currentTimeMillis(),
     private var exhausted: Boolean = false,
     private var exhaustedOnly: Boolean = false,
+    private var attribute: MutableMap<String, Any> = mutableMapOf(),
 ) : RetryContext {
     override fun getRetryCount() = retryCount
 
