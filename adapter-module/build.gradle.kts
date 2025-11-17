@@ -108,6 +108,7 @@ dependencies {
     // Spring Boot starters
     implementation(libs.bundles.spring.web)
     implementation(libs.bundles.spring.data)
+    implementation(libs.spring.retry)
 
     // Database dependencies
     implementation(libs.bundles.database)

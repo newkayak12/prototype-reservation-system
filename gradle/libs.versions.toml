@@ -65,6 +65,7 @@ spring-boot-docker-compose = { module = "org.springframework.boot:spring-boot-do
 # Spring Framework
 spring-web = { module = "org.springframework:spring-web", version.ref = "springFramework" }
 spring-tx = { module = "org.springframework:spring-tx", version.ref = "springFramework" }
+spring-retry = { module = "org.springframework.retry:spring-retry" }
 
 # Database
 querydsl-jpa = { module = "com.querydsl:querydsl-jpa", version.ref = "querydsl" }

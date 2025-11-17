@@ -11,3 +11,5 @@ coverage:
     - "**/enumerations/*"
     - "**/exceptions/*"
     - "**/utilities/*"
+    - "**/template/*"
+    - "**/config*/*"
