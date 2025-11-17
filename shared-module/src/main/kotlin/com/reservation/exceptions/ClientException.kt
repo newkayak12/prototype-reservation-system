@@ -1,3 +1,3 @@
 package com.reservation.exceptions
 
-open class ClientException(message: String = "Client Exception") : RuntimeException(message)
+abstract class ClientException(message: String = "Client Exception") : RuntimeException(message)
