@@ -2,7 +2,7 @@ package com.reservation.user.self.usecase
 
 import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.config.annotations.UseCase
-import com.reservation.exceptions.InvalidSituationException
+import com.reservation.user.self.exceptions.UserFieldMustNotBeNullException
 import com.reservation.user.self.port.input.ChangeGeneralUserPasswordUseCase
 import com.reservation.user.self.port.input.command.request.ChangeGeneralUserPasswordCommand
 import com.reservation.user.self.port.output.ChangeGeneralUserPassword
@@ -29,10 +29,10 @@ class ChangeGeneralUserPasswordService(
 
         return changeGeneralUserPassword.command(
             ChangeGeneralUserPasswordInquiry(
-                user.identifier ?: run { throw InvalidSituationException() },
+                user.identifier ?: run { throw UserFieldMustNotBeNullException() },
                 user.userEncodedPassword,
-                user.userOldEncodedPassword ?: run { throw InvalidSituationException() },
-                user.userPasswordChangedDatetime ?: run { throw InvalidSituationException() },
+                user.userOldEncodedPassword ?: run { throw UserFieldMustNotBeNullException() },
+                user.userPasswordChangedDatetime ?: run { throw UserFieldMustNotBeNullException() },
             ),
         )
     }

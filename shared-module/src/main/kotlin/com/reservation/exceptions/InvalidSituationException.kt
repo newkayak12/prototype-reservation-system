@@ -1,5 +1,5 @@
 package com.reservation.exceptions
 
-open class InvalidSituationException(
+abstract class InvalidSituationException(
     message: String = "It's CRITICAL EXCEPTION",
 ) : RuntimeException(message)

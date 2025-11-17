@@ -3,11 +3,11 @@ package com.reservation.user.self.usecase
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.common.exceptions.AlreadyPersistedException
 import com.reservation.common.exceptions.NoSuchPersistedElementException
-import com.reservation.exceptions.InvalidSituationException
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.user.history.change.port.input.CreateGeneralUserChangeHistoryUseCase
 import com.reservation.user.self.User
+import com.reservation.user.self.exceptions.UserFieldMustNotBeNullException
 import com.reservation.user.self.port.input.command.request.ChangeGeneralUserNicknameCommand
 import com.reservation.user.self.port.output.ChangeGeneralUserNickname
 import com.reservation.user.self.port.output.CheckGeneralUserNicknameDuplicated
@@ -136,7 +136,7 @@ class ChangeGeneralUserNicknameServiceTest {
                 changeUserNicknameDomainService.changePersonalAttributes(any(), any())
             } returns invalidUser
 
-            assertThrows<InvalidSituationException> {
+            assertThrows<UserFieldMustNotBeNullException> {
                 useCase.execute(command)
             }
         }
