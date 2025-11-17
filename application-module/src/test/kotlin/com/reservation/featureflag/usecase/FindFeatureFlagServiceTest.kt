@@ -1,6 +1,6 @@
 package com.reservation.featureflag.usecase
-
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
+import com.reservation.enumeration.FeatureFlagType.BACKEND
 import com.reservation.exceptions.InvalidRedisStatusException
 import com.reservation.featureflag.configurations.TestListenRetryReason
 import com.reservation.featureflag.configurations.TestRetryConfig
@@ -194,11 +194,15 @@ class FindFeatureFlagServiceTest {
             fun `redis return feature flag`() {
                 val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
                 val redisResult = pureMonkey.giveMeOne<FindFeatureFlagResult>()
-                val query = pureMonkey.giveMeOne<FindFeatureFlagQuery>()
+                val query =
+                    FindFeatureFlagQuery(
+                        featureFlagType = BACKEND,
+                        featureFlagKey = "KEY",
+                    )
 
                 every {
                     fetchFeatureFlagTemplate.query(any())
-                } throws Exception() andThen redisResult
+                } throws InvalidRedisStatusException() andThen redisResult
 
                 val serviceResult = service.execute(query)
 
@@ -217,7 +221,7 @@ class FindFeatureFlagServiceTest {
 
         @DisplayName("redis에 요청했으나 redis connection 실패가 발생했고 3회 재시도 후 실패하여")
         @Nested
-        inner class `Connection failed with 3 times` {
+        inner class `Connection failed with 5 times` {
             @DisplayName("Database에서 조회된 피처 플래그 반환")
             @Test
             fun `database return feature flag`() {
@@ -244,7 +248,7 @@ class FindFeatureFlagServiceTest {
 
                 serviceResult shouldNotBe null
 
-                verify(exactly = 3) { fetchFeatureFlagTemplate.query(any()) }
+                verify(exactly = 5) { fetchFeatureFlagTemplate.query(any()) }
                 verify(exactly = 0) { saveFeatureFlagTemplate.command(any()) }
                 verify(exactly = 1) { findFeatureFlagRepository.query(any()) }
             }
@@ -290,7 +294,7 @@ class FindFeatureFlagServiceTest {
                 serviceResult.id shouldBe failOverId
                 serviceResult.isEnabled shouldBe failOverIsEnabled
 
-                verify(exactly = 3) { fetchFeatureFlagTemplate.query(any()) }
+                verify(exactly = 5) { fetchFeatureFlagTemplate.query(any()) }
                 verify(exactly = 0) { saveFeatureFlagTemplate.command(any()) }
                 verify(exactly = 1) { findFeatureFlagRepository.query(any()) }
             }

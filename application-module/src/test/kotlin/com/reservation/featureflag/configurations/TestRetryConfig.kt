@@ -2,17 +2,25 @@ package com.reservation.featureflag.configurations
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.EnableAspectJAutoProxy
 import org.springframework.retry.annotation.AnnotationAwareRetryOperationsInterceptor
 import org.springframework.retry.annotation.EnableRetry
+import org.springframework.retry.policy.MapRetryContextCache
 
 @Configuration
-@EnableAspectJAutoProxy
 @EnableRetry
 class TestRetryConfig {
     @Bean
-    fun retryInterceptor(): AnnotationAwareRetryOperationsInterceptor =
-        AnnotationAwareRetryOperationsInterceptor()
+    fun mapRetryContextCache() = MapRetryContextCache()
+
+    @Bean(name = ["retryAdvisor"])
+    fun retryAdvisor(
+        mapRetryContextCache: MapRetryContextCache,
+    ): AnnotationAwareRetryOperationsInterceptor {
+        val interceptor = AnnotationAwareRetryOperationsInterceptor()
+        interceptor.setRetryContextCache(mapRetryContextCache)
+
+        return interceptor
+    }
 
     @Bean
     fun listenRetryReason() = TestListenRetryReason()

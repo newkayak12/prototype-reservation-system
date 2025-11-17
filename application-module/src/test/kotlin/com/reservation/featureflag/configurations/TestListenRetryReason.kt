@@ -4,6 +4,7 @@ import com.reservation.utilities.logger.loggerFactory
 import org.springframework.retry.RetryCallback
 import org.springframework.retry.RetryContext
 import org.springframework.retry.RetryListener
+import org.springframework.retry.RetryState
 
 class TestListenRetryReason : RetryListener {
     private val log = loggerFactory<TestListenRetryReason>()
@@ -16,14 +17,17 @@ class TestListenRetryReason : RetryListener {
         super.onError(context, callback, throwable)
         log.error(
             """
+
             RETRY====
             context: {}
+            callback: {}
+            type: {}
             =========
 
             """.trimIndent(),
             context,
             callback,
-            throwable,
+            context is RetryState,
         )
     }
 }

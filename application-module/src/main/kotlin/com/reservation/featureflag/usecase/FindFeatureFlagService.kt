@@ -29,8 +29,7 @@ class FindFeatureFlagService(
     @Retryable(
         retryFor = [InvalidRedisStatusException::class],
         maxAttempts = 5,
-        backoff = Backoff(delay = 100, multiplier = 2.0, maxDelay = 500),
-        label = "feature-flag-redis-retry",
+        backoff = Backoff(delay = 100, multiplier = 2.0, maxDelay = 2000),
         listeners = ["listenRetryReason"],
         stateful = true,
     )
@@ -40,7 +39,7 @@ class FindFeatureFlagService(
     @Recover
     @Transactional(readOnly = true)
     fun executeWithDatabase(
-        @Suppress("UNUSED_PARAMETER") exception: Exception,
+        @Suppress("UNUSED_PARAMETER") exception: InvalidRedisStatusException,
         request: FindFeatureFlagQuery,
     ): FindFeatureFlagQueryResult = fetchFromDatabase(request)
 
