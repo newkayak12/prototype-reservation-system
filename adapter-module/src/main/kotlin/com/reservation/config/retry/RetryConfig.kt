@@ -9,6 +9,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy
 import org.springframework.retry.annotation.AnnotationAwareRetryOperationsInterceptor
 import org.springframework.retry.annotation.EnableRetry
 import org.springframework.retry.annotation.Retryable
+import org.springframework.retry.support.RetryTemplate
 
 @Configuration
 @EnableAspectJAutoProxy

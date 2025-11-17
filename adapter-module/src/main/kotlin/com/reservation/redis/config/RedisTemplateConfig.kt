@@ -1,5 +1,6 @@
 package com.reservation.redis.config
 
+import com.reservation.config.retry.SerializableRetryContext
 import com.reservation.redis.featureflag.entity.FeatureFlagRedisEntity
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -31,6 +32,20 @@ class RedisTemplateConfig {
         template.connectionFactory = redisConnectionFactory
         template.keySerializer = StringRedisSerializer()
         val jsonSerializer = Jackson2JsonRedisSerializer(FeatureFlagRedisEntity::class.java)
+        template.valueSerializer = jsonSerializer
+        template.hashValueSerializer = jsonSerializer
+
+        return template
+    }
+
+    @Bean
+    fun redisRetryContextCacheTemplate(
+        redisConnectionFactory: RedisConnectionFactory,
+    ): RedisTemplate<String, SerializableRetryContext> {
+        val template = RedisTemplate<String, SerializableRetryContext>()
+        template.connectionFactory = redisConnectionFactory
+        template.keySerializer = StringRedisSerializer()
+        val jsonSerializer = Jackson2JsonRedisSerializer(SerializableRetryContext::class.java)
         template.valueSerializer = jsonSerializer
         template.hashValueSerializer = jsonSerializer
 
