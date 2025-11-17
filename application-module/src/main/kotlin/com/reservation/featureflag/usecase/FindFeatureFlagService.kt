@@ -28,7 +28,7 @@ class FindFeatureFlagService(
     @Retryable(
         retryFor = [Exception::class],
         maxAttempts = 5,
-        backoff = Backoff(delay = 10, multiplier = 2.0, maxDelay = 100),
+        backoff = Backoff(delay = 100, multiplier = 2.0, maxDelay = 500),
         label = "feature-flag-redis-retry",
         listeners = ["listenRetryReason"],
         stateful = true,

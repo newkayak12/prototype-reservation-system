@@ -110,7 +110,7 @@ class FindFeatureFlagServiceTest {
         // then: Redis에서 조회된 피처 플래그 반환
         @DisplayName("실제 조회할 때")
         @Nested
-        inner class `When exectue` {
+        inner class `When execute` {
             @DisplayName("Redis에서 조회된 피처 플래그 반환")
             @Test
             fun `redis return feature flag`() {
@@ -146,7 +146,7 @@ class FindFeatureFlagServiceTest {
 
         @DisplayName("cache miss로 Database 실제 조회하고")
         @Nested
-        inner class `When exectue` {
+        inner class `When execute` {
             @DisplayName("Database에서 조회된 피처 플래그 반환")
             @Test
             fun `redis return feature flag`() {

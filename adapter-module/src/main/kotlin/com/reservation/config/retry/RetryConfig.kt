@@ -36,4 +36,7 @@ class RetryConfig {
         RetryTemplate.defaultInstance().apply {
             setRetryContextCache(redisRetryContextCache)
         }
+
+    @Bean
+    fun listenRetryReason() = RetryReasonListener()
 }

@@ -15,7 +15,7 @@ class RedisRetryContextCache(
         private val TTL = Duration.ofDays(7)
     }
 
-    override fun get(key: Any): RetryContext {
+    override fun get(key: Any): RetryContext? {
         val redisKey = "$KEY_PREFIX$key"
         return redisRetryContextCacheTemplate.opsForValue().get(redisKey)
     }
