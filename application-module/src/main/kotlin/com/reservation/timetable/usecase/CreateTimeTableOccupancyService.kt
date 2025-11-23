@@ -143,7 +143,10 @@ class CreateTimeTableOccupancyService(
     ): Boolean {
         for (timetable in timeTables.sortedBy { it.id }) {
             val snapshot = createTimeTableOccupancyDomainService.create(userId, timetable)
-            val result = createTimeTableOccupancy.createTimeTableOccupancy(snapshot.toInquiry())
+            val result =
+                createTimeTableOccupancy.createTimeTableOccupancy(
+                    snapshot.toInquiry(userId),
+                )
 
             if (result) break
         }
@@ -175,10 +178,11 @@ class CreateTimeTableOccupancyService(
         }
     }
 
-    private fun TimeTableSnapshot.toInquiry(): CreateTimeTableOccupancyInquiry =
+    private fun TimeTableSnapshot.toInquiry(userId: String): CreateTimeTableOccupancyInquiry =
         CreateTimeTableOccupancyInquiry(
             id = id!!,
             restaurantId = restaurantId,
+            userId = userId,
             date = date,
             day = day,
             startTime = startTime,
