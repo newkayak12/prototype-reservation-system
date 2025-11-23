@@ -8,7 +8,6 @@ import com.reservation.config.restdoc.Query
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.rest.timetable.FindTimeTableController
 import com.reservation.rest.timetable.TimeTableUrl
 import com.reservation.timetable.port.input.FindTimeTablesUseCase
 import com.reservation.timetable.port.input.query.response.FindTimeTableQueryResult

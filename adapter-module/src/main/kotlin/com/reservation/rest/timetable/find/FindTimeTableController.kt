@@ -1,6 +1,7 @@
-package com.reservation.rest.timetable
+package com.reservation.rest.timetable.find
 
 import com.reservation.rest.common.response.ListResponse
+import com.reservation.rest.timetable.TimeTableUrl
 import com.reservation.rest.timetable.request.FindTimeTableRequest
 import com.reservation.rest.timetable.response.FindTimeTableResponse
 import com.reservation.timetable.port.input.FindTimeTablesUseCase

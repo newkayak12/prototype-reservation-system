@@ -1,0 +1,16 @@
+spring:
+    config:
+        activate:
+            on-profile: local
+redisson:
+    mode: SINGLE
+    threads: 16
+    netty-threads: 32
+    single-server-config:
+        address: "redis://${spring.data.redis.host}:${spring.data.redis.port}"
+        connection-pool-size: 64
+        connection-minimum-idle-size: 10
+        idle-connection-timeout: 10000
+        timeout: 3000
+        retry-attempts: 3
+        retry-interval: 1500
