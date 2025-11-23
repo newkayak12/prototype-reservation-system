@@ -3,6 +3,7 @@ package com.reservation.timetable
 import com.reservation.enumeration.TableStatus
 import com.reservation.enumeration.TableStatus.EMPTY
 import com.reservation.enumeration.TableStatus.OCCUPIED
+import com.reservation.enumeration.TimeTableConfirmStatus
 import com.reservation.timetable.snapshot.TimeTableSnapshot
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -19,6 +20,7 @@ class TimeTable(
     val tableNumber: Int,
     val tableSize: Int,
     private var tableStatus: TableStatus,
+    private var timeTableConfirmStatus: TimeTableConfirmStatus,
     private var timetableOccupancy: TimetableOccupancy?,
 ) {
     val getStatus: TableStatus
@@ -51,6 +53,7 @@ class TimeTable(
             tableNumber = tableNumber,
             tableSize = tableSize,
             tableStatus = tableStatus,
+            timeTableConfirmStatus = timeTableConfirmStatus,
             timetableOccupancy = timetableOccupancy?.toSnapshot(),
         )
     }

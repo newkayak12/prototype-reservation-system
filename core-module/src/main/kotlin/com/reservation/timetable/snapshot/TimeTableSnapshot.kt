@@ -1,6 +1,7 @@
 package com.reservation.timetable.snapshot
 
 import com.reservation.enumeration.TableStatus
+import com.reservation.enumeration.TimeTableConfirmStatus
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -16,5 +17,6 @@ data class TimeTableSnapshot(
     val tableNumber: Int,
     val tableSize: Int,
     val tableStatus: TableStatus,
+    val timeTableConfirmStatus: TimeTableConfirmStatus,
     val timetableOccupancy: TimetableOccupancySnapShot?,
 )

@@ -13,6 +13,7 @@ interface CreateTimeTableOccupancy {
     data class CreateTimeTableOccupancyInquiry(
         val id: String,
         val restaurantId: String,
+        val userId: String,
         val date: LocalDate,
         val day: DayOfWeek,
         val startTime: LocalTime,
