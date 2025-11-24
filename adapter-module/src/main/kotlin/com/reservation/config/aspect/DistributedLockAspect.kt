@@ -75,24 +75,34 @@ class DistributedLockAspect(
         distributedLock: DistributedLock,
     ) {
         val lockType = distributedLock.lockType
-        val checkLockTemplate: com.reservation.redis.redisson.lock.CheckLockTemplate =
+        val checkLockTemplate: CheckLockTemplate =
             getCheckLock(lockType)
-        val unlockLockTemplate: com.reservation.redis.redisson.lock.UnlockLockTemplate =
+        val unlockLockTemplate: UnlockLockTemplate =
             getUnLock(lockType)
 
         if (!checkLockTemplate.isHeldByCurrentThread(parsedKey)) return
         unlockLockTemplate.unlock(parsedKey)
     }
 
-    @Around("@annotation(distributedLock)")
-    fun executeDistributedLockAction(
-        proceedingJoinPoint: ProceedingJoinPoint,
-        distributedLock: DistributedLock,
-    ): Any? {
+    @Around("@annotation(com.reservation.config.annotations.DistributedLock)")
+    @Suppress("UseCheckOrError", "RethrowCaughtException")
+    fun executeDistributedLockAction(proceedingJoinPoint: ProceedingJoinPoint): Any? {
+        val method = (proceedingJoinPoint.signature as MethodSignature).method
+        val targetClass = proceedingJoinPoint.target::class.java
+        val targetMethod = targetClass.getMethod(method.name, *method.parameterTypes)
+        val distributedLock =
+            targetMethod.getAnnotation(DistributedLock::class.java)
+                ?: method.getAnnotation(DistributedLock::class.java)
+                ?: throw IllegalStateException(
+                    "@DistributedLock annotation not found on method ${method.name}",
+                )
         val parsedKey = parseKey(proceedingJoinPoint, distributedLock)
+
         try {
             acquireLock(parsedKey, distributedLock)
             return proceedingJoinPoint.proceed()
+        } catch (e: TooManyRequestHasBeenComeSimultaneouslyException) {
+            throw e
         } finally {
             releaseLock(parsedKey, distributedLock)
         }

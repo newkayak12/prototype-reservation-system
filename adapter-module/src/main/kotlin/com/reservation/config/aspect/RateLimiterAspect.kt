@@ -69,11 +69,19 @@ class RateLimiterAspect(
         if (!isAcquired) throw TooManyCreateTimeTableOccupancyRequestException()
     }
 
-    @Around("@annotation(rateLimiter)")
-    fun executeDistributedLockAction(
-        proceedingJoinPoint: ProceedingJoinPoint,
-        rateLimiter: RateLimiter,
-    ): Any? {
+    @Around("@annotation(com.reservation.config.annotations.RateLimiter)")
+    @Suppress("UseCheckOrError", "RethrowCaughtException")
+    fun executeDistributedLockAction(proceedingJoinPoint: ProceedingJoinPoint): Any? {
+        val method = (proceedingJoinPoint.signature as MethodSignature).method
+        val targetClass = proceedingJoinPoint.target::class.java
+        val targetMethod = targetClass.getMethod(method.name, *method.parameterTypes)
+        val rateLimiter =
+            targetMethod.getAnnotation(RateLimiter::class.java)
+                ?: method.getAnnotation(RateLimiter::class.java)
+                ?: throw IllegalStateException(
+                    "@RateLimiter annotation not found on method ${method.name}",
+                )
+
         val parsedKey = parseKey(proceedingJoinPoint, rateLimiter)
         acquireRateLimit(parsedKey, rateLimiter)
 
