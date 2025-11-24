@@ -1,32 +1,29 @@
 package com.reservation.timetable.usecase
 
+import com.reservation.config.annotations.DistributedLock
+import com.reservation.config.annotations.RateLimiter
 import com.reservation.config.annotations.UseCase
+import com.reservation.enumeration.LockType
+import com.reservation.enumeration.RateLimitType
 import com.reservation.exceptions.ClientException
 import com.reservation.timetable.TimeTable
 import com.reservation.timetable.exception.AllTheSeatsAreAlreadyOccupiedException
 import com.reservation.timetable.exception.AllTheThingsAreAlreadyOccupiedException
-import com.reservation.timetable.exception.TooManyCreateTimeTableOccupancyRequestException
-import com.reservation.timetable.exception.TooManyRequestHasBeenComeSimultaneouslyException
 import com.reservation.timetable.port.input.CreateTimeTableOccupancyUseCase
 import com.reservation.timetable.port.input.command.request.CreateTimeTableOccupancyCommand
-import com.reservation.timetable.port.output.AcquireTimeTableFairLock
-import com.reservation.timetable.port.output.AcquireTimeTableRateLimiter
-import com.reservation.timetable.port.output.AcquireTimeTableRateLimiter.RateLimitSettings
-import com.reservation.timetable.port.output.AcquireTimeTableRateLimiter.RateLimitType.WHOLE
 import com.reservation.timetable.port.output.AcquireTimeTableSemaphore
 import com.reservation.timetable.port.output.AcquireTimeTableSemaphore.SemaphoreInquiry
 import com.reservation.timetable.port.output.AcquireTimeTableSemaphore.SemaphoreSettings
-import com.reservation.timetable.port.output.CheckTimeTableFairLock
 import com.reservation.timetable.port.output.CreateTimeTableOccupancy
 import com.reservation.timetable.port.output.CreateTimeTableOccupancy.CreateTimeTableOccupancyInquiry
 import com.reservation.timetable.port.output.CreateTimeTableOccupancy.TimetableOccupancyInquiry
 import com.reservation.timetable.port.output.LoadBookableTimeTables
 import com.reservation.timetable.port.output.LoadBookableTimeTables.LoadBookableTimeTablesInquiry
 import com.reservation.timetable.port.output.ReleaseSemaphore
-import com.reservation.timetable.port.output.UnlockTimeTableFairLock
 import com.reservation.timetable.service.CreateTimeTableOccupancyDomainService
 import com.reservation.timetable.snapshot.TimeTableSnapshot
 import com.reservation.timetable.snapshot.TimetableOccupancySnapShot
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
 import java.time.LocalDate
@@ -37,10 +34,6 @@ import java.util.concurrent.TimeUnit
 @UseCase
 @Suppress("LongParameterList", "TooManyFunctions")
 class CreateTimeTableOccupancyService(
-    private val acquireTimeTableRateLimiter: AcquireTimeTableRateLimiter,
-    private val acquireTimeTableFairLock: AcquireTimeTableFairLock,
-    private val checkTimeTableFairLock: CheckTimeTableFairLock,
-    private val unlockTimeTableFairLock: UnlockTimeTableFairLock,
     private val acquireTimeTableSemaphore: AcquireTimeTableSemaphore,
     private val releaseSemaphore: ReleaseSemaphore,
     private val loadBookableTimeTables: LoadBookableTimeTables,
@@ -59,6 +52,11 @@ class CreateTimeTableOccupancyService(
         private const val NAME = "TIMETABLE"
         private val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
         private val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
+        private const val SP_EL_KEY = """
+         '$NAME:' + #command.restaurantId + ':' +
+          #command.date.format(T(java.time.format.DateTimeFormatter).ofPattern('yyyyMMdd')) + ':' +
+          #command.startTime.format(T(java.time.format.DateTimeFormatter).ofPattern('HHmm'))
+        """
     }
 
     private fun key(
@@ -66,39 +64,6 @@ class CreateTimeTableOccupancyService(
         date: LocalDate,
         startTime: LocalTime,
     ) = "$NAME:$restaurantId:${date.format(DATE_FORMATTER)}:${startTime.format(TIME_FORMATTER)}"
-
-    private fun acquireRateLimiter(key: String) {
-        val rateLimitSettings =
-            RateLimitSettings(
-                type = WHOLE,
-                rate = RATE_LIMITER_CAPACITY,
-                rateInterval = Duration.ofMinutes(RATE_LIMITER_RATE_INTERVAL),
-                duration = Duration.ofHours(RATE_LIMITER_DURATION),
-            )
-        val isAcquired =
-            acquireTimeTableRateLimiter.tryAcquire(
-                key,
-                Duration.ofMinutes(RATE_LIMIT_MAXIMUM_WAIT_TIME),
-                rateLimitSettings,
-            )
-
-        if (!isAcquired) throw TooManyCreateTimeTableOccupancyRequestException()
-    }
-
-    private fun acquireFairLock(key: String) {
-        val isAcquired =
-            acquireTimeTableFairLock.tryLock(
-                key,
-                FAIR_LOCK_MAXIMUM_WAIT_TIME,
-                TimeUnit.MINUTES,
-            )
-        if (!isAcquired) throw TooManyRequestHasBeenComeSimultaneouslyException()
-    }
-
-    private fun releaseFairLock(key: String) {
-        if (!checkTimeTableFairLock.isHeldByCurrentThread(key)) return
-        unlockTimeTableFairLock.unlock(key)
-    }
 
     private fun loadBookableTimeTables(command: CreateTimeTableOccupancyCommand): List<TimeTable> {
         val inquiry =

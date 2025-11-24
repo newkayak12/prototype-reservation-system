@@ -1,7 +1,6 @@
 package com.reservation.redis.redisson.timetable.semaphore
 
-import com.reservation.redis.redisson.common.semaphore.exception.NoSuchSemaphoreException
-import com.reservation.redis.redisson.timetable.lock.fair.FairLockStore
+import com.reservation.redis.redisson.semaphore.exception.NoSuchSemaphoreException
 import org.redisson.api.RSemaphore
 
 object SemaphoreStore {
@@ -18,6 +17,6 @@ object SemaphoreStore {
     ): RSemaphore = SEMAPHORE.get().computeIfAbsent(key(name)) { semaphoreProvider() }
 
     fun getSemaphore(name: String) =
-        SEMAPHORE.get()[FairLockStore.key(name)]
+        SEMAPHORE.get()[com.reservation.redis.redisson.lock.general.store.LockStore.key(name)]
             ?: throw NoSuchSemaphoreException()
 }
