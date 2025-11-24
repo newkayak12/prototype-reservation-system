@@ -15,17 +15,7 @@ object LockStore {
     fun getOrCreateFairLock(
         name: String,
         lockProvider: () -> RLock,
-    ): RLock =
-        com.reservation.redis.redisson.lock.general.store.LockStore.LOCK.get().computeIfAbsent(
-            com.reservation.redis.redisson.lock.general.store.LockStore.key(
-                name,
-            ),
-        ) { lockProvider() }
+    ): RLock = LOCK.get().computeIfAbsent(key(name)) { lockProvider() }
 
-    fun getFairLock(name: String): RLock =
-        com.reservation.redis.redisson.lock.general.store.LockStore.LOCK.get()[
-            com.reservation.redis.redisson.lock.general.store.LockStore.key(
-                name,
-            ),
-        ] ?: throw NoSuchLockException()
+    fun getFairLock(name: String): RLock = LOCK.get()[key(name)] ?: throw NoSuchLockException()
 }

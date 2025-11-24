@@ -23,6 +23,7 @@ import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.mockk.Runs
 import io.mockk.clearMocks
 import io.mockk.every
@@ -30,6 +31,7 @@ import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.just
+import io.mockk.verify
 import net.jqwik.api.Arbitraries
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -99,6 +101,16 @@ class CreateTimeTableOccupancyServiceTest {
                 shouldThrow<AllTheSeatsAreAlreadyOccupiedException> {
                     createTimeTableOccupancyService.execute(command)
                 }
+
+                verify(exactly = 0) {
+                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancyDomainService.create(any(), any())
+                    releaseSemaphore.release(any())
+                    acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
+                }
+                verify(exactly = 1) {
+                    loadBookableTimeTables.query(any())
+                }
             }
         }
     }
@@ -133,6 +145,16 @@ class CreateTimeTableOccupancyServiceTest {
 
                 shouldThrow<AllTheThingsAreAlreadyOccupiedException> {
                     createTimeTableOccupancyService.execute(command)
+                }
+
+                verify(exactly = 0) {
+                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancyDomainService.create(any(), any())
+                    releaseSemaphore.release(any())
+                }
+                verify(exactly = 1) {
+                    acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
+                    loadBookableTimeTables.query(any())
                 }
             }
         }
@@ -171,7 +193,23 @@ class CreateTimeTableOccupancyServiceTest {
                         InvalidTimeTableStatusException(),
                     ).sample()
 
+                every {
+                    releaseSemaphore.release(any())
+                } just Runs
+
                 val exception = shouldThrowAny { createTimeTableOccupancyService.execute(command) }
+
+                exception.message shouldContain "Invalid"
+
+                verify(exactly = 0) {
+                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                }
+                verify(exactly = 1) {
+                    acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
+                    loadBookableTimeTables.query(any())
+                    createTimeTableOccupancyDomainService.create(any(), any())
+                    releaseSemaphore.release(any())
+                }
             }
         }
     }
@@ -220,6 +258,14 @@ class CreateTimeTableOccupancyServiceTest {
 
                 shouldThrow<DataIntegrityViolationException> {
                     createTimeTableOccupancyService.execute(command)
+                }
+
+                verify(exactly = 1) {
+                    acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
+                    loadBookableTimeTables.query(any())
+                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancyDomainService.create(any(), any())
+                    releaseSemaphore.release(any())
                 }
             }
         }
@@ -270,6 +316,13 @@ class CreateTimeTableOccupancyServiceTest {
                 val result = createTimeTableOccupancyService.execute(command)
 
                 result shouldBe true
+                verify(exactly = 1) {
+                    acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
+                    loadBookableTimeTables.query(any())
+                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancyDomainService.create(any(), any())
+                }
+                verify(exactly = 0) { releaseSemaphore.release(any()) }
             }
         }
     }

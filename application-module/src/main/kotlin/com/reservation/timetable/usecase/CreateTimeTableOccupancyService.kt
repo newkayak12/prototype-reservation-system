@@ -49,11 +49,16 @@ class CreateTimeTableOccupancyService(
         private const val SEMAPHORE_DURATION = 10L
         private const val SEMAPHORE_MAXIMUM_WAIT_TIME = 5L
         private const val SEMAPHORE_ACQUIRE_SIZE = 1
-        private const val NAME = "TIMETABLE"
+        private const val SEMAPHORE_NAME = "SEMAPHORE"
         private val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
         private val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
-        private const val SP_EL_KEY = """
-         '$NAME:' + #command.restaurantId + ':' +
+        private const val RATE_LIMITER_SP_EL_KEY = """
+         'RATE_LIMITER:' + #command.restaurantId + ':' +
+          #command.date.format(T(java.time.format.DateTimeFormatter).ofPattern('yyyyMMdd')) + ':' +
+          #command.startTime.format(T(java.time.format.DateTimeFormatter).ofPattern('HHmm'))
+        """
+        private const val DISTRIBUTED_LOCK_SP_EL_KEY = """
+         'DISTRIBUTED_LOCK:' + #command.restaurantId + ':' +
           #command.date.format(T(java.time.format.DateTimeFormatter).ofPattern('yyyyMMdd')) + ':' +
           #command.startTime.format(T(java.time.format.DateTimeFormatter).ofPattern('HHmm'))
         """
@@ -63,7 +68,9 @@ class CreateTimeTableOccupancyService(
         restaurantId: String,
         date: LocalDate,
         startTime: LocalTime,
-    ) = "$NAME:$restaurantId:${date.format(DATE_FORMATTER)}:${startTime.format(TIME_FORMATTER)}"
+    ) = "$SEMAPHORE_NAME:$restaurantId:${date.format(DATE_FORMATTER)}:${
+        startTime.format(TIME_FORMATTER)
+    }"
 
     private fun loadBookableTimeTables(command: CreateTimeTableOccupancyCommand): List<TimeTable> {
         val inquiry =
@@ -120,7 +127,7 @@ class CreateTimeTableOccupancyService(
     }
 
     @RateLimiter(
-        key = SP_EL_KEY,
+        key = RATE_LIMITER_SP_EL_KEY,
         type = RateLimitType.WHOLE,
         rate = RATE_LIMITER_CAPACITY,
         maximumWaitTime = RATE_LIMIT_MAXIMUM_WAIT_TIME,
@@ -128,7 +135,7 @@ class CreateTimeTableOccupancyService(
         bucketLiveTime = RATE_LIMITER_DURATION,
     )
     @DistributedLock(
-        key = SP_EL_KEY,
+        key = DISTRIBUTED_LOCK_SP_EL_KEY,
         lockType = LockType.FAIR_LOCK,
         waitTime = FAIR_LOCK_MAXIMUM_WAIT_TIME,
         waitTimeUnit = TimeUnit.MINUTES,
@@ -144,6 +151,7 @@ class CreateTimeTableOccupancyService(
         } catch (e: ClientException) {
             when (e) {
                 is AllTheThingsAreAlreadyOccupiedException -> throw e
+                is AllTheSeatsAreAlreadyOccupiedException -> throw e
                 else -> {
                     releaseSemaphore(key)
                     throw e
