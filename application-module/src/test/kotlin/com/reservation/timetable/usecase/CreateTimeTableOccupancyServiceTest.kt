@@ -23,11 +23,13 @@ import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.matchers.shouldBe
+import io.mockk.Runs
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.just
 import net.jqwik.api.Arbitraries
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -90,6 +92,10 @@ class CreateTimeTableOccupancyServiceTest {
                     loadBookableTimeTables.query(any())
                 } returns emptyList()
 
+                every {
+                    releaseSemaphore.release(any())
+                } just Runs
+
                 shouldThrow<AllTheSeatsAreAlreadyOccupiedException> {
                     createTimeTableOccupancyService.execute(command)
                 }
@@ -120,6 +126,10 @@ class CreateTimeTableOccupancyServiceTest {
                 every {
                     acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
                 } returns false
+
+                every {
+                    releaseSemaphore.release(any())
+                } just Runs
 
                 shouldThrow<AllTheThingsAreAlreadyOccupiedException> {
                     createTimeTableOccupancyService.execute(command)
@@ -202,11 +212,15 @@ class CreateTimeTableOccupancyServiceTest {
 
                 every {
                     createTimeTableOccupancy.createTimeTableOccupancy(any())
-                } returns true
+                } throws DataIntegrityViolationException(Arbitraries.strings().sample())
 
-                val result = createTimeTableOccupancyService.execute(command)
+                every {
+                    releaseSemaphore.release(any())
+                } just Runs
 
-                result shouldBe true
+                shouldThrow<DataIntegrityViolationException> {
+                    createTimeTableOccupancyService.execute(command)
+                }
             }
         }
     }
@@ -247,11 +261,15 @@ class CreateTimeTableOccupancyServiceTest {
 
                 every {
                     createTimeTableOccupancy.createTimeTableOccupancy(any())
-                } throws DataIntegrityViolationException(Arbitraries.strings().sample())
+                } returns true
 
-                shouldThrow<DataIntegrityViolationException> {
-                    createTimeTableOccupancyService.execute(command)
-                }
+                every {
+                    releaseSemaphore.release(any())
+                } just Runs
+
+                val result = createTimeTableOccupancyService.execute(command)
+
+                result shouldBe true
             }
         }
     }

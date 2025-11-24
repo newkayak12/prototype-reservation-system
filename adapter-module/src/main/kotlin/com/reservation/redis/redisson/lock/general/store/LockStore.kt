@@ -1,7 +1,7 @@
 package com.reservation.redis.redisson.lock.general.store
 
 import com.reservation.redis.config.RedissonNameSpace.FAIR_LOCK_NAMESPACE
-import com.reservation.redis.redisson.common.lock.fair.exception.NoSuchLockException
+import com.reservation.redis.redisson.lock.general.exception.NoSuchLockException
 import org.redisson.api.RLock
 
 object LockStore {

@@ -119,12 +119,23 @@ class CreateTimeTableOccupancyService(
         return true
     }
 
+    @RateLimiter(
+        key = SP_EL_KEY,
+        type = RateLimitType.WHOLE,
+        rate = RATE_LIMITER_CAPACITY,
+        maximumWaitTime = RATE_LIMIT_MAXIMUM_WAIT_TIME,
+        rateIntervalTime = RATE_LIMITER_RATE_INTERVAL,
+        bucketLiveTime = RATE_LIMITER_DURATION,
+    )
+    @DistributedLock(
+        key = SP_EL_KEY,
+        lockType = LockType.FAIR_LOCK,
+        waitTime = FAIR_LOCK_MAXIMUM_WAIT_TIME,
+        waitTimeUnit = TimeUnit.MINUTES,
+    )
     @Transactional
     override fun execute(command: CreateTimeTableOccupancyCommand): Boolean {
         val key = key(command.restaurantId, command.date, command.startTime)
-
-        acquireRateLimiter(key)
-        acquireFairLock(key)
 
         try {
             val list = loadBookableTimeTables(command)
@@ -132,14 +143,15 @@ class CreateTimeTableOccupancyService(
             return saveOccupancy(command.userId, list)
         } catch (e: ClientException) {
             when (e) {
-                is AllTheSeatsAreAlreadyOccupiedException -> throw e
+                is AllTheThingsAreAlreadyOccupiedException -> throw e
                 else -> {
                     releaseSemaphore(key)
                     throw e
                 }
             }
-        } finally {
-            releaseFairLock(key)
+        } catch (e: DataIntegrityViolationException) {
+            releaseSemaphore(key)
+            throw e
         }
     }
 

@@ -4,6 +4,9 @@ import com.reservation.config.annotations.DistributedLock
 import com.reservation.enumeration.LockType
 import com.reservation.enumeration.LockType.FAIR_LOCK
 import com.reservation.enumeration.LockType.LOCK
+import com.reservation.redis.redisson.lock.AcquireLockTemplate
+import com.reservation.redis.redisson.lock.CheckLockTemplate
+import com.reservation.redis.redisson.lock.UnlockLockTemplate
 import com.reservation.timetable.exception.TooManyRequestHasBeenComeSimultaneouslyException
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
@@ -18,12 +21,12 @@ import org.springframework.stereotype.Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Suppress("LongParameterList")
 class DistributedLockAspect(
-    private val acquireFairLockAdapter: com.reservation.redis.redisson.lock.AcquireLockTemplate,
-    private val checkFairLockAdapter: com.reservation.redis.redisson.lock.CheckLockTemplate,
-    private val unlockFairLockAdapter: com.reservation.redis.redisson.lock.UnlockLockTemplate,
-    private val acquireLockAdapter: com.reservation.redis.redisson.lock.AcquireLockTemplate,
-    private val checkLockAdapter: com.reservation.redis.redisson.lock.CheckLockTemplate,
-    private val unlockLockAdapter: com.reservation.redis.redisson.lock.UnlockLockTemplate,
+    private val acquireFairLockAdapter: AcquireLockTemplate,
+    private val checkFairLockAdapter: CheckLockTemplate,
+    private val unlockFairLockAdapter: UnlockLockTemplate,
+    private val acquireLockAdapter: AcquireLockTemplate,
+    private val checkLockAdapter: CheckLockTemplate,
+    private val unlockLockAdapter: UnlockLockTemplate,
     private val spelParser: SpelParser,
 ) {
     private fun parseKey(

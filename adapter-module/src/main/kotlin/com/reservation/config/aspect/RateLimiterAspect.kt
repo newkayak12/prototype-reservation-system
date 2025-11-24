@@ -19,8 +19,8 @@ import org.springframework.stereotype.Component
 @Component
 @Order(Ordered.LOWEST_PRECEDENCE)
 class RateLimiterAspect(
-    private val rateLimiterTemplate: AcquireRateLimiterTemplate,
     private val spelParser: SpelParser,
+    private val rateLimiterTemplate: AcquireRateLimiterTemplate,
 ) {
     private fun parseKey(
         proceedingJoinPoint: ProceedingJoinPoint,
