@@ -97,14 +97,15 @@ class DistributedLockAspect(
                     "@DistributedLock annotation not found on method ${method.name}",
                 )
         val parsedKey = parseKey(proceedingJoinPoint, distributedLock)
-
+        var doRelease = true
         try {
             acquireLock(parsedKey, distributedLock)
             return proceedingJoinPoint.proceed()
         } catch (e: TooManyRequestHasBeenComeSimultaneouslyException) {
+            doRelease = false
             throw e
         } finally {
-            releaseLock(parsedKey, distributedLock)
+            if (doRelease) releaseLock(parsedKey, distributedLock)
         }
     }
 }
