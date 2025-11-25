@@ -2,19 +2,15 @@ spring:
     config:
         activate:
             on-profile: temporary
-    data:
-        redis:
-            host: localhost
-            port: 6379
-            timeout: 5000ms
-#    data:
-#        redis:
-#            sentinel:
-#                master: main-redis
-#                nodes:
-#                    - localhost:26379
-#                    - localhost:26380
-#                    - localhost:26381
-#            connect-timeout: 3000ms
-#            timeout: 50000ms
-
+redisson:
+    mode: SINGLES
+    threads: 16
+    netty-threads: 32
+    single-server-config:
+        address: "redis://${spring.data.redis.host}:${spring.data.redis.port}"
+        connection-pool-size: 64
+        connection-minimum-idle-size: 10
+        idle-connection-timeout: 10000
+        timeout: 3000
+        retry-attempts: 3
+        retry-interval: 1500

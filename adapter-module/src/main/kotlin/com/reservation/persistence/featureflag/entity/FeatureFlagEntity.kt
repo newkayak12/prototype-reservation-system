@@ -26,7 +26,7 @@ import jakarta.persistence.Table
 class FeatureFlagEntity(
     @Id
     @GeneratedValue(strategy = IDENTITY)
-    @Column(name = "identifier")
+    @Column(name = "id")
     private val identifier: Long,
     featureFlagType: FeatureFlagType,
     featureFlagKey: String,

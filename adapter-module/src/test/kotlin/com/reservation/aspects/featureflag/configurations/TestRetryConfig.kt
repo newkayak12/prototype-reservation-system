@@ -1,12 +1,12 @@
 package com.reservation.aspects.featureflag.configurations
 
+import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 import org.springframework.retry.annotation.AnnotationAwareRetryOperationsInterceptor
 import org.springframework.retry.annotation.EnableRetry
 import org.springframework.retry.policy.MapRetryContextCache
 
-@Configuration
+@TestConfiguration
 @EnableRetry
 class TestRetryConfig {
     @Bean

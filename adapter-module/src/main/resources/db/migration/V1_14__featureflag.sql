@@ -1,6 +1,6 @@
 CREATE TABLE prototype_reservation.feature_flag
 (
-    identifier        BIGINT PRIMARY KEY,
+    id        BIGINT PRIMARY KEY,
     feature_flag_type ENUM('BACKEND', 'FRONTEND') DEFAULT 'BACKEND',
     feature_flag_key  VARCHAR(255) DEFAULT FALSE,
     is_enabled        BOOLEAN      DEFAULT FALSE,

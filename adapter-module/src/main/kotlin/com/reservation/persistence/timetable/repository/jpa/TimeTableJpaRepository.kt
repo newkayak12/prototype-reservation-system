@@ -10,27 +10,27 @@ interface TimeTableJpaRepository : CrudRepository<TimeTableEntity, String> {
     companion object {
         private const val FIND_BOOKABLE_TIME_STAMP_SQL = """
         SELECT
-        DISTINCT TimeTableEntity.identifier,
-        TimeTableEntity.restaurantId,
-        TimeTableEntity.date,
-        TimeTableEntity.day,
-        TimeTableEntity.startTime,
-        TimeTableEntity.endTime,
-        TimeTableEntity.tableNumber,
-        TimeTableEntity.tableSize,
-        TimeTableEntity.tableStatus,
-        TimeTableEntity.timeTableConfirmStatus
-        FROM TimeTableEntity
-        WHERE TimeTableEntity.restaurantId = :restaurantId
-        AND TimeTableEntity.date = :date
-        AND TimeTableEntity.startTime = :startTime
-        AND TimeTableEntity.tableStatus = 'EMPTY'
-        AND TimeTableEntity.timeTableConfirmStatus = 'NOT_CONFIRMED'
+        timetable.identifier,
+        timetable.restaurantId,
+        timetable.date,
+        timetable.day,
+        timetable.startTime,
+        timetable.endTime,
+        timetable.tableNumber,
+        timetable.tableSize,
+        timetable.tableStatus,
+        timetable.timeTableConfirmStatus
+        FROM TimeTableEntity timetable
+        WHERE timetable.restaurantId = :restaurantId
+        AND timetable.date = :date
+        AND timetable.startTime = :startTime
+        AND timetable.tableStatus = 'EMPTY'
+        AND timetable.timeTableConfirmStatus = 'NOT_CONFIRMED'
         AND NOT EXISTS (
-            SELECT 1 FROM TimeTableOccupancyEntity
-            WHERE TimeTableOccupancyEntity.timeTable.identifier = TimeTableEntity.identifier
-            AND TimeTableOccupancyEntity.occupiedStatus = 'OCCUPIED'
-        );
+            SELECT 1 FROM TimeTableOccupancyEntity timetableOccupancy
+            WHERE timetableOccupancy.timeTable.identifier = timetable.identifier
+            AND timetableOccupancy.occupiedStatus = 'OCCUPIED'
+        )
         """
     }
 
