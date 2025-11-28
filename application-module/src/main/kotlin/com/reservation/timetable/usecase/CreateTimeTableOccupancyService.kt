@@ -7,8 +7,8 @@ import com.reservation.enumeration.LockType
 import com.reservation.enumeration.RateLimitType
 import com.reservation.exceptions.ClientException
 import com.reservation.timetable.TimeTable
-import com.reservation.timetable.exception.AllTheSeatsAreAlreadyOccupiedException
-import com.reservation.timetable.exception.AllTheThingsAreAlreadyOccupiedException
+import com.reservation.timetable.exceptions.AllTheSeatsAreAlreadyOccupiedException
+import com.reservation.timetable.exceptions.AllTheThingsAreAlreadyOccupiedException
 import com.reservation.timetable.port.input.CreateTimeTableOccupancyUseCase
 import com.reservation.timetable.port.input.command.request.CreateTimeTableOccupancyCommand
 import com.reservation.timetable.port.output.AcquireTimeTableSemaphore

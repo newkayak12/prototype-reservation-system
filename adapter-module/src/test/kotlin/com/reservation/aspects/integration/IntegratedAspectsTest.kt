@@ -8,8 +8,8 @@ import com.reservation.redis.redisson.lock.AcquireLockTemplate
 import com.reservation.redis.redisson.lock.CheckLockTemplate
 import com.reservation.redis.redisson.lock.UnlockLockTemplate
 import com.reservation.redis.redisson.ratelimit.AcquireRateLimiterTemplate
-import com.reservation.timetable.exception.TooManyCreateTimeTableOccupancyRequestException
-import com.reservation.timetable.exception.TooManyRequestHasBeenComeSimultaneouslyException
+import com.reservation.timetable.exceptions.TooManyCreateTimeTableOccupancyRequestException
+import com.reservation.timetable.exceptions.TooManyRequestHasBeenComeSimultaneouslyException
 import io.kotest.assertions.assertSoftly
 import io.mockk.clearAllMocks
 import io.mockk.every

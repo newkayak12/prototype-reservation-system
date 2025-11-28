@@ -7,7 +7,7 @@ import com.reservation.enumeration.LockType.LOCK
 import com.reservation.redis.redisson.lock.AcquireLockTemplate
 import com.reservation.redis.redisson.lock.CheckLockTemplate
 import com.reservation.redis.redisson.lock.UnlockLockTemplate
-import com.reservation.timetable.exception.TooManyRequestHasBeenComeSimultaneouslyException
+import com.reservation.timetable.exceptions.TooManyRequestHasBeenComeSimultaneouslyException
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect

@@ -18,7 +18,7 @@ import com.reservation.redis.redisson.lock.general.adapter.AcquireLockAdapter
 import com.reservation.redis.redisson.lock.general.adapter.CheckLockAdapter
 import com.reservation.redis.redisson.lock.general.adapter.UnlockLockAdapter
 import com.reservation.timetable.TimeTable
-import com.reservation.timetable.exception.TooManyRequestHasBeenComeSimultaneouslyException
+import com.reservation.timetable.exceptions.TooManyRequestHasBeenComeSimultaneouslyException
 import com.reservation.timetable.port.input.CreateTimeTableOccupancyUseCase
 import com.reservation.timetable.port.input.command.request.CreateTimeTableOccupancyCommand
 import com.reservation.timetable.port.output.AcquireTimeTableSemaphore

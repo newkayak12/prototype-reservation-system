@@ -6,8 +6,8 @@ import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.timetable.TimeTable
-import com.reservation.timetable.exception.AllTheSeatsAreAlreadyOccupiedException
-import com.reservation.timetable.exception.AllTheThingsAreAlreadyOccupiedException
+import com.reservation.timetable.exceptions.AllTheSeatsAreAlreadyOccupiedException
+import com.reservation.timetable.exceptions.AllTheThingsAreAlreadyOccupiedException
 import com.reservation.timetable.policy.exceptions.InvalidTimeTableIdException
 import com.reservation.timetable.policy.exceptions.InvalidTimeTableStatusException
 import com.reservation.timetable.policy.exceptions.InvalidTimeTableUserIdException

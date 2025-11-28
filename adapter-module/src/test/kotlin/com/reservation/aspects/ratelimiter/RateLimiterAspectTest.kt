@@ -10,7 +10,7 @@ import com.reservation.config.aspect.SpelParser
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.redis.redisson.ratelimit.AcquireRateLimiterTemplate
 import com.reservation.timetable.TimeTable
-import com.reservation.timetable.exception.TooManyCreateTimeTableOccupancyRequestException
+import com.reservation.timetable.exceptions.TooManyCreateTimeTableOccupancyRequestException
 import com.reservation.timetable.port.input.CreateTimeTableOccupancyUseCase
 import com.reservation.timetable.port.input.command.request.CreateTimeTableOccupancyCommand
 import com.reservation.timetable.port.output.AcquireTimeTableSemaphore

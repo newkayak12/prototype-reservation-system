@@ -6,7 +6,7 @@ import com.reservation.redis.redisson.ratelimit.AcquireRateLimiterTemplate.Bucke
 import com.reservation.redis.redisson.ratelimit.AcquireRateLimiterTemplate.MaximumWaitSettings
 import com.reservation.redis.redisson.ratelimit.AcquireRateLimiterTemplate.RateLimiterSettings
 import com.reservation.redis.redisson.ratelimit.AcquireRateLimiterTemplate.RateSettings
-import com.reservation.timetable.exception.TooManyCreateTimeTableOccupancyRequestException
+import com.reservation.timetable.exceptions.TooManyCreateTimeTableOccupancyRequestException
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect

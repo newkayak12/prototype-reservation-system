@@ -1,4 +1,4 @@
-package com.reservation.timetable.exception
+package com.reservation.timetable.exceptions
 
 import com.reservation.exceptions.ClientException
 
