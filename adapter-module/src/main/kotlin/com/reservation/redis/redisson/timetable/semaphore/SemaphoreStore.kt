@@ -20,6 +20,16 @@ object SemaphoreStore {
     ): RSemaphore = SEMAPHORE.get().computeIfAbsent(key(name)) { semaphoreProvider() }
 
     fun getSemaphore(name: String) =
-        SEMAPHORE.get()[com.reservation.redis.redisson.lock.general.store.LockStore.key(name)]
+        SEMAPHORE.get()[LockStore.key(name)]
             ?: throw NoSuchSemaphoreException()
+
+    fun acquired() {
+        ACQUIRED.set(true)
+    }
+
+    fun released() {
+        ACQUIRED.set(false)
+    }
+
+    fun isAcquired() = ACQUIRED.get()
 }
