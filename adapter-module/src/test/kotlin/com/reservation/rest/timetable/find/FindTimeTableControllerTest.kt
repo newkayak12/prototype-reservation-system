@@ -8,9 +8,8 @@ import com.reservation.config.restdoc.Query
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.rest.timetable.FindTimeTableController
 import com.reservation.rest.timetable.TimeTableUrl
-import com.reservation.timetable.port.input.FindTimeTableUseCase
+import com.reservation.timetable.port.input.FindTimeTablesUseCase
 import com.reservation.timetable.port.input.query.response.FindTimeTableQueryResult
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.spec.style.FunSpec
@@ -34,14 +33,14 @@ class FindTimeTableControllerTest : FunSpec(
         extension(restDocsExtension)
 
         lateinit var mockMvc: MockMvc
-        lateinit var findTimeTableUseCase: FindTimeTableUseCase
+        lateinit var findTimeTablesUseCase: FindTimeTablesUseCase
 
         val dateTimeFormat = DateTimeFormatter.ISO_DATE
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
 
         beforeTest { testCase ->
-            findTimeTableUseCase = mockk<FindTimeTableUseCase>()
-            val controller = FindTimeTableController(findTimeTableUseCase)
+            findTimeTablesUseCase = mockk<FindTimeTablesUseCase>()
+            val controller = FindTimeTableController(findTimeTablesUseCase)
 
             mockMvc =
                 MockMvcFactory.buildMockMvc(
@@ -53,7 +52,7 @@ class FindTimeTableControllerTest : FunSpec(
         test("조건에 맞춰 조회를 진행했으나 결과가 없어 빈 리스트가 반환된다.") {
 
             every {
-                findTimeTableUseCase.execute(any())
+                findTimeTablesUseCase.execute(any())
             } returns emptyList()
 
             mockMvc.perform(
@@ -76,7 +75,7 @@ class FindTimeTableControllerTest : FunSpec(
             val queryList = pureMonkey.giveMe<FindTimeTableQueryResult>(size)
 
             every {
-                findTimeTableUseCase.execute(any())
+                findTimeTablesUseCase.execute(any())
             } returns queryList
 
             mockMvc.perform(

@@ -1,10 +1,12 @@
 package com.reservation.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import jakarta.validation.Validation
 import org.springframework.restdocs.ManualRestDocumentation
 import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.validation.beanvalidation.SpringValidatorAdapter
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -58,12 +60,16 @@ object MockMvcFactory {
         val controllerKey = "${controller!!::class::simpleName.name}@${controller.hashCode()}"
         val docsKey = restDocumentation.toString()
         val cacheKey = Pair(controllerKey, docsKey)
+        val validator = Validation.buildDefaultValidatorFactory().validator
+        val springValidator = SpringValidatorAdapter(validator)
 
         return mockMvcWithDocsCache.computeIfAbsent(cacheKey) {
             getStandAloneSetup(controller)
                 .apply<org.springframework.test.web.servlet.setup.StandaloneMockMvcBuilder>(
                     MockMvcRestDocumentation.documentationConfiguration(restDocumentation),
-                ).build()
+                )
+                .setValidator(springValidator)
+                .build()
         }
     }
 

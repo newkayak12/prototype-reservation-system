@@ -122,6 +122,7 @@ dependencies {
     // Additional dependencies
     implementation(libs.springdoc.openapi)
     implementation(libs.p6spy)
+    implementation(libs.redisson.spring.boot.starter)
 
     // Development only
     developmentOnly(libs.spring.boot.docker.compose)

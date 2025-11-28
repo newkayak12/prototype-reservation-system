@@ -1,0 +1,7 @@
+spring:
+    config:
+        import:
+            - classpath:redis/redisson/local.yaml
+            - classpath:redis/redisson/production.yaml
+            - classpath:redis/redisson/stage.yaml
+            - classpath:redis/redisson/temporary.yaml

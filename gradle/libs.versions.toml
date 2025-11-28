@@ -42,6 +42,7 @@ hibernateValidator = "8.0.1.Final"
 jakartaValidation = "3.0.2"
 uuidGenerator = "4.3.0"
 p6spy = "1.10.0"
+redisson = "3.52.0"
 
 [libraries]
 # Kotlin
@@ -109,6 +110,7 @@ restdocs-api-spec = { module = "com.epages:restdocs-api-spec-mockmvc", version.r
 
 # Development Tools
 p6spy = { module = "com.github.gavlyukovskiy:p6spy-spring-boot-starter", version.ref = "p6spy" }
+redisson-spring-boot-starter = { module = "org.redisson:redisson-spring-boot-starter", version.ref = "redisson" }
 
 # Batch
 spring-boot-starter-batch = { module = "org.springframework.boot:spring-boot-starter-batch" }

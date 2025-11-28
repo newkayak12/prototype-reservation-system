@@ -40,6 +40,14 @@ class ReservationApplicationTest {
             registry.add("spring.flyway.url") { mysqlContainer.jdbcUrl }
             registry.add("spring.flyway.user") { mysqlContainer.username }
             registry.add("spring.flyway.password") { mysqlContainer.password }
+
+            registry.add("spring.data.redis.host") { redisContainer.host }
+            registry.add("spring.data.redis.port") {
+                redisContainer.getMappedPort(6379)
+            }
+            registry.add("redisson.single-server-config.address") {
+                "redis://${redisContainer.host}:${redisContainer.getMappedPort(6379)}"
+            }
         }
     }
 
