@@ -170,3 +170,68 @@ com.reservation.{domain}
 3. Use pre-commit hooks for formatting/validation
 4. All tests must pass before PR
 5. Code review required before merge
+
+## Class Diagram Guidelines
+
+### DDD Context Diagram Standards
+When creating or updating class diagrams in `/docs/class-diagram/`, follow these principles:
+
+#### **Format Requirements**
+- Use **mermaid graph LR** format (context diagram style)
+- Follow V1 diagram structure as the base template
+- Title format: `title: {Module} - Context Relationships`
+- Theme: `'dark'` with `fontFamily: 'Pretendard'`
+
+#### **Content Guidelines**
+- **Focus on Domain Relationships**: Show DDD domain boundaries and relationships, not implementation details
+- **Aggregate Roots Only**: Include only core domain entities (Aggregate Roots), not Value Objects
+- **Simplified VO Management**: Remove detailed VO contains relationships, snapshots, and internal structure
+- **Core Relationship Types**:
+  - `-->|owns|` - Ownership relationships
+  - `-->|refers|` - Reference through ID  
+  - `-->|transform|` - Domain state changes
+  - `-->|generates|` - Creation relationships
+  - `-->|associates|` - Category/classification links
+  - `-->|creates|` - Factory relationships
+  - `-->|contains|` - Only for essential aggregate components
+
+#### **Structure Pattern**
+```mermaid
+graph LR
+%% --- ID References ---
+    entityId
+    otherId
+
+%% --- Contexts ---
+    subgraph Domain-Context
+        aggregate[AggregateRoot]
+        essential_component[EssentialComponent]
+    end
+
+%% --- Relationships ---
+    owner -->|owns| entityId
+    entityId -->|refers| aggregate
+    aggregate -->|associates| categoryId
+```
+
+#### **What to EXCLUDE**
+- Value Object internal structures (LoginId, Password, PersonalAttributes, etc.)
+- Snapshot entities and relationships (`~Snapshot`)
+- Detailed VO contains relationships (`-->|contains| login_id`)
+- Implementation-specific technical details
+- Infrastructure concerns
+
+#### **What to INCLUDE**
+- Core domain boundaries (Contexts as subgraphs)
+- Aggregate Root entities
+- Essential domain relationships
+- ID-based references between domains
+- Business-meaningful associations
+
+#### **Naming Conventions**
+- File naming: `V{number}.md` (V1.md, V2.md, V3.md)
+- Entity naming: `entity[EntityName]` 
+- Context naming: `Domain-Context` format
+- ID references: `entityId` format
+
+This approach ensures diagrams show **domain intent and boundaries** rather than implementation details, making them useful for business understanding and architectural decisions.
