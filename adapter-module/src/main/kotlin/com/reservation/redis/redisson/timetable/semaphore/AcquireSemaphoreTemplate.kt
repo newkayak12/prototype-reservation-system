@@ -6,6 +6,7 @@ import com.reservation.timetable.port.output.AcquireTimeTableSemaphore.Semaphore
 import org.redisson.api.RSemaphore
 import org.redisson.api.RedissonClient
 import org.springframework.stereotype.Component
+import java.time.Duration
 
 @Component
 class AcquireSemaphoreTemplate(
@@ -24,7 +25,7 @@ class AcquireSemaphoreTemplate(
 
         val permits = semaphoreInquiry.permits
         val waitTime = semaphoreInquiry.waitTime
-        return semaphore.tryAcquire(permits, waitTime)
+        return semaphore.tryAcquireAndRecord(permits, waitTime)
     }
 
     private fun RSemaphore.applySettings(settings: SemaphoreSettings) {
@@ -33,5 +34,17 @@ class AcquireSemaphoreTemplate(
         val capacity = settings.capacity
         val semaphoreDuration = settings.semaphoreDuration
         trySetPermits(capacity, semaphoreDuration)
+    }
+
+    private fun RSemaphore.tryAcquireAndRecord(
+        permits: Int,
+        waitTime: Duration,
+    ): Boolean {
+        val acquired = this.tryAcquire(permits, waitTime)
+
+        if (acquired) {
+            SemaphoreStore.acquired()
+        }
+        return acquired
     }
 }

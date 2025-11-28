@@ -1,5 +1,6 @@
 package com.reservation.redis.redisson.timetable.semaphore
 
+import com.reservation.redis.redisson.lock.general.store.LockStore
 import com.reservation.redis.redisson.semaphore.exception.NoSuchSemaphoreException
 import org.redisson.api.RSemaphore
 
@@ -8,6 +9,8 @@ object SemaphoreStore {
         ThreadLocal.withInitial {
             mutableMapOf()
         }
+
+    private val ACQUIRED: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
 
     fun key(name: String) = "$SEMAPHORE$name"
 
