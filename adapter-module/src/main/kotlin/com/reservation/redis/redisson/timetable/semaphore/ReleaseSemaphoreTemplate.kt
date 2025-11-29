@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component
 class ReleaseSemaphoreTemplate : ReleaseSemaphore {
     override fun release(name: String) {
         val semaphore = SemaphoreStore.getSemaphore(name)
-        if (SemaphoreStore.isAcquired()) {
+        if (SemaphoreStore.isAcquired(name)) {
             semaphore.release()
-            SemaphoreStore.released()
+            SemaphoreStore.released(name)
         }
     }
 }

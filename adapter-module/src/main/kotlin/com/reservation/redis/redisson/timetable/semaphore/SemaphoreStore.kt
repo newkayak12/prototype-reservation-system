@@ -1,6 +1,5 @@
 package com.reservation.redis.redisson.timetable.semaphore
 
-import com.reservation.redis.redisson.lock.general.store.LockStore
 import com.reservation.redis.redisson.semaphore.exception.NoSuchSemaphoreException
 import org.redisson.api.RSemaphore
 
@@ -10,7 +9,8 @@ object SemaphoreStore {
             mutableMapOf()
         }
 
-    private val ACQUIRED: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+    private val ACQUIRED: ThreadLocal<MutableMap<String, Boolean>> =
+        ThreadLocal.withInitial { mutableMapOf() }
 
     fun key(name: String) = "$SEMAPHORE$name"
 
@@ -20,16 +20,16 @@ object SemaphoreStore {
     ): RSemaphore = SEMAPHORE.get().computeIfAbsent(key(name)) { semaphoreProvider() }
 
     fun getSemaphore(name: String) =
-        SEMAPHORE.get()[LockStore.key(name)]
+        SEMAPHORE.get()[key(name)]
             ?: throw NoSuchSemaphoreException()
 
-    fun acquired() {
-        ACQUIRED.set(true)
+    fun acquired(name: String) {
+        ACQUIRED.get().computeIfAbsent(key(name)) { true }
     }
 
-    fun released() {
-        ACQUIRED.set(false)
+    fun released(name: String) {
+        ACQUIRED.get().remove(key(name))
     }
 
-    fun isAcquired() = ACQUIRED.get()
+    fun isAcquired(name: String) = ACQUIRED.get()?.get(key(name)) ?: false
 }

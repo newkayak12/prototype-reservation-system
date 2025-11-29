@@ -25,7 +25,7 @@ class AcquireSemaphoreTemplate(
 
         val permits = semaphoreInquiry.permits
         val waitTime = semaphoreInquiry.waitTime
-        return semaphore.tryAcquireAndRecord(permits, waitTime)
+        return semaphore.tryAcquireAndRecord(name, permits, waitTime)
     }
 
     private fun RSemaphore.applySettings(settings: SemaphoreSettings) {
@@ -37,13 +37,14 @@ class AcquireSemaphoreTemplate(
     }
 
     private fun RSemaphore.tryAcquireAndRecord(
+        name: String,
         permits: Int,
         waitTime: Duration,
     ): Boolean {
         val acquired = this.tryAcquire(permits, waitTime)
 
         if (acquired) {
-            SemaphoreStore.acquired()
+            SemaphoreStore.acquired(name)
         }
         return acquired
     }
