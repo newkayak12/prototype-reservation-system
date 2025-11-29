@@ -9,6 +9,9 @@ object SemaphoreStore {
             mutableMapOf()
         }
 
+    private val ACQUIRED: ThreadLocal<MutableMap<String, Boolean>> =
+        ThreadLocal.withInitial { mutableMapOf() }
+
     fun key(name: String) = "$SEMAPHORE$name"
 
     fun getOrCreateSemaphore(
@@ -17,6 +20,16 @@ object SemaphoreStore {
     ): RSemaphore = SEMAPHORE.get().computeIfAbsent(key(name)) { semaphoreProvider() }
 
     fun getSemaphore(name: String) =
-        SEMAPHORE.get()[com.reservation.redis.redisson.lock.general.store.LockStore.key(name)]
+        SEMAPHORE.get()[key(name)]
             ?: throw NoSuchSemaphoreException()
+
+    fun acquired(name: String) {
+        ACQUIRED.get().computeIfAbsent(key(name)) { true }
+    }
+
+    fun released(name: String) {
+        ACQUIRED.get().remove(key(name))
+    }
+
+    fun isAcquired(name: String) = ACQUIRED.get()?.get(key(name)) ?: false
 }
