@@ -15,6 +15,8 @@ spring:
             - classpath:persistence/flyway/index.yaml
             - classpath:redis/datasource/index.yaml
             - classpath:redis/redisson/index.yaml
+            - classpath:kafka/index.yaml
+            - classpath:kafka/index.yaml
             - classpath:security/index.yaml
             - classpath:docker/index.yaml
             - classpath:common.yaml

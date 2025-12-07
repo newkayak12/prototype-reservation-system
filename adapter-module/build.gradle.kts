@@ -123,6 +123,9 @@ dependencies {
     implementation(libs.springdoc.openapi)
     implementation(libs.p6spy)
     implementation(libs.redisson.spring.boot.starter)
+    
+    // Kafka
+    implementation(libs.bundles.kafka)
 
     // Development only
     developmentOnly(libs.spring.boot.docker.compose)

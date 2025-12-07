@@ -1,0 +1,36 @@
+spring:
+    config:
+        activate:
+            on-profile: stage
+    kafka:
+        bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+        producer:
+            acks: 1
+            retries: 3
+            batch-size: 16384
+            buffer-memory: 33554432
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.apache.kafka.common.serialization.StringSerializer
+            properties:
+                linger.ms: 5
+                enable.idempotence: true  # 중복 방지
+                max.in.flight.requests.per.connection: 5
+                delivery.timeout.ms: 30000
+                request.timeout.ms: 30000
+        consumer:
+            bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+            group-id: reservation-service
+            auto-offset-reset: earliest
+            enable-auto-commit: false  # 수동 커밋으로 정확한 처리 보장
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            properties:
+                isolation.level: read_committed  # 트랜잭션 커밋된 메시지만 읽기
+                session.timeout.ms: 30000
+                heartbeat.interval.ms: 3000
+                max.poll.records: 500
+                fetch.min.bytes: 1
+                fetch.max.wait.ms: 500
+            parallel:
+                max-concurrency: 16
+                processing-order: key

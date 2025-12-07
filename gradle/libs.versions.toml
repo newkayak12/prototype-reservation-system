@@ -44,6 +44,10 @@ uuidGenerator = "4.3.0"
 p6spy = "1.10.0"
 redisson = "3.52.0"
 
+# Kafka
+springKafka = "3.3.1"
+parallelConsumer = "0.5.2.8"
+
 [libraries]
 # Kotlin
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
@@ -112,6 +116,11 @@ restdocs-api-spec = { module = "com.epages:restdocs-api-spec-mockmvc", version.r
 p6spy = { module = "com.github.gavlyukovskiy:p6spy-spring-boot-starter", version.ref = "p6spy" }
 redisson-spring-boot-starter = { module = "org.redisson:redisson-spring-boot-starter", version.ref = "redisson" }
 
+# Kafka
+spring-kafka = { module = "org.springframework.kafka:spring-kafka", version.ref = "springKafka" }
+spring-kafka-test = { module = "org.springframework.kafka:spring-kafka-test", version.ref = "springKafka" }
+parallel-consumer-core = { module = "io.confluent.parallelconsumer:parallel-consumer-core", version.ref = "parallelConsumer" }
+
 # Batch
 spring-boot-starter-batch = { module = "org.springframework.boot:spring-boot-starter-batch" }
 spring-boot-starter-batch-test = {module = "org.springframework.batch:spring-batch-test"}
@@ -144,3 +153,4 @@ testing-fixtures = ["fixture-monkey-kotlin", "fixture-monkey-kotest"]
 security = ["jjwt", "spring-security-crypto"]
 validation = ["hibernate-validator", "jakarta-validation"]
 documentation = ["springdoc-openapi", "restdocs-mockmvc", "restdocs-asciidoctor", "restdocs-api-spec"]
+kafka = ["spring-kafka", "parallel-consumer-core"]

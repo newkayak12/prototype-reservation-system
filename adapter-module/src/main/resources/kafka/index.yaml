@@ -1,0 +1,7 @@
+spring:
+    config:
+        import:
+            - classpath:kafka/local.yaml
+            - classpath:kafka/production.yaml
+            - classpath:kafka/stage.yaml
+            - classpath:kafka/temporary.yaml
