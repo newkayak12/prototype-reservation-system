@@ -7,6 +7,7 @@ import com.reservation.enumeration.LockType
 import com.reservation.enumeration.RateLimitType
 import com.reservation.exceptions.ClientException
 import com.reservation.timetable.TimeTable
+import com.reservation.timetable.event.TimeTableOccupiedDomainEvent
 import com.reservation.timetable.exceptions.AllTheSeatsAreAlreadyOccupiedException
 import com.reservation.timetable.exceptions.AllTheThingsAreAlreadyOccupiedException
 import com.reservation.timetable.port.input.CreateTimeTableOccupancyUseCase
@@ -21,8 +22,10 @@ import com.reservation.timetable.port.output.LoadBookableTimeTables
 import com.reservation.timetable.port.output.LoadBookableTimeTables.LoadBookableTimeTablesInquiry
 import com.reservation.timetable.port.output.ReleaseSemaphore
 import com.reservation.timetable.service.CreateTimeTableOccupancyDomainService
+import com.reservation.timetable.service.CreateTimeTableOccupiedDomainEventService
 import com.reservation.timetable.snapshot.TimeTableSnapshot
 import com.reservation.timetable.snapshot.TimetableOccupancySnapShot
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
@@ -39,6 +42,9 @@ class CreateTimeTableOccupancyService(
     private val loadBookableTimeTables: LoadBookableTimeTables,
     private val createTimeTableOccupancy: CreateTimeTableOccupancy,
     private val createTimeTableOccupancyDomainService: CreateTimeTableOccupancyDomainService,
+    private val createTimeTableOccupiedDomainEventService:
+        CreateTimeTableOccupiedDomainEventService,
+    private val applicationEventPublisher: ApplicationEventPublisher,
 ) : CreateTimeTableOccupancyUseCase {
     companion object {
         private const val FAIR_LOCK_MAXIMUM_WAIT_TIME = 2L
@@ -112,17 +118,23 @@ class CreateTimeTableOccupancyService(
     private fun saveOccupancy(
         userId: String,
         timeTables: List<TimeTable>,
-    ): Boolean {
+    ): TimeTableOccupiedDomainEvent {
         for (timetable in timeTables.sortedBy { it.id }) {
             val snapshot = createTimeTableOccupancyDomainService.create(userId, timetable)
-            val result =
-                createTimeTableOccupancy.createTimeTableOccupancy(
-                    snapshot.toInquiry(userId),
-                )
+            val inquiry = snapshot.toInquiry(userId)
+            val timetableId = snapshot.id
+            val occupancyId = createTimeTableOccupancy.createTimeTableOccupancy(inquiry)
 
-            if (result) break
+            if (timetableId == null || occupancyId == null) break
+
+            return createTimeTableOccupiedDomainEventService.create(timetableId, occupancyId!!)
         }
 
+        throw AllTheThingsAreAlreadyOccupiedException()
+    }
+
+    private fun saveToOutBoxAndPublish(domainEvent: TimeTableOccupiedDomainEvent): Boolean {
+        applicationEventPublisher.publishEvent(domainEvent)
         return true
     }
 
@@ -147,7 +159,9 @@ class CreateTimeTableOccupancyService(
         try {
             val list = loadBookableTimeTables(command)
             acquireSemaphore(key, list.size)
-            return saveOccupancy(command.userId, list)
+            val domainEvent = saveOccupancy(command.userId, list)
+
+            return saveToOutBoxAndPublish(domainEvent)
         } catch (e: ClientException) {
             when (e) {
                 is AllTheThingsAreAlreadyOccupiedException -> throw e
