@@ -21,4 +21,3 @@ spring:
             - classpath:docker/index.yaml
             - classpath:common.yaml
 
-

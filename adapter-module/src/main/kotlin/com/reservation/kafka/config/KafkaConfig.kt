@@ -34,24 +34,47 @@ class KafkaConfig(
         const val FETCH_MAX_WAIT_MS = "fetch.max.wait.ms"
     }
 
-    private fun createProducerConfig(kafkaProperties: KafkaProperties): Map<String, Any?> {
+    private fun createProducerConfig(kafkaProperties: KafkaProperties): Map<String, Any> {
         val producerConfig = kafkaProperties.producer
-        val properties = producerConfig.properties
-        return mapOf(
-            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to producerConfig.bootstrapServers,
-            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to producerConfig.keySerializer,
-            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to producerConfig.valueSerializer,
-            ProducerConfig.ACKS_CONFIG to producerConfig.acks,
-            ProducerConfig.RETRIES_CONFIG to producerConfig.retries,
-            ProducerConfig.BUFFER_MEMORY_CONFIG to producerConfig.bufferMemory,
-            ProducerConfig.COMPRESSION_TYPE_CONFIG to producerConfig.compressionType,
-            ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION to
-                properties[MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION],
-            ProducerConfig.LINGER_MS_CONFIG to properties[LINGER_MS],
-            ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG to properties[ENABLE_IDEMPOTENCE],
-            ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG to properties[DELIVERY_TIMEOUT_MS],
-            ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG to properties[REQUEST_TIMEOUT_MS],
-        )
+        val properties = producerConfig.properties ?: emptyMap()
+
+        val configMap = mutableMapOf<String, Any>()
+
+        // 필수 설정들
+        producerConfig.bootstrapServers?.let {
+            configMap[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = it
+        }
+        producerConfig.keySerializer?.let {
+            configMap[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = it
+        }
+        producerConfig.valueSerializer?.let {
+            configMap[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = it
+        }
+        producerConfig.acks?.let { configMap[ProducerConfig.ACKS_CONFIG] = it }
+        producerConfig.retries?.let { configMap[ProducerConfig.RETRIES_CONFIG] = it }
+        producerConfig.bufferMemory?.let {
+            configMap[ProducerConfig.BUFFER_MEMORY_CONFIG] = it.toBytes()
+        }
+        producerConfig.compressionType?.let {
+            configMap[ProducerConfig.COMPRESSION_TYPE_CONFIG] = it
+        }
+
+        // 선택적 설정들 (null이 아닌 경우만 추가)
+        properties[MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION]?.let {
+            configMap[ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION] = it
+        }
+        properties[LINGER_MS]?.let { configMap[ProducerConfig.LINGER_MS_CONFIG] = it }
+        properties[ENABLE_IDEMPOTENCE]?.let {
+            configMap[ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG] = it
+        }
+        properties[DELIVERY_TIMEOUT_MS]?.let {
+            configMap[ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG] = it
+        }
+        properties[REQUEST_TIMEOUT_MS]?.let {
+            configMap[ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG] = it
+        }
+
+        return configMap
     }
 
     @Bean
@@ -67,24 +90,43 @@ class KafkaConfig(
         producerFactory: ProducerFactory<String, AbstractEvent>,
     ): KafkaTemplate<String, AbstractEvent> = KafkaTemplate(producerFactory)
 
-    private fun createConsumerConfig(kafkaProperties: KafkaProperties): Map<String, Any?> {
+    private fun createConsumerConfig(kafkaProperties: KafkaProperties): Map<String, Any> {
         val consumerConfig = kafkaProperties.consumer
-        val properties = consumerConfig.properties
+        val properties = consumerConfig.properties ?: emptyMap()
 
-        return mapOf(
-            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to consumerConfig.bootstrapServers,
-            ConsumerConfig.GROUP_ID_CONFIG to consumerConfig.groupId,
-            ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to consumerConfig.autoOffsetReset,
-            ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to consumerConfig.enableAutoCommit,
-            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to consumerConfig.keyDeserializer,
-            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to consumerConfig.valueDeserializer,
-            ConsumerConfig.ISOLATION_LEVEL_CONFIG to properties[ISOLATION_LEVEL],
-            ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG to properties[SESSION_TIMEOUT_MS],
-            ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG to properties[HEARTBEAT_INTERVAL_MS],
-            ConsumerConfig.MAX_POLL_RECORDS_CONFIG to properties[MAX_POLL_RECORDS],
-            ConsumerConfig.FETCH_MIN_BYTES_CONFIG to properties[FETCH_MIN_BYTES],
-            ConsumerConfig.FETCH_MAX_BYTES_CONFIG to properties[FETCH_MAX_WAIT_MS],
-        )
+        val configMap = mutableMapOf<String, Any>()
+
+        // 필수 설정들
+        consumerConfig.bootstrapServers?.let {
+            configMap[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = it
+        }
+        consumerConfig.groupId?.let { configMap[ConsumerConfig.GROUP_ID_CONFIG] = it }
+        consumerConfig.autoOffsetReset?.let {
+            configMap[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = it
+        }
+        consumerConfig.enableAutoCommit?.let {
+            configMap[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = it
+        }
+        consumerConfig.keyDeserializer?.let {
+            configMap[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = it
+        }
+        consumerConfig.valueDeserializer?.let {
+            configMap[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = it
+        }
+
+        // 선택적 설정들 (null이 아닌 경우만 추가)
+        properties[ISOLATION_LEVEL]?.let { configMap[ConsumerConfig.ISOLATION_LEVEL_CONFIG] = it }
+        properties[SESSION_TIMEOUT_MS]?.let {
+            configMap[ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG] = it
+        }
+        properties[HEARTBEAT_INTERVAL_MS]?.let {
+            configMap[ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG] = it
+        }
+        properties[MAX_POLL_RECORDS]?.let { configMap[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = it }
+        properties[FETCH_MIN_BYTES]?.let { configMap[ConsumerConfig.FETCH_MIN_BYTES_CONFIG] = it }
+        properties[FETCH_MAX_WAIT_MS]?.let { configMap[ConsumerConfig.FETCH_MAX_BYTES_CONFIG] = it }
+
+        return configMap
     }
 
     @Bean

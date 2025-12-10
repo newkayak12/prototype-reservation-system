@@ -13,7 +13,7 @@ spring:
             value-serializer: org.apache.kafka.common.serialization.StringSerializer
             properties:
                 linger.ms: 5
-                enable.idempotence: true  # 중복 방지
+                enable.idempotence: false  # 중복 방지
                 max.in.flight.requests.per.connection: 5
                 delivery.timeout.ms: 30000
                 request.timeout.ms: 30000

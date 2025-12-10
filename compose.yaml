@@ -27,7 +27,7 @@ services:
 
   # Kafka Cluster - 3 nodes using KRaft (no Zookeeper)
   kafka-1:
-    image: 'confluentinc/cp-kafka:latest'
+    image: 'apache/kafka:latest'
     hostname: kafka-1
     ports:
       - "9092:9092"
@@ -63,7 +63,7 @@ services:
     depends_on: []
 
   kafka-2:
-    image: 'confluentinc/cp-kafka:latest'
+    image: 'apache/kafka:latest'
     hostname: kafka-2
     ports:
       - "9093:9093"
@@ -99,7 +99,7 @@ services:
     depends_on: []
 
   kafka-3:
-    image: 'confluentinc/cp-kafka:latest'
+    image: 'apache/kafka:latest'
     hostname: kafka-3
     ports:
       - "9094:9094"

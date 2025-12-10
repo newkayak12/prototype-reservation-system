@@ -45,21 +45,53 @@ spring:
     url: jdbc:mysql://localhost:3306/flyway
   docker:
     compose:
-      enabled: false
+      enabled: true
+  kafka:
+    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+    producer:
+      acks: 1
+      retries: 3
+      batch-size: 16384
+      buffer-memory: 33554432
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        linger.ms: 5
+        enable.idempotence: false  # 중복 방지
+        max.in.flight.requests.per.connection: 5
+        delivery.timeout.ms: 60000
+        request.timeout.ms: 30000
+    consumer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+      group-id: reservation-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false  # 수동 커밋으로 정확한 처리 보장
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        isolation.level: read_committed  # 트랜잭션 커밋된 메시지만 읽기
+        session.timeout.ms: 30000
+        heartbeat.interval.ms: 3000
+        max.poll.records: 500
+        fetch.min.bytes: 1
+        fetch.max.wait.ms: 500
+      parallel:
+        max-concurrency: 16
+        processing-order: key
+
 
 redisson:
   mode: SINGLES
   threads: 16
   netty-threads: 32
   single-server-config:
-    address: "redis://localhost:6379"
+    address: "redis://${spring.data.redis.host}:${spring.data.redis.port}"
     connection-pool-size: 64
     connection-minimum-idle-size: 10
     idle-connection-timeout: 10000
     timeout: 3000
     retry-attempts: 3
     retry-interval: 1500
-
 
 logging:
   level:

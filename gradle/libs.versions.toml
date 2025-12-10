@@ -46,7 +46,7 @@ redisson = "3.52.0"
 
 # Kafka
 springKafka = "3.3.1"
-parallelConsumer = "0.5.2.8"
+parallelConsumer = "0.5.3.2"
 
 [libraries]
 # Kotlin
@@ -95,6 +95,7 @@ springmockk = { module = "com.ninja-squad:springmockk", version.ref = "springmoc
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 testcontainers-mysql = { module = "org.testcontainers:mysql" }
 testcontainers-junit = { module = "org.testcontainers:junit-jupiter" }
+testcontainers-kafka = {module = "org.testcontainers:kafka"}
 fixture-monkey-kotlin = { module = "com.navercorp.fixturemonkey:fixture-monkey-starter-kotlin", version.ref = "fixtureMonkey" }
 fixture-monkey-kotest = { module = "com.navercorp.fixturemonkey:fixture-monkey-kotest", version.ref = "fixtureMonkey" }
 
@@ -148,7 +149,7 @@ querydsl-kapt = ["jakarta-annotation-api", "jakarta-persistence-api"]
 testing-junit = ["junit-jupiter", "junit-platform-launcher"]
 testing-kotest = ["kotest-runner", "kotest-assertions", "kotest-framework", "kotest-spring"]
 testing-mock = ["mockk", "springmockk"]
-testing-containers = ["testcontainers-mysql", "testcontainers-junit", "spring-boot-testcontainers"]
+testing-containers = ["testcontainers-kafka","testcontainers-mysql", "testcontainers-junit", "spring-boot-testcontainers"]
 testing-fixtures = ["fixture-monkey-kotlin", "fixture-monkey-kotest"]
 security = ["jjwt", "spring-security-crypto"]
 validation = ["hibernate-validator", "jakarta-validation"]
