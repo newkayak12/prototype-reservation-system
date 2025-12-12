@@ -49,6 +49,8 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
     producer:
+      topic:
+        auto-create: true
       acks: 1
       retries: 3
       batch-size: 16384
@@ -95,8 +97,11 @@ redisson:
 
 logging:
   level:
+    root: INFO
     p6spy: DEBUG
     com.p6spy: DEBUG
+    org.apache.kafka: INFO
+    org.springframework.kafka: INFO
 decorator:
   datasource:
     p6spy:
