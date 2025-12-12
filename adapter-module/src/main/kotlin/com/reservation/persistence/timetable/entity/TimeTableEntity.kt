@@ -9,6 +9,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.EnumType.STRING
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import org.hibernate.annotations.Comment
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -53,6 +54,10 @@ class TimeTableEntity(
     @Column(name = "time_table_confirm_status")
     @Comment("테이블 승인 여부")
     var timeTableConfirmStatus: TimeTableConfirmStatus = NOT_CONFIRMED
+
+    @Version
+    @Column(name = "version")
+    private var version: Long = 0
 
     fun modifyTableStatus(tableStatus: TableStatus) {
         this.tableStatus = tableStatus
