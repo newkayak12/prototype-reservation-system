@@ -10,6 +10,7 @@ data class FindTimeTableAndOccupancyQueryResult(
     val restaurantId: String,
     val date: LocalDate,
     val day: DayOfWeek,
+    val startTime: LocalTime,
     val endTime: LocalTime,
     val tableNumber: Int,
     val tableSize: Int,

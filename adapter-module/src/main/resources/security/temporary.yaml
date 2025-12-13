@@ -10,4 +10,10 @@ security:
       issuer: HELLO
       version: v1
     allowed:
-      path: /**
+      path:
+        - /api/**/internal/**
+        - /api/v1/user/sign-up
+        - /api/v1/user/sign-in
+        - /api/v1/user/sign-out
+        - /api/v1/user/find/login-id
+        - /api/v1/user/find/password

@@ -3,6 +3,8 @@ package com.reservation.persistence.timetable.repository.dsl
 import com.querydsl.core.types.Projections
 import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
+import com.reservation.enumeration.OccupyStatus.OCCUPIED
+import com.reservation.enumeration.TableStatus
 import com.reservation.persistence.timetable.entity.QTimeTableEntity.timeTableEntity
 import com.reservation.persistence.timetable.entity.QTimeTableOccupancyEntity.timeTableOccupancyEntity
 import com.reservation.timetable.port.output.FindTimeTableAndOccupancy
@@ -24,6 +26,7 @@ class FindTimeTableAndOccupancyRepository(
                 timeTableEntity.restaurantId,
                 timeTableEntity.date,
                 timeTableEntity.day,
+                timeTableEntity.startTime,
                 timeTableEntity.endTime,
                 timeTableEntity.tableNumber,
                 timeTableEntity.tableSize,
@@ -38,6 +41,8 @@ class FindTimeTableAndOccupancyRepository(
             .where(
                 TimeTableIdQuerySpec.timeTableIdEq(inquiry.timeTableId),
                 TimeTableOccupancyIdQuerySpec.timeTableOccupancyIdEq(inquiry.timeTableOccupancyId),
+                TimeTableStatusQuerySpec.timeTableStatusEq(TableStatus.OCCUPIED),
+                TimeTableOccupancyStatusQuerySpec.timeTableOccupancyEq(OCCUPIED),
             )
             .fetchOne()
     }
