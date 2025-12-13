@@ -26,6 +26,7 @@ class TimeTableOccupiedDomainEventListener(
 ) {
     companion object {
         const val TIME_TABLE_OCCUPIED_EVENT_VERSION = 1.0
+        const val KAFKA_EVENT_PUBLISH_TIME_OUT = 10L
     }
 
     @TransactionalEventListener(phase = BEFORE_COMMIT)
@@ -60,7 +61,7 @@ class TimeTableOccupiedDomainEventListener(
 
         runCatching {
             kafkaTemplate.send(kafkaTopic, kafkaKey, createdEvent)
-                .get(10, SECONDS)
+                .get(KAFKA_EVENT_PUBLISH_TIME_OUT, SECONDS)
         }
             .onSuccess { outbox.succeeded() }
             .onFailure { exception ->
