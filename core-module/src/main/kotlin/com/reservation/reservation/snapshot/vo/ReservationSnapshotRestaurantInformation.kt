@@ -1,4 +1,4 @@
-package com.reservation.reservation.vo
+package com.reservation.reservation.snapshot.vo
 
 class ReservationSnapshotRestaurantInformation(
     val restaurantId: String,

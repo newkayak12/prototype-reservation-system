@@ -1,4 +1,4 @@
-package com.reservation.reservation.vo
+package com.reservation.reservation.snapshot.vo
 
 import java.time.DayOfWeek
 import java.time.LocalDate

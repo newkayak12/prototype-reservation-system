@@ -5,7 +5,7 @@ import com.reservation.reservation.policy.validations.ReservationTimeTableOccupa
 import com.reservation.reservation.policy.validations.ReservationTimeTableOccupancyIdFormatValidationPolicy
 import com.reservation.reservation.policy.validations.ReservationTimeTableOccupancyIdPolicy
 
-class ValidateTimeTableOccupancy {
+class ValidateTimeTableIdOccupancy {
     val timeTableOccupancyIdValidationPolicy: List<ReservationTimeTableOccupancyIdPolicy> =
         listOf(
             ReservationTimeTableOccupancyIdEmptyValidationPolicy(),

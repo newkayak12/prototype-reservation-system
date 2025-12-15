@@ -4,7 +4,7 @@ import com.reservation.reservation.Reservation
 import com.reservation.reservation.policy.format.CreateReservationForm
 import com.reservation.reservation.service.validate.ValidateRestaurantId
 import com.reservation.reservation.service.validate.ValidateTimeTableId
-import com.reservation.reservation.service.validate.ValidateTimeTableOccupancy
+import com.reservation.reservation.service.validate.ValidateTimeTableIdOccupancy
 import com.reservation.reservation.service.validate.ValidateUserId
 import com.reservation.reservation.snapshot.ReservationSnapshot
 import com.reservation.reservation.vo.ReservationBooker
@@ -13,16 +13,16 @@ import com.reservation.reservation.vo.ReservationRestaurantInformation
 import com.reservation.reservation.vo.ReservationSchedule
 
 class CreateReservationDomainService {
+    private val validateUserId = ValidateUserId()
     private val validateRestaurantId = ValidateRestaurantId()
     private val validateTimeTableId = ValidateTimeTableId()
-    private val validateTimeTableOccupancy = ValidateTimeTableOccupancy()
-    private val validateUserId = ValidateUserId()
+    private val validateTimeTableIdOccupancy = ValidateTimeTableIdOccupancy()
 
     private fun validate(form: CreateReservationForm) {
+        validateUserId.validate(form.userId)
         validateRestaurantId.validate(form.restaurantId)
         validateTimeTableId.validate(form.timeTableId)
-        validateTimeTableOccupancy.validate(form.timeTableOccupancyId)
-        validateUserId.validate(form.userId)
+        validateTimeTableIdOccupancy.validate(form.timeTableOccupancyId)
     }
 
     fun createReservation(form: CreateReservationForm): ReservationSnapshot {
