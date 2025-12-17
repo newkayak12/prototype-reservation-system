@@ -110,3 +110,13 @@ decorator:
 key:
   bidirectional:
     secret: d6fe589c69bf2edfb795b1a37e977dd7e98ce3c3aff17b095b4129588d994f02
+
+
+http-interface:
+  retry:
+    max-attempts: 3
+    initial-interval: 100
+    multiplier: 2.0
+    max-interval: 2000
+  internal:
+    base-url: http://localhost:8080

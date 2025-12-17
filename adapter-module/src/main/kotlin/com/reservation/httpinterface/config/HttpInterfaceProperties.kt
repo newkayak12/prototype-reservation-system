@@ -15,6 +15,6 @@ data class HttpInterfaceProperties(
     )
 
     data class InternalProperties(
-        val timeTableOccupancy: String,
+        val baseUrl: String,
     )
 }

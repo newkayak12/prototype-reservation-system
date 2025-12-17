@@ -21,8 +21,8 @@ data class FindTimeTableOccupancyInternallyHttpInterfaceResponse(
     )
 
     data class BookingInformationHttpInterfaceResponse(
-        val timeTableOccupancyId: String,
         val userId: String,
+        val timeTableOccupancyId: String,
         val occupiedDatetime: LocalDateTime,
     )
 }

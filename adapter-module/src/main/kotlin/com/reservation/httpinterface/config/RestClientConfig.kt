@@ -43,12 +43,12 @@ class RestClientConfig(
         restClient: RestClient,
     ): FindTimeTableOccupancyHttpInterface {
         val internal = httpInterfaceProperties.internal
-        val url = internal.timeTableOccupancy
+        val baseUrl = internal.baseUrl
 
         val mutatedRestClient: RestClient =
             restClient
                 .mutate()
-                .baseUrl(url)
+                .baseUrl(baseUrl)
                 .build()
 
         val adapter = RestClientAdapter.create(mutatedRestClient)
