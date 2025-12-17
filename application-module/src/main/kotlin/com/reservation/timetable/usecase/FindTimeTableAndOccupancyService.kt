@@ -30,6 +30,7 @@ class FindTimeTableAndOccupancyService(
             restaurantId = restaurantId,
             date = date,
             day = day,
+            startTime = startTime,
             endTime = endTime,
             tableNumber = tableNumber,
             tableSize = tableSize,
