@@ -65,7 +65,6 @@ class TimeTableOccupiedDomainEventListener(
         }
             .onSuccess { outbox.succeeded() }
             .onFailure { exception ->
-                exception.printStackTrace()
 
                 when (exception) {
                     is InterruptedException, is ExecutionException -> outbox.failed()
