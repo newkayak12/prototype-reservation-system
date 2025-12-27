@@ -10,6 +10,7 @@ import com.reservation.config.aspect.SpelParser
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.redis.redisson.ratelimit.AcquireRateLimiterTemplate
 import com.reservation.timetable.TimeTable
+import com.reservation.timetable.event.TimeTableOccupiedDomainEvent
 import com.reservation.timetable.exceptions.TooManyCreateTimeTableOccupancyRequestException
 import com.reservation.timetable.port.input.CreateTimeTableOccupancyUseCase
 import com.reservation.timetable.port.input.command.request.CreateTimeTableOccupancyCommand
@@ -18,6 +19,7 @@ import com.reservation.timetable.port.output.CreateTimeTableOccupancy
 import com.reservation.timetable.port.output.LoadBookableTimeTables
 import com.reservation.timetable.port.output.ReleaseSemaphore
 import com.reservation.timetable.service.CreateTimeTableOccupancyDomainService
+import com.reservation.timetable.service.CreateTimeTableOccupiedDomainEventService
 import com.reservation.timetable.snapshot.TimeTableSnapshot
 import com.reservation.timetable.snapshot.TimetableOccupancySnapShot
 import com.reservation.timetable.usecase.CreateTimeTableOccupancyService
@@ -40,6 +42,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.aop.support.AopUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.EnableAspectJAutoProxy
 import org.springframework.test.context.ContextConfiguration
@@ -71,6 +74,13 @@ class RateLimiterAspectTest {
     @Autowired
     private lateinit var createTimeTableOccupancyDomainService:
         CreateTimeTableOccupancyDomainService
+
+    @Autowired
+    private lateinit var createTimeTableOccupiedDomainEventService:
+        CreateTimeTableOccupiedDomainEventService
+
+    @Autowired
+    private lateinit var applicationEventPublisher: ApplicationEventPublisher
 
     @BeforeEach
     fun init() {
@@ -104,11 +114,19 @@ class RateLimiterAspectTest {
         fun createTimeTableOccupancyDomainService() = mockk<CreateTimeTableOccupancyDomainService>()
 
         @Bean
+        fun createTimeTableOccupiedDomainEventService() =
+            mockk<CreateTimeTableOccupiedDomainEventService>()
+
+        @Bean
+        fun applicationEventPublisher() = mockk<ApplicationEventPublisher>()
+
+        @Bean
         fun rateLimiterAspect(
             spelParser: SpelParser,
             rateLimiterTemplate: AcquireRateLimiterTemplate,
         ) = RateLimiterAspect(spelParser, rateLimiterTemplate)
 
+        @Suppress("LongParameterList")
         @Bean
         fun createTimeTableOccupancyService(
             acquireTimeTableSemaphore: AcquireTimeTableSemaphore,
@@ -116,6 +134,8 @@ class RateLimiterAspectTest {
             loadBookableTimeTables: LoadBookableTimeTables,
             createTimeTableOccupancy: CreateTimeTableOccupancy,
             createTimeTableOccupancyDomainService: CreateTimeTableOccupancyDomainService,
+            createTimeTableOccupiedDomainEventService: CreateTimeTableOccupiedDomainEventService,
+            applicationEventPublisher: ApplicationEventPublisher,
         ): CreateTimeTableOccupancyService {
             return CreateTimeTableOccupancyService(
                 acquireTimeTableSemaphore,
@@ -123,6 +143,8 @@ class RateLimiterAspectTest {
                 loadBookableTimeTables,
                 createTimeTableOccupancy,
                 createTimeTableOccupancyDomainService,
+                createTimeTableOccupiedDomainEventService,
+                applicationEventPublisher,
             )
         }
     }
@@ -192,6 +214,8 @@ class RateLimiterAspectTest {
             @DisplayName("예약이 성공적으로 생성되고 true를 반환한다")
             @Test
             fun `booking success and return true`() {
+                val event = pureMonkey.giveMeOne<TimeTableOccupiedDomainEvent>()
+                val occupancyId = UuidGenerator.generate()
                 val command = pureMonkey.giveMeOne<CreateTimeTableOccupancyCommand>()
                 val list = pureMonkey.giveMe<TimeTable>(4)
                 val occupancySnapshot = pureMonkey.giveMeOne<TimetableOccupancySnapShot>()
@@ -218,7 +242,15 @@ class RateLimiterAspectTest {
 
                 every {
                     createTimeTableOccupancy.createTimeTableOccupancy(any())
-                } returns true
+                } returns occupancyId
+
+                every {
+                    createTimeTableOccupiedDomainEventService.create(any(), any())
+                } returns event
+
+                every {
+                    applicationEventPublisher.publishEvent(any<TimeTableOccupiedDomainEvent>())
+                } just Runs
 
                 every {
                     releaseSemaphore.release(any())
@@ -233,6 +265,8 @@ class RateLimiterAspectTest {
                     loadBookableTimeTables.query(any())
                     createTimeTableOccupancy.createTimeTableOccupancy(any())
                     createTimeTableOccupancyDomainService.create(any(), any())
+                    createTimeTableOccupiedDomainEventService.create(any(), any())
+                    applicationEventPublisher.publishEvent(any<TimeTableOccupiedDomainEvent>())
                 }
                 verify(exactly = 0) { releaseSemaphore.release(any()) }
             }

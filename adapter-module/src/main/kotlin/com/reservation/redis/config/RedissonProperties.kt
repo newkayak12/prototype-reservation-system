@@ -12,11 +12,11 @@ data class RedissonProperties(
     val mode: RedissonMode,
     val threads: Int,
     val nettyThreads: Int,
-    val replicatedServersConfig: ReplicatedServersConfig?,
-    val sentinelServersConfig: SentinelServersConfig?,
-    val singleServerConfig: SingleServerConfig?,
-    val masterSlaveServersConfig: MasterSlaveServersConfig?,
-    val clusterServersConfig: ClusterServersConfig?,
+    val replicatedServersConfig: ReplicatedServersConfig? = null,
+    val sentinelServersConfig: SentinelServersConfig? = null,
+    val singleServerConfig: SingleServerConfig? = null,
+    val masterSlaveServersConfig: MasterSlaveServersConfig? = null,
+    val clusterServersConfig: ClusterServersConfig? = null,
 ) {
     enum class RedissonMode {
         REPLICATED,

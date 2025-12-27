@@ -28,7 +28,13 @@ class ReservationApplicationTest {
 
         @Container
         private val redisContainer =
-            GenericContainer(DockerImageName.parse("redis:7.0")).withExposedPorts(6379)
+            GenericContainer(DockerImageName.parse("redis:7.0"))
+                .withExposedPorts(6379)
+
+        @Container
+        private val kafkaContainer =
+            GenericContainer("apache/kafka:latest")
+                .withExposedPorts(9092)
 
         @JvmStatic
         @DynamicPropertySource
@@ -47,6 +53,10 @@ class ReservationApplicationTest {
             }
             registry.add("redisson.single-server-config.address") {
                 "redis://${redisContainer.host}:${redisContainer.getMappedPort(6379)}"
+            }
+
+            registry.add("spring.kafka.bootstrap-servers") {
+                "${kafkaContainer.getHost()}:${kafkaContainer.getMappedPort(9092)}"
             }
         }
     }

@@ -9,3 +9,11 @@ security:
       secret: af869782f3abde439def4230f2b05bd701f1ab047ec80808d3b84f1c8923506a
       issuer: HELLO
       version: v1
+    allowed:
+      path:
+        - /api/**/internal/**
+        - /api/v1/user/sign-up
+        - /api/v1/user/sign-in
+        - /api/v1/user/sign-out
+        - /api/v1/user/find/login-id
+        - /api/v1/user/find/password

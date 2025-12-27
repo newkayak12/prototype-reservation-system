@@ -1,6 +1,7 @@
 package com.reservation.timetable.config
 
 import com.reservation.timetable.service.CreateTimeTableOccupancyDomainService
+import com.reservation.timetable.service.CreateTimeTableOccupiedDomainEventService
 import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Component
 
@@ -8,4 +9,7 @@ import org.springframework.stereotype.Component
 class TimeTableServiceFactory {
     @Bean
     fun createTimeTableOccupancyDomainService() = CreateTimeTableOccupancyDomainService()
+
+    @Bean
+    fun createTimeTableOccupiedEventService() = CreateTimeTableOccupiedDomainEventService()
 }
