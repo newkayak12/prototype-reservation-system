@@ -6,7 +6,7 @@ import org.hibernate.annotations.Comment
 
 @Embeddable
 class ReservationRestaurant(
-    @Column(name = "restaurant_company_id")
+    @Column(name = "restaurant_id")
     @Comment("매장 ID")
     val restaurantId: String,
 )

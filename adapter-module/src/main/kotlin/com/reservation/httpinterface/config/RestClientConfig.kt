@@ -14,7 +14,7 @@ class RestClientConfig(
     val httpInterfaceProperties: HttpInterfaceProperties,
 ) {
     @Bean
-    fun retryTemplate(): RetryTemplate {
+    fun httpRetryTemplate(): RetryTemplate {
         val retry = httpInterfaceProperties.retry
 
         return RetryTemplate
@@ -29,10 +29,10 @@ class RestClientConfig(
     }
 
     @Bean
-    fun restClient(retryTemplate: RetryTemplate): RestClient =
+    fun restClient(httpRetryTemplate: RetryTemplate): RestClient =
         RestClient.builder()
             .requestInterceptor { request, body, execution ->
-                retryTemplate.execute<ClientHttpResponse, Exception> {
+                httpRetryTemplate.execute<ClientHttpResponse, Exception> {
                     execution.execute(request, body)
                 }
             }

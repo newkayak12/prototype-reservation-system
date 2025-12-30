@@ -3,6 +3,8 @@ package com.reservation.persistence.reservation.entity.vo
 import com.reservation.enumeration.ReservationStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Embeddable
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import org.hibernate.annotations.Comment
 import java.time.LocalDateTime
 
@@ -13,6 +15,7 @@ class ReservationTimeTableOccupancy(
     val timetableOccupancyId: String,
     @Column(name = "reservation_status")
     @Comment("예약 상태")
+    @field:Enumerated(EnumType.STRING)
     val reservationStatus: ReservationStatus,
     @Column(name = "reservation_occupied_datetime")
     @Comment("예약 시간")
