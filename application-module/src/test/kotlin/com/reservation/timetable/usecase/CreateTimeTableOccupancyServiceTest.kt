@@ -6,6 +6,7 @@ import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.timetable.TimeTable
+import com.reservation.timetable.event.TimeTableOccupiedDomainEvent
 import com.reservation.timetable.exceptions.AllTheSeatsAreAlreadyOccupiedException
 import com.reservation.timetable.exceptions.AllTheThingsAreAlreadyOccupiedException
 import com.reservation.timetable.policy.exceptions.InvalidTimeTableIdException
@@ -17,6 +18,7 @@ import com.reservation.timetable.port.output.CreateTimeTableOccupancy
 import com.reservation.timetable.port.output.LoadBookableTimeTables
 import com.reservation.timetable.port.output.ReleaseSemaphore
 import com.reservation.timetable.service.CreateTimeTableOccupancyDomainService
+import com.reservation.timetable.service.CreateTimeTableOccupiedDomainEventService
 import com.reservation.timetable.snapshot.TimeTableSnapshot
 import com.reservation.timetable.snapshot.TimetableOccupancySnapShot
 import com.reservation.utilities.generator.uuid.UuidGenerator
@@ -38,6 +40,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DataIntegrityViolationException
 
 @ExtendWith(MockKExtension::class)
@@ -57,6 +60,13 @@ class CreateTimeTableOccupancyServiceTest {
     @MockK
     private lateinit var createTimeTableOccupancyDomainService:
         CreateTimeTableOccupancyDomainService
+
+    @MockK
+    private lateinit var createTimeTableOccupiedDomainEventService:
+        CreateTimeTableOccupiedDomainEventService
+
+    @MockK
+    private lateinit var applicationEventPublisher: ApplicationEventPublisher
 
     @InjectMockKs
     private lateinit var createTimeTableOccupancyService: CreateTimeTableOccupancyService
@@ -293,6 +303,8 @@ class CreateTimeTableOccupancyServiceTest {
                         .set("timetableOccupancy", occupancySnapshot)
                         .sample()
 
+                val domainEvent = pureMonkey.giveMeOne<TimeTableOccupiedDomainEvent>()
+
                 every {
                     loadBookableTimeTables.query(any())
                 } returns list
@@ -307,10 +319,18 @@ class CreateTimeTableOccupancyServiceTest {
 
                 every {
                     createTimeTableOccupancy.createTimeTableOccupancy(any())
-                } returns true
+                } returns UuidGenerator.generate()
+
+                every {
+                    createTimeTableOccupiedDomainEventService.create(any(), any())
+                } returns domainEvent
 
                 every {
                     releaseSemaphore.release(any())
+                } just Runs
+
+                every {
+                    applicationEventPublisher.publishEvent(eq(domainEvent))
                 } just Runs
 
                 val result = createTimeTableOccupancyService.execute(command)

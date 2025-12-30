@@ -15,3 +15,4 @@ coverage:
     - "**/template/**"
     - "**/config*/**"
     - "**/test/**"
+    - "**/httpinterface/**"

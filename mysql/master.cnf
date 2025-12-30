@@ -1,0 +1,30 @@
+[mysqld]
+# 서버 ID - 클러스터 내에서 유니크해야 함
+server-id = 1
+
+# Binary logging 활성화
+log-bin = mysql-bin
+binlog-format = ROW
+
+# 레플리케이션할 데이터베이스 지정
+binlog-do-db = prototype_reservation
+
+# Binary log 파일 보관 일수
+expire-logs-days = 7
+
+# Binary log 파일 최대 크기
+max-binlog-size = 100M
+
+# GTID 기반 레플리케이션 (권장)
+gtid-mode = ON
+enforce-gtid-consistency = ON
+
+# 레플리케이션 사용자를 위한 설정
+log-slave-updates = 1
+
+# 성능 최적화
+sync-binlog = 1
+innodb-flush-log-at-trx-commit = 1
+
+# 네트워크 타임아웃 설정
+slave-net-timeout = 60

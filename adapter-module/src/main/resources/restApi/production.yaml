@@ -1,3 +1,15 @@
 spring:
     activate:
         on-profile: production
+
+
+
+
+http-interface:
+    retry:
+        max-attempts: 3
+        initial-interval: 100
+        multiplier: 2.0
+        max-interval: 2000
+    internal:
+        base-url: http://localhost:8080

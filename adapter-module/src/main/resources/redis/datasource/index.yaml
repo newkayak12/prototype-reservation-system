@@ -5,3 +5,4 @@ spring:
             - classpath:redis/datasource/production.yaml
             - classpath:redis/datasource/stage.yaml
             - classpath:redis/datasource/temporary.yaml
+            - classpath:redis/redisson/index.yaml
