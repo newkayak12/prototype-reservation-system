@@ -4,7 +4,7 @@ import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.config.MockMvcFactory
 import com.reservation.config.SpringRestDocsKotestExtension
 import com.reservation.config.restdoc.Body
-import com.reservation.config.restdoc.Query
+import com.reservation.config.restdoc.PathParameter
 import com.reservation.config.restdoc.RestDocuments
 import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
@@ -112,10 +112,10 @@ class FindTimeTableOccupancyInternalControllerTest : FunSpec() {
                         documentTags = listOf("zeroPayload", "timeTable", "timeTableOccupancy"),
                         summary = "예약 시간, 예약 정보",
                         description = "zeroPayload의 값을 조회하기 위한 API",
-                        query =
+                        pathParameter =
                             arrayOf(
-                                Query("timeTableId", false, "시간표 PK"),
-                                Query("timeTableOccupancyId", false, "예약 PK"),
+                                PathParameter("timeTableId", false, "시간표 PK"),
+                                PathParameter("timeTableOccupancyId", false, "예약 PK"),
                             ),
                         responseBody =
                             arrayOf(
