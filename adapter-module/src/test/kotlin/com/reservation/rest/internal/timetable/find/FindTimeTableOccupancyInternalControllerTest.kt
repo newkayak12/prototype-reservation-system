@@ -6,6 +6,7 @@ import com.reservation.config.SpringRestDocsKotestExtension
 import com.reservation.config.restdoc.Body
 import com.reservation.config.restdoc.Query
 import com.reservation.config.restdoc.RestDocuments
+import com.reservation.fixture.CommonlyUsedArbitraries
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.rest.internal.timetable.TimeTableOccupancyUrl
 import com.reservation.timetable.port.input.FindTimeTableAndOccupancyUseCase
@@ -15,6 +16,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.mockk.every
 import io.mockk.mockk
 import net.jqwik.api.Arbitraries
+import org.springframework.http.HttpHeaders
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get
 import org.springframework.restdocs.payload.JsonFieldType.NUMBER
 import org.springframework.restdocs.payload.JsonFieldType.STRING
@@ -94,7 +96,11 @@ class FindTimeTableOccupancyInternalControllerTest : FunSpec() {
             } returns result
 
             mockMvc.perform(
-                get(url, timeTableIdSample, timeTableOccupancyIdSample),
+                get(url, timeTableIdSample, timeTableOccupancyIdSample)
+                    .header(
+                        HttpHeaders.AUTHORIZATION,
+                        CommonlyUsedArbitraries.bearerTokenArbitrary.sample(),
+                    ),
             )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is2xxSuccessful)
