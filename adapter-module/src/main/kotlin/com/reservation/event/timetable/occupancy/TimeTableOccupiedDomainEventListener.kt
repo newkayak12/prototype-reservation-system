@@ -30,7 +30,9 @@ class TimeTableOccupiedDomainEventListener(
     }
 
     @TransactionalEventListener(phase = BEFORE_COMMIT)
-    fun handleCreateTimeTableOccupancyEvent(event: TimeTableOccupiedDomainEvent) {
+    fun handleCreateTimeTableOccupancyEvent(
+        event: TimeTableOccupiedDomainEvent,
+    ): TimeTableOccupiedOutboxEvent {
         val createdEvent =
             event.toKafkaEvent(
                 TIME_TABLE_OCCUPIED,
@@ -38,12 +40,8 @@ class TimeTableOccupiedDomainEventListener(
             )
 
         val outbox = createOutbox(createdEvent)
-        val nextEvent =
-            TimeTableOccupiedOutboxEvent(
-                outbox.identifier,
-                createdEvent,
-            )
-        applicationEventPublisher.publishEvent(nextEvent)
+
+        return TimeTableOccupiedOutboxEvent(outbox.identifier, createdEvent)
     }
 
     @TransactionalEventListener(phase = AFTER_COMMIT)
