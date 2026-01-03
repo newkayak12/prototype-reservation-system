@@ -7,13 +7,19 @@ import com.reservation.featureflag.port.input.query.request.FindFeatureFlagQuery
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import org.springframework.stereotype.Component
+import org.springframework.util.StringUtils
+import java.lang.reflect.Method
 
 @Aspect
 @Component
 class FeatureFlagAspect(
     private val findFeatureFlagUseCase: FindFeatureFlagUseCase,
-) {
+) : ApplicationContextAware {
+    private lateinit var applicationContext: ApplicationContext
+
     private fun verifyFeatureFlag(annotation: FeatureFlag): Boolean {
         val featureFlagType = annotation.featureFlagType
         val featureFlagKey = annotation.featureFlagKey
@@ -29,6 +35,30 @@ class FeatureFlagAspect(
         return isEnabled
     }
 
+    private fun getClass(
+        joinPoint: ProceedingJoinPoint,
+        annotation: FeatureFlag,
+    ): Class<out Any> {
+        val className = annotation.targetClass
+
+        if (StringUtils.hasText(className)) {
+            val bean = applicationContext.getBean(annotation.targetClass)
+            return bean.javaClass
+        }
+
+        return joinPoint.target::class.java
+    }
+
+    private fun getFallbackMethod(
+        targetClass: Class<out Any>,
+        joinPoint: ProceedingJoinPoint,
+        annotation: FeatureFlag,
+    ): Method =
+        targetClass.getDeclaredMethod(
+            annotation.fallback,
+            *joinPoint.args.map { it::class.java }.toTypedArray(),
+        )
+
     private fun failOver(
         joinPoint: ProceedingJoinPoint,
         annotation: FeatureFlag,
@@ -36,12 +66,9 @@ class FeatureFlagAspect(
         if (annotation.fallback.isNullOrBlank()) throw AccessNotPermittedException()
 
         try {
-            val targetClass = joinPoint.target::class.java
-            val fallbackMethod =
-                targetClass.getDeclaredMethod(
-                    annotation.fallback,
-                    *joinPoint.args.map { it::class.java }.toTypedArray(),
-                )
+            val targetClass = getClass(joinPoint, annotation)
+            val fallbackMethod = getFallbackMethod(targetClass, joinPoint, annotation)
+
             return fallbackMethod.invoke(joinPoint.target, *joinPoint.args)
         } catch (_: NoSuchMethodException) {
             throw AccessNotPermittedException()
@@ -59,5 +86,9 @@ class FeatureFlagAspect(
         } else {
             failOver(proceedingJoinPoint, featureFlag)
         }
+    }
+
+    override fun setApplicationContext(applicationContext: ApplicationContext) {
+        this.applicationContext = applicationContext
     }
 }

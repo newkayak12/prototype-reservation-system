@@ -10,5 +10,6 @@ import kotlin.annotation.AnnotationTarget.FUNCTION
 annotation class FeatureFlag(
     val featureFlagType: FeatureFlagType = BACKEND,
     val featureFlagKey: String,
+    val targetClass: String = "",
     val fallback: String = "",
 )
