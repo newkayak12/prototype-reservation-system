@@ -5,6 +5,7 @@ import com.reservation.featureflag.port.output.SaveFeatureFlag
 import com.reservation.featureflag.port.output.SaveFeatureFlag.SaveFeatureFlagInquiry
 import com.reservation.redis.RedisNameSpace
 import com.reservation.redis.featureflag.entity.FeatureFlagRedisEntity
+import io.lettuce.core.RedisCommandExecutionException
 import io.lettuce.core.RedisException
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Component
@@ -16,6 +17,8 @@ class SaveFeatureFlagTemplate(
 ) : SaveFeatureFlag {
     companion object {
         private const val DURATION_MINUTES = 360L
+        private const val REDIS_COMMAND_EXCEPTION_MESSAGE =
+            "Redis setIfAbsent operation returned null for key"
     }
 
     override fun command(inquiry: SaveFeatureFlagInquiry): Boolean {
@@ -24,6 +27,7 @@ class SaveFeatureFlagTemplate(
             val key = inquiry.toKey()
             val value = inquiry.toValue()
             return opsForValue.setIfAbsent(key, value, DURATION_MINUTES, MINUTES)
+                ?: throw RedisCommandExecutionException("$REDIS_COMMAND_EXCEPTION_MESSAGE: $key")
         } catch (_: RedisException) {
             throw InvalidRedisStatusException()
         }
