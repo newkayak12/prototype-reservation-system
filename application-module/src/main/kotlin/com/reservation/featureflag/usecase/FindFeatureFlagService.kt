@@ -23,7 +23,7 @@ class FindFeatureFlagService(
 ) : FindFeatureFlagUseCase {
     companion object {
         private const val FAIL_OVER_ID = -1L
-        private const val FAIL_OVER_IS_ENABLED = false
+        private const val CALL_FAIL_OVER = false
     }
 
     @Retryable(
@@ -47,7 +47,7 @@ class FindFeatureFlagService(
         val inquiry = request.toInquiry()
 
         return fetchFeatureFlagTemplate.query(inquiry)
-            ?.let { it.toQuery() }
+            ?.toQuery()
             ?: fetchFromDatabaseAndSaveAtRedis(request)
     }
 
@@ -73,7 +73,7 @@ class FindFeatureFlagService(
         val failOver = request.failOver()
 
         return findFeatureFlagRepository.query(inquiry)
-            ?.let { it.toQuery() }
+            ?.toQuery()
             ?: failOver
     }
 
@@ -88,7 +88,7 @@ class FindFeatureFlagService(
             id = FAIL_OVER_ID,
             featureFlagType = this.featureFlagType,
             featureFlagKey = this.featureFlagKey,
-            isEnabled = FAIL_OVER_IS_ENABLED,
+            isEnabled = CALL_FAIL_OVER,
         )
 
     private fun FindFeatureFlagResult.toQuery() =
