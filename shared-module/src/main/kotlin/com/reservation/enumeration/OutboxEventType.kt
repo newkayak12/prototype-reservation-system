@@ -1,5 +1,7 @@
 package com.reservation.enumeration
 
-enum class OutboxEventType {
-    TIME_TABLE_OCCUPIED,
+enum class OutboxEventType(
+    val topic: String,
+) {
+    TIME_TABLE_OCCUPIED("time-table-occupied"),
 }
