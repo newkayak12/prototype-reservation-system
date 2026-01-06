@@ -5,7 +5,9 @@ import com.reservation.httpinterface.timetable.FindTimeTableOccupancyHttpInterfa
 import com.reservation.httpinterface.timetable.response.FindTimeTableOccupancyInternallyHttpInterfaceResponse
 import com.reservation.kafka.listener.event.TimeTableOccupancyReceivedEvent
 import com.reservation.reservation.port.input.CreateReservationUseCase
+import com.reservation.reservation.port.input.IsReservationExistsUseCase
 import com.reservation.reservation.port.input.command.CreateReservationCommand
+import com.reservation.reservation.port.input.query.IsReservationExistsQuery
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.Acknowledgment
 import org.springframework.kafka.support.KafkaHeaders
@@ -18,11 +20,22 @@ import java.time.Duration
 class TimeTableOccupancyKafkaListener(
     private val httpInterface: FindTimeTableOccupancyHttpInterface,
     private val createReservationUseCase: CreateReservationUseCase,
+    private val isReservationExistsUseCase: IsReservationExistsUseCase,
 ) {
     companion object {
         const val TOPIC = "OutboxEventType"
         const val GROUP_ID = "reservation-service"
     }
+
+    private fun isExists(
+        timeTableId: String,
+        timeTableOccupancyId: String,
+    ) = isReservationExistsUseCase.execute(
+        IsReservationExistsQuery(
+            timeTableId = timeTableId,
+            timeTableOccupancyId = timeTableOccupancyId,
+        ),
+    )
 
     @KafkaListener(
         topics = [TOPIC],
@@ -35,6 +48,11 @@ class TimeTableOccupancyKafkaListener(
         runCatching {
             val timeTableId = event.timeTableId
             val timeTableOccupancyId = event.timeTableOccupancyId
+
+            if (isExists(timeTableId, timeTableOccupancyId)) {
+                return
+            }
+
             val responseEntity =
                 httpInterface.findTimeTableOccupancyInternally(
                     timeTableId = timeTableId,
