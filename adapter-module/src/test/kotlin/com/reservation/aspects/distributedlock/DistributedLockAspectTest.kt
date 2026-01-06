@@ -24,6 +24,7 @@ import com.reservation.timetable.port.input.CreateTimeTableOccupancyUseCase
 import com.reservation.timetable.port.input.command.request.CreateTimeTableOccupancyCommand
 import com.reservation.timetable.port.output.AcquireTimeTableSemaphore
 import com.reservation.timetable.port.output.CreateTimeTableOccupancy
+import com.reservation.timetable.port.output.DelegateReservation
 import com.reservation.timetable.port.output.LoadBookableTimeTables
 import com.reservation.timetable.port.output.ReleaseSemaphore
 import com.reservation.timetable.service.CreateTimeTableOccupancyDomainService
@@ -51,7 +52,6 @@ import org.springframework.aop.support.AopUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.TestConfiguration
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.EnableAspectJAutoProxy
 import org.springframework.test.context.ContextConfiguration
@@ -86,7 +86,7 @@ class DistributedLockAspectTest {
         CreateTimeTableOccupiedDomainEventService
 
     @Autowired
-    private lateinit var applicationEventPublisher: ApplicationEventPublisher
+    private lateinit var delegateReservation: DelegateReservation
 
     @Autowired
     @Qualifier(value = "acquireFairLockAdapter")
@@ -134,7 +134,7 @@ class DistributedLockAspectTest {
             mockk<CreateTimeTableOccupiedDomainEventService>()
 
         @Bean
-        fun applicationEventPublisher() = mockk<ApplicationEventPublisher>()
+        fun delegateReservation() = mockk<DelegateReservation>()
 
         @Bean("acquireFairLockAdapter")
         fun acquireFairLockAdapter() = mockk<AcquireFairLockAdapter>()
@@ -183,7 +183,7 @@ class DistributedLockAspectTest {
             createTimeTableOccupancy: CreateTimeTableOccupancy,
             createTimeTableOccupancyDomainService: CreateTimeTableOccupancyDomainService,
             createTimeTableOccupiedDomainEventService: CreateTimeTableOccupiedDomainEventService,
-            applicationEventPublisher: ApplicationEventPublisher,
+            delegateReservation: DelegateReservation,
         ): CreateTimeTableOccupancyService {
             return CreateTimeTableOccupancyService(
                 acquireTimeTableSemaphore,
@@ -192,7 +192,7 @@ class DistributedLockAspectTest {
                 createTimeTableOccupancy,
                 createTimeTableOccupancyDomainService,
                 createTimeTableOccupiedDomainEventService,
-                applicationEventPublisher,
+                delegateReservation,
             )
         }
     }
@@ -239,7 +239,7 @@ class DistributedLockAspectTest {
                     acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
                     releaseSemaphore.release(any())
                     loadBookableTimeTables.query(any())
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancy.command(any())
                     createTimeTableOccupancyDomainService.create(any(), any())
                 }
             }
@@ -286,7 +286,7 @@ class DistributedLockAspectTest {
                 } returns snapshot
 
                 every {
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancy.command(any())
                 } returns occupancyId
 
                 every {
@@ -294,7 +294,7 @@ class DistributedLockAspectTest {
                 } returns event
 
                 every {
-                    applicationEventPublisher.publishEvent(any<TimeTableOccupiedDomainEvent>())
+                    delegateReservation.command(any<TimeTableOccupiedDomainEvent>())
                 } just Runs
 
                 every {
@@ -311,10 +311,10 @@ class DistributedLockAspectTest {
                 verify(exactly = 1) {
                     acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
                     loadBookableTimeTables.query(any())
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancy.command(any())
                     createTimeTableOccupancyDomainService.create(any(), any())
                     createTimeTableOccupiedDomainEventService.create(any(), any())
-                    applicationEventPublisher.publishEvent(any<TimeTableOccupiedDomainEvent>())
+                    delegateReservation.command(any<TimeTableOccupiedDomainEvent>())
                 }
                 verify(exactly = 0) { releaseSemaphore.release(any()) }
             }

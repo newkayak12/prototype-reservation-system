@@ -1,4 +1,4 @@
-package com.reservation.event.schedule
+package com.reservation.event.schedule.adapter
 
 import com.reservation.restaurant.event.CreateScheduleEvent
 import com.reservation.schedule.port.input.CreateScheduleUseCase

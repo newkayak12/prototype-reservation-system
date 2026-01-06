@@ -152,7 +152,7 @@ class TimeTableOccupiedDomainEventListenerTest {
         } returns listOf(createValidTimeTable())
 
         every {
-            createTimeTableOccupancy.createTimeTableOccupancy(any())
+            createTimeTableOccupancy.command(any())
         } returns UuidGenerator.generate()
 
         createTimeTableOccupancyService.execute(command)

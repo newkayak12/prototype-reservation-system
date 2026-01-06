@@ -1,5 +1,6 @@
 package com.reservation.event.schedule
 
+import com.reservation.event.schedule.adapter.ScheduleEventListener
 import com.reservation.restaurant.event.CreateScheduleEvent
 import com.reservation.schedule.port.input.CreateScheduleUseCase
 import com.reservation.schedule.port.input.command.request.CreateScheduleCommand

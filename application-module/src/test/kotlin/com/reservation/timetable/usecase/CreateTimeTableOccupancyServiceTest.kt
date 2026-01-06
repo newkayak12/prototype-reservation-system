@@ -15,6 +15,7 @@ import com.reservation.timetable.policy.exceptions.InvalidTimeTableUserIdExcepti
 import com.reservation.timetable.port.input.command.request.CreateTimeTableOccupancyCommand
 import com.reservation.timetable.port.output.AcquireTimeTableSemaphore
 import com.reservation.timetable.port.output.CreateTimeTableOccupancy
+import com.reservation.timetable.port.output.DelegateReservation
 import com.reservation.timetable.port.output.LoadBookableTimeTables
 import com.reservation.timetable.port.output.ReleaseSemaphore
 import com.reservation.timetable.service.CreateTimeTableOccupancyDomainService
@@ -40,7 +41,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DataIntegrityViolationException
 
 @ExtendWith(MockKExtension::class)
@@ -66,7 +66,7 @@ class CreateTimeTableOccupancyServiceTest {
         CreateTimeTableOccupiedDomainEventService
 
     @MockK
-    private lateinit var applicationEventPublisher: ApplicationEventPublisher
+    private lateinit var delegateReservation: DelegateReservation
 
     @InjectMockKs
     private lateinit var createTimeTableOccupancyService: CreateTimeTableOccupancyService
@@ -113,7 +113,7 @@ class CreateTimeTableOccupancyServiceTest {
                 }
 
                 verify(exactly = 0) {
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancy.command(any())
                     createTimeTableOccupancyDomainService.create(any(), any())
                     releaseSemaphore.release(any())
                     acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
@@ -158,7 +158,7 @@ class CreateTimeTableOccupancyServiceTest {
                 }
 
                 verify(exactly = 0) {
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancy.command(any())
                     createTimeTableOccupancyDomainService.create(any(), any())
                     releaseSemaphore.release(any())
                 }
@@ -212,7 +212,7 @@ class CreateTimeTableOccupancyServiceTest {
                 exception.message shouldContain "Invalid"
 
                 verify(exactly = 0) {
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancy.command(any())
                 }
                 verify(exactly = 1) {
                     acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
@@ -259,7 +259,7 @@ class CreateTimeTableOccupancyServiceTest {
                 } returns snapshot
 
                 every {
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancy.command(any())
                 } throws DataIntegrityViolationException(Arbitraries.strings().sample())
 
                 every {
@@ -273,7 +273,7 @@ class CreateTimeTableOccupancyServiceTest {
                 verify(exactly = 1) {
                     acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
                     loadBookableTimeTables.query(any())
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancy.command(any())
                     createTimeTableOccupancyDomainService.create(any(), any())
                     releaseSemaphore.release(any())
                 }
@@ -318,7 +318,7 @@ class CreateTimeTableOccupancyServiceTest {
                 } returns snapshot
 
                 every {
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancy.command(any())
                 } returns UuidGenerator.generate()
 
                 every {
@@ -330,7 +330,7 @@ class CreateTimeTableOccupancyServiceTest {
                 } just Runs
 
                 every {
-                    applicationEventPublisher.publishEvent(eq(domainEvent))
+                    delegateReservation.command(eq(domainEvent))
                 } just Runs
 
                 val result = createTimeTableOccupancyService.execute(command)
@@ -339,7 +339,7 @@ class CreateTimeTableOccupancyServiceTest {
                 verify(exactly = 1) {
                     acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
                     loadBookableTimeTables.query(any())
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancy.command(any())
                     createTimeTableOccupancyDomainService.create(any(), any())
                 }
                 verify(exactly = 0) { releaseSemaphore.release(any()) }

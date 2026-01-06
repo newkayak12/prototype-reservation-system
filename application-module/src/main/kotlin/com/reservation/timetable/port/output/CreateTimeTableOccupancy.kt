@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 interface CreateTimeTableOccupancy {
-    fun createTimeTableOccupancy(inquiry: CreateTimeTableOccupancyInquiry): String?
+    fun command(inquiry: CreateTimeTableOccupancyInquiry): String?
 
     data class CreateTimeTableOccupancyInquiry(
         val id: String,

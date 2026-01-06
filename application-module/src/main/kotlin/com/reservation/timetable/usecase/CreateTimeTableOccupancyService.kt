@@ -18,6 +18,7 @@ import com.reservation.timetable.port.output.AcquireTimeTableSemaphore.Semaphore
 import com.reservation.timetable.port.output.CreateTimeTableOccupancy
 import com.reservation.timetable.port.output.CreateTimeTableOccupancy.CreateTimeTableOccupancyInquiry
 import com.reservation.timetable.port.output.CreateTimeTableOccupancy.TimetableOccupancyInquiry
+import com.reservation.timetable.port.output.DelegateReservation
 import com.reservation.timetable.port.output.LoadBookableTimeTables
 import com.reservation.timetable.port.output.LoadBookableTimeTables.LoadBookableTimeTablesInquiry
 import com.reservation.timetable.port.output.ReleaseSemaphore
@@ -25,7 +26,6 @@ import com.reservation.timetable.service.CreateTimeTableOccupancyDomainService
 import com.reservation.timetable.service.CreateTimeTableOccupiedDomainEventService
 import com.reservation.timetable.snapshot.TimeTableSnapshot
 import com.reservation.timetable.snapshot.TimetableOccupancySnapShot
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
@@ -44,7 +44,7 @@ class CreateTimeTableOccupancyService(
     private val createTimeTableOccupancyDomainService: CreateTimeTableOccupancyDomainService,
     private val createTimeTableOccupiedDomainEventService:
         CreateTimeTableOccupiedDomainEventService,
-    private val applicationEventPublisher: ApplicationEventPublisher,
+    private val delegateReservation: DelegateReservation,
 ) : CreateTimeTableOccupancyUseCase {
     companion object {
         private const val FAIR_LOCK_MAXIMUM_WAIT_TIME = 2L
@@ -123,7 +123,7 @@ class CreateTimeTableOccupancyService(
             val snapshot = createTimeTableOccupancyDomainService.create(userId, timetable)
             val inquiry = snapshot.toInquiry(userId)
             val timetableId = snapshot.id
-            val occupancyId = createTimeTableOccupancy.createTimeTableOccupancy(inquiry)
+            val occupancyId = createTimeTableOccupancy.command(inquiry)
 
             if (timetableId == null || occupancyId == null) break
 
@@ -134,7 +134,7 @@ class CreateTimeTableOccupancyService(
     }
 
     private fun saveToOutBoxAndPublish(domainEvent: TimeTableOccupiedDomainEvent): Boolean {
-        applicationEventPublisher.publishEvent(domainEvent)
+        delegateReservation.command(domainEvent)
         return true
     }
 

@@ -16,6 +16,7 @@ import com.reservation.timetable.port.input.CreateTimeTableOccupancyUseCase
 import com.reservation.timetable.port.input.command.request.CreateTimeTableOccupancyCommand
 import com.reservation.timetable.port.output.AcquireTimeTableSemaphore
 import com.reservation.timetable.port.output.CreateTimeTableOccupancy
+import com.reservation.timetable.port.output.DelegateReservation
 import com.reservation.timetable.port.output.LoadBookableTimeTables
 import com.reservation.timetable.port.output.ReleaseSemaphore
 import com.reservation.timetable.service.CreateTimeTableOccupancyDomainService
@@ -42,7 +43,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.aop.support.AopUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.TestConfiguration
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.EnableAspectJAutoProxy
 import org.springframework.test.context.ContextConfiguration
@@ -80,7 +80,7 @@ class RateLimiterAspectTest {
         CreateTimeTableOccupiedDomainEventService
 
     @Autowired
-    private lateinit var applicationEventPublisher: ApplicationEventPublisher
+    private lateinit var delegateReservation: DelegateReservation
 
     @BeforeEach
     fun init() {
@@ -118,7 +118,7 @@ class RateLimiterAspectTest {
             mockk<CreateTimeTableOccupiedDomainEventService>()
 
         @Bean
-        fun applicationEventPublisher() = mockk<ApplicationEventPublisher>()
+        fun delegateReservation() = mockk<DelegateReservation>()
 
         @Bean
         fun rateLimiterAspect(
@@ -135,7 +135,7 @@ class RateLimiterAspectTest {
             createTimeTableOccupancy: CreateTimeTableOccupancy,
             createTimeTableOccupancyDomainService: CreateTimeTableOccupancyDomainService,
             createTimeTableOccupiedDomainEventService: CreateTimeTableOccupiedDomainEventService,
-            applicationEventPublisher: ApplicationEventPublisher,
+            delegateReservation: DelegateReservation,
         ): CreateTimeTableOccupancyService {
             return CreateTimeTableOccupancyService(
                 acquireTimeTableSemaphore,
@@ -144,7 +144,7 @@ class RateLimiterAspectTest {
                 createTimeTableOccupancy,
                 createTimeTableOccupancyDomainService,
                 createTimeTableOccupiedDomainEventService,
-                applicationEventPublisher,
+                delegateReservation,
             )
         }
     }
@@ -194,7 +194,7 @@ class RateLimiterAspectTest {
                     acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
                     releaseSemaphore.release(any())
                     loadBookableTimeTables.query(any())
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancy.command(any())
                     createTimeTableOccupancyDomainService.create(any(), any())
                 }
             }
@@ -241,7 +241,7 @@ class RateLimiterAspectTest {
                 } returns snapshot
 
                 every {
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancy.command(any())
                 } returns occupancyId
 
                 every {
@@ -249,7 +249,7 @@ class RateLimiterAspectTest {
                 } returns event
 
                 every {
-                    applicationEventPublisher.publishEvent(any<TimeTableOccupiedDomainEvent>())
+                    delegateReservation.command(any<TimeTableOccupiedDomainEvent>())
                 } just Runs
 
                 every {
@@ -263,10 +263,10 @@ class RateLimiterAspectTest {
                     rateLimiterTemplate.tryAcquire(any(), any(), any(), any())
                     acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
                     loadBookableTimeTables.query(any())
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
+                    createTimeTableOccupancy.command(any())
                     createTimeTableOccupancyDomainService.create(any(), any())
                     createTimeTableOccupiedDomainEventService.create(any(), any())
-                    applicationEventPublisher.publishEvent(any<TimeTableOccupiedDomainEvent>())
+                    delegateReservation.command(any<TimeTableOccupiedDomainEvent>())
                 }
                 verify(exactly = 0) { releaseSemaphore.release(any()) }
             }

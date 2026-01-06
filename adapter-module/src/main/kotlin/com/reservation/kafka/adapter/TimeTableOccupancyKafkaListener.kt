@@ -1,9 +1,9 @@
-package com.reservation.kafka.listener
+package com.reservation.kafka.adapter
 
 import com.reservation.httpinterface.exceptions.ResponseBodyRequiredException
 import com.reservation.httpinterface.timetable.FindTimeTableOccupancyHttpInterface
 import com.reservation.httpinterface.timetable.response.FindTimeTableOccupancyInternallyHttpInterfaceResponse
-import com.reservation.kafka.listener.event.TimeTableOccupancyReceivedEvent
+import com.reservation.kafka.event.TimeTableOccupancyReceivedEvent
 import com.reservation.reservation.port.input.CreateReservationUseCase
 import com.reservation.reservation.port.input.IsReservationExistsUseCase
 import com.reservation.reservation.port.input.command.CreateReservationCommand

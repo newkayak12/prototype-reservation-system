@@ -1,9 +1,11 @@
-package com.reservation.event.timetable.occupancy
+package com.reservation.event.timetable.occupancy.adapter
 
 import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.enumeration.OutboxEventType
 import com.reservation.enumeration.OutboxEventType.TIME_TABLE_OCCUPIED
 import com.reservation.event.abstractEvent.AbstractEvent
+import com.reservation.event.timetable.occupancy.TimeTableOccupiedEvent
+import com.reservation.event.timetable.occupancy.TimeTableOccupiedOutboxEvent
 import com.reservation.persistence.outbox.entity.OutBox
 import com.reservation.persistence.outbox.repository.OutboxRepository
 import com.reservation.timetable.event.TimeTableOccupiedDomainEvent

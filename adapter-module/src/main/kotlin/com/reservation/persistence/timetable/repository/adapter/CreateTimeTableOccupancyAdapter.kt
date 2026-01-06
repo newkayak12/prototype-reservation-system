@@ -26,7 +26,7 @@ class CreateTimeTableOccupancyAdapter(
     ): TimeTableOccupancyEntity =
         TimeTableOccupancyEntity(timeTable = timeTableEntity, userId = inquiry.userId)
 
-    override fun createTimeTableOccupancy(inquiry: CreateTimeTableOccupancyInquiry): String? {
+    override fun command(inquiry: CreateTimeTableOccupancyInquiry): String? {
         val timetableEntity =
             findTimeTableEntity(inquiry.id)
                 .also { it.modifyTableStatus(inquiry.tableStatus) }
