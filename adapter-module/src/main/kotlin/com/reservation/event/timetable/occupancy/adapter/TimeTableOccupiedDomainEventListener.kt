@@ -52,7 +52,7 @@ class TimeTableOccupiedDomainEventListener(
         val outboxId = outboxEvent.outboxId
         val createdEvent = outboxEvent.event
 
-        val kafkaTopic = createdEvent.eventType.name
+        val kafkaTopic = createdEvent.eventType.topic
         val kafkaKey = createdEvent.key()
 
         val outbox =
