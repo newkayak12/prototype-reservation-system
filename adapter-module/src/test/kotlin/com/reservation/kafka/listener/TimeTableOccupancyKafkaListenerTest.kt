@@ -2,12 +2,14 @@ package com.reservation.kafka.listener
 
 import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.common.exceptions.NoSuchPersistedElementException
-import com.reservation.enumeration.OutboxEventType
+import com.reservation.enumeration.OutboxEventType.TIME_TABLE_OCCUPIED
 import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.httpinterface.timetable.FindTimeTableOccupancyHttpInterface
 import com.reservation.httpinterface.timetable.response.FindTimeTableOccupancyInternallyHttpInterfaceResponse
-import com.reservation.kafka.listener.event.TimeTableOccupancyReceivedEvent
+import com.reservation.kafka.adapter.TimeTableOccupancyKafkaListener
+import com.reservation.kafka.event.TimeTableOccupancyReceivedEvent
 import com.reservation.reservation.port.input.CreateReservationUseCase
+import com.reservation.reservation.port.input.IsReservationExistsUseCase
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.kotest.core.annotation.DisplayName
 import io.kotest.core.spec.style.FunSpec
@@ -26,11 +28,13 @@ class TimeTableOccupancyKafkaListenerTest : FunSpec(
     {
         val httpInterface = mockk<FindTimeTableOccupancyHttpInterface>()
         val createReservationUseCase = mockk<CreateReservationUseCase>()
+        val isReservationExistsUseCase = mockk<IsReservationExistsUseCase>()
 
         val kafkaListener =
             TimeTableOccupancyKafkaListener(
                 httpInterface = httpInterface,
                 createReservationUseCase = createReservationUseCase,
+                isReservationExistsUseCase = isReservationExistsUseCase,
             )
 
         val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
@@ -43,7 +47,7 @@ class TimeTableOccupancyKafkaListenerTest : FunSpec(
             val ack = mockk<Acknowledgment>(relaxed = true)
             val event =
                 TimeTableOccupancyReceivedEvent(
-                    eventType = OutboxEventType.TIME_TABLE_OCCUPIED,
+                    eventType = TIME_TABLE_OCCUPIED,
                     eventVersion = 1.0,
                     timeTableId = UuidGenerator.generate(),
                     timeTableOccupancyId = UuidGenerator.generate(),
@@ -66,7 +70,7 @@ class TimeTableOccupancyKafkaListenerTest : FunSpec(
             val ack = mockk<Acknowledgment>(relaxed = true)
             val event =
                 TimeTableOccupancyReceivedEvent(
-                    eventType = OutboxEventType.TIME_TABLE_OCCUPIED,
+                    eventType = TIME_TABLE_OCCUPIED,
                     eventVersion = 1.0,
                     timeTableId = UuidGenerator.generate(),
                     timeTableOccupancyId = UuidGenerator.generate(),
@@ -97,7 +101,7 @@ class TimeTableOccupancyKafkaListenerTest : FunSpec(
             val ack = mockk<Acknowledgment>(relaxed = true)
             val event =
                 TimeTableOccupancyReceivedEvent(
-                    eventType = OutboxEventType.TIME_TABLE_OCCUPIED,
+                    eventType = TIME_TABLE_OCCUPIED,
                     eventVersion = 1.0,
                     timeTableId = UuidGenerator.generate(),
                     timeTableOccupancyId = UuidGenerator.generate(),
