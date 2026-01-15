@@ -127,7 +127,7 @@ class TimeTableOccupancyKafkaListener(
         createReservationUseCase.execute(command)
     }
 
-    private fun onEventHandler(event: TimeTableOccupancyReceivedEvent) {
+    fun onEventHandler(event: TimeTableOccupancyReceivedEvent) {
         val timeTableId = event.timeTableId
         val timeTableOccupancyId = event.timeTableOccupancyId
 
@@ -161,7 +161,6 @@ class TimeTableOccupancyKafkaListener(
             event,
         )
 
-
         val dltRecord =
             ProducerRecord<String, String>(
                 "$originalTopic-$DLT_SUFFIX", // topic
@@ -172,7 +171,6 @@ class TimeTableOccupancyKafkaListener(
                 headers().add("error-reason", error.toByteArray())
                 headers().add("failed-timestamp", Instant.now().toString().toByteArray())
             }
-
 
         runCatching {
             kafkaTemplate.send(dltRecord).get(WAIT_FOR_GET_TIME, TimeUnit.SECONDS)
