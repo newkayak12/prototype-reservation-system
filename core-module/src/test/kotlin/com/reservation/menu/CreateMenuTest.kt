@@ -9,7 +9,6 @@ import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.string.shouldContain
 import net.jqwik.api.Arbitraries
 import java.math.BigDecimal
-import java.math.RoundingMode.UP
 
 class CreateMenuTest : BehaviorSpec(
     {
@@ -138,23 +137,23 @@ class CreateMenuTest : BehaviorSpec(
                 .withCharRange('A', 'Z')
                 .ofMinLength(1)
                 .ofMaxLength(30)
+
+        private val booleanArbitrary = Arbitraries.of(true, false)
         private val bigDecimalArbitrary =
             Arbitraries.bigDecimals()
                 .greaterThan(BigDecimal.ZERO)
-                .lessThan(BigDecimal.valueOf(999999998L))
-                .greaterThan(BigDecimal.ZERO)
+                .lessThan(BigDecimal.valueOf(999_999_99L))
 
-        private val booleanArbitrary = Arbitraries.of(true, false)
-
-        fun perfectCase() =
-            CreateMenuForm(
+        fun perfectCase(): CreateMenuForm {
+            return CreateMenuForm(
                 restaurantId = stringArbitrary.sample(),
                 title = stringArbitrary.sample(),
                 description = stringArbitrary.sample(),
-                price = bigDecimalArbitrary.sample().setScale(0, UP),
+                price = bigDecimalArbitrary.sample(),
                 isRepresentative = booleanArbitrary.sample(),
                 isRecommended = booleanArbitrary.sample(),
                 isVisible = booleanArbitrary.sample(),
             )
+        }
     }
 }
