@@ -19,6 +19,13 @@ interface AcquireRateLimiterTemplate {
 
     fun status(): RateLimiterTemplateState
 
+    fun availablePermits(
+        rateLimiterSettings: RateLimiterSettings,
+        maximumWaitSettings: MaximumWaitSettings,
+        rateSettings: RateSettings,
+        bucketLiveTimeSettings: BucketLiveTimeSettings,
+    ): Long
+
     data class RateLimiterSettings(
         val key: String,
         val type: RateLimitType,

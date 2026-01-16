@@ -50,6 +50,13 @@ class AcquireRateLimitRedisAdapter(
         return status
     }
 
+    override fun availablePermits(
+        rateLimiterSettings: RateLimiterSettings,
+        maximumWaitSettings: MaximumWaitSettings,
+        rateSettings: RateSettings,
+        bucketLiveTimeSettings: BucketLiveTimeSettings,
+    ) = getRateLimiter(rateLimiterSettings, rateSettings, bucketLiveTimeSettings).availablePermits()
+
     private fun getRateLimiter(
         rateLimiterSettings: RateLimiterSettings,
         rateSettings: RateSettings,
