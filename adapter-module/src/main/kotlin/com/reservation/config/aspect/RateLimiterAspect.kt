@@ -13,6 +13,7 @@ import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.reflect.MethodSignature
+import org.redisson.client.RedisException
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
@@ -40,8 +41,8 @@ class RateLimiterAspect(
         return status.isActivated()
     }
 
-    private fun giveMeRateLimiterTemplate(): AcquireRateLimiterTemplate {
-        if (isRedisEnabled()) {
+    private fun giveMeRateLimiterTemplate(isRedisEnabled: Boolean): AcquireRateLimiterTemplate {
+        if (isRedisEnabled) {
             return acquireRateLimitRedisAdapter
         }
 
@@ -83,26 +84,39 @@ class RateLimiterAspect(
         val maximumWaitSettings = giveMeMaximumWaitSettings(rateLimiter)
         val rateSettings = giveMeRateSettings(rateLimiter)
         val bucketLiveTimeSettings = giveMeBucketLiveSettings(rateLimiter)
+        var isAcquired = false
 
-        val isAcquired =
-            giveMeRateLimiterTemplate()
-                .tryAcquire(
-                    rateLimiterSettings = rateLimiterSettings,
-                    maximumWaitSettings = maximumWaitSettings,
-                    rateSettings = rateSettings,
-                    bucketLiveTimeSettings = bucketLiveTimeSettings,
+        try {
+            val isRedisEnabled = isRedisEnabled()
+
+            isAcquired =
+                giveMeRateLimiterTemplate(isRedisEnabled)
+                    .tryAcquire(
+                        rateLimiterSettings = rateLimiterSettings,
+                        maximumWaitSettings = maximumWaitSettings,
+                        rateSettings = rateSettings,
+                        bucketLiveTimeSettings = bucketLiveTimeSettings,
+                    )
+
+            if (isAcquired && isRedisEnabled) {
+                acquireRateLimitInMemoryAdapter.syncAcquiredResult(
+                    rateLimiterSettings,
+                    maximumWaitSettings,
+                    rateSettings,
+                    bucketLiveTimeSettings,
                 )
+            }
+        } catch (_: RedisException) {
+            isAcquired =
+                acquireRateLimitInMemoryAdapter.tryAcquire(
+                    rateLimiterSettings,
+                    maximumWaitSettings,
+                    rateSettings,
+                    bucketLiveTimeSettings,
+                )
+        }
 
         if (!isAcquired) throw TooManyCreateTimeTableOccupancyRequestException()
-
-        if (isRedisEnabled()) {
-            acquireRateLimitInMemoryAdapter.syncAcquiredResult(
-                rateLimiterSettings,
-                maximumWaitSettings,
-                rateSettings,
-                bucketLiveTimeSettings,
-            )
-        }
     }
 
     @Around("@annotation(com.reservation.config.annotations.RateLimiter)")

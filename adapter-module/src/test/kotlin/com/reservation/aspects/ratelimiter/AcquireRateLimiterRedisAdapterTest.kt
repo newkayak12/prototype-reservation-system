@@ -105,10 +105,6 @@ class AcquireRateLimiterRedisAdapterTest {
                 .build()
     }
 
-    @Test
-    fun contextLoads() {
-    }
-
     @DisplayName("rateLimiter의 최대 개수를 1000L으로 설정하고 1개를 acquire해서 availablePermit을 구하면 999가 된다.")
     @Test
     fun `set 1000L to rate limiter and acquire then return 999`() {

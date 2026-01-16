@@ -1,34 +1,15 @@
 package com.reservation.aspects.ratelimiter
 
-import com.navercorp.fixturemonkey.FixtureMonkey
-import com.navercorp.fixturemonkey.kotlin.giveMe
-import com.navercorp.fixturemonkey.kotlin.giveMeBuilder
-import com.navercorp.fixturemonkey.kotlin.giveMeOne
 import com.reservation.aspects.ratelimiter.RateLimiterAspectTest.InitializeMockContext
 import com.reservation.config.aspect.RateLimiterAspect
 import com.reservation.config.aspect.SpelParser
-import com.reservation.fixture.FixtureMonkeyFactory
-import com.reservation.redis.redisson.ratelimit.AcquireRateLimiterTemplate
-import com.reservation.timetable.TimeTable
-import com.reservation.timetable.event.TimeTableOccupiedDomainEvent
+import com.reservation.enumeration.RateLimiterTemplateState.ACTIVATED
+import com.reservation.enumeration.RateLimiterTemplateState.DEACTIVATED
+import com.reservation.redis.redisson.ratelimit.adapter.AcquireRateLimitInMemoryAdapter
+import com.reservation.redis.redisson.ratelimit.adapter.AcquireRateLimitRedisAdapter
 import com.reservation.timetable.exceptions.TooManyCreateTimeTableOccupancyRequestException
-import com.reservation.timetable.port.input.CreateTimeTableOccupancyUseCase
-import com.reservation.timetable.port.input.command.request.CreateTimeTableOccupancyCommand
-import com.reservation.timetable.port.output.AcquireTimeTableSemaphore
-import com.reservation.timetable.port.output.CreateTimeTableOccupancy
-import com.reservation.timetable.port.output.LoadBookableTimeTables
-import com.reservation.timetable.port.output.ReleaseSemaphore
-import com.reservation.timetable.service.CreateTimeTableOccupancyDomainService
-import com.reservation.timetable.service.CreateTimeTableOccupiedDomainEventService
-import com.reservation.timetable.snapshot.TimeTableSnapshot
-import com.reservation.timetable.snapshot.TimetableOccupancySnapShot
-import com.reservation.timetable.usecase.CreateTimeTableOccupancyService
-import com.reservation.utilities.generator.uuid.UuidGenerator
-import io.kotest.assertions.assertSoftly
-import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.matchers.shouldBe
 import io.mockk.Runs
-import io.mockk.clearAllMocks
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -36,13 +17,12 @@ import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.aop.support.AopUtils
+import org.redisson.client.RedisException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.TestConfiguration
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.EnableAspectJAutoProxy
 import org.springframework.test.context.ContextConfiguration
@@ -51,225 +31,218 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 @ExtendWith(value = [SpringExtension::class])
 @ContextConfiguration(classes = [InitializeMockContext::class])
 class RateLimiterAspectTest {
-    private lateinit var pureMonkey: FixtureMonkey
+    @Autowired
+    private lateinit var inMemoryAdapter: AcquireRateLimitInMemoryAdapter
 
     @Autowired
-    private lateinit var service: CreateTimeTableOccupancyUseCase
+    private lateinit var redisAdapter: AcquireRateLimitRedisAdapter
 
     @Autowired
-    private lateinit var rateLimiterTemplate: AcquireRateLimiterTemplate
+    private lateinit var rateLimiterAspectTestComponent: RateLimiterAspectTestComponent
 
-    @Autowired
-    private lateinit var acquireTimeTableSemaphore: AcquireTimeTableSemaphore
-
-    @Autowired
-    private lateinit var releaseSemaphore: ReleaseSemaphore
-
-    @Autowired
-    private lateinit var loadBookableTimeTables: LoadBookableTimeTables
-
-    @Autowired
-    private lateinit var createTimeTableOccupancy: CreateTimeTableOccupancy
-
-    @Autowired
-    private lateinit var createTimeTableOccupancyDomainService:
-        CreateTimeTableOccupancyDomainService
-
-    @Autowired
-    private lateinit var createTimeTableOccupiedDomainEventService:
-        CreateTimeTableOccupiedDomainEventService
-
-    @Autowired
-    private lateinit var applicationEventPublisher: ApplicationEventPublisher
-
-    @BeforeEach
-    fun init() {
-        pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-
-        clearAllMocks()
-    }
-
-    @TestConfiguration
     @EnableAspectJAutoProxy
+    @TestConfiguration
     class InitializeMockContext {
         @Bean
-        fun spelParser() = SpelParser()
+        fun spelParser(): SpelParser = SpelParser()
 
         @Bean
-        fun rateLimiterTemplate() = mockk<AcquireRateLimiterTemplate>()
+        fun acquireRateLimitInMemoryAdapter() = mockk<AcquireRateLimitInMemoryAdapter>()
 
         @Bean
-        fun acquireTimeTableSemaphore() = mockk<AcquireTimeTableSemaphore>()
-
-        @Bean
-        fun releaseSemaphore() = mockk<ReleaseSemaphore>()
-
-        @Bean
-        fun loadBookableTimeTables() = mockk<LoadBookableTimeTables>()
-
-        @Bean
-        fun createTimeTableOccupancy() = mockk<CreateTimeTableOccupancy>()
-
-        @Bean
-        fun createTimeTableOccupancyDomainService() = mockk<CreateTimeTableOccupancyDomainService>()
-
-        @Bean
-        fun createTimeTableOccupiedDomainEventService() =
-            mockk<CreateTimeTableOccupiedDomainEventService>()
-
-        @Bean
-        fun applicationEventPublisher() = mockk<ApplicationEventPublisher>()
+        fun acquireRateLimitRedisAdapter() = mockk<AcquireRateLimitRedisAdapter>()
 
         @Bean
         fun rateLimiterAspect(
             spelParser: SpelParser,
-            rateLimiterTemplate: AcquireRateLimiterTemplate,
-        ) = RateLimiterAspect(spelParser, rateLimiterTemplate)
+            acquireRateLimitInMemoryAdapter: AcquireRateLimitInMemoryAdapter,
+            acquireRateLimitRedisAdapter: AcquireRateLimitRedisAdapter,
+        ) = RateLimiterAspect(
+            spelParser,
+            acquireRateLimitInMemoryAdapter,
+            acquireRateLimitRedisAdapter,
+        )
 
-        @Suppress("LongParameterList")
         @Bean
-        fun createTimeTableOccupancyService(
-            acquireTimeTableSemaphore: AcquireTimeTableSemaphore,
-            releaseSemaphore: ReleaseSemaphore,
-            loadBookableTimeTables: LoadBookableTimeTables,
-            createTimeTableOccupancy: CreateTimeTableOccupancy,
-            createTimeTableOccupancyDomainService: CreateTimeTableOccupancyDomainService,
-            createTimeTableOccupiedDomainEventService: CreateTimeTableOccupiedDomainEventService,
-            applicationEventPublisher: ApplicationEventPublisher,
-        ): CreateTimeTableOccupancyService {
-            return CreateTimeTableOccupancyService(
-                acquireTimeTableSemaphore,
-                releaseSemaphore,
-                loadBookableTimeTables,
-                createTimeTableOccupancy,
-                createTimeTableOccupancyDomainService,
-                createTimeTableOccupiedDomainEventService,
-                applicationEventPublisher,
-            )
-        }
+        fun rateLimiterAspectTestComponent() = RateLimiterAspectTestComponent()
     }
 
+    @BeforeEach
+    fun setUp() {
+        clearMocks(
+            inMemoryAdapter,
+            redisAdapter,
+        )
+    }
+
+    /**
+     * Redis로 RateLimiter를 받아서 메소드 실행에 성공한다.
+     * Redis의 tryAcquire 1회 호출되며
+     *
+     * Redis의 tryAcquire이 1회 호출된다.
+     * InMemory는 tryAcquire이 0회 호출된다.
+     * syncAcquiredResult는 1회 실행된다.
+     */
+    @DisplayName("RateLimiter를 Redis로 실행하여 정상적으로 요청에 성공한다.")
     @Test
-    fun contextLoads() {
-        val targets =
-            listOf(
-                AopUtils.isAopProxy(service),
-                AopUtils.isJdkDynamicProxy(service),
-                AopUtils.isCglibProxy(service),
-            )
+    fun `call rate limiter as Redis successfully`() {
+        val command = "SUCCESS"
 
-        assertSoftly {
-            assertThat(targets).anyMatch { it }
-        }
+        every { redisAdapter.status() } returns ACTIVATED
+        every { redisAdapter.tryAcquire(any(), any(), any(), any()) } returns true
+        every { inMemoryAdapter.syncAcquiredResult(any(), any(), any(), any()) } just Runs
+
+        val result = rateLimiterAspectTestComponent.rateLimiterTest(command)
+        assertThat(result).isEqualTo(command)
+
+        verify(exactly = 1) { redisAdapter.status() }
+        verify(exactly = 1) { redisAdapter.tryAcquire(any(), any(), any(), any()) }
+        verify(exactly = 1) { inMemoryAdapter.syncAcquiredResult(any(), any(), any(), any()) }
+        verify(exactly = 0) { inMemoryAdapter.tryAcquire(any(), any(), any(), any()) }
     }
 
-    // Scenario 1: Rate Limiter 제한 초과
-    // Given: 동일한 시간대에 대해 Rate Limiter 용량을 초과하는 요청이 들어왔을 때
-    // When: 예약 생성을 요청하면
-    // Then: TooManyCreateTimeTableOccupancyRequestException이 발생한다
-    @DisplayName("동일한 시간대에 대해 Rate Limiter 용량을 초과하는 요청이 들어왔을 때")
-    @Nested
-    inner class `Request income when rate limiter is over` {
-        @DisplayName("예약 생성을 요청하면")
-        @Nested
-        inner class `When request booking` {
-            @DisplayName("TooManyCreateTimeTableOccupancyRequestException이 발생한다")
-            @Test
-            fun `throw TooManyCreateTimeTableOccupancyRequestException`() {
-                val command = pureMonkey.giveMeOne<CreateTimeTableOccupancyCommand>()
+    /**
+     * Redis RateLimiter를 받아서 메소드 실행에 성공하지만
+     * Redis의 tryAcquire에서 횟수가 남지 않아서
+     * TooManyCreateTimeTableOccupancyRequestException가 발생한다.
+     *
+     * Redis의 tryAcquire이 1회 호출된다.
+     * InMemory는 tryAcquire이 0회 호출된다.
+     * syncAcquiredResult는 0회 실행된다.
+     */
+    @DisplayName("RateLimiter를 Redis로 실행하여 TooManyCreateTimeTableOccupancyRequestException가 발생한다")
+    @Test
+    fun `call rate limiter as Redis throw TooManyCreateTimeTableOccupancyRequestException`() {
+        val command = "SUCCESS"
 
-                every {
-                    rateLimiterTemplate.tryAcquire(any(), any(), any(), any())
-                } returns false
+        every { redisAdapter.status() } returns ACTIVATED
+        every { redisAdapter.tryAcquire(any(), any(), any(), any()) } returns false
+        every { inMemoryAdapter.syncAcquiredResult(any(), any(), any(), any()) } just Runs
 
-                val exception =
-                    shouldThrow<TooManyCreateTimeTableOccupancyRequestException> {
-                        service.execute(command)
-                    }
-
-                exception.message shouldBe "Too many request"
-
-                verify(exactly = 1) { rateLimiterTemplate.tryAcquire(any(), any(), any(), any()) }
-                verify(exactly = 0) {
-                    acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
-                    releaseSemaphore.release(any())
-                    loadBookableTimeTables.query(any())
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
-                    createTimeTableOccupancyDomainService.create(any(), any())
-                }
-            }
+        assertThrows<TooManyCreateTimeTableOccupancyRequestException> {
+            rateLimiterAspectTestComponent.rateLimiterTest(command)
         }
+
+        verify(exactly = 1) { redisAdapter.status() }
+        verify(exactly = 1) { redisAdapter.tryAcquire(any(), any(), any(), any()) }
+        verify(exactly = 0) { inMemoryAdapter.syncAcquiredResult(any(), any(), any(), any()) }
+        verify(exactly = 0) { inMemoryAdapter.tryAcquire(any(), any(), any(), any()) }
     }
 
-    // Scenario 2: 정상적인 예약 생성 - 단일 테이블
-    // Given: 유효한 사용자와 예약 가능한 테이블이 1개 있을 때
-    // When: 예약 생성을 요청하면
-    // Then: 예약이 성공적으로 생성되고 true를 반환한다
-    @DisplayName("유효한 사용자와 예약 가능한 테이블이 1개 있을 때")
-    @Nested
-    inner class `Request income and booking success` {
-        @DisplayName("예약 생성을 요청하면")
-        @Nested
-        inner class `When request booking` {
-            @DisplayName("예약이 성공적으로 생성되고 true를 반환한다")
-            @Test
-            fun `booking success and return true`() {
-                val event = pureMonkey.giveMeOne<TimeTableOccupiedDomainEvent>()
-                val occupancyId = UuidGenerator.generate()
-                val command = pureMonkey.giveMeOne<CreateTimeTableOccupancyCommand>()
-                val list = pureMonkey.giveMe<TimeTable>(4)
-                val occupancySnapshot = pureMonkey.giveMeOne<TimetableOccupancySnapShot>()
-                val snapshot =
-                    pureMonkey.giveMeBuilder<TimeTableSnapshot>()
-                        .set("id", UuidGenerator.generate())
-                        .set("timetableOccupancy", occupancySnapshot)
-                        .sample()
-                every {
-                    rateLimiterTemplate.tryAcquire(any(), any(), any(), any())
-                } returns true
+    /**
+     * Redis RateLimiter를 받아서 메소드 실행에 성공하지만
+     * Redis의 tryAcquire에서 Redis 통신 불량으로
+     * RedisException가 발생한다.
+     * InMemory로 fallback 하여 성공한다.
+     *
+     * Redis의 tryAcquire이 1회 호출된다.
+     * InMemory는 tryAcquire이 1회 호출된다.
+     * syncAcquiredResult는 0회 실행된다.
+     */
 
-                every {
-                    loadBookableTimeTables.query(any())
-                } returns list
+    @DisplayName("RateLimiter를 Redis로 실행하여 RedisException가 발생한다 그리고 InMemory로 fallback한다.")
+    @Test
+    fun `call rate limiter as Redis throw RedisException then fallback success`() {
+        val command = "SUCCESS"
 
-                every {
-                    acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
-                } returns true
+        every { redisAdapter.status() } returns ACTIVATED
+        every { redisAdapter.tryAcquire(any(), any(), any(), any()) } throws RedisException("")
+        every { inMemoryAdapter.tryAcquire(any(), any(), any(), any()) } returns true
 
-                every {
-                    createTimeTableOccupancyDomainService.create(any(), any())
-                } returns snapshot
+        val result = rateLimiterAspectTestComponent.rateLimiterTest(command)
+        assertThat(result).isEqualTo(command)
 
-                every {
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
-                } returns occupancyId
+        verify(exactly = 1) { redisAdapter.status() }
+        verify(exactly = 1) { redisAdapter.tryAcquire(any(), any(), any(), any()) }
+        verify(exactly = 0) { inMemoryAdapter.syncAcquiredResult(any(), any(), any(), any()) }
+        verify(exactly = 1) { inMemoryAdapter.tryAcquire(any(), any(), any(), any()) }
+    }
 
-                every {
-                    createTimeTableOccupiedDomainEventService.create(any(), any())
-                } returns event
+    /**
+     * Redis RateLimiter를 받아서 메소드 실행에 성공하지만
+     * Redis의 tryAcquire에서 Redis 통신 불량으로
+     * RedisException가 발생한다.
+     * InMemory로 fallback 하여 실패하며 TooManyCreateTimeTableOccupancyRequestException가 발생한다
+     *
+     * Redis의 tryAcquire이 1회 호출된다.
+     * InMemory는 tryAcquire이 1회 호출된다.
+     * syncAcquiredResult는 0회 실행된다.
+     */
 
-                every {
-                    applicationEventPublisher.publishEvent(any<TimeTableOccupiedDomainEvent>())
-                } just Runs
+    @DisplayName(
+        "RateLimiter를 Redis로 실행하여 RedisException가 발생한다 " +
+            "그리고 InMemory 실패해 TooManyCreateTimeTableOccupancyRequestException가 발생한다",
+    )
+    @Test
+    fun `call rate limiter as Redis throw RedisException then fallback but failed`() {
+        val command = "SUCCESS"
 
-                every {
-                    releaseSemaphore.release(any())
-                } just Runs
+        every { redisAdapter.status() } returns ACTIVATED
+        every { redisAdapter.tryAcquire(any(), any(), any(), any()) } throws RedisException("")
+        every { inMemoryAdapter.tryAcquire(any(), any(), any(), any()) } returns false
 
-                val result = service.execute(command)
-
-                result shouldBe true
-                verify(exactly = 1) {
-                    rateLimiterTemplate.tryAcquire(any(), any(), any(), any())
-                    acquireTimeTableSemaphore.tryAcquire(any(), any(), any())
-                    loadBookableTimeTables.query(any())
-                    createTimeTableOccupancy.createTimeTableOccupancy(any())
-                    createTimeTableOccupancyDomainService.create(any(), any())
-                    createTimeTableOccupiedDomainEventService.create(any(), any())
-                    applicationEventPublisher.publishEvent(any<TimeTableOccupiedDomainEvent>())
-                }
-                verify(exactly = 0) { releaseSemaphore.release(any()) }
-            }
+        assertThrows<TooManyCreateTimeTableOccupancyRequestException> {
+            rateLimiterAspectTestComponent.rateLimiterTest(command)
         }
+
+        verify(exactly = 1) { redisAdapter.status() }
+        verify(exactly = 1) { redisAdapter.tryAcquire(any(), any(), any(), any()) }
+        verify(exactly = 0) { inMemoryAdapter.syncAcquiredResult(any(), any(), any(), any()) }
+        verify(exactly = 1) { inMemoryAdapter.tryAcquire(any(), any(), any(), any()) }
+    }
+
+    /**
+     * InMemory로 RateLimiter를 받아서 메소드 실행에 성공한다.
+     * InMemory의 tryAcquire 1회 호출되며
+     *
+     * Redis의 tryAcquire이 0회 호출된다.
+     * InMemory는 tryAcquire이 1회 호출된다.
+     * syncAcquiredResult는 0회 실행된다.
+     */
+    @DisplayName("RateLimiter를 InMemory로 실행하여 RateLimiter 획득에 성공한다.")
+    @Test
+    fun `call rate limiter as InMemory`() {
+        val command = "SUCCESS"
+
+        every { redisAdapter.status() } returns DEACTIVATED
+        every { inMemoryAdapter.tryAcquire(any(), any(), any(), any()) } returns true
+
+        val result = rateLimiterAspectTestComponent.rateLimiterTest(command)
+        assertThat(result).isEqualTo(command)
+
+        verify(exactly = 1) { redisAdapter.status() }
+        verify(exactly = 0) { redisAdapter.tryAcquire(any(), any(), any(), any()) }
+        verify(exactly = 0) { inMemoryAdapter.syncAcquiredResult(any(), any(), any(), any()) }
+        verify(exactly = 1) { inMemoryAdapter.tryAcquire(any(), any(), any(), any()) }
+    }
+
+    /**
+     * InMemory RateLimiter를 받아서 메소드 실행에 성공하지만
+     * InMemory의 tryAcquire에서 횟수가 남지 않아서
+     * TooManyCreateTimeTableOccupancyRequestException가 발생한다.
+     *
+     * Redis의 tryAcquire이 0회 호출된다.
+     * InMemory는 tryAcquire이 1회 호출된다.
+     * syncAcquiredResult는 0회 실행된다.
+     */
+    @DisplayName(
+        "RateLimiter를 InMemory로 실행하여 획득에 실패해서" +
+            " TooManyCreateTimeTableOccupancyRequestException가 발생한다.",
+    )
+    @Test
+    fun `call rate limiter as InMemory throw TooManyCreateTimeTableOccupancyRequestException`() {
+        val command = "SUCCESS"
+
+        every { redisAdapter.status() } returns DEACTIVATED
+        every { inMemoryAdapter.tryAcquire(any(), any(), any(), any()) } returns false
+
+        assertThrows<TooManyCreateTimeTableOccupancyRequestException> {
+            rateLimiterAspectTestComponent.rateLimiterTest(command)
+        }
+
+        verify(exactly = 1) { redisAdapter.status() }
+        verify(exactly = 0) { redisAdapter.tryAcquire(any(), any(), any(), any()) }
+        verify(exactly = 0) { inMemoryAdapter.syncAcquiredResult(any(), any(), any(), any()) }
+        verify(exactly = 1) { inMemoryAdapter.tryAcquire(any(), any(), any(), any()) }
     }
 }
