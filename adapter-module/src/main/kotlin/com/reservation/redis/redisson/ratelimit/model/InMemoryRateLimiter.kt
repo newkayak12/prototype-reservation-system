@@ -11,7 +11,7 @@ data class InMemoryRateLimiter(
     val rateIntervalTime: Duration,
     val bucketLiveTime: Duration,
     val maximumWait: Duration,
-    val availablePermits: AtomicLong,
+    private val availablePermits: AtomicLong,
 ) {
     companion object {
         private const val RATE_LIMITER_LIMIT_ZERO = 0L
@@ -39,4 +39,6 @@ data class InMemoryRateLimiter(
     fun acquire() {
         availablePermits.decrementAndGet()
     }
+
+    fun availablePermits(): Long = availablePermits.get()
 }

@@ -43,6 +43,20 @@ class AcquireRateLimitInMemoryAdapter : AcquireRateLimiterTemplate {
 
     override fun status(): RateLimiterTemplateState = RateLimiterTemplateState.ACTIVATED
 
+    override fun availablePermits(
+        rateLimiterSettings: RateLimiterSettings,
+        maximumWaitSettings: MaximumWaitSettings,
+        rateSettings: RateSettings,
+        bucketLiveTimeSettings: BucketLiveTimeSettings,
+    ): Long =
+        getRateLimiter(
+            rateLimiterSettings,
+            maximumWaitSettings,
+            rateSettings,
+            bucketLiveTimeSettings,
+        )
+            .availablePermits()
+
     private fun getRateLimiter(
         rateLimiterSettings: RateLimiterSettings,
         maximumWaitSettings: MaximumWaitSettings,
