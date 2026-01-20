@@ -26,7 +26,7 @@ class AcquireSemaphoreTemplate(
             val waitTime = semaphoreInquiry.waitTime
             semaphore.tryAcquire(permits, waitTime)
         }
-            .isSuccess
+            .getOrElse { false }
     }
 
     private fun RSemaphore.applySettings(settings: SemaphoreSettings) {
