@@ -17,7 +17,7 @@ class AcquireSemaphoreTemplate(
         semaphoreSettings: SemaphoreSettings,
         semaphoreInquiry: SemaphoreInquiry,
     ): Boolean {
-        return try {
+        return runCatching {
             val semaphore =
                 redissonClient.getSemaphore(SemaphoreKeyGenerator.key(name))
                     .apply { applySettings(semaphoreSettings) }
@@ -25,10 +25,8 @@ class AcquireSemaphoreTemplate(
             val permits = semaphoreInquiry.permits
             val waitTime = semaphoreInquiry.waitTime
             semaphore.tryAcquire(permits, waitTime)
-        } catch (e: Exception) {
-            // Redis 연결 실패 등의 경우 false 반환
-            false
         }
+            .isSuccess
     }
 
     private fun RSemaphore.applySettings(settings: SemaphoreSettings) {
