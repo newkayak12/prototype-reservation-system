@@ -1,12 +1,12 @@
-package com.reservation.redis.redisson.timetable.semaphore
+package com.reservation.redis.redisson.timetable.semaphore.adapter
 
+import com.reservation.redis.redisson.timetable.semaphore.util.SemaphoreKeyGenerator
 import com.reservation.timetable.port.output.AcquireTimeTableSemaphore
 import com.reservation.timetable.port.output.AcquireTimeTableSemaphore.SemaphoreInquiry
 import com.reservation.timetable.port.output.AcquireTimeTableSemaphore.SemaphoreSettings
 import org.redisson.api.RSemaphore
 import org.redisson.api.RedissonClient
 import org.springframework.stereotype.Component
-import java.time.Duration
 
 @Component
 class AcquireSemaphoreTemplate(
@@ -17,35 +17,23 @@ class AcquireSemaphoreTemplate(
         semaphoreSettings: SemaphoreSettings,
         semaphoreInquiry: SemaphoreInquiry,
     ): Boolean {
-        val semaphore =
-            SemaphoreStore.getOrCreateSemaphore(name) {
-                redissonClient.getSemaphore(SemaphoreStore.key(name))
+        return runCatching {
+            val semaphore =
+                redissonClient.getSemaphore(SemaphoreKeyGenerator.key(name))
                     .apply { applySettings(semaphoreSettings) }
-            }
 
-        val permits = semaphoreInquiry.permits
-        val waitTime = semaphoreInquiry.waitTime
-        return semaphore.tryAcquireAndRecord(name, permits, waitTime)
+            val permits = semaphoreInquiry.permits
+            val waitTime = semaphoreInquiry.waitTime
+            semaphore.tryAcquire(permits, waitTime)
+        }
+            .getOrElse { false }
     }
 
     private fun RSemaphore.applySettings(settings: SemaphoreSettings) {
-        if (isExists) return
-
         val capacity = settings.capacity
         val semaphoreDuration = settings.semaphoreDuration
+
+        // trySetPermits는 이미 존재하는 경우 무시되므로 중복 체크 불필요
         trySetPermits(capacity, semaphoreDuration)
-    }
-
-    private fun RSemaphore.tryAcquireAndRecord(
-        name: String,
-        permits: Int,
-        waitTime: Duration,
-    ): Boolean {
-        val acquired = this.tryAcquire(permits, waitTime)
-
-        if (acquired) {
-            SemaphoreStore.acquired(name)
-        }
-        return acquired
     }
 }
