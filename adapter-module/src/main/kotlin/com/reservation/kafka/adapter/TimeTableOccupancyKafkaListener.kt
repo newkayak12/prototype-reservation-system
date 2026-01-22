@@ -12,7 +12,6 @@ import com.reservation.reservation.port.input.command.CreateReservationCommand
 import com.reservation.reservation.port.input.query.IsReservationExistsQuery
 import com.reservation.utilities.logger.loggerFactory
 import io.confluent.parallelconsumer.ParallelStreamProcessor
-import io.confluent.parallelconsumer.internal.DrainingCloseable.DrainingMode.DRAIN
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -64,7 +63,7 @@ class TimeTableOccupancyKafkaListener(
                 }
 
             repeat(RETRY_ATTEMPTS) { attempt ->
-                runCatching {
+                val isSuccess = runCatching {
                     onEventHandler(payload)
                 }
                     .onFailure { error ->
@@ -76,6 +75,9 @@ class TimeTableOccupancyKafkaListener(
                             Thread.sleep(backOff.toLong())
                         }
                     }
+                    .isSuccess
+
+                if (isSuccess) return@poll
             }
 
             onHandleDlt(TOPIC, key, "Max retries exceeded", payloadString)
@@ -84,7 +86,7 @@ class TimeTableOccupancyKafkaListener(
 
     @PreDestroy
     fun destroy() {
-        parallelEventConsumer.close(DRAIN)
+        parallelEventConsumer.close()
     }
 
     private fun isExists(
