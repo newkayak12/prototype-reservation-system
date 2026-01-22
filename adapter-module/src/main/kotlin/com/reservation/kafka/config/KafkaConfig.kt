@@ -132,13 +132,13 @@ class KafkaConfig(
         return configMap
     }
 
-    private inline fun <reified T> parallelConsumerOptions(
+    private fun createParallelConsumerOptions(
         kafkaProperties: KafkaProperties,
-    ): ParallelConsumerOptionsBuilder<String, T> {
+    ): ParallelConsumerOptionsBuilder<String, String> {
         val configProps = createConsumerConfig(kafkaProperties)
-        val kafkaConsumer = KafkaConsumer<String, T>(configProps)
+        val kafkaConsumer = KafkaConsumer<String, String>(configProps)
 
-        return ParallelConsumerOptions.builder<String, T>()
+        return ParallelConsumerOptions.builder<String, String>()
             .ordering(parallelConsumerProperties.processingOrder) // KEY, PARTITION, UNORDERED
             .maxConcurrency(parallelConsumerProperties.maxConcurrency)
             .consumer(kafkaConsumer) // KafkaConsumer 직접 전달
@@ -149,7 +149,7 @@ class KafkaConfig(
         kafkaProperties: KafkaProperties,
     ): ParallelStreamProcessor<String, String> {
         val consumer =
-            parallelConsumerOptions<String>(kafkaProperties)
+            createParallelConsumerOptions(kafkaProperties)
                 .shutdownTimeout(Duration.ofSeconds(TEN_SECONDS))
                 .build()
 
