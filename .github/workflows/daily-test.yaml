@@ -5,6 +5,13 @@ on:
     - cron: '0 15 * * *'  # UTC 15:00 = KST 00:00
   workflow_dispatch:     # 수동 실행도 허용
 
+permissions:
+  id-token: write
+  contents: read
+  checks: write  # ✅ Check Run 생성을 위해 반드시 필요
+  pull-requests: write
+
+
 
 jobs:
   adapter-module:
@@ -27,3 +34,37 @@ jobs:
       - core-module
     if: always()
     uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@658699f588c33d5c8d037c722352c8221568fe94
+
+  success-notification:
+    if: ${{ needs.adapter-module.result == 'success' && needs.application-module.result == 'success' && needs.core-module.result == 'success' }}
+    needs:
+      - adapter-module
+      - application-module
+      - core-module
+    runs-on: ubuntu-latest
+    steps:
+      - name: OAuth Success Notification
+        uses: newkayak12/github-actions/slack-api@main
+        with:
+          slack-token: ${{ secrets.SLACK_OAUTH_TOKEN }}
+          channel: '#notification'
+          template: 'success'
+          title: 'Daily Tests Successful'
+          description: 'All module tests passed successfully'
+
+  failure-notification:
+    if: ${{ always() && (needs.adapter-module.result == 'failure' || needs.application-module.result == 'failure' || needs.core-module.result == 'failure') }}
+    needs:
+      - adapter-module
+      - application-module
+      - core-module
+    runs-on: ubuntu-latest
+    steps:
+      - name: OAuth Failure Notification
+        uses: newkayak12/github-actions/slack-api@main
+        with:
+          slack-token: ${{ secrets.SLACK_OAUTH_TOKEN }}
+          channel: '#notification'
+          template: 'failure'
+          title: 'Daily Tests Failed'
+          description: 'One or more module tests failed'
