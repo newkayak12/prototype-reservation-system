@@ -33,7 +33,7 @@ jobs:
       - application-module
       - core-module
     if: always()
-    uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@master
+    uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@658699f588c33d5c8d037c722352c8221568fe94
 
   success-notification:
     if: ${{ needs.adapter-module.result == 'success' && needs.application-module.result == 'success' && needs.core-module.result == 'success' }}
