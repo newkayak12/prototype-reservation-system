@@ -161,6 +161,8 @@ class AcquireRateLimiterRedisAdapterTest {
         val rateSettings = RateSettings(totalSize, 1, MINUTES)
         val bucketLiveTimeSettings = BucketLiveTimeSettings(1, HOURS)
 
+        executor.use { it.close() }
+
         repeat(repeatSize) {
             executor.submit {
                 try {
@@ -189,6 +191,5 @@ class AcquireRateLimiterRedisAdapterTest {
             )
 
         assertEquals(expected, availablePermits)
-        executor.close()
     }
 }

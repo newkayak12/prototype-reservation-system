@@ -100,6 +100,7 @@ class AcquireRateLimiterInMemoryAdapterTest {
         val rateSettings = RateSettings(totalSize, 1, MINUTES)
         val bucketLiveTimeSettings = BucketLiveTimeSettings(1, HOURS)
 
+        executor.use { it.close() }
         repeat(repeatSize) {
             executor.submit {
                 try {
@@ -128,7 +129,6 @@ class AcquireRateLimiterInMemoryAdapterTest {
             )
 
         assertEquals(expected, availablePermits)
-        executor.close()
     }
 
     @DisplayName(
@@ -153,6 +153,8 @@ class AcquireRateLimiterInMemoryAdapterTest {
         val rateSettings = RateSettings(totalSize, 1, MINUTES)
         val bucketLiveTimeSettings = BucketLiveTimeSettings(1, HOURS)
 
+        executor.use { it.close() }
+
         repeat(repeatSize) {
             executor.submit {
                 try {
@@ -181,7 +183,6 @@ class AcquireRateLimiterInMemoryAdapterTest {
             )
 
         assertEquals(expected, availablePermits)
-        executor.close()
     }
 
     @DisplayName(
@@ -206,6 +207,8 @@ class AcquireRateLimiterInMemoryAdapterTest {
         val rateSettings = RateSettings(totalSize, 1, MINUTES)
         val bucketLiveTimeSettings = BucketLiveTimeSettings(1, HOURS)
 
+        executor.use { it.close() }
+
         repeat(repeatSize) {
             executor.submit {
                 try {
@@ -234,6 +237,5 @@ class AcquireRateLimiterInMemoryAdapterTest {
             )
 
         assertEquals(expected, availablePermits)
-        executor.close()
     }
 }
