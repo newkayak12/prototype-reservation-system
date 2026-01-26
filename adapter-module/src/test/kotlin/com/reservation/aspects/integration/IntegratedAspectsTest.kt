@@ -35,9 +35,9 @@ import org.springframework.transaction.interceptor.TransactionInterceptor
  * IntegratedAspectsTest - Aspect 실행 순서 및 통합 테스트
  *
  * ## 테스트 목적
- * - DistributedLockAspect, RateLimiterAspect, @Transactional 의 실행 순서 검증
+ * - DistributedLockAspect,  @Transactional 의 실행 순서 검증
  * - 각 Aspect 가 올바르게 동작하는지 통합적으로 검증
- * - 예상 실행 순서: DistributedLockAspect → @Transactional → RateLimiterAspect
+ * - 예상 실행 순서: DistributedLockAspect → @Transactional
  *
  * ## Aspect 실행 순서 분석
  * 1. DistributedLockAspect (@Order(Ordered.HIGHEST_PRECEDENCE) = Integer.MIN_VALUE)
@@ -54,7 +54,7 @@ import org.springframework.transaction.interceptor.TransactionInterceptor
  *
  * ### 시나리오 1: 정상적인 실행 흐름 테스트
  * - 모든 Aspect 가 정상적으로 동작하는 경우
- * - 실행 순서: DistributedLock → @Transactional → RateLimiter → 비즈니스 로직
+ * - 실행 순서: DistributedLock → @Transactional →  비즈니스 로직
  * - 예상 결과: 모든 단계가 성공적으로 완료
  *
  * ### 시나리오 2: DistributedLock 실패 테스트
@@ -206,7 +206,7 @@ class IntegratedAspectsTest {
     /**
      *     ### 시나리오 1: 정상적인 실행 흐름 테스트
      *     - 모든 Aspect 가 정상적으로 동작하는 경우
-     *     - 실행 순서: DistributedLock → @Transactional → RateLimiter → 비즈니스 로직
+     *     - 실행 순서: DistributedLock → @Transactional → 비즈니스 로직
      *     - 예상 결과: 모든 단계가 성공적으로 완료
      */
     @DisplayName("시나리오 1: 정상적인 실행 흐름 테스트")
