@@ -6,11 +6,14 @@ import com.reservation.redis.redisson.ratelimit.AcquireRateLimiterTemplate.Bucke
 import com.reservation.redis.redisson.ratelimit.AcquireRateLimiterTemplate.MaximumWaitSettings
 import com.reservation.redis.redisson.ratelimit.AcquireRateLimiterTemplate.RateLimiterSettings
 import com.reservation.redis.redisson.ratelimit.AcquireRateLimiterTemplate.RateSettings
+import com.reservation.redis.redisson.ratelimit.adapter.AcquireRateLimitInMemoryAdapter
+import com.reservation.redis.redisson.ratelimit.adapter.AcquireRateLimitRedisAdapter
 import com.reservation.timetable.exceptions.TooManyCreateTimeTableOccupancyRequestException
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.reflect.MethodSignature
+import org.redisson.client.RedisException
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
@@ -20,7 +23,8 @@ import org.springframework.stereotype.Component
 @Order(Ordered.LOWEST_PRECEDENCE)
 class RateLimiterAspect(
     private val spelParser: SpelParser,
-    private val rateLimiterTemplate: AcquireRateLimiterTemplate,
+    private val acquireRateLimitInMemoryAdapter: AcquireRateLimitInMemoryAdapter,
+    private val acquireRateLimitRedisAdapter: AcquireRateLimitRedisAdapter,
 ) {
     private fun parseKey(
         proceedingJoinPoint: ProceedingJoinPoint,
@@ -32,39 +36,85 @@ class RateLimiterAspect(
         return spelParser.parse(expression, method, args)
     }
 
+    private fun isRedisEnabled(): Boolean {
+        val status = acquireRateLimitRedisAdapter.status()
+        return status.isActivated()
+    }
+
+    private fun giveMeRateLimiterTemplate(isRedisEnabled: Boolean): AcquireRateLimiterTemplate {
+        if (isRedisEnabled) {
+            return acquireRateLimitRedisAdapter
+        }
+
+        return acquireRateLimitInMemoryAdapter
+    }
+
+    private fun giveMeSettings(
+        parseKey: String,
+        rateLimiter: RateLimiter,
+    ) = RateLimiterSettings(
+        key = parseKey,
+        type = rateLimiter.type,
+    )
+
+    private fun giveMeMaximumWaitSettings(rateLimiter: RateLimiter) =
+        MaximumWaitSettings(
+            maximumWaitTime = rateLimiter.maximumWaitTime,
+            maximumWaitTimeUnit = rateLimiter.maximumWaitTimeUnit,
+        )
+
+    private fun giveMeRateSettings(rateLimiter: RateLimiter) =
+        RateSettings(
+            rate = rateLimiter.rate,
+            rateIntervalTime = rateLimiter.rateIntervalTime,
+            rateIntervalTimeUnit = rateLimiter.rateIntervalTimeUnit,
+        )
+
+    private fun giveMeBucketLiveSettings(rateLimiter: RateLimiter) =
+        BucketLiveTimeSettings(
+            bucketLiveTime = rateLimiter.bucketLiveTime,
+            bucketLiveTimeUnit = rateLimiter.bucketLiveTimeUnit,
+        )
+
     private fun acquireRateLimit(
         parseKey: String,
         rateLimiter: RateLimiter,
     ) {
-        val rateLimiterSettings =
-            RateLimiterSettings(
-                key = parseKey,
-                type = rateLimiter.type,
-            )
-        val maximumWaitSettings =
-            MaximumWaitSettings(
-                maximumWaitTime = rateLimiter.maximumWaitTime,
-                maximumWaitTimeUnit = rateLimiter.maximumWaitTimeUnit,
-            )
-        val rateSettings =
-            RateSettings(
-                rate = rateLimiter.rate,
-                rateIntervalTime = rateLimiter.rateIntervalTime,
-                rateIntervalTimeUnit = rateLimiter.rateIntervalTimeUnit,
-            )
-        val bucketLiveTimeSettings =
-            BucketLiveTimeSettings(
-                bucketLiveTime = rateLimiter.bucketLiveTime,
-                bucketLiveTimeUnit = rateLimiter.bucketLiveTimeUnit,
-            )
+        val rateLimiterSettings = giveMeSettings(parseKey, rateLimiter)
+        val maximumWaitSettings = giveMeMaximumWaitSettings(rateLimiter)
+        val rateSettings = giveMeRateSettings(rateLimiter)
+        val bucketLiveTimeSettings = giveMeBucketLiveSettings(rateLimiter)
+        var isAcquired = false
 
-        val isAcquired =
-            rateLimiterTemplate.tryAcquire(
-                rateLimiterSettings = rateLimiterSettings,
-                maximumWaitSettings = maximumWaitSettings,
-                rateSettings = rateSettings,
-                bucketLiveTimeSettings = bucketLiveTimeSettings,
-            )
+        try {
+            val isRedisEnabled = isRedisEnabled()
+
+            isAcquired =
+                giveMeRateLimiterTemplate(isRedisEnabled)
+                    .tryAcquire(
+                        rateLimiterSettings = rateLimiterSettings,
+                        maximumWaitSettings = maximumWaitSettings,
+                        rateSettings = rateSettings,
+                        bucketLiveTimeSettings = bucketLiveTimeSettings,
+                    )
+
+            if (isAcquired && isRedisEnabled) {
+                acquireRateLimitInMemoryAdapter.syncAcquiredResult(
+                    rateLimiterSettings,
+                    maximumWaitSettings,
+                    rateSettings,
+                    bucketLiveTimeSettings,
+                )
+            }
+        } catch (_: RedisException) {
+            isAcquired =
+                acquireRateLimitInMemoryAdapter.tryAcquire(
+                    rateLimiterSettings,
+                    maximumWaitSettings,
+                    rateSettings,
+                    bucketLiveTimeSettings,
+                )
+        }
 
         if (!isAcquired) throw TooManyCreateTimeTableOccupancyRequestException()
     }

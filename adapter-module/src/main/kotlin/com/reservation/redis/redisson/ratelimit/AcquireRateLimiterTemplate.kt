@@ -1,6 +1,7 @@
 package com.reservation.redis.redisson.ratelimit
 
 import com.reservation.enumeration.RateLimitType
+import com.reservation.enumeration.RateLimiterTemplateState
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
@@ -11,6 +12,19 @@ interface AcquireRateLimiterTemplate {
         rateSettings: RateSettings,
         bucketLiveTimeSettings: BucketLiveTimeSettings,
     ): Boolean
+
+    fun enable()
+
+    fun disable()
+
+    fun status(): RateLimiterTemplateState
+
+    fun availablePermits(
+        rateLimiterSettings: RateLimiterSettings,
+        maximumWaitSettings: MaximumWaitSettings,
+        rateSettings: RateSettings,
+        bucketLiveTimeSettings: BucketLiveTimeSettings,
+    ): Long
 
     data class RateLimiterSettings(
         val key: String,
