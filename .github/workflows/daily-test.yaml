@@ -2,16 +2,14 @@ name: Daily Job
 
 on:
   schedule:
-    - cron: '0 15 * * *'  # UTC 15:00 = KST 00:00
-  workflow_dispatch:     # 수동 실행도 허용
+    - cron: '*/5 * * * *'  # UTC 15:00 = KST 00:00
+  workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
-  checks: write  # ✅ Check Run 생성을 위해 반드시 필요
+  checks: write
   pull-requests: write
-
-
 
 jobs:
   adapter-module:
@@ -28,39 +26,30 @@ jobs:
 
   publish_test_results:
     name: Publish Test Results
-    needs:
-      - adapter-module
-      - application-module
-      - core-module
+    needs: [adapter-module, application-module, core-module]
     if: always()
-    uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@658699f588c33d5c8d037c722352c8221568fe94
+    uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@master  # SHA 대신 master
 
   success-notification:
     if: ${{ needs.adapter-module.result == 'success' && needs.application-module.result == 'success' && needs.core-module.result == 'success' }}
-    needs:
-      - adapter-module
-      - application-module
-      - core-module
+    needs: [adapter-module, application-module, core-module]
     runs-on: ubuntu-latest
     steps:
-      - name: OAuth Success Notification
+      - name: Success Notification
         uses: newkayak12/github-actions/slack-api@main
         with:
           slack-token: ${{ secrets.SLACK_OAUTH_TOKEN }}
           channel: '#notification'
           template: 'success'
           title: 'Daily Tests Successful'
-          description: 'All module tests passed successfully'
+          description: 'All module tests passed'
 
   failure-notification:
     if: ${{ always() && (needs.adapter-module.result == 'failure' || needs.application-module.result == 'failure' || needs.core-module.result == 'failure') }}
-    needs:
-      - adapter-module
-      - application-module
-      - core-module
+    needs: [adapter-module, application-module, core-module]
     runs-on: ubuntu-latest
     steps:
-      - name: OAuth Failure Notification
+      - name: Failure Notification
         uses: newkayak12/github-actions/slack-api@main
         with:
           slack-token: ${{ secrets.SLACK_OAUTH_TOKEN }}
