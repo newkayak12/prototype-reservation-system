@@ -161,26 +161,27 @@ class AcquireRateLimiterRedisAdapterTest {
         val rateSettings = RateSettings(totalSize, 1, MINUTES)
         val bucketLiveTimeSettings = BucketLiveTimeSettings(1, HOURS)
 
-        executor.use { it.close() }
-
-        repeat(repeatSize) {
-            executor.submit {
-                try {
-                    startLatch.await()
-                    acquireRateLimitRedisAdapter.tryAcquire(
-                        rateLimiterSettings,
-                        maximumWaitSettings,
-                        rateSettings,
-                        bucketLiveTimeSettings,
-                    )
-                } finally {
-                    endLatch.countDown()
+        executor.use {
+            repeat(repeatSize) {
+                executor.submit {
+                    try {
+                        startLatch.await()
+                        acquireRateLimitRedisAdapter.tryAcquire(
+                            rateLimiterSettings,
+                            maximumWaitSettings,
+                            rateSettings,
+                            bucketLiveTimeSettings,
+                        )
+                    } finally {
+                        endLatch.countDown()
+                    }
                 }
             }
+
+            startLatch.countDown()
+            endLatch.await(5, SECONDS)
         }
 
-        startLatch.countDown()
-        endLatch.await(5, SECONDS)
 
         val availablePermits =
             acquireRateLimitRedisAdapter.availablePermits(
