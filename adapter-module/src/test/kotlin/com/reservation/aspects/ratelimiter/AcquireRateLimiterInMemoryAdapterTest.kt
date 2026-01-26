@@ -119,9 +119,7 @@ class AcquireRateLimiterInMemoryAdapterTest {
 
             startLatch.countDown()
             endLatch.await(5, SECONDS)
-
         }
-
 
         val availablePermits =
             acquireRateLimitInMemoryAdapter.availablePermits(
@@ -157,7 +155,6 @@ class AcquireRateLimiterInMemoryAdapterTest {
         val bucketLiveTimeSettings = BucketLiveTimeSettings(1, HOURS)
 
         executor.use {
-
             repeat(repeatSize) {
                 executor.submit {
                     try {
@@ -176,10 +173,7 @@ class AcquireRateLimiterInMemoryAdapterTest {
 
             startLatch.countDown()
             endLatch.await(5, SECONDS)
-
         }
-
-
 
         val availablePermits =
             acquireRateLimitInMemoryAdapter.availablePermits(
@@ -233,9 +227,7 @@ class AcquireRateLimiterInMemoryAdapterTest {
 
             startLatch.countDown()
             endLatch.await(5, SECONDS)
-
         }
-
 
         val availablePermits =
             acquireRateLimitInMemoryAdapter.availablePermits(

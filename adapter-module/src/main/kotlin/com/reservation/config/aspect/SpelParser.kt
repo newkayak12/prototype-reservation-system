@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component
 import java.lang.reflect.Method
 
 @Component
-@SuppressWarnings("TooGenericExceptionCaught")
 class SpelParser {
     private val parser = SpelExpressionParser()
 

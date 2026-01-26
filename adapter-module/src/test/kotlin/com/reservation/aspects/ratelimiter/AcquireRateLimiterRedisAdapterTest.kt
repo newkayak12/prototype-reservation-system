@@ -43,10 +43,7 @@ import java.util.concurrent.TimeUnit.SECONDS
 @ContextConfiguration(classes = [AcquireRateLimiterRedisAdapterTestConfiguration::class])
 @Testcontainers
 class AcquireRateLimiterRedisAdapterTest {
-
-
     companion object {
-
         @JvmStatic
         @Container
         private val redisContainer =
@@ -181,7 +178,6 @@ class AcquireRateLimiterRedisAdapterTest {
             startLatch.countDown()
             endLatch.await(5, SECONDS)
         }
-
 
         val availablePermits =
             acquireRateLimitRedisAdapter.availablePermits(

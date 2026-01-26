@@ -38,8 +38,11 @@ class InMemoryRateLimiter(
 
     fun acquire() {
         availablePermits.getAndUpdate {
-            if (it - 1 < 0) it
-            else it - 1
+            if (it - 1 < 0) {
+                it
+            } else {
+                it - 1
+            }
         }
     }
 
