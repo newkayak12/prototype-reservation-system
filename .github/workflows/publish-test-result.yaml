@@ -2,11 +2,25 @@ name: Publish Test Result
 
 on:
   workflow_call:
+    outputs:
+      test_result:
+        description: "Test result summary"
+        value: ${{ jobs.publish_test_results.outputs.result }}
+      total_tests:
+        description: "Total test count"
+        value: ${{ jobs.publish_test_results.outputs.total }}
+      failed_tests:
+        description: "Failed test count"
+        value: ${{ jobs.publish_test_results.outputs.failed }}
 
 jobs:
   publish_test_results:
     if: always()
     runs-on: ubuntu-latest
+    outputs:
+      result: ${{ steps.test_results.outputs.conclusion }}
+      total: ${{ steps.test_results.outputs.total }}
+      failed: ${{ steps.test_results.outputs.failed }}
     steps:
       - name: Download adapter test-results
         uses: actions/download-artifact@634f93c # v5.0.0
