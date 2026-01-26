@@ -12,15 +12,24 @@ permissions:
   pull-requests: write
 
 jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger tests
+        run: echo "Run Daily Tests"
+
   adapter-module:
+    needs: run-tests
     name: Adapter Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/adapter-module-test.yaml@master
 
   application-module:
+    needs: run-tests
     name: Application Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/application-module-test.yaml@master
 
   core-module:
+    needs: run-tests
     name: Core Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/core-module-test.yaml@master
 
