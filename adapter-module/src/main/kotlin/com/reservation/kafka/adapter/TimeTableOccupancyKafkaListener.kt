@@ -63,19 +63,20 @@ class TimeTableOccupancyKafkaListener(
                 }
 
             repeat(RETRY_ATTEMPTS) { attempt ->
-                val isSuccess = runCatching {
-                    onEventHandler(payload)
-                }
-                    .onFailure { error ->
-                        log.error("Error in TimeTableOccupancyEvent:", error)
-                        log.error("retry: {}", attempt)
-
-                        if (attempt < RETRY_ATTEMPTS - 1) {
-                            val backOff = BACK_OFF_DELAY * ((attempt + 1) * BACK_OFF_MULTIPLIER)
-                            Thread.sleep(backOff.toLong())
-                        }
+                val isSuccess =
+                    runCatching {
+                        onEventHandler(payload)
                     }
-                    .isSuccess
+                        .onFailure { error ->
+                            log.error("Error in TimeTableOccupancyEvent:", error)
+                            log.error("retry: {}", attempt)
+
+                            if (attempt < RETRY_ATTEMPTS - 1) {
+                                val backOff = BACK_OFF_DELAY * ((attempt + 1) * BACK_OFF_MULTIPLIER)
+                                Thread.sleep(backOff.toLong())
+                            }
+                        }
+                        .isSuccess
 
                 if (isSuccess) return@poll
             }
