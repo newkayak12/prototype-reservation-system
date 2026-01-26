@@ -19,22 +19,21 @@ jobs:
         run: echo "Run Daily Tests"
 
   adapter-module:
-    runs-on: ubuntu-latest
+    needs: run-tests
     name: Adapter Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/adapter-module-test.yaml@master
 
   application-module:
-    runs-on: ubuntu-latest
+    needs: run-tests
     name: Application Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/application-module-test.yaml@master
 
   core-module:
-    runs-on: ubuntu-latest
+    needs: run-tests
     name: Core Module Test
     uses: newkayak12/prototype-reservation-system/.github/workflows/core-module-test.yaml@master
 
   publish_test_results:
-    runs-on: ubuntu-latest
     name: Publish Test Results
     needs: [adapter-module, application-module, core-module]
     if: always()
