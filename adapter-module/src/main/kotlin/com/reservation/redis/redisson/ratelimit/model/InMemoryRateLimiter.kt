@@ -4,6 +4,7 @@ import com.reservation.enumeration.RateLimitType
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicLong
 
+@Suppress("LongParameterList")
 class InMemoryRateLimiter(
     val key: String,
     val type: RateLimitType,
