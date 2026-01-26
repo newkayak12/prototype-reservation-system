@@ -43,7 +43,11 @@ import java.util.concurrent.TimeUnit.SECONDS
 @ContextConfiguration(classes = [AcquireRateLimiterRedisAdapterTestConfiguration::class])
 @Testcontainers
 class AcquireRateLimiterRedisAdapterTest {
+
+
     companion object {
+
+        @JvmStatic
         @Container
         private val redisContainer =
             GenericContainer(DockerImageName.parse("redis:7.0"))
@@ -185,5 +189,6 @@ class AcquireRateLimiterRedisAdapterTest {
             )
 
         assertEquals(expected, availablePermits)
+        executor.close()
     }
 }
