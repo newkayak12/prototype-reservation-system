@@ -4,7 +4,7 @@ import com.reservation.enumeration.RateLimitType
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicLong
 
-data class InMemoryRateLimiter(
+class InMemoryRateLimiter(
     val key: String,
     val type: RateLimitType,
     val rate: Long,
@@ -37,7 +37,10 @@ data class InMemoryRateLimiter(
     }
 
     fun acquire() {
-        availablePermits.decrementAndGet()
+        availablePermits.getAndUpdate {
+            if (it - 1 <= 0) it
+            else it - 1
+        }
     }
 
     fun availablePermits(): Long = availablePermits.get()
