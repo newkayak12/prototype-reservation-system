@@ -128,6 +128,7 @@ class AcquireRateLimiterInMemoryAdapterTest {
             )
 
         assertEquals(expected, availablePermits)
+        executor.close()
     }
 
     @DisplayName(
@@ -180,6 +181,7 @@ class AcquireRateLimiterInMemoryAdapterTest {
             )
 
         assertEquals(expected, availablePermits)
+        executor.close()
     }
 
     @DisplayName(
@@ -232,5 +234,6 @@ class AcquireRateLimiterInMemoryAdapterTest {
             )
 
         assertEquals(expected, availablePermits)
+        executor.close()
     }
 }
