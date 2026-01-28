@@ -2,7 +2,7 @@ name: Daily Job
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # UTC 15:00 = KST 00:00
+    - cron: '0 */6 * * *'  # UTC 15:00 = KST 00:00
   workflow_dispatch:
 
 permissions:
@@ -40,8 +40,8 @@ jobs:
     uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@master  # SHA 대신 master
 
   success-notification:
-    if: ${{ needs.adapter-module.result == 'success' && needs.application-module.result == 'success' && needs.core-module.result == 'success' }}
-    needs: [adapter-module, application-module, core-module]
+    if: ${{ needs.publish_test_results.outputs.test_result == 'success' }}
+    needs: [publish_test_results]
     runs-on: ubuntu-latest
     steps:
       - name: Success Notification
@@ -50,12 +50,12 @@ jobs:
           slack-token: ${{ secrets.SLACK_OAUTH_TOKEN }}
           channel: '#notification'
           template: 'success'
-          title: 'Daily Tests Successful'
-          description: 'All module tests passed'
+          title: '✅ Daily Tests Successful'
+          description: 'All tests passed! Total: ${{ needs.publish_test_results.outputs.total_tests }} tests'
 
   failure-notification:
-    if: ${{ always() && (needs.adapter-module.result == 'failure' || needs.application-module.result == 'failure' || needs.core-module.result == 'failure') }}
-    needs: [adapter-module, application-module, core-module]
+    if: ${{ always() && needs.publish_test_results.outputs.test_result != 'success' }}
+    needs: [publish_test_results]
     runs-on: ubuntu-latest
     steps:
       - name: Failure Notification
@@ -63,6 +63,6 @@ jobs:
         with:
           slack-token: ${{ secrets.SLACK_OAUTH_TOKEN }}
           channel: '#notification'
-          template: 'failure'
-          title: 'Daily Tests Failed'
-          description: 'One or more module tests failed'
+          template: 'error'
+          title: '❌ Daily Tests Failed'
+          description: 'Failed: ${{ needs.publish_test_results.outputs.failed_tests }}/${{ needs.publish_test_results.outputs.total_tests }} tests'
