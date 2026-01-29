@@ -38,6 +38,7 @@ jobs:
           name: core-test-results
           path: test-results/core
       - name: Publish Test Results
+        id: test_results
         uses: EnricoMi/publish-unit-test-result-action@a5ca2095ab79d1c9dab8904a6ced60f50d4a15c3 # v2.20.0
         if: always()
         with:
