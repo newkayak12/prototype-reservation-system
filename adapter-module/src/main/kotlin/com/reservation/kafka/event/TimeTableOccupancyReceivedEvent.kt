@@ -1,4 +1,4 @@
-package com.reservation.kafka.listener.event
+package com.reservation.kafka.event
 
 import com.reservation.enumeration.OutboxEventType
 import java.time.LocalDateTime
