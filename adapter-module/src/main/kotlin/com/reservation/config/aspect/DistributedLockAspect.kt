@@ -91,15 +91,14 @@ class DistributedLockAspect(
         distributedLock: DistributedLock,
     ) {
         val lockType = distributedLock.lockType
-        val checkLockTemplate: CheckLockTemplate =
-            getCheckLock(lockType)
-        val unlockLockTemplate: UnlockLockTemplate =
-            getUnLock(lockType)
+        val checkLockTemplate: CheckLockTemplate = getCheckLock(lockType)
+        val unlockLockTemplate: UnlockLockTemplate = getUnLock(lockType)
 
         if (!checkLockTemplate.isHeldByCurrentThread(parsedKey)) return
         unlockLockTemplate.unlock(parsedKey)
     }
 
+    // NamedLock으로 변경
     fun executeSerialization(proceedingJoinPoint: ProceedingJoinPoint): Any? {
         return runCatching<Any?> { serializableTemplate.execute { proceedingJoinPoint.proceed() } }
             .getOrElse { exception ->
@@ -128,7 +127,7 @@ class DistributedLockAspect(
                 )
         val parsedKey = parseKey(proceedingJoinPoint, distributedLock)
         var doRelease = true
-        var isRedisAccesible = true
+        var isRedisAccessible = true
         try {
             acquireLock(parsedKey, distributedLock)
             return proceedingJoinPoint.proceed()
@@ -136,10 +135,10 @@ class DistributedLockAspect(
             doRelease = false
             throw e
         } catch (e: RedisException) {
-            isRedisAccesible = false
+            isRedisAccessible = false
             return executeSerialization(proceedingJoinPoint)
         } finally {
-            if (isRedisAccesible && doRelease) releaseLock(parsedKey, distributedLock)
+            if (isRedisAccessible && doRelease) releaseLock(parsedKey, distributedLock)
         }
     }
 }

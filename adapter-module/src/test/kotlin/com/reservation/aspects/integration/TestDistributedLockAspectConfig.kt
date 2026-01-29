@@ -3,9 +3,9 @@ package com.reservation.aspects.integration
 import com.reservation.redis.redisson.lock.AcquireLockTemplate
 import com.reservation.redis.redisson.lock.CheckLockTemplate
 import com.reservation.redis.redisson.lock.UnlockLockTemplate
-import com.reservation.redis.redisson.lock.fair.template.adapter.AcquireFairLockAdapter
-import com.reservation.redis.redisson.lock.fair.template.adapter.CheckFairLockAdapter
-import com.reservation.redis.redisson.lock.fair.template.adapter.UnlockFairLockAdapter
+import com.reservation.redis.redisson.lock.fair.adapter.AcquireFairLockAdapter
+import com.reservation.redis.redisson.lock.fair.adapter.CheckFairLockAdapter
+import com.reservation.redis.redisson.lock.fair.adapter.UnlockFairLockAdapter
 import com.reservation.redis.redisson.lock.general.adapter.AcquireLockAdapter
 import com.reservation.redis.redisson.lock.general.adapter.CheckLockAdapter
 import com.reservation.redis.redisson.lock.general.adapter.UnlockLockAdapter

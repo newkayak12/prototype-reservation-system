@@ -1,4 +1,4 @@
-package com.reservation.redis.redisson.lock.general.adapter
+package com.reservation.redis.redisson.lock.fair.adapter
 
 import com.reservation.redis.redisson.lock.AcquireLockTemplate
 import com.reservation.redis.redisson.lock.util.LockKeyGenerator
@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
 
 @Component
-class AcquireLockAdapter(
+class AcquireFairLockAdapter(
     private val redissonClient: RedissonClient,
 ) : AcquireLockTemplate {
     override fun tryLock(
@@ -15,7 +15,7 @@ class AcquireLockAdapter(
         waitTime: Long,
         waitTimeUnit: TimeUnit,
     ): Boolean {
-        val lock = redissonClient.getLock(LockKeyGenerator.lockKey(name))
+        val lock = redissonClient.getFairLock(LockKeyGenerator.fairLockKey(name))
         return lock.tryLock(waitTime, waitTimeUnit)
     }
 }
