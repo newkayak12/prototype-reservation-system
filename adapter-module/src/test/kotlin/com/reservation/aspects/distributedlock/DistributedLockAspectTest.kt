@@ -56,6 +56,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.EnableAspectJAutoProxy
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
+import org.springframework.transaction.PlatformTransactionManager
 
 @ExtendWith(value = [SpringExtension::class])
 @ContextConfiguration(classes = [InitializeMockContext::class])
@@ -154,6 +155,9 @@ class DistributedLockAspectTest {
         @Bean("unlockLockAdapter")
         fun unlockLockAdapter() = mockk<UnlockLockAdapter>()
 
+        @Bean
+        fun platformTransactionManager() = mockk<PlatformTransactionManager>(relaxed = true)
+
         @Suppress("LongParameterList")
         @Bean
         fun distributedLockAspect(
@@ -164,6 +168,7 @@ class DistributedLockAspectTest {
             checkLockAdapter: CheckLockTemplate,
             unlockLockAdapter: UnlockLockTemplate,
             spelParser: SpelParser,
+            platformTransactionManager: PlatformTransactionManager,
         ) = DistributedLockAspect(
             acquireFairLockAdapter,
             checkFairLockAdapter,
@@ -172,6 +177,7 @@ class DistributedLockAspectTest {
             checkLockAdapter,
             unlockLockAdapter,
             spelParser,
+            platformTransactionManager,
         )
 
         @Suppress("LongParameterList")

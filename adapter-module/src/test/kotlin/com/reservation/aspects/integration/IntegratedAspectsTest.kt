@@ -133,6 +133,7 @@ class IntegratedAspectsTest {
             checkLockAdapter: CheckLockTemplate,
             unlockLockAdapter: UnlockLockTemplate,
             spelParser: SpelParser,
+            mockTransactionManager: PlatformTransactionManager,
         ) = DistributedLockAspect(
             acquireFairLockAdapter,
             checkFairLockAdapter,
@@ -141,6 +142,7 @@ class IntegratedAspectsTest {
             checkLockAdapter,
             unlockLockAdapter,
             spelParser,
+            mockTransactionManager,
         )
 
         @Bean
