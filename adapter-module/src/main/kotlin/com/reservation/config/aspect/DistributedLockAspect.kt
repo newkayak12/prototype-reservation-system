@@ -7,14 +7,22 @@ import com.reservation.enumeration.LockType.LOCK
 import com.reservation.redis.redisson.lock.AcquireLockTemplate
 import com.reservation.redis.redisson.lock.CheckLockTemplate
 import com.reservation.redis.redisson.lock.UnlockLockTemplate
+import com.reservation.timetable.exceptions.RequestUnProcessableException
 import com.reservation.timetable.exceptions.TooManyRequestHasBeenComeSimultaneouslyException
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.reflect.MethodSignature
+import org.redisson.client.RedisException
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
+import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.dao.TransientDataAccessException
+import org.springframework.jdbc.CannotGetJdbcConnectionException
 import org.springframework.stereotype.Component
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.TransactionDefinition
+import org.springframework.transaction.support.TransactionTemplate
 
 @Aspect
 @Component
@@ -28,7 +36,15 @@ class DistributedLockAspect(
     private val checkLockAdapter: CheckLockTemplate,
     private val unlockLockAdapter: UnlockLockTemplate,
     private val spelParser: SpelParser,
+    private val transactionManager: PlatformTransactionManager,
 ) {
+    private val serializableTemplate by lazy {
+        TransactionTemplate(transactionManager)
+            .apply {
+                isolationLevel = TransactionDefinition.ISOLATION_SERIALIZABLE
+            }
+    }
+
     private fun parseKey(
         proceedingJoinPoint: ProceedingJoinPoint,
         distributedLock: DistributedLock,
@@ -84,6 +100,20 @@ class DistributedLockAspect(
         unlockLockTemplate.unlock(parsedKey)
     }
 
+    fun executeSerialization(proceedingJoinPoint: ProceedingJoinPoint): Any? {
+        return runCatching<Any?> { serializableTemplate.execute { proceedingJoinPoint.proceed() } }
+            .getOrElse { exception ->
+                when (exception) {
+                    is DataIntegrityViolationException,
+                    is CannotGetJdbcConnectionException,
+                    is TransientDataAccessException,
+                    -> throw RequestUnProcessableException()
+
+                    else -> throw exception
+                }
+            }
+    }
+
     @Around("@annotation(com.reservation.config.annotations.DistributedLock)")
     @Suppress("UseCheckOrError", "RethrowCaughtException")
     fun executeDistributedLockAction(proceedingJoinPoint: ProceedingJoinPoint): Any? {
@@ -98,14 +128,18 @@ class DistributedLockAspect(
                 )
         val parsedKey = parseKey(proceedingJoinPoint, distributedLock)
         var doRelease = true
+        var isRedisAccesible = true
         try {
             acquireLock(parsedKey, distributedLock)
             return proceedingJoinPoint.proceed()
         } catch (e: TooManyRequestHasBeenComeSimultaneouslyException) {
             doRelease = false
             throw e
+        } catch (e: RedisException) {
+            isRedisAccesible = false
+            return executeSerialization(proceedingJoinPoint)
         } finally {
-            if (doRelease) releaseLock(parsedKey, distributedLock)
+            if (isRedisAccesible && doRelease) releaseLock(parsedKey, distributedLock)
         }
     }
 }
