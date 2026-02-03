@@ -18,9 +18,9 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     outputs:
-      result: ${{ steps.test_results.outputs.conclusion }}
-      total: ${{ steps.test_results.outputs.total }}
-      failed: ${{ steps.test_results.outputs.failed }}
+      result: ${{ fromJSON(steps.test_results.outputs.json).conclusion }}
+      total: ${{ fromJSON(steps.test_results.outputs.json).stats.tests }}
+      failed: ${{ fromJSON(steps.test_results.outputs.json).stats.tests_fail }}
     steps:
       - name: Download adapter test-results
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
