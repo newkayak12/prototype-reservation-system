@@ -4,9 +4,10 @@ import com.reservation.config.annotations.DistributedLock
 import com.reservation.enumeration.LockType
 import com.reservation.enumeration.LockType.FAIR_LOCK
 import com.reservation.enumeration.LockType.LOCK
-import com.reservation.redis.redisson.lock.AcquireLockTemplate
-import com.reservation.redis.redisson.lock.CheckLockTemplate
-import com.reservation.redis.redisson.lock.UnlockLockTemplate
+import com.reservation.redis.redisson.lock.LockCoordinator
+import com.reservation.redis.redisson.lock.fair.FairLockRedisCoordinator
+import com.reservation.redis.redisson.lock.general.GeneralLockRedisCoordinator
+import com.reservation.redis.redisson.lock.named.NamedLockCoordinator
 import com.reservation.timetable.exceptions.RequestUnProcessableException
 import com.reservation.timetable.exceptions.TooManyRequestHasBeenComeSimultaneouslyException
 import org.aspectj.lang.ProceedingJoinPoint

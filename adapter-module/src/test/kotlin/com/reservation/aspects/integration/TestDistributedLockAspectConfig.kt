@@ -9,6 +9,8 @@ import com.reservation.redis.redisson.lock.fair.adapter.UnlockFairLockAdapter
 import com.reservation.redis.redisson.lock.general.adapter.AcquireLockAdapter
 import com.reservation.redis.redisson.lock.general.adapter.CheckLockAdapter
 import com.reservation.redis.redisson.lock.general.adapter.UnlockLockAdapter
+import com.reservation.redis.redisson.lock.named.adapter.AcquireNamedLockAdapter
+import com.reservation.redis.redisson.lock.named.adapter.UnlockNamedLockAdapter
 import io.mockk.mockk
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
@@ -32,4 +34,10 @@ class TestDistributedLockAspectConfig {
 
     @Bean
     fun unlockLockAdapter(): UnlockLockTemplate = mockk<UnlockLockAdapter>()
+
+    @Bean
+    fun acquireNamedLockAdapter() = mockk<AcquireNamedLockAdapter>()
+
+    @Bean
+    fun unlockNamedLockAdapter() = mockk<UnlockNamedLockAdapter>()
 }
