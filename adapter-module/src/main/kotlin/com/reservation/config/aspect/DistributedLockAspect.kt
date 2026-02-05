@@ -8,7 +8,7 @@ import com.reservation.redis.redisson.lock.LockCoordinator
 import com.reservation.redis.redisson.lock.fair.FairLockRedisCoordinator
 import com.reservation.redis.redisson.lock.general.GeneralLockRedisCoordinator
 import com.reservation.redis.redisson.lock.named.NamedLockCoordinator
-import com.reservation.timetable.exceptions.RequestUnProcessableException
+import com.reservation.timetable.exceptions.RequestUnprocessableException
 import com.reservation.timetable.exceptions.TooManyRequestHasBeenComeSimultaneouslyException
 import com.reservation.utilities.logger.loggerFactory
 import org.aspectj.lang.ProceedingJoinPoint
@@ -93,7 +93,7 @@ class DistributedLockAspect(
                     is DataIntegrityViolationException,
                     is CannotGetJdbcConnectionException,
                     is TransientDataAccessException,
-                    -> throw RequestUnProcessableException()
+                    -> throw RequestUnprocessableException()
 
                     else -> throw exception
                 }
@@ -120,7 +120,7 @@ class DistributedLockAspect(
                     is DataIntegrityViolationException,
                     is CannotGetJdbcConnectionException,
                     is TransientDataAccessException,
-                    -> throw RequestUnProcessableException()
+                    -> throw RequestUnprocessableException()
 
                     else -> throw exception
                 }
@@ -152,6 +152,9 @@ class DistributedLockAspect(
         }
     }
 
+    private fun validateDatabaseLock(distributedLock: DistributedLock) {
+    }
+
     @Around("@annotation(com.reservation.config.annotations.DistributedLock)")
     @Suppress(
         "UseCheckOrError",
@@ -169,10 +172,11 @@ class DistributedLockAspect(
                     "@DistributedLock annotation not found on method ${method.name}",
                 )
         val parsedKey = parseKey(proceedingJoinPoint, distributedLock)
-        var doRelease = true
+        var doRelease = false
         var isRedisAccessible = true
         try {
             acquireRedisLock(parsedKey, distributedLock)
+            doRelease = true
             return proceedingJoinPoint.proceed()
         } catch (e: TooManyRequestHasBeenComeSimultaneouslyException) {
             doRelease = false
