@@ -30,10 +30,9 @@ class AcquireNamedLockAdapter(
             }
 
             attempt++
-            if (attempt < maxAttempt)
-                {
-                    sleep(sleepInterval)
-                }
+            if (attempt < maxAttempt) {
+                sleep(sleepInterval)
+            }
         }
 
         return false

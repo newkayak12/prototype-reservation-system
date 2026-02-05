@@ -28,7 +28,6 @@ import org.springframework.transaction.support.TransactionTemplate
 @Aspect
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@Suppress("LongParameterList")
 class DistributedLockAspect(
     private val fairLockRedisCoordinator: FairLockRedisCoordinator,
     private val generalLockRedisCoordinator: GeneralLockRedisCoordinator,
