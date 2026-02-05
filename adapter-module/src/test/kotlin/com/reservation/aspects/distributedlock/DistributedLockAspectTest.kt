@@ -11,12 +11,17 @@ import com.reservation.fixture.FixtureMonkeyFactory
 import com.reservation.redis.redisson.lock.AcquireLockTemplate
 import com.reservation.redis.redisson.lock.CheckLockTemplate
 import com.reservation.redis.redisson.lock.UnlockLockTemplate
+import com.reservation.redis.redisson.lock.fair.FairLockRedisCoordinator
 import com.reservation.redis.redisson.lock.fair.adapter.AcquireFairLockAdapter
 import com.reservation.redis.redisson.lock.fair.adapter.CheckFairLockAdapter
 import com.reservation.redis.redisson.lock.fair.adapter.UnlockFairLockAdapter
+import com.reservation.redis.redisson.lock.general.GeneralLockRedisCoordinator
 import com.reservation.redis.redisson.lock.general.adapter.AcquireLockAdapter
 import com.reservation.redis.redisson.lock.general.adapter.CheckLockAdapter
 import com.reservation.redis.redisson.lock.general.adapter.UnlockLockAdapter
+import com.reservation.redis.redisson.lock.named.NamedLockCoordinator
+import com.reservation.redis.redisson.lock.named.adapter.AcquireNamedLockAdapter
+import com.reservation.redis.redisson.lock.named.adapter.UnlockNamedLockAdapter
 import com.reservation.timetable.TimeTable
 import com.reservation.timetable.event.TimeTableOccupiedDomainEvent
 import com.reservation.timetable.exceptions.TooManyRequestHasBeenComeSimultaneouslyException
@@ -156,6 +161,12 @@ class DistributedLockAspectTest {
         fun unlockLockAdapter() = mockk<UnlockLockAdapter>()
 
         @Bean
+        fun acquireNamedLockAdapter() = mockk<AcquireNamedLockAdapter>()
+
+        @Bean
+        fun unlockNamedLockAdapter() = mockk<UnlockNamedLockAdapter>()
+
+        @Bean
         fun platformTransactionManager() = mockk<PlatformTransactionManager>(relaxed = true)
 
         @Suppress("LongParameterList")
@@ -168,14 +179,24 @@ class DistributedLockAspectTest {
             checkLockAdapter: CheckLockTemplate,
             unlockLockAdapter: UnlockLockTemplate,
             spelParser: SpelParser,
+            acquireNamedLockAdapter: AcquireLockTemplate,
+            unlockNamedLockAdapter: UnlockLockTemplate,
             platformTransactionManager: PlatformTransactionManager,
         ) = DistributedLockAspect(
-            acquireFairLockAdapter,
-            checkFairLockAdapter,
-            unlockFairLockAdapter,
-            acquireLockAdapter,
-            checkLockAdapter,
-            unlockLockAdapter,
+            FairLockRedisCoordinator(
+                acquireFairLockAdapter,
+                checkFairLockAdapter,
+                unlockFairLockAdapter,
+            ),
+            GeneralLockRedisCoordinator(
+                acquireLockAdapter,
+                checkLockAdapter,
+                unlockLockAdapter,
+            ),
+            NamedLockCoordinator(
+                acquireNamedLockAdapter,
+                unlockNamedLockAdapter,
+            ),
             spelParser,
             platformTransactionManager,
         )

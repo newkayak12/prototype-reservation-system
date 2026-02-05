@@ -30,12 +30,9 @@ import org.springframework.transaction.support.TransactionTemplate
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Suppress("LongParameterList")
 class DistributedLockAspect(
-    private val acquireFairLockAdapter: AcquireLockTemplate,
-    private val checkFairLockAdapter: CheckLockTemplate,
-    private val unlockFairLockAdapter: UnlockLockTemplate,
-    private val acquireLockAdapter: AcquireLockTemplate,
-    private val checkLockAdapter: CheckLockTemplate,
-    private val unlockLockAdapter: UnlockLockTemplate,
+    private val fairLockRedisCoordinator: FairLockRedisCoordinator,
+    private val generalLockRedisCoordinator: GeneralLockRedisCoordinator,
+    private val namedLockCoordinator: NamedLockCoordinator,
     private val spelParser: SpelParser,
     private val transactionManager: PlatformTransactionManager,
 ) {
@@ -56,13 +53,13 @@ class DistributedLockAspect(
         return spelParser.parse(expression, method, args)
     }
 
-    private fun getAcquireLock(lockType: LockType) =
+    private fun getRedisLockCoordinator(lockType: LockType) =
         when (lockType) {
-            LOCK -> acquireLockAdapter
-            FAIR_LOCK -> acquireFairLockAdapter
+            LOCK -> generalLockRedisCoordinator
+            FAIR_LOCK -> fairLockRedisCoordinator
         }
 
-    private fun acquireLock(
+    private fun acquireRedisLock(
         parsedKey: String,
         distributedLock: DistributedLock,
     ) {
@@ -70,33 +67,20 @@ class DistributedLockAspect(
         val waitTime = distributedLock.waitTime
         val waitTimeUnit = distributedLock.waitTimeUnit
         val isAcquired: Boolean =
-            getAcquireLock(lockType = lockType)
+            getRedisLockCoordinator(lockType = lockType)
                 .tryLock(parsedKey, waitTime, waitTimeUnit)
         if (!isAcquired) throw TooManyRequestHasBeenComeSimultaneouslyException()
     }
 
-    private fun getCheckLock(lockType: LockType) =
-        when (lockType) {
-            LOCK -> checkLockAdapter
-            FAIR_LOCK -> checkFairLockAdapter
-        }
-
-    private fun getUnLock(lockType: LockType) =
-        when (lockType) {
-            LOCK -> unlockLockAdapter
-            FAIR_LOCK -> unlockFairLockAdapter
-        }
-
-    private fun releaseLock(
+    private fun releaseLockRedisTemplate(
         parsedKey: String,
         distributedLock: DistributedLock,
     ) {
         val lockType = distributedLock.lockType
-        val checkLockTemplate: CheckLockTemplate = getCheckLock(lockType)
-        val unlockLockTemplate: UnlockLockTemplate = getUnLock(lockType)
+        val lockCoordinator: LockCoordinator = getRedisLockCoordinator(lockType)
 
-        if (!checkLockTemplate.isHeldByCurrentThread(parsedKey)) return
-        unlockLockTemplate.unlock(parsedKey)
+        if (!lockCoordinator.isHeldByCurrentThread(parsedKey)) return
+        lockCoordinator.unlock(parsedKey)
     }
 
     // NamedLock으로 변경
@@ -112,6 +96,57 @@ class DistributedLockAspect(
                     else -> throw exception
                 }
             }
+    }
+
+    private fun acquireDatabaseLock(
+        parsedKey: String,
+        distributedLock: DistributedLock,
+    ) {
+        val waitTime = distributedLock.waitTime
+        val waitTimeUnit = distributedLock.waitTimeUnit
+
+        val isAcquired =
+            runCatching<Boolean> {
+                namedLockCoordinator.tryLock(
+                    parsedKey,
+                    waitTime,
+                    waitTimeUnit,
+                )
+            }.getOrElse { exception ->
+                when (exception) {
+                    is DataIntegrityViolationException,
+                    is CannotGetJdbcConnectionException,
+                    is TransientDataAccessException,
+                    -> throw RequestUnProcessableException()
+
+                    else -> throw exception
+                }
+            }
+
+        if (!isAcquired) throw TooManyRequestHasBeenComeSimultaneouslyException()
+    }
+
+    private fun releaseDatabaseLock(parsedKey: String) {
+        namedLockCoordinator.unlock(parsedKey)
+    }
+
+    fun executeNamedLock(
+        parsedKey: String,
+        proceedingJoinPoint: ProceedingJoinPoint,
+        distributedLock: DistributedLock,
+    ): Any? {
+        var doRelease = true
+        try {
+            acquireDatabaseLock(parsedKey, distributedLock)
+            return proceedingJoinPoint.proceed()
+        } catch (e: TooManyRequestHasBeenComeSimultaneouslyException) {
+            doRelease = false
+            throw e
+        } finally {
+            if (doRelease) {
+                releaseDatabaseLock(parsedKey)
+            }
+        }
     }
 
     @Around("@annotation(com.reservation.config.annotations.DistributedLock)")
@@ -130,16 +165,16 @@ class DistributedLockAspect(
         var doRelease = true
         var isRedisAccessible = true
         try {
-            acquireLock(parsedKey, distributedLock)
+            acquireRedisLock(parsedKey, distributedLock)
             return proceedingJoinPoint.proceed()
         } catch (e: TooManyRequestHasBeenComeSimultaneouslyException) {
             doRelease = false
             throw e
         } catch (e: RedisException) {
             isRedisAccessible = false
-            return executeSerialization(proceedingJoinPoint)
+            return executeNamedLock(parsedKey, proceedingJoinPoint, distributedLock)
         } finally {
-            if (isRedisAccessible && doRelease) releaseLock(parsedKey, distributedLock)
+            if (isRedisAccessible && doRelease) releaseLockRedisTemplate(parsedKey, distributedLock)
         }
     }
 }
