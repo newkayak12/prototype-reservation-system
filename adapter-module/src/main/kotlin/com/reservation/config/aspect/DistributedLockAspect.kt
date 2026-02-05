@@ -10,6 +10,7 @@ import com.reservation.redis.redisson.lock.general.GeneralLockRedisCoordinator
 import com.reservation.redis.redisson.lock.named.NamedLockCoordinator
 import com.reservation.timetable.exceptions.RequestUnProcessableException
 import com.reservation.timetable.exceptions.TooManyRequestHasBeenComeSimultaneouslyException
+import com.reservation.utilities.logger.loggerFactory
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
@@ -35,6 +36,8 @@ class DistributedLockAspect(
     private val spelParser: SpelParser,
     private val transactionManager: PlatformTransactionManager,
 ) {
+    private val log = loggerFactory<DistributedLockAspect>()
+
     private val serializableTemplate by lazy {
         TransactionTemplate(transactionManager)
             .apply {
@@ -97,6 +100,7 @@ class DistributedLockAspect(
             }
     }
 
+    @Suppress("ThrowsCount")
     private fun acquireDatabaseLock(
         parsedKey: String,
         distributedLock: DistributedLock,
@@ -149,7 +153,11 @@ class DistributedLockAspect(
     }
 
     @Around("@annotation(com.reservation.config.annotations.DistributedLock)")
-    @Suppress("UseCheckOrError", "RethrowCaughtException")
+    @Suppress(
+        "UseCheckOrError",
+        "RethrowCaughtException",
+        "SwallowedException",
+    )
     fun executeDistributedLockAction(proceedingJoinPoint: ProceedingJoinPoint): Any? {
         val method = (proceedingJoinPoint.signature as MethodSignature).method
         val targetClass = proceedingJoinPoint.target::class.java
@@ -170,6 +178,7 @@ class DistributedLockAspect(
             doRelease = false
             throw e
         } catch (e: RedisException) {
+            log.warn(" Unable to connect to Redis")
             isRedisAccessible = false
             return executeNamedLock(parsedKey, proceedingJoinPoint, distributedLock)
         } finally {
