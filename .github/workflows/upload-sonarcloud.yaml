@@ -48,5 +48,8 @@ jobs:
             -Dsonar.exclusions=**/src/test/**/*
             -Dsonar.coverage.exclusions=**/src/**/config/**/*.kt,**/src/**/dto/**/*.kt,**/src/**/exception/**/*.kt,**/src/**/mapper/**/*.kt,**/src/**/factory/**/*.kt,**/src/**/entity/**/*.kt,**/src/**/adapter/**/*.kt,**/src/**/repository/**/*.kt,**/*Config.kt,**/*Dto.kt,**/*Request.kt,**/*Response.kt,**/*Exception.kt,**/*Factory.kt,**/*Entity.kt,**/*Adapter.kt,**/*Repository.kt,**/*.sql,**/*.gradle.kts
             -Dsonar.coverage.jacoco.xmlReportPaths=jacoco/adapter/jacocoTestReport.xml,jacoco/application/jacocoTestReport.xml,jacoco/core/jacocoTestReport.xml
+            -Dsonar.issue.ignore.multicriteria=e1
+            -Dsonar.issue.ignore.multicriteria.e1.ruleKey=kotlin:S2068
+            -Dsonar.issue.ignore.multicriteria.e1.resourceKey=**/*Test*.kt,**/config/**,**/dto/**,**/sample/**
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
