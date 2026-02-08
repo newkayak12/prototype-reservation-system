@@ -6,6 +6,9 @@ import com.reservation.config.aspect.SpelParser
 import com.reservation.redis.redisson.lock.AcquireLockTemplate
 import com.reservation.redis.redisson.lock.CheckLockTemplate
 import com.reservation.redis.redisson.lock.UnlockLockTemplate
+import com.reservation.redis.redisson.lock.fair.FairLockRedisCoordinator
+import com.reservation.redis.redisson.lock.general.GeneralLockRedisCoordinator
+import com.reservation.redis.redisson.lock.named.NamedLockCoordinator
 import com.reservation.timetable.exceptions.TooManyRequestHasBeenComeSimultaneouslyException
 import io.kotest.assertions.assertSoftly
 import io.mockk.clearAllMocks
@@ -132,15 +135,27 @@ class IntegratedAspectsTest {
             acquireLockAdapter: AcquireLockTemplate,
             checkLockAdapter: CheckLockTemplate,
             unlockLockAdapter: UnlockLockTemplate,
+            acquireNamedLockAdapter: AcquireLockTemplate,
+            unlockNamedLockAdapter: UnlockLockTemplate,
             spelParser: SpelParser,
+            mockTransactionManager: PlatformTransactionManager,
         ) = DistributedLockAspect(
-            acquireFairLockAdapter,
-            checkFairLockAdapter,
-            unlockFairLockAdapter,
-            acquireLockAdapter,
-            checkLockAdapter,
-            unlockLockAdapter,
+            FairLockRedisCoordinator(
+                acquireFairLockAdapter,
+                checkFairLockAdapter,
+                unlockFairLockAdapter,
+            ),
+            GeneralLockRedisCoordinator(
+                acquireLockAdapter,
+                checkLockAdapter,
+                unlockLockAdapter,
+            ),
+            NamedLockCoordinator(
+                acquireNamedLockAdapter,
+                unlockNamedLockAdapter,
+            ),
             spelParser,
+            mockTransactionManager,
         )
 
         @Bean

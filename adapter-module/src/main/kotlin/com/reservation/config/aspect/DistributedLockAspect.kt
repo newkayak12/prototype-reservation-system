@@ -4,31 +4,47 @@ import com.reservation.config.annotations.DistributedLock
 import com.reservation.enumeration.LockType
 import com.reservation.enumeration.LockType.FAIR_LOCK
 import com.reservation.enumeration.LockType.LOCK
-import com.reservation.redis.redisson.lock.AcquireLockTemplate
-import com.reservation.redis.redisson.lock.CheckLockTemplate
-import com.reservation.redis.redisson.lock.UnlockLockTemplate
+import com.reservation.redis.redisson.lock.LockCoordinator
+import com.reservation.redis.redisson.lock.fair.FairLockRedisCoordinator
+import com.reservation.redis.redisson.lock.general.GeneralLockRedisCoordinator
+import com.reservation.redis.redisson.lock.named.NamedLockCoordinator
+import com.reservation.timetable.exceptions.RequestUnprocessableException
 import com.reservation.timetable.exceptions.TooManyRequestHasBeenComeSimultaneouslyException
+import com.reservation.utilities.logger.loggerFactory
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.reflect.MethodSignature
+import org.redisson.client.RedisException
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
+import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.dao.TransientDataAccessException
+import org.springframework.jdbc.CannotGetJdbcConnectionException
 import org.springframework.stereotype.Component
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.TransactionDefinition
+import org.springframework.transaction.support.TransactionTemplate
 
 @Aspect
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@Suppress("LongParameterList")
 class DistributedLockAspect(
-    private val acquireFairLockAdapter: AcquireLockTemplate,
-    private val checkFairLockAdapter: CheckLockTemplate,
-    private val unlockFairLockAdapter: UnlockLockTemplate,
-    private val acquireLockAdapter: AcquireLockTemplate,
-    private val checkLockAdapter: CheckLockTemplate,
-    private val unlockLockAdapter: UnlockLockTemplate,
+    private val fairLockRedisCoordinator: FairLockRedisCoordinator,
+    private val generalLockRedisCoordinator: GeneralLockRedisCoordinator,
+    private val namedLockCoordinator: NamedLockCoordinator,
     private val spelParser: SpelParser,
+    private val transactionManager: PlatformTransactionManager,
 ) {
+    private val log = loggerFactory<DistributedLockAspect>()
+
+    private val serializableTemplate by lazy {
+        TransactionTemplate(transactionManager)
+            .apply {
+                isolationLevel = TransactionDefinition.ISOLATION_SERIALIZABLE
+            }
+    }
+
     private fun parseKey(
         proceedingJoinPoint: ProceedingJoinPoint,
         distributedLock: DistributedLock,
@@ -39,13 +55,13 @@ class DistributedLockAspect(
         return spelParser.parse(expression, method, args)
     }
 
-    private fun getAcquireLock(lockType: LockType) =
+    private fun getRedisLockCoordinator(lockType: LockType) =
         when (lockType) {
-            LOCK -> acquireLockAdapter
-            FAIR_LOCK -> acquireFairLockAdapter
+            LOCK -> generalLockRedisCoordinator
+            FAIR_LOCK -> fairLockRedisCoordinator
         }
 
-    private fun acquireLock(
+    private fun acquireRedisLock(
         parsedKey: String,
         distributedLock: DistributedLock,
     ) {
@@ -53,39 +69,95 @@ class DistributedLockAspect(
         val waitTime = distributedLock.waitTime
         val waitTimeUnit = distributedLock.waitTimeUnit
         val isAcquired: Boolean =
-            getAcquireLock(lockType = lockType)
+            getRedisLockCoordinator(lockType = lockType)
                 .tryLock(parsedKey, waitTime, waitTimeUnit)
         if (!isAcquired) throw TooManyRequestHasBeenComeSimultaneouslyException()
     }
 
-    private fun getCheckLock(lockType: LockType) =
-        when (lockType) {
-            LOCK -> checkLockAdapter
-            FAIR_LOCK -> checkFairLockAdapter
-        }
-
-    private fun getUnLock(lockType: LockType) =
-        when (lockType) {
-            LOCK -> unlockLockAdapter
-            FAIR_LOCK -> unlockFairLockAdapter
-        }
-
-    private fun releaseLock(
+    private fun releaseLockRedisTemplate(
         parsedKey: String,
         distributedLock: DistributedLock,
     ) {
         val lockType = distributedLock.lockType
-        val checkLockTemplate: CheckLockTemplate =
-            getCheckLock(lockType)
-        val unlockLockTemplate: UnlockLockTemplate =
-            getUnLock(lockType)
+        val lockCoordinator: LockCoordinator = getRedisLockCoordinator(lockType)
 
-        if (!checkLockTemplate.isHeldByCurrentThread(parsedKey)) return
-        unlockLockTemplate.unlock(parsedKey)
+        if (!lockCoordinator.isHeldByCurrentThread(parsedKey)) return
+        lockCoordinator.unlock(parsedKey)
+    }
+
+    // NamedLock으로 변경
+    fun executeSerialization(proceedingJoinPoint: ProceedingJoinPoint): Any? {
+        return runCatching<Any?> { serializableTemplate.execute { proceedingJoinPoint.proceed() } }
+            .getOrElse { exception ->
+                when (exception) {
+                    is DataIntegrityViolationException,
+                    is CannotGetJdbcConnectionException,
+                    is TransientDataAccessException,
+                    -> throw RequestUnprocessableException()
+
+                    else -> throw exception
+                }
+            }
+    }
+
+    @Suppress("ThrowsCount")
+    private fun acquireDatabaseLock(
+        parsedKey: String,
+        distributedLock: DistributedLock,
+    ) {
+        val waitTime = distributedLock.waitTime
+        val waitTimeUnit = distributedLock.waitTimeUnit
+
+        val isAcquired =
+            runCatching<Boolean> {
+                namedLockCoordinator.tryLock(
+                    parsedKey,
+                    waitTime,
+                    waitTimeUnit,
+                )
+            }.getOrElse { exception ->
+                when (exception) {
+                    is DataIntegrityViolationException,
+                    is CannotGetJdbcConnectionException,
+                    is TransientDataAccessException,
+                    -> throw RequestUnprocessableException()
+
+                    else -> throw exception
+                }
+            }
+
+        if (!isAcquired) throw TooManyRequestHasBeenComeSimultaneouslyException()
+    }
+
+    private fun releaseDatabaseLock(parsedKey: String) {
+        namedLockCoordinator.unlock(parsedKey)
+    }
+
+    fun executeNamedLock(
+        parsedKey: String,
+        proceedingJoinPoint: ProceedingJoinPoint,
+        distributedLock: DistributedLock,
+    ): Any? {
+        var doRelease = true
+        try {
+            acquireDatabaseLock(parsedKey, distributedLock)
+            return proceedingJoinPoint.proceed()
+        } catch (e: TooManyRequestHasBeenComeSimultaneouslyException) {
+            doRelease = false
+            throw e
+        } finally {
+            if (doRelease) {
+                releaseDatabaseLock(parsedKey)
+            }
+        }
     }
 
     @Around("@annotation(com.reservation.config.annotations.DistributedLock)")
-    @Suppress("UseCheckOrError", "RethrowCaughtException")
+    @Suppress(
+        "UseCheckOrError",
+        "RethrowCaughtException",
+        "SwallowedException",
+    )
     fun executeDistributedLockAction(proceedingJoinPoint: ProceedingJoinPoint): Any? {
         val method = (proceedingJoinPoint.signature as MethodSignature).method
         val targetClass = proceedingJoinPoint.target::class.java
@@ -97,15 +169,21 @@ class DistributedLockAspect(
                     "@DistributedLock annotation not found on method ${method.name}",
                 )
         val parsedKey = parseKey(proceedingJoinPoint, distributedLock)
-        var doRelease = true
+        var doRelease = false
+        var isRedisAccessible = true
         try {
-            acquireLock(parsedKey, distributedLock)
+            acquireRedisLock(parsedKey, distributedLock)
+            doRelease = true
             return proceedingJoinPoint.proceed()
         } catch (e: TooManyRequestHasBeenComeSimultaneouslyException) {
             doRelease = false
             throw e
+        } catch (e: RedisException) {
+            log.warn(" Unable to connect to Redis")
+            isRedisAccessible = false
+            return executeNamedLock(parsedKey, proceedingJoinPoint, distributedLock)
         } finally {
-            if (doRelease) releaseLock(parsedKey, distributedLock)
+            if (isRedisAccessible && doRelease) releaseLockRedisTemplate(parsedKey, distributedLock)
         }
     }
 }

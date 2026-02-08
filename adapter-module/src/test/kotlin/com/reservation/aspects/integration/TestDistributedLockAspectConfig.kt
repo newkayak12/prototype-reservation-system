@@ -3,12 +3,14 @@ package com.reservation.aspects.integration
 import com.reservation.redis.redisson.lock.AcquireLockTemplate
 import com.reservation.redis.redisson.lock.CheckLockTemplate
 import com.reservation.redis.redisson.lock.UnlockLockTemplate
-import com.reservation.redis.redisson.lock.fair.template.adapter.AcquireFairLockAdapter
-import com.reservation.redis.redisson.lock.fair.template.adapter.CheckFairLockAdapter
-import com.reservation.redis.redisson.lock.fair.template.adapter.UnlockFairLockAdapter
+import com.reservation.redis.redisson.lock.fair.adapter.AcquireFairLockAdapter
+import com.reservation.redis.redisson.lock.fair.adapter.CheckFairLockAdapter
+import com.reservation.redis.redisson.lock.fair.adapter.UnlockFairLockAdapter
 import com.reservation.redis.redisson.lock.general.adapter.AcquireLockAdapter
 import com.reservation.redis.redisson.lock.general.adapter.CheckLockAdapter
 import com.reservation.redis.redisson.lock.general.adapter.UnlockLockAdapter
+import com.reservation.redis.redisson.lock.named.adapter.AcquireNamedLockAdapter
+import com.reservation.redis.redisson.lock.named.adapter.UnlockNamedLockAdapter
 import io.mockk.mockk
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
@@ -32,4 +34,10 @@ class TestDistributedLockAspectConfig {
 
     @Bean
     fun unlockLockAdapter(): UnlockLockTemplate = mockk<UnlockLockAdapter>()
+
+    @Bean
+    fun acquireNamedLockAdapter() = mockk<AcquireNamedLockAdapter>()
+
+    @Bean
+    fun unlockNamedLockAdapter() = mockk<UnlockNamedLockAdapter>()
 }
