@@ -152,9 +152,6 @@ class DistributedLockAspect(
         }
     }
 
-    private fun validateDatabaseLock(distributedLock: DistributedLock) {
-    }
-
     @Around("@annotation(com.reservation.config.annotations.DistributedLock)")
     @Suppress(
         "UseCheckOrError",
