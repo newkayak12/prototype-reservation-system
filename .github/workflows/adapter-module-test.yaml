@@ -5,13 +5,8 @@ on:
 
 jobs:
   adapter-module:
-    runs-on: ubuntu-latest
 
-    services:
-      docker:
-        image: docker:dind
-        options: --privileged
-
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout
