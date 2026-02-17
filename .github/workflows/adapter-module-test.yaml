@@ -27,6 +27,11 @@ jobs:
 #          restore-keys: |
 #            ${{ runner.os }}-gradle-v3-
 
+      - name: Setup Docker
+        run: |
+          sudo systemctl restart docker
+          docker version
+          echo "Docker API Version: $(docker version --format '{{.Server.APIVersion}}')"
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
       - name: Run tests and coverage
