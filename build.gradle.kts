@@ -27,6 +27,13 @@ kotlin {
     }
 }
 
+// Force Docker Java API version for Testcontainers compatibility
+configurations.all {
+    resolutionStrategy {
+        force("com.github.docker-java:docker-java-api:3.4.0")
+    }
+}
+
 spotless {
     kotlin {
         target("**/*.kt")
