@@ -2,6 +2,7 @@ package com.reservation.kafka.config
 
 import com.reservation.event.abstractEvent.AbstractEvent
 import io.confluent.parallelconsumer.ParallelConsumerOptions
+import io.confluent.parallelconsumer.ParallelConsumerOptions.ParallelConsumerOptionsBuilder
 import io.confluent.parallelconsumer.ParallelStreamProcessor
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -13,6 +14,7 @@ import org.springframework.kafka.annotation.EnableKafka
 import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.core.ProducerFactory
+import java.time.Duration
 
 @Configuration
 @EnableKafka
@@ -32,6 +34,7 @@ class KafkaConfig(
         const val MAX_POLL_RECORDS = "max.poll.records"
         const val FETCH_MIN_BYTES = "fetch.min.bytes"
         const val FETCH_MAX_WAIT_MS = "fetch.max.wait.ms"
+        const val TEN_SECONDS = 10L
     }
 
     private fun createProducerConfig(kafkaProperties: KafkaProperties): Map<String, Any> {
@@ -129,23 +132,27 @@ class KafkaConfig(
         return configMap
     }
 
-    @Bean
-    fun parallelConsumerOptions(
+    private fun createParallelConsumerOptions(
         kafkaProperties: KafkaProperties,
-    ): ParallelConsumerOptions<String, Any> {
+    ): ParallelConsumerOptionsBuilder<String, String> {
         val configProps = createConsumerConfig(kafkaProperties)
-        val kafkaConsumer = KafkaConsumer<String, Any>(configProps)
+        val kafkaConsumer = KafkaConsumer<String, String>(configProps)
 
-        return ParallelConsumerOptions.builder<String, Any>()
+        return ParallelConsumerOptions.builder<String, String>()
             .ordering(parallelConsumerProperties.processingOrder) // KEY, PARTITION, UNORDERED
             .maxConcurrency(parallelConsumerProperties.maxConcurrency)
             .consumer(kafkaConsumer) // KafkaConsumer 직접 전달
-            .build()
     }
 
     @Bean
-    fun parallelEasyConsumer(
-        options: ParallelConsumerOptions<String, Any>,
-    ): ParallelStreamProcessor<String, Any> =
-        ParallelStreamProcessor.createEosStreamProcessor(options)
+    fun parallelConsumer(
+        kafkaProperties: KafkaProperties,
+    ): ParallelStreamProcessor<String, String> {
+        val consumer =
+            createParallelConsumerOptions(kafkaProperties)
+                .shutdownTimeout(Duration.ofSeconds(TEN_SECONDS))
+                .build()
+
+        return ParallelStreamProcessor.createEosStreamProcessor(consumer)
+    }
 }
