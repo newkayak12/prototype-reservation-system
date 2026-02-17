@@ -18,7 +18,7 @@ kotest = "5.9.0"
 mockk = "1.13.10"
 springmockk = "4.0.2"
 assertj = "3.24.2"
-testcontainers = "1.20.4"
+testcontainers = "2.0.3"
 fixtureMonkey = "1.1.11"
 
 # Code Quality
