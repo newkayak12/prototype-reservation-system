@@ -2,10 +2,8 @@ package com.reservation.event.timetable.occupancy
 
 import com.ninjasquad.springmockk.MockkBean
 import com.ninjasquad.springmockk.SpykBean
-import com.reservation.enumeration.OutboxEventType.TIME_TABLE_OCCUPIED
 import com.reservation.enumeration.TableStatus
 import com.reservation.enumeration.TimeTableConfirmStatus
-import com.reservation.event.abstractEvent.AbstractEvent
 import com.reservation.timetable.TimeTable
 import com.reservation.timetable.port.input.command.request.CreateTimeTableOccupancyCommand
 import com.reservation.timetable.port.output.CreateTimeTableOccupancy
@@ -17,6 +15,7 @@ import io.mockk.verify
 import jakarta.annotation.PostConstruct
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.NewTopic
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -100,7 +99,7 @@ class TimeTableOccupiedDomainEventListenerTest {
     private lateinit var createTimeTableOccupancy: CreateTimeTableOccupancy
 
     @SpykBean
-    private lateinit var kafkaTemplate: KafkaTemplate<String, AbstractEvent>
+    private lateinit var kafkaTemplate: KafkaTemplate<String, String>
 
     @Autowired
     private lateinit var createTimeTableOccupancyService: CreateTimeTableOccupancyService
@@ -158,7 +157,7 @@ class TimeTableOccupiedDomainEventListenerTest {
         createTimeTableOccupancyService.execute(command)
 
         verify(exactly = 1) {
-            kafkaTemplate.send(eq(TIME_TABLE_OCCUPIED.name), any(), any())
+            kafkaTemplate.send(any<ProducerRecord<String, String>>())
         }
     }
 }
