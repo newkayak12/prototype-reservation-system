@@ -165,7 +165,7 @@ class TimeTableOccupancyKafkaListener(
         )
 
         val dltRecord =
-            ProducerRecord<String, String>(
+            ProducerRecord(
                 "$originalTopic-$DLT_SUFFIX", // topic
                 partitionKey, // key (positional)
                 event, // value (positional)
