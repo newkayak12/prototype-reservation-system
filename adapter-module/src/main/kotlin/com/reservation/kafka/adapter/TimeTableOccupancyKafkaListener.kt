@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.reservation.httpinterface.exceptions.ResponseBodyRequiredException
 import com.reservation.httpinterface.timetable.FindTimeTableOccupancyHttpInterface
 import com.reservation.httpinterface.timetable.response.FindTimeTableOccupancyInternallyHttpInterfaceResponse
+import com.reservation.kafka.config.KafkaHeader.ERROR_REASON_KEY
+import com.reservation.kafka.config.KafkaHeader.FAILED_TIMESTAMP_KEY
 import com.reservation.kafka.config.KafkaHeader.ORIGINAL_TOPIC_KEY
 import com.reservation.kafka.config.KafkaHeader.RETRY_COUNT_KEY
 import com.reservation.kafka.event.TimeTableOccupancyReceivedEvent
@@ -21,6 +23,7 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.header.Headers
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
+import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -67,8 +70,14 @@ class TimeTableOccupancyKafkaListener(
             val headers = record.headers()
 
             val retryCount = retryCount(headers)
-            if (retryCount > RETRY_ATTEMPTS) {
-                onHandleDlt(TOPIC, key, "Retry-count exceeded ($retryCount).", payloadString)
+            if (retryCount + ADD_RETRY_COUNT >= RETRY_ATTEMPTS) {
+                onHandleDlt(
+                    originalTopic = TOPIC,
+                    partitionKey = key,
+                    headers = headers,
+                    error = "Retry-count exceeded ($retryCount).",
+                    event = payloadString,
+                )
                 return@poll
             }
 
@@ -142,13 +151,12 @@ class TimeTableOccupancyKafkaListener(
         }
 
     private fun originalTopic(header: Headers) =
-        header.lastHeader(ORIGINAL_TOPIC_KEY)
-            ?.let { String(it.value()) }
+        header.lastHeader(ORIGINAL_TOPIC_KEY)?.let { String(it.value(), StandardCharsets.UTF_8) }
             ?: TOPIC
 
     private fun retryCount(header: Headers) =
         header.lastHeader(RETRY_COUNT_KEY)
-            ?.let { String(it.value()).toInt() }
+            ?.let { String(it.value(), StandardCharsets.UTF_8).toIntOrNull() }
             ?: 0
 
     private fun retry(
@@ -167,10 +175,11 @@ class TimeTableOccupancyKafkaListener(
                 payloadString,
             )
 
-        record.headers().add(RETRY_COUNT_KEY, retryCount.toString().toByteArray(Charsets.UTF_8))
-        record.headers().add(ORIGINAL_TOPIC_KEY, originalTopic.toByteArray(Charsets.UTF_8))
+        record.headers()
+            .add(RETRY_COUNT_KEY, retryCount.toString().toByteArray(StandardCharsets.UTF_8))
+        record.headers().add(ORIGINAL_TOPIC_KEY, originalTopic.toByteArray(StandardCharsets.UTF_8))
 
-        kafkaTemplate.send(record)
+        kafkaTemplate.send(record).thenAccept { log.info("Result: $it") }
     }
 
     private fun createReservation(body: FindTimeTableOccupancyInternallyHttpInterfaceResponse?) {
@@ -182,7 +191,7 @@ class TimeTableOccupancyKafkaListener(
         createReservationUseCase.execute(command)
     }
 
-    private fun onEventHandler(event: TimeTableOccupancyReceivedEvent) {
+    fun onEventHandler(event: TimeTableOccupancyReceivedEvent) {
         val timeTableId = event.timeTableId
         val timeTableOccupancyId = event.timeTableOccupancyId
 
@@ -199,9 +208,10 @@ class TimeTableOccupancyKafkaListener(
         createReservation(responseEntity.body)
     }
 
-    private fun onHandleDlt(
+    fun onHandleDlt(
         originalTopic: String,
         partitionKey: String,
+        headers: Headers,
         error: String,
         event: String,
     ) {
@@ -222,9 +232,9 @@ class TimeTableOccupancyKafkaListener(
                 partitionKey, // key (positional)
                 event, // value (positional)
             ).apply {
-                headers().add("original-topic", originalTopic.toByteArray())
-                headers().add("error-reason", error.toByteArray())
-                headers().add("failed-timestamp", Instant.now().toString().toByteArray())
+                headers().add(ORIGINAL_TOPIC_KEY, headers.lastHeader(ORIGINAL_TOPIC_KEY).value())
+                headers().add(ERROR_REASON_KEY, error.toByteArray())
+                headers().add(FAILED_TIMESTAMP_KEY, Instant.now().toString().toByteArray())
             }
 
         runCatching {
