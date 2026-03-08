@@ -17,6 +17,7 @@ import jakarta.annotation.PreDestroy
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
+import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
@@ -87,7 +88,7 @@ class TimeTableOccupancyKafkaListener(
 
     @PreDestroy
     fun destroy() {
-        parallelEventConsumer.close()
+        parallelEventConsumer.closeDrainFirst(Duration.ofSeconds(30))
     }
 
     private fun isExists(
