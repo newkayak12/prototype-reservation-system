@@ -81,7 +81,7 @@ class TimeTableOccupancyKafkaListener(
                 return@poll
             }
 
-            val payload: TimeTableOccupancyReceivedEvent? = parseJson(key, payloadString)
+            val payload: TimeTableOccupancyReceivedEvent? = parseJson(key, headers, payloadString)
             if (payload == null) return@poll
 
             runCatching { onEventHandler(payload) }
@@ -137,6 +137,7 @@ class TimeTableOccupancyKafkaListener(
 
     private fun parseJson(
         key: String,
+        header: Headers,
         payloadString: String,
     ): TimeTableOccupancyReceivedEvent? =
         try {
@@ -146,7 +147,7 @@ class TimeTableOccupancyKafkaListener(
             )
         } catch (e: JsonProcessingException) {
             log.error("INVALID JSON", e)
-            onHandleDlt(TOPIC, key, e.toString(), payloadString)
+            onHandleDlt(TOPIC, key, header, e.toString(), payloadString)
             null
         }
 
