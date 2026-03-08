@@ -1,6 +1,5 @@
 package com.reservation.kafka.config
 
-import com.reservation.event.abstractEvent.AbstractEvent
 import io.confluent.parallelconsumer.ParallelConsumerOptions
 import io.confluent.parallelconsumer.ParallelConsumerOptions.ParallelConsumerOptionsBuilder
 import io.confluent.parallelconsumer.ParallelStreamProcessor
@@ -81,17 +80,15 @@ class KafkaConfig(
     }
 
     @Bean
-    fun kafkaProducerFactory(
-        kafkaProperties: KafkaProperties,
-    ): ProducerFactory<String, AbstractEvent> {
+    fun kafkaProducerFactory(kafkaProperties: KafkaProperties): ProducerFactory<String, String> {
         val configProps = createProducerConfig(kafkaProperties)
         return DefaultKafkaProducerFactory(configProps)
     }
 
     @Bean
     fun kafkaTemplate(
-        producerFactory: ProducerFactory<String, AbstractEvent>,
-    ): KafkaTemplate<String, AbstractEvent> = KafkaTemplate(producerFactory)
+        producerFactory: ProducerFactory<String, String>,
+    ): KafkaTemplate<String, String> = KafkaTemplate(producerFactory)
 
     private fun createConsumerConfig(kafkaProperties: KafkaProperties): Map<String, Any> {
         val consumerConfig = kafkaProperties.consumer
