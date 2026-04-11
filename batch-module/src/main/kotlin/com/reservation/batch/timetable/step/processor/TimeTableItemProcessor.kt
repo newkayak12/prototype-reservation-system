@@ -3,6 +3,7 @@ package com.reservation.batch.timetable.step.processor
 import com.reservation.batch.annotations.Step
 import com.reservation.batch.timetable.constants.TimeTableBatchConstants.JobParameter
 import com.reservation.batch.timetable.dto.ScheduleWithData
+import com.reservation.enumeration.TableStatus
 import com.reservation.persistence.timetable.entity.TimeTableEntity
 import com.reservation.utilities.logger.loggerFactory
 import org.springframework.batch.core.StepExecution
@@ -75,6 +76,7 @@ class TimeTableItemProcessor : ItemProcessor<ScheduleWithData, List<TimeTableEnt
                             endTime = time.endTime,
                             tableNumber = table.tableNumber,
                             tableSize = table.tableSize,
+                            tableStatus = TableStatus.EMPTY,
                         )
                     }
                 }

@@ -98,6 +98,7 @@ dependencies {
     // Project modules
     implementation(project(":shared-module"))
     implementation(project(":application-module"))
+    implementation(project(":infrastructure-module"))
     compileOnly(project(":core-module"))
     testImplementation(project(":core-module"))
 
