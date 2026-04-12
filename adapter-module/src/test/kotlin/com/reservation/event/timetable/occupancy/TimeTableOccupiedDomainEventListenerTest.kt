@@ -2,6 +2,7 @@ package com.reservation.event.timetable.occupancy
 
 import com.ninjasquad.springmockk.MockkBean
 import com.ninjasquad.springmockk.SpykBean
+import com.reservation.enumeration.OutboxEventType.TIME_TABLE_OCCUPIED
 import com.reservation.enumeration.TableStatus
 import com.reservation.enumeration.TimeTableConfirmStatus
 import com.reservation.timetable.TimeTable
@@ -88,8 +89,6 @@ class TimeTableOccupiedDomainEventListenerTest {
                 kafkaContainer.bootstrapServers
             }
         }
-
-        private const val EVENT = "TIME_TABLE_OCCUPIED"
     }
 
     @MockkBean
@@ -113,7 +112,7 @@ class TimeTableOccupiedDomainEventListenerTest {
             // Kafka 컨테이너 시작 대기
             Thread.sleep(5000)
             val adminClient = AdminClient.create(kafkaAdmin.configurationProperties)
-            val topic = NewTopic("TIME_TABLE_OCCUPIED", 3, 1)
+            val topic = NewTopic(TIME_TABLE_OCCUPIED.name, 3, 1)
             adminClient.createTopics(listOf(topic)).all().get()
             adminClient.close()
         } catch (e: Exception) {
@@ -157,7 +156,11 @@ class TimeTableOccupiedDomainEventListenerTest {
         createTimeTableOccupancyService.execute(command)
 
         verify(exactly = 1) {
-            kafkaTemplate.send(any<ProducerRecord<String, String>>())
+            kafkaTemplate.send(
+                match<ProducerRecord<String, String>> {
+                    it.topic() == TIME_TABLE_OCCUPIED.name
+                },
+            )
         }
     }
 }
