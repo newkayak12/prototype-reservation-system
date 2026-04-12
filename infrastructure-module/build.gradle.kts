@@ -5,11 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.kapt)
 }
 
-tasks.named("bootJar") { enabled = true }
-tasks.named("jar") { enabled = false }
-
-
-
+tasks.named("bootJar") { enabled = false }
+tasks.named("jar") { enabled = true }
 
 kapt {
     arguments {
@@ -36,31 +33,26 @@ tasks.named<Detekt>("detekt") {
     }
 }
 
-val developmentOnly by configurations
 val kapt by configurations
 
 dependencies {
     // Project modules
     implementation(project(":shared-module"))
+    implementation(project(":core-module"))
     implementation(project(":application-module"))
-    implementation(project(":infrastructure-module"))
-    compileOnly(project(":core-module"))
-    testImplementation(project(":core-module"))
 
     // Kotlin basics
     implementation(libs.kotlin.reflect)
     implementation(libs.jackson.kotlin)
 
     // Spring Boot starters
-    implementation(libs.bundles.spring.web)
+    implementation(libs.spring.boot.starter.web)
     implementation(libs.bundles.spring.data)
-
-    // Spring Batch for long-running jobs
-    implementation(libs.spring.boot.starter.batch)
-    implementation(libs.spring.boot.starter.batch.test)
+    implementation(libs.spring.retry)
 
     // Database dependencies
     implementation(libs.bundles.database)
+    implementation(libs.bundles.flyway)
 
     // QueryDSL
     implementation("com.querydsl:querydsl-jpa:${libs.versions.querydsl.get()}:jakarta")
@@ -69,22 +61,10 @@ dependencies {
 
     // Additional dependencies
     implementation(libs.p6spy)
-
-    // Development only
-    developmentOnly(libs.spring.boot.docker.compose)
-
-    // Documentation
-    testImplementation(libs.bundles.testing.containers)
-    testImplementation(libs.bundles.testing.kotest)
-    testImplementation(libs.bundles.testing.mock)
-    testImplementation(libs.spring.boot.starter.test)
-    testImplementation(libs.bundles.testing.fixtures)  // FixtureMonkey includes jqwik
-    testImplementation(project(":test-module"))
 }
 
 allOpen {
     annotation("jakarta.persistence.Entity")
     annotation("jakarta.persistence.MappedSuperclass")
     annotation("jakarta.persistence.Embeddable")
-    annotation("com.reservation.batch.annotations.Step")
 }

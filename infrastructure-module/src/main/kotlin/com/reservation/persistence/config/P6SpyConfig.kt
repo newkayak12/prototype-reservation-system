@@ -1,4 +1,4 @@
-package com.reservation.config.persistence
+package com.reservation.persistence.config
 
 import com.p6spy.engine.common.ConnectionInformation
 import com.p6spy.engine.event.JdbcEventListener
@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration
 import java.sql.SQLException
 
 @Configuration
-internal class P6SpyConfig {
+class P6SpyConfig {
     @Bean
     fun p6SpyEventListener(): P6SpyEventListener = P6SpyEventListener()
 }
@@ -24,7 +24,7 @@ enum class QueryType(val value: String) {
     STATEMENT(Category.STATEMENT.name),
 }
 
-internal class P6SpyEventListener : JdbcEventListener() {
+class P6SpyEventListener : JdbcEventListener() {
     override fun onAfterGetConnection(
         connectionInformation: ConnectionInformation?,
         e: SQLException?,
@@ -33,7 +33,7 @@ internal class P6SpyEventListener : JdbcEventListener() {
     }
 }
 
-internal class P6SpyFormatter : MessageFormattingStrategy {
+class P6SpyFormatter : MessageFormattingStrategy {
     override fun formatMessage(
         connectionId: Int,
         now: String,

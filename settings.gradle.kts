@@ -12,6 +12,7 @@ include(
     "shared-module",
     "core-module",
     "application-module",
+    "infrastructure-module",
     "adapter-module",
     "test-module",
     "batch-module"
