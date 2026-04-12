@@ -113,8 +113,6 @@ dependencies {
 
     // Database dependencies
     implementation(libs.bundles.database)
-    implementation(libs.bundles.flyway)
-
     // QueryDSL
     implementation("com.querydsl:querydsl-jpa:${libs.versions.querydsl.get()}:jakarta")
     kapt("com.querydsl:querydsl-apt:${libs.versions.querydsl.get()}:jakarta")
