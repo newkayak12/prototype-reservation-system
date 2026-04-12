@@ -6,7 +6,7 @@ security:
   jwt:
     properties:
       expire-time: 300000
-      secret: af869782f3abde439def4230f2b05bd701f1ab047ec80808d3b84f1c8923506a
+      secret: af869782f3abde439def4230f2b05bd701f1ab047ec80808d3b84f1c8923506a # NOSONAR
       issuer: HELLO
       version: v1
     allowed:
