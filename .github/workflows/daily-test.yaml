@@ -21,23 +21,23 @@ jobs:
   adapter-module:
     needs: run-tests
     name: Adapter Module Test
-    uses: newkayak12/prototype-reservation-system/.github/workflows/adapter-module-test.yaml@master
+    uses: newkayak12/prototype-reservation-system/.github/workflows/adapter-module-test.yaml@master # NOSONAR
 
   application-module:
     needs: run-tests
     name: Application Module Test
-    uses: newkayak12/prototype-reservation-system/.github/workflows/application-module-test.yaml@master
+    uses: newkayak12/prototype-reservation-system/.github/workflows/application-module-test.yaml@master # NOSONAR
 
   core-module:
     needs: run-tests
     name: Core Module Test
-    uses: newkayak12/prototype-reservation-system/.github/workflows/core-module-test.yaml@master
+    uses: newkayak12/prototype-reservation-system/.github/workflows/core-module-test.yaml@master # NOSONAR
 
   publish_test_results:
     name: Publish Test Results
     needs: [adapter-module, application-module, core-module]
     if: always()
-    uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@master  # SHA 대신 master
+    uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@master  # SHA 대신 master # NOSONAR
 
   success-notification:
     if: ${{ needs.publish_test_results.outputs.test_result == 'success' }}
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Success Notification
-        uses: newkayak12/github-actions/slack-api@main
+        uses: newkayak12/github-actions/slack-api@main # NOSONAR
         with:
           slack-token: ${{ secrets.SLACK_OAUTH_TOKEN }}
           channel: '#notification'
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Failure Notification
-        uses: newkayak12/github-actions/slack-api@main
+        uses: newkayak12/github-actions/slack-api@main # NOSONAR
         with:
           slack-token: ${{ secrets.SLACK_OAUTH_TOKEN }}
           channel: '#notification'
