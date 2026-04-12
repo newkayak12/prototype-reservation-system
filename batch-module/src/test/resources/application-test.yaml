@@ -20,7 +20,7 @@ spring:
 #      driver-class-name: com.mysql.cj.jdbc.Driver
       url: jdbc:mysql://localhost:3306/prototype_reservation?serverTimezone=UTC&characterEncoding=UTF-8
       username: temporary
-      password: temporary
+      password: temporary # NOSONAR
     open-in-view: false
     hibernate:
       naming:
