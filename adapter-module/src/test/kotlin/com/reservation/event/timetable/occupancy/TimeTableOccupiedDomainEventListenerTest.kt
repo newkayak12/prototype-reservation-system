@@ -5,7 +5,6 @@ import com.ninjasquad.springmockk.SpykBean
 import com.reservation.enumeration.OutboxEventType.TIME_TABLE_OCCUPIED
 import com.reservation.enumeration.TableStatus
 import com.reservation.enumeration.TimeTableConfirmStatus
-import com.reservation.event.abstractEvent.AbstractEvent
 import com.reservation.timetable.TimeTable
 import com.reservation.timetable.port.input.command.request.CreateTimeTableOccupancyCommand
 import com.reservation.timetable.port.output.CreateTimeTableOccupancy
@@ -17,6 +16,7 @@ import io.mockk.verify
 import jakarta.annotation.PostConstruct
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.NewTopic
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -89,8 +89,6 @@ class TimeTableOccupiedDomainEventListenerTest {
                 kafkaContainer.bootstrapServers
             }
         }
-
-        private const val EVENT = "TIME_TABLE_OCCUPIED"
     }
 
     @MockkBean
@@ -100,7 +98,7 @@ class TimeTableOccupiedDomainEventListenerTest {
     private lateinit var createTimeTableOccupancy: CreateTimeTableOccupancy
 
     @SpykBean
-    private lateinit var kafkaTemplate: KafkaTemplate<String, AbstractEvent>
+    private lateinit var kafkaTemplate: KafkaTemplate<String, String>
 
     @Autowired
     private lateinit var createTimeTableOccupancyService: CreateTimeTableOccupancyService
@@ -114,7 +112,7 @@ class TimeTableOccupiedDomainEventListenerTest {
             // Kafka 컨테이너 시작 대기
             Thread.sleep(5000)
             val adminClient = AdminClient.create(kafkaAdmin.configurationProperties)
-            val topic = NewTopic("TIME_TABLE_OCCUPIED", 3, 1)
+            val topic = NewTopic(TIME_TABLE_OCCUPIED.name, 3, 1)
             adminClient.createTopics(listOf(topic)).all().get()
             adminClient.close()
         } catch (e: Exception) {
@@ -158,7 +156,11 @@ class TimeTableOccupiedDomainEventListenerTest {
         createTimeTableOccupancyService.execute(command)
 
         verify(exactly = 1) {
-            kafkaTemplate.send(eq(TIME_TABLE_OCCUPIED.name), any(), any())
+            kafkaTemplate.send(
+                match<ProducerRecord<String, String>> {
+                    it.topic() == TIME_TABLE_OCCUPIED.name
+                },
+            )
         }
     }
 }

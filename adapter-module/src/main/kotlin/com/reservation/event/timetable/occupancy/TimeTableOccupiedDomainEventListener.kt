@@ -1,12 +1,16 @@
 package com.reservation.event.timetable.occupancy
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.reservation.common.exceptions.NoSuchPersistedElementException
 import com.reservation.enumeration.OutboxEventType
 import com.reservation.enumeration.OutboxEventType.TIME_TABLE_OCCUPIED
 import com.reservation.event.abstractEvent.AbstractEvent
+import com.reservation.kafka.config.KafkaHeader.ORIGINAL_TOPIC_KEY
+import com.reservation.kafka.config.KafkaHeader.RETRY_COUNT_KEY
 import com.reservation.persistence.outbox.entity.OutBox
 import com.reservation.persistence.outbox.repository.OutboxRepository
 import com.reservation.timetable.event.TimeTableOccupiedDomainEvent
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
@@ -20,9 +24,10 @@ import java.util.concurrent.TimeUnit.SECONDS
 
 @Component
 class TimeTableOccupiedDomainEventListener(
-    private val kafkaTemplate: KafkaTemplate<String, AbstractEvent>,
+    private val kafkaTemplate: KafkaTemplate<String, String>,
     private val repository: OutboxRepository,
     private val applicationEventPublisher: ApplicationEventPublisher,
+    private val objectMapper: ObjectMapper,
 ) {
     companion object {
         const val TIME_TABLE_OCCUPIED_EVENT_VERSION = 1.0
@@ -60,7 +65,17 @@ class TimeTableOccupiedDomainEventListener(
                 .orElseThrow { throw NoSuchPersistedElementException() }
 
         runCatching {
-            kafkaTemplate.send(kafkaTopic, kafkaKey, createdEvent)
+            val record =
+                ProducerRecord(
+                    kafkaTopic,
+                    kafkaKey,
+                    objectMapper.writeValueAsString(createdEvent),
+                )
+
+            record.headers().add(RETRY_COUNT_KEY, "0".toByteArray(Charsets.UTF_8))
+            record.headers().add(ORIGINAL_TOPIC_KEY, kafkaTopic.toByteArray(Charsets.UTF_8))
+
+            kafkaTemplate.send(record)
                 .get(KAFKA_EVENT_PUBLISH_TIME_OUT, SECONDS)
         }
             .onSuccess { outbox.succeeded() }
