@@ -10,5 +10,5 @@ spring:
         hikari:
             driver-class-name: com.p6spy.engine.spy.P6SpyDriver
             username: temporary
-            password: temporary
+            password: temporary # NOSONAR
             jdbc-url: jdbc:mysql://localhost:3306/prototype_reservation?serverTimezone=UTC&characterEncoding=UTF-8

@@ -5,15 +5,11 @@ on:
     - cron: '0 */6 * * *'  # UTC 15:00 = KST 00:00
   workflow_dispatch:
 
-permissions:
-  id-token: write
-  contents: read
-  checks: write
-  pull-requests: write
-
 jobs:
   run-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Trigger tests
         run: echo "Run Daily Tests"
@@ -21,28 +17,39 @@ jobs:
   adapter-module:
     needs: run-tests
     name: Adapter Module Test
+    permissions:
+      contents: read
     uses: newkayak12/prototype-reservation-system/.github/workflows/adapter-module-test.yaml@master # NOSONAR
 
   application-module:
     needs: run-tests
     name: Application Module Test
+    permissions:
+      contents: read
     uses: newkayak12/prototype-reservation-system/.github/workflows/application-module-test.yaml@master # NOSONAR
 
   core-module:
     needs: run-tests
     name: Core Module Test
+    permissions:
+      contents: read
     uses: newkayak12/prototype-reservation-system/.github/workflows/core-module-test.yaml@master # NOSONAR
 
   publish_test_results:
     name: Publish Test Results
     needs: [adapter-module, application-module, core-module]
     if: always()
+    permissions:
+      checks: write
+      pull-requests: write
     uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@master  # SHA 대신 master # NOSONAR
 
   success-notification:
     if: ${{ needs.publish_test_results.outputs.test_result == 'success' }}
     needs: [publish_test_results]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Success Notification
         uses: newkayak12/github-actions/slack-api@main # NOSONAR
@@ -57,6 +64,8 @@ jobs:
     if: ${{ always() && needs.publish_test_results.outputs.test_result != 'success' }}
     needs: [publish_test_results]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Failure Notification
         uses: newkayak12/github-actions/slack-api@main # NOSONAR

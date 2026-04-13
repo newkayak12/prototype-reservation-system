@@ -1,7 +1,7 @@
 spring:
   flyway:
     user: temporary
-    password: temporary
+    password: temporary # NOSONAR
     driver-class-name: com.mysql.cj.jdbc.Driver
     table: flyway_version_control
     baseline-on-migrate: true

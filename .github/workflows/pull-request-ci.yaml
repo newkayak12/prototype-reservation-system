@@ -6,7 +6,6 @@ on:
       - main
 
 permissions:
-  id-token: write
   contents: read
   checks: write  # ✅ Check Run 생성을 위해 반드시 필요
   pull-requests: write
@@ -19,14 +18,20 @@ concurrency:
 jobs:
   adapter-module:
     name: Adapter Module Test
+    permissions:
+      contents: read
     uses: newkayak12/prototype-reservation-system/.github/workflows/adapter-module-test.yaml@658699f588c33d5c8d037c722352c8221568fe94
 
   application-module:
     name: Application Module Test
+    permissions:
+      contents: read
     uses: newkayak12/prototype-reservation-system/.github/workflows/application-module-test.yaml@658699f588c33d5c8d037c722352c8221568fe94
 
   core-module:
     name: Core Module Test
+    permissions:
+      contents: read
     uses: newkayak12/prototype-reservation-system/.github/workflows/core-module-test.yaml@658699f588c33d5c8d037c722352c8221568fe94
 
   publish_test_results:
@@ -36,6 +41,9 @@ jobs:
       - application-module
       - core-module
     if: always()
+    permissions:
+      checks: write  # ✅ Check Run 생성을 위해 반드시 필요
+      pull-requests: write
     uses: newkayak12/prototype-reservation-system/.github/workflows/publish-test-result.yaml@658699f588c33d5c8d037c722352c8221568fe94
 
   upload_to_sonar_cloud:
@@ -45,6 +53,8 @@ jobs:
       - application-module
       - core-module
     if: success()
+    permissions:
+      contents: read
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_PROJECT_KEY: ${{secrets.SONAR_PROJECT_KEY}}
@@ -58,6 +68,8 @@ jobs:
       - application-module
       - core-module
     if: success()
+    permissions:
+      contents: read
     uses: newkayak12/prototype-reservation-system/.github/workflows/upload-codecov.yaml@658699f588c33d5c8d037c722352c8221568fe94
 
   build:
@@ -67,4 +79,6 @@ jobs:
       - application-module
       - core-module
     if: success()
+    permissions:
+      contents: read
     uses: newkayak12/prototype-reservation-system/.github/workflows/build.yaml@658699f588c33d5c8d037c722352c8221568fe94
