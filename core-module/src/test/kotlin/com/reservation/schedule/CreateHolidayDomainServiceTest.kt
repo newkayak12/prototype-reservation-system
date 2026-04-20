@@ -37,7 +37,7 @@ class CreateHolidayDomainServiceTest : BehaviorSpec(
             val schedule = giveMeSchedule()
             val form =
                 giveMePerfectCase().copy(
-                    restaurantId = Arbitraries.strings().ofMinLength(10).sample(),
+                    restaurantId = Arbitraries.strings().alpha().ofMinLength(10).sample(),
                 )
 
             When("휴일 생성 요청을 보내면 ") {
