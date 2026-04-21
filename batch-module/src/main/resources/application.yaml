@@ -13,5 +13,7 @@ spring:
             - classpath:persistence/datasource/index.yaml
             - classpath:docker/index.yaml
             - classpath:common.yaml
+    flyway:
+        enabled: false
 
 
