@@ -438,7 +438,7 @@ class ChangeRestaurantServiceTest : BehaviorSpec(
          */
         Given("올바른 요청과 태그가 들어온다.") {
             val pureMonkey = FixtureMonkeyFactory.giveMePureMonkey().build()
-            val categories = pureMonkey.giveMe<Long>(7)
+            val categories = pureMonkey.giveMe<Long>(20).distinct().take(7)
 
             val request = perfectCase().copy(tags = categories)
 

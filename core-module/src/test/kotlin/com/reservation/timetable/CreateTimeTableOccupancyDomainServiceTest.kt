@@ -41,7 +41,7 @@ class CreateTimeTableOccupancyDomainServiceTest : BehaviorSpec(
         }
 
         Given("UUID 형식이 아닌 userId가 주어졌을 때") {
-            val emptyUserId = Arbitraries.strings().alpha().ofLength(128).sample()
+            val emptyUserId = "not-a-valid-uuid-string"
             val timetable = giveMePerfectCase(UuidGenerator.generate())
 
             When("예약 점유 생성을 요청하면") {
