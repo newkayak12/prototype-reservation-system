@@ -16,8 +16,9 @@ import org.testcontainers.utility.DockerImageName
 @Testcontainers
 class ReservationApplicationTest {
     companion object {
+        @JvmField
         @Container
-        private val mysqlContainer =
+        val mysqlContainer =
             MySQLContainer("mysql:8.0")
                 .apply {
                     withDatabaseName("prototype_reservation")
@@ -26,13 +27,15 @@ class ReservationApplicationTest {
                     withInitScript("docker-entrypoint-initdb.d/init.sql")
                 }
 
+        @JvmField
         @Container
-        private val redisContainer =
+        val redisContainer =
             GenericContainer(DockerImageName.parse("redis:7.0"))
                 .withExposedPorts(6379)
 
+        @JvmField
         @Container
-        private val kafkaContainer =
+        val kafkaContainer =
             GenericContainer("apache/kafka:latest")
                 .withExposedPorts(9092)
 

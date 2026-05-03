@@ -16,8 +16,9 @@ import org.testcontainers.utility.DockerImageName
 @Testcontainers
 class ReservationBatchApplicationTest {
     companion object {
+        @JvmField
         @Container
-        private val mysqlContainer =
+        val mysqlContainer =
             MySQLContainer("mysql:8.0")
                 .apply {
                     withDatabaseName("prototype_reservation")
@@ -26,8 +27,9 @@ class ReservationBatchApplicationTest {
                     withInitScript("docker-entrypoint-initdb.d/init.sql")
                 }
 
+        @JvmField
         @Container
-        private val redisContainer =
+        val redisContainer =
             GenericContainer(DockerImageName.parse("redis:7.0")).withExposedPorts(6379)
 
         @JvmStatic
@@ -36,6 +38,9 @@ class ReservationBatchApplicationTest {
             registry.add("spring.datasource.url") { mysqlContainer.jdbcUrl }
             registry.add("spring.datasource.username") { mysqlContainer.username }
             registry.add("spring.datasource.password") { mysqlContainer.password }
+
+            registry.add("spring.data.redis.host") { redisContainer.host }
+            registry.add("spring.data.redis.port") { redisContainer.getMappedPort(6379) }
         }
     }
 
