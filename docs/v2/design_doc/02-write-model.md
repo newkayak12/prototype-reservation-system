@@ -74,7 +74,7 @@ sequenceDiagram
 ```
 
 - **Zero Payload** 원칙 계승([[07.reservation]]): 메시지는 식별자 중심, 컨슈머가 최신 상태/이벤트 조회. 스키마 진화·DLQ 재처리 안전.
-- **eventVersion** 보유(`AbstractEvent`)로 이벤트 진화 대응.
+- **eventVersion** 보유(`AbstractEvent`)로 이벤트 진화 대응. 호환성 규칙·읽기 시 업캐스팅 전략은 [[10.event-schema-evolution]].
 - **재처리**: 스케줄러 기반 미발행 Outbox 재시도, Consumer 실패는 PoisonMessage 별도 관리([[07.reservation]] 계승).
 
 ## 도메인 이벤트 카탈로그 (TBD)

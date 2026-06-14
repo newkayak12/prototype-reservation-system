@@ -23,11 +23,10 @@ graph LR
     OB -->|relay| K[(Kafka)]
     K --> PRJ
     subgraph qry [query-module · layered]
-        PRJ[projector] --> RM[(read model)]
+        PRJ[projector] --> RM[(read model<br/>query DB)]
         RM --> QS[query service] --> QC[query controller]
     end
     actor -->|query| QC
-    QC -.->|프로젝션 미적용 저빈도| REP[(read replica)]
 ```
 
 ## 문서 인덱스
