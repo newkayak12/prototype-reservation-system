@@ -3,9 +3,9 @@
 - **상위 결정**: [[04.read-model-projection-and-replica]]
 - **개요**: [[00-design-overview]]
 
-> query 측은 layered이며, command의 도메인/스키마를 모른다. 읽기 소스는 **이벤트 프로젝션 read model**이 기본, 저빈도는 **read replica**다.
+> query 측은 layered이며, command의 도메인/스키마를 모른다. 읽기 소스는 **이벤트 프로젝션 read model**이 기본, 저빈도 lookup은 **경량 프로젝션/published 테이블**이다. 둘 다 **query 전용 MySQL**(projector가 Kafka 이벤트로 채움)에 있고, query-module은 그 DB에 정적 바인딩된다 — command DB와 물리 분리, 다리는 Kafka(라우팅 코드 없음 — [[13.db-hosting-and-read-write-topology]]).
 
-> ⚠️ 본 문서는 **목표 아키텍처**다. 현재(V1) 구현은 별도 read model 없이 쓰기 테이블을 공유 조회한다([[01-current-state]] §4). 프로젝션/replica 전환은 [[06.strangler-migration]] 순서대로 단계적으로 도입한다.
+> ⚠️ 본 문서는 **목표 아키텍처**다. 현재(V1) 구현은 별도 read model 없이 쓰기 테이블을 공유 조회한다([[01-current-state]] §4). 프로젝션 전환은 [[06.strangler-migration]] 순서대로 단계적으로 도입한다.
 
 ## 원칙: 읽기는 항상 query 측, command는 읽기를 서빙하지 않는다
 
@@ -26,10 +26,10 @@ graph LR
 - 교차 컨텍스트 조인·고읽기·다른 모양의 조회에 사용.
 - **ES 컨텍스트는 최소 1개의 현재상태 프로젝션을 반드시 가진다** — 이벤트 스트림은 임의 조회에 못 쓰므로. ("프로젝션 미적용"은 *추가* 프로젝션을 안 만든다는 뜻이지 읽기 뷰가 0개라는 뜻이 아니다.)
 
-### (나) read replica / 공유 read 스키마 — 저빈도 미프로젝션분
+### (나) 경량 lookup 프로젝션 — 저빈도분
 
-- 프로젝션을 두지 않는 저빈도 lookup(예: `category`, `company`)은 query가 **read replica 또는 공유 read 스키마/뷰**로 조회.
-- **command 테이블 직접 조회는 금지** — 반드시 replica/뷰 경유 (약한 결합만 감수).
+- 교차 조인·고읽기 프로젝션이 필요 없는 저빈도 lookup(예: `category`, `company`)도 query DB 안에 **경량 프로젝션(또는 lookup 컨텍스트가 published한 테이블)**으로 둔다. command DB를 읽지 않는다.
+- **command 테이블 직접 조회는 금지** — query DB는 command DB와 물리 분리라([[13.db-hosting-and-read-write-topology]]) 이 경계가 *물리적으로* 성립한다. (이전 "read replica 경유" 안은 query가 쓰기 스키마에 결합해 폐기.)
 
 ## 컨텍스트별 초기 읽기 전략 (초안)
 
@@ -38,10 +38,10 @@ graph LR
 | `reservation` | 프로젝션 (예약 목록·상세, 식당명 비정규화) | ES — 현재상태 프로젝션 필수 |
 | `restaurant` | 프로젝션 (검색·상세) | ES |
 | `timetable` | 프로젝션 (가용 시간) | ES |
-| `schedule` | 프로젝션 or replica | 변화 빈도 보고 결정 |
-| `user`/`authenticate` | replica (단순 조회) + 일부 프로젝션 | |
-| `menu` | replica | |
-| `category`·`company` | replica (lookup) | (나) |
+| `schedule` | 프로젝션 (또는 경량 lookup) | 변화 빈도 보고 결정 |
+| `user`/`authenticate` | 경량 프로젝션 (단순 조회) + 일부 프로젝션 | |
+| `menu` | 경량 lookup 프로젝션 | |
+| `category`·`company` | 경량 lookup 프로젝션 | (나) |
 
 > YAGNI: 프로젝션은 실제 읽기 요구(교차 조인/성능)가 있는 곳부터. 선제적으로 전 컨텍스트에 깔지 않는다.
 

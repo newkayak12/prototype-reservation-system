@@ -38,7 +38,7 @@ V2의 목표는 세 가지다 — **(1) Read/Write 모델 분리(CQRS), (2) 이�
 | 1 | command / query 를 **top-level Gradle 모듈로 분리**, 도메인은 각 모듈 내 패키지 | [[01.cqrs-command-query-module-split]] |
 | 2 | **선택적 이벤트 소싱** — `reservation`·`timetable`·`restaurant` 만 진짜 ES | [[02.selective-event-sourcing-scope]] |
 | 3 | **command = hexagonal, query = layered** (아키텍처 비대칭) | [[03.command-hexagonal-query-layered]] |
-| 4 | 읽기 = 이벤트 프로젝션 read model, 미적용분은 **read replica/공유 read 스키마** | [[04.read-model-projection-and-replica]] |
+| 4 | 읽기 = 이벤트 프로젝션 read model(query DB), 저빈도는 **경량 lookup 프로젝션**. replica는 HA 전용 | [[04.read-model-projection-and-replica]] · [[13.db-hosting-and-read-write-topology]] |
 | 5 | 이벤트 스토어 = **MySQL 이벤트 테이블 직접 구현** | [[05.event-store-mysql-table]] |
 | 6 | **Strangler 점진 전환** — timetable 선행을 템플릿으로 | [[06.strangler-migration]] |
 
@@ -66,7 +66,7 @@ ES가 아니어도 다른 컨텍스트가 그 변화를 구독해야 하면 **Ou
 **command = hexagonal**(리치 도메인·포트/어댑터), **query = layered**(web→service→repository)로 둔다. 쓰기는 도메인 격리가 값어치를 하고, 읽기는 "DB→DTO"라 hexagonal 격식이 낭비다 — 경제성을 위한 의도된 비대칭이다. query는 도메인 core에 **의존하지 않고**, `contract`의 이벤트로만 read model을 채운다.
 
 ### 5. 읽기 모델 전략 → [[04.read-model-projection-and-replica]]
-top-level 분리의 귀결로 query는 command의 테이블을 직접 못 읽는다(스키마 결합 = 안티패턴). 따라서 읽기는 **이벤트 프로젝션 read model**이 기본이며, 프로젝션을 두지 않는 저빈도 컨텍스트는 **read replica/공유 read 스키마**로 조회한다(replica/뷰 경유만, command 테이블 직접 조회 금지).
+top-level 분리의 귀결로 query는 command의 테이블을 직접 못 읽는다(스키마 결합 = 안티패턴). 따라서 읽기는 **이벤트 프로젝션 read model**(query DB)이 기본이며, 저빈도 컨텍스트도 query DB 안의 **경량 lookup 프로젝션**으로 조회한다(command DB·replica 직접 읽기 금지 — replica는 HA 전용).
 
 ### 6. 이벤트 스토어 구현 → [[05.event-store-mysql-table]]
 ES 컨텍스트의 쓰기 저장소는 **MySQL의 append-only 이벤트 테이블로 직접 구현**한다. 현 규모에서 전용 제품은 운영 복잡도가 과하며, 기존 스냅샷 패턴을 ES 스냅샷 최적화로 재활용한다.
@@ -86,11 +86,10 @@ graph LR
     ES -->|Outbox| K[(Kafka)]
     K -->|구독| P
     subgraph query-module [query-module · layered]
-        P[projector] --> RM[(read model)]
+        P[projector] --> RM[(read model<br/>query DB)]
         RM --> Q[query service]
     end
     actor -->|query| Q
-    Q -.->|프로젝션 미적용| RR[(read replica)]
 ```
 
 - command 측은 ES/비-ES에 따라 이벤트 스토어 또는 상태+Outbox에 쓴다.
