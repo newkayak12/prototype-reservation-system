@@ -18,7 +18,16 @@
 
 ## RFC (rfc/)
 - [[RFC-001-v2-cqrs-and-event-sourcing]] — V2 방향 결정의 서사 (라운드1 — 큰 그림)
-- [[RFC-002-deferred-decisions]] — 라운드2: 미룬 논의 재개 (namespace·lookup·신선도·부수효과·물리분리·Redis failover)
+- [[RFC-002-decision-queue]] — **라운드2 결정 큐 (인덱스)**: 흩어진 미결 ~65건을 주제별 RFC로 쪼개 하나씩 닫는 맵
+- [[RFC-003-read-model-consistency]] — 읽기 모델·일관성 (lookup·신선도·layered 규약)
+- [[RFC-004-messaging-delivery]] — 메시징·전달 보장 (파티션·lag·inbox·CDC·부수효과)
+- [[RFC-005-event-store-schema-evolution]] — 이벤트 스토어·스키마 진화 (스냅샷·보존·콜드·업캐스터)
+- [[RFC-006-pii-security]] — PII·보안 (키 보관처·셰딩 토큰·가드)
+- [[RFC-007-saga-process-manager]] — Saga·프로세스 매니저 (PM 상태·TTL·실패 처리)
+- [[RFC-008-deployment-infra-ops]] — 배포·인프라·운영 (namespace·물리분리·Redis·Strimzi)
+- [[RFC-009-observability]] — 관측성 (전파·메트릭·추적 보존)
+- [[RFC-010-testing-quality-gates]] — 테스트·품질 게이트 (ArchUnit/Konsist·계약·카오스·SLO)
+- [[RFC-011-module-structure-migration]] — 모듈 구조·마이그레이션 확정 (도메인 배치·전환 순서·신규기능)
 
 ## ADR (adr/) — V2 트랙, 01부터
 - [[01.cqrs-command-query-module-split]] — command/query 모듈 분리
