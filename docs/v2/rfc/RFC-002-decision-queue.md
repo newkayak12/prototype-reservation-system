@@ -30,6 +30,20 @@
 
 > 각 RFC 본문이 **그 주제의 미결 전체 + 옵션 + 출처**를 담는다. 이 표는 지도일 뿐.
 
+## 라운드3 — 기존 RFC가 매달아 둔 실 + 아키텍처 결정면 보강
+
+라운드2(003~014)가 V2 결정면의 *큰 틀*을 덮은 뒤, 그 RFC들이 **열어놓고 안 닫은 실**과 **다른 트랙에 있던 항목 중 아키텍처 결정면인 슬라이스**를 별도 RFC로 추가한다.
+
+| # | RFC | 주제 | 어디서 매달려 왔나 | 닫으면 보강할 곳 |
+|---|---|---|---|---|
+| 13 | [[RFC-015-aggregate-concurrency-control]] | 애그리거트 동시성·쓰기 경합 제어 | [[RFC-013-command-query-api-contract]] 낙관 락·[[RFC-007-saga-process-manager]] 임시 점유가 *언급*만 함 | [[05-aggregate-design]] + 신규 ADR |
+| 14 | [[RFC-016-authorization-model]] | V2 인가 모델 | [[RFC-013-command-query-api-contract]]이 인증서버·게이트웨이를 토대로만 두고 *인가 모델*은 미정 | 신규 design_doc + ADR |
+| 15 | [[RFC-017-payment-integration-boundary]] | 결제 연동 경계 (payment ACL) | [[RFC-007-saga-process-manager]]이 `payment` 컨텍스트·결제 이벤트를 새로 끌어들임 | [[06-consistency-and-sagas]] + 신규 design_doc·ADR |
+| 16 | [[RFC-018-disaster-recovery-event-store]] | 재해 복구·이벤트 스토어 복구 의미론 | T-18 DR 런북 중 *아키텍처 복구 의미론* 슬라이스 (운영 수치는 T-18 잔류) | [[08-event-store-lifecycle]] + 신규 ADR |
+| 17 | [[RFC-019-caching-redis-role]] | 캐싱·Redis의 V2 역할 | 호스팅(투명)과 별개로 *투영 위 캐시가 필요한가*는 아키텍처 질문 | [[03-read-model]] + 신규 ADR |
+
+> 라운드3은 **신규 결정면이 아니라 기존 결정의 하류·경계**다. 의도적으로 다른 트랙에 둔 것(이벤트 스토밍·알림·운영 런북·호스팅)은 아래 "RFC에 없는 것"에 그대로 남긴다.
+
 ## RFC에 없는 것 (다른 트랙)
 
 RFC-003~014가 **V2 아키텍처 결정면 전체**를 덮는다. 그 바깥은 RFC가 아니라 다른 트랙에서 닫힌다 — 여기 한눈에 모은다.
