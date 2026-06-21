@@ -29,6 +29,8 @@ prototype-reservation-system
 
 > 기존 `core-module` / `application-module` / `adapter-module` 의 쓰기 측 코드는 `command-module` 의 각 도메인 패키지로, 조회 측 코드는 `query-module` 로 이전한다. 이전은 [[04-migration]] 의 Strangler 순서를 따른다.
 
+> **순수 도메인의 거처 — 별도 `core-module`을 두지 않는다.** V1처럼 의존성 없는 `core-module`로 도메인을 떼어내면 "도메인은 인프라를 모른다"가 빌드 의존성으로 강제되지만, CQRS를 모듈 최상단에서 가른 이상([[01.cqrs-command-query-module-split]]) command 컨텍스트의 도메인은 그 command 모듈에 응집시키는 편이 경계와 일치한다 — 컨텍스트를 쪼개 옮길 때 도메인이 함께 움직이고, "이 도메인이 어느 컨텍스트 소속인가"가 디렉터리만으로 드러난다. 별도 모듈이 강제하던 순수성은 *물리 경계 대신 검증 경계*로 지킨다 — `domain` 패키지가 JPA·Spring을 import하지 못하게 ArchUnit/Konsist 규칙으로 막는다(아래 §경계 강제). 즉 **(도메인=command 패키지) + (순수성=검증 규칙)**이다([[RFC-010-module-structure-migration]] · [[07.command-domain-jpa-separation]]). 모듈이 비대해져 응집 이점이 약해지면 경계 재검토는 열려 있다.
+
 ## command-module — hexagonal (도메인 패키지 내부)
 
 각 도메인 패키지는 내부적으로 헥사고날 3층을 **하위 패키지**로 가진다.
@@ -47,6 +49,7 @@ com.reservation.command.reservation
 
 - 애그리거트는 `handle(command) → List<DomainEvent>` + `apply(event) → newState` 책임을 **스스로** 진다 (빈약 도메인 탈피, 상세 [[02-write-model]]).
 - ES/비-ES 차이는 `adapter/out` 구현에만 나타난다 (event store vs 상태+Outbox).
+- 비-ES 컨텍스트의 도메인↔JPA 매핑은 **V1식 엄격한 hexagonal 수동 매핑을 유지**한다 — 컨텍스트별로 손으로 쓴 매핑 함수가 `adapter/out` 안쪽에 명시적으로 남는다. 코드 생성 도구(MapStruct류)·공통 매퍼 추상은 비채택([[07.command-domain-jpa-separation]] · [[RFC-010-module-structure-migration]]). 반복이 과해지면 공통 추상이 아니라 경계를 흐리지 않는 국소 컨벤션(같은 자리·같은 시그니처)으로 대응한다.
 
 ## query-module — layered (도메인 패키지 내부)
 
@@ -101,11 +104,16 @@ graph TD
 - `query.*` 가 `command.*` 를 import 하지 않음.
 - 위반 시 빌드 실패 — `detekt`/테스트 단계에 편입.
 
+## 신규 기능 컨텍스트 (리뷰·포인트·신고)
+
+리뷰/별점·포인트·신고는 V1에 없던 신규 도메인이라 Strangler *전환 대상*이 아니다 — **각각 별도 command 컨텍스트로, 처음부터 신구조 네이티브로** 짓는다(기존 컨텍스트에 욱여넣지 않는다). 다만 투입 시점은 **레퍼런스 컨텍스트 한두 개의 전환이 끝나 패턴(모듈 구조·매핑 규약·검증 규칙)이 검증된 뒤**다. 아직 흔들리는 규약 위에 새 코드를 쌓으면 패턴이 바뀔 때 신규 기능도 함께 흔들린다([[RFC-010-module-structure-migration]]). 사업 우선순위가 전환보다 높아 순서가 뒤집히면 패턴 미확정 리스크를 명시한다. 각 신규 기능의 상세 도메인 설계는 후속 사이클.
+
 ## 향후 물리 분리 경로
 
-top-level이 command/query라 **"읽기 전체를 query 서비스로"** 분리는 `query-module` 을 별도 배포로 떼면 된다. **"도메인별 서비스 분할"** 은 두 모듈에서 같은 이름 도메인 패키지를 함께 들어내는 비용이 있으나, 패키지 경계가 깨끗하면 수용 가능하다([[01.cqrs-command-query-module-split]] 트레이드오프 참조).
+top-level이 command/query라 **"읽기 전체를 query 서비스로"** 분리는 `query-module` 을 별도 배포로 떼면 된다. **"도메인별 서비스 분할"** 은 두 모듈에서 같은 이름 도메인 패키지를 함께 들어내는 비용이 있으나, 패키지 경계가 깨끗하면 수용 가능하다([[01.cqrs-command-query-module-split]] 트레이드오프 참조). command/query의 *물리* 배포 분리 시점 자체는 [[09-deployment-runtime]]가 다룬다.
 
 ## 관련 문서
-- [[00-design-overview]] · [[02-write-model]] · [[03-read-model]] · [[04-migration]]
-- ADR: [[01.cqrs-command-query-module-split]] · [[03.command-hexagonal-query-layered]]
+- [[00-design-overview]] · [[02-write-model]] · [[03-read-model]] · [[04-migration]] · [[09-deployment-runtime]]
+- RFC: [[RFC-010-module-structure-migration]]
+- ADR: [[01.cqrs-command-query-module-split]] · [[03.command-hexagonal-query-layered]] · [[07.command-domain-jpa-separation]]
 - 계승: [[02.hexagonal]]

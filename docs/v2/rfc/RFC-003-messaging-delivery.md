@@ -1,6 +1,6 @@
 # RFC-003 — 메시징·전달 보장
 
-- **상태**: Open · 논의 중 · 2026-06-15
+- **상태**: 합의됨 (2026-06-21) · design [[07-messaging-topology]] 반영 · ADR [[09.event-ordering-and-delivery-guarantee]] 비준 대기
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[07-messaging-topology]] 보강 + [[09.event-ordering-and-delivery-guarantee]] 비준
 
@@ -38,7 +38,7 @@ relay가 outbox를 읽는 방식은 폴링과 CDC(Debezium) 두 갈래다. CDC�
 
 ### 실패 메시지의 운영 루프
 
-처리에 실패하는 poison message는 무한 재시도로 파티션을 막거나, 조용히 버려져선 안 된다. V1의 PoisonMessage·스케줄러 재처리(v1 [[07.reservation]])를 계승해, **즉시 3회 재시도 → 지수 백오프 → DLQ 격리**의 단계를 둔다. DLQ로 간 건 알람을 띄우고 기본은 수동 재생한다. 자동 재생은 원인이 일시적임을 확신할 수 있을 때만이라 기본값으로 두지 않는다. (이의 여지: 재시도 횟수·백오프 곡선의 구체 값은 Design.)
+처리에 실패하는 poison message는 무한 재시도로 파티션을 막거나, 조용히 버려져선 안 된다. V1의 PoisonMessage·스케줄러 재처리(v1 [[07.reservation]])를 계승해, **즉시 3회 재시도 → 지수 백오프 → DLQ 격리**의 단계를 둔다. DLQ로 격리된 건 **메시지 채널(예: Slack)로 알람을 발송**하고 기본은 수동 재생한다 — DLQ는 조용히 쌓이면 의미가 없으니 사람이 즉시 인지할 채널로 밀어내는 게 핵심이다. 자동 재생은 원인이 일시적임을 확신할 수 있을 때만이라 기본값으로 두지 않는다. (이의 여지: 재시도 횟수·백오프 곡선의 구체 값은 Design.)
 
 ### 컨슈머 그룹과 리밸런싱
 
@@ -48,32 +48,37 @@ read model·프로젝터는 같은 이벤트 스트림을 각자 다르게 소�
 
 토픽을 얼마나 오래 보관할지는 재구축을 어디서 하느냐와 묶여 있다. read model을 토픽 처음부터 다시 흘려 재구축하려면 retention이 그만큼 길어야 한다. 하지만 V2에서 진실 원천은 **이벤트 스토어**다 — 토픽은 전달 채널일 뿐 영속 기록이 아니다. 그러니 토픽 retention은 **짧게** 두고, 재구축은 **스토어 리플레이**로 한다([[RFC-011-projection-rebuild-catchup]] 재구축 소스와 정합). 상태성 lookup 토픽처럼 "최신 상태"가 의미를 갖는 것만 log compaction을 쓴다. (이의 여지: 짧은 retention의 구체 기간과 compaction 대상 토픽 식별은 Design.)
 
-### 무엇을 Kafka로 내보내는가 — 통합 이벤트
+### 무엇을 Kafka로 내보내는가 — 통합 이벤트(경계만 확정, 모양은 분리)
 
-내부 도메인 이벤트를 그대로 Kafka에 흘리면, 내부 모델 변경이 외부 컨슈머를 깨뜨린다. Kafka로 나가는 건 **통합 이벤트(published language)**여야 하고, 내부 도메인 이벤트와 분리한다([[07-messaging-topology]]·[[02-write-model]]). 페이로드는 **thin**이 기본이다 — id와 핵심 필드만 싣고, 컨슈머가 필요하면 조회한다. fat 페이로드(자족적)는 결합을 줄이는 대신 스키마를 무겁게 하고 변경에 약하다. thin으로 시작해 필요가 증명되면 넓힌다.
+내부 도메인 이벤트를 그대로 Kafka에 흘리면, 내부 모델 변경이 외부 컨슈머를 깨뜨린다. Kafka로 나가는 건 **통합 이벤트(published language)**여야 하고, 내부 도메인 이벤트와 분리한다([[07-messaging-topology]]·[[02-write-model]]) — 이 *경계*는 여기서 못 박는다.
 
-### 지금 못 박지 못하는 것 — 파티션 수와 lag 임계
+그러나 그 페이로드를 thin으로 둘지 fat으로 둘지, 직렬화 규약·스키마 버저닝을 어떻게 가져갈지는 결합도와 스키마 진화 전략이 얽혀 단독으로 결론 내기 애매하다. 이건 이 RFC에서 결론 내지 않고 **별도 RFC로 분리**한다(아래 §별도 RFC로 분리).
 
-두 가지는 *정책*만 여기서 잡고 *숫자*는 운영으로 미룬다.
+### 파티션 수 — 정책은 여기, 숫자는 운영
 
 파티션 수는 순서 계약의 일부다 — 파티션 키가 `aggregate_id`인 이상, 파티션 수를 사후에 바꾸면 키 해싱이 재분배돼 순서 보장이 깨진다. 그래서 **고정 지향**으로 가고 보수적 초기값(일반 토픽 3, 고처리량 6~12 수준)을 둔다. 증설이 정말 필요하면 in-place 변경이 아니라 **새 토픽으로 마이그레이션**한다. 절대 초기값은 처리량 추정으로 Design에서 잡는다([[09.event-ordering-and-delivery-guarantee]]·[[07-messaging-topology]]·[[12.kafka-hosting-msk-vs-self-managed]]).
 
-consumer lag은 **핵심 SLI**로 삼고 warn/crit 2단 알람을 건다. 임계 숫자는 사전 추정이 아니라 운영 관측치로 튜닝하며, [[RFC-007-deployment-infra-ops]]·[[RFC-008-observability]]의 SLI 체계와 단일화한다([[RFC-002-read-model-consistency]]의 프로젝션 지연 관측과 동반). 정책은 지금, 숫자는 운영시.
+consumer lag(임계 숫자·SLI 단일화)은 [[RFC-002-read-model-consistency]]의 프로젝션 지연과 한 지표 체계라 단독으로 닫기 애매하다 — lag을 핵심 SLI로 본다는 *전제*만 메커니즘으로 깔고, 임계·SLI 체계 확정은 이 RFC에서 결론 내지 않고 **별도 RFC로 분리**한다(아래 §별도 RFC로 분리).
 
 ## Design으로 넘기는 것
 
 - 파티션 절대 초기값(처리량 추정 기반)과 토픽 마이그레이션 절차.
-- lag warn/crit 임계 숫자와 [[RFC-008-observability]] SLI 단일화 방식.
 - 컨슈머별 inbox 유지/생략 귀속(순서 역전 무풍지대 검증)과 inbox 보존 기간·GC 주기.
 - 부수효과 유형별 디듀프/outbox/수동 귀속.
-- DLQ 재시도 횟수·백오프 곡선·자동 재생 조건.
+- DLQ 재시도 횟수·백오프 곡선·자동 재생 조건(알람 채널은 **메시지(Slack)로 확정** — 수치만 Design).
 - 토픽 retention 구체 기간·compaction 대상 토픽 식별.
-- 통합 이벤트 직렬화 규약·스키마 버저닝.
 - relay 단일성·CDC 전환 기준은 필요 시 신규 ADR로 분리.
 
-🌱 **토픽 목록 자체는 여기서 닫지 못한다.** 분할 축(컨텍스트/aggregate-type)은 정했지만, 실제 토픽 목록은 도메인 이벤트 카탈로그에 의존하고 그건 이벤트 스토밍이 선행해야 나온다([[07-messaging-topology]]·[[09.event-ordering-and-delivery-guarantee]]). 스토밍 이후 별도로 확정한다.
+## 별도 RFC로 분리 — 여기서 결론 내지 않는 것
 
-이 RFC가 닫히면 [[07-messaging-topology]]에 파티션·토픽·inbox 섹션을 보강하고, [[09.event-ordering-and-delivery-guarantee]]의 미결을 해소해 Proposed→Accepted로 승급한다.
+아래 둘은 이 RFC의 메커니즘 결정(전달 보장)과 결이 다르다 — 스키마 진화·관측 체계의 문제다. 이 문서에 끼워 어정쩡하게 두지 않고, 필요할 때 각각 **전용 RFC**로 연다(topical, not parked).
+
+- **Kafka 통합 이벤트 페이로드 — thin/fat·직렬화·스키마 버저닝.** 통합 이벤트라는 *경계*는 확정됐고 그 *모양*만 분리한다. 스키마 진화([[10.event-schema-evolution]])·소비자 계약 테스트([[11-environments-and-testing]])와 묶어 다룬다.
+- **consumer lag 임계·SLI 단일화.** [[RFC-002-read-model-consistency]]의 프로젝션 지연과 한 지표 체계라, 둘을 함께 다루는 관측 RFC로 모은다([[RFC-008-observability]]·[[RFC-007-deployment-infra-ops]]).
+
+🌱 **토픽 목록 자체도 여기서 닫지 못한다.** 분할 축(컨텍스트/aggregate-type)은 정했지만, 실제 토픽 목록은 도메인 이벤트 카탈로그에 의존하고 그건 이벤트 스토밍이 선행해야 나온다([[07-messaging-topology]]·[[09.event-ordering-and-delivery-guarantee]]). 스토밍 이후 별도로 확정한다.
+
+이 RFC가 닫히며 [[07-messaging-topology]]에 파티션·토픽·inbox·DLQ 섹션이 반영됐고, [[09.event-ordering-and-delivery-guarantee]]는 미결 해소 후 Proposed→Accepted 비준만 남는다.
 
 ## 관련 문서
 

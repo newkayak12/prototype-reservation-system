@@ -32,14 +32,28 @@ class Reservation private constructor(/* state */) {
 
 ```
 event_store(
-  aggregate_type, aggregate_id, sequence_no,   -- (aggregate_id, sequence_no) UNIQUE
+  global_seq   BIGINT AUTO_INCREMENT,          -- 재구축/백필 열거·재개 커서 전용(교차 전순서 아님). [[22.event-identity-and-global-ordering]]
+  event_id     BINARY(16),                      -- 전역 유일 정체성: inbox/dedup·causation 앵커·Kafka messageId
+  aggregate_type, aggregate_id, sequence_no,    -- (aggregate_id, sequence_no) UNIQUE
   event_type, event_version, payload(JSON),
-  occurred_at
+  occurred_at,
+  -- 봉투 추적메타: correlation_id, causation_id, traceparent (§공통)
+  PRIMARY KEY (global_seq), UNIQUE (aggregate_id, sequence_no), UNIQUE (event_id)
 )
 ```
 
-- **낙관적 동시성**: `expected_sequence` 에 append. 충돌 시 `(aggregate_id, sequence_no)` UNIQUE 위반 → 재시도. (V1의 부재 #6 해소)
-- **스냅샷 최적화**: 기존 `*Snapshot` 패턴을 재활용해 N개 이벤트마다 스냅샷 저장 → 리플레이 단축.
+- **정체성·열거**: `event_id`(전 컨텍스트 공통 dedup/causation 앵커)와 `global_seq`(재구축 *열거* 커서, 순서 정확성 아님)는 [[22.event-identity-and-global-ordering]]에서 확정. 비-ES Outbox 이벤트도 `event_id` 보유.
+- **동시성 = 비관 락 + UNIQUE 백스톱**([[16.optimistic-concurrency-control]] 2026-06-17 개정): 한 자리에 대한 결정을 한 줄로 세운다.
+  ```
+  lock(aggregate_id)            # L1: Redisson 분산 락 (Redis 불가 시 L1′: DB lock-row FOR UPDATE 폴백)
+    load(replay) → version N
+    handle(cmd) → events
+    append (aggregate_id, N+1)  # L0: (aggregate_id, sequence_no) UNIQUE = 정확성 백스톱(불변)
+  release(lock)
+  ```
+  - **L0 UNIQUE는 절대 제거하지 않는다** — 분산 락은 liveness지 safety가 아니다([[19.caching-redis-role]] 단일 인스턴스·`allkeys-lru`·페일오버로 락 유실 가능). 락이 풀려도 UNIQUE가 이중 점유를 최종 거절. (V1의 부재 #6 해소)
+  - 락 범위 = **단일 `aggregate_id`만**(전역 락 금지). 교차 애그리거트는 사가([[06-consistency-and-sagas]]). ES 쓰기 경로 한정 — 비-ES는 DB 행 락 그대로.
+- **스냅샷 최적화**: 기존 `*Snapshot` 패턴을 재활용해 N개 이벤트마다 스냅샷 저장 → 리플레이 단축. 스냅샷 낀 로드의 expected `sequence_no` = 스냅샷 버전 + 이후 이벤트 수([[08-event-store-lifecycle]]).
 - **전용 제품 미도입**: 현 규모에서 EventStoreDB/Axon은 과함. 근거 [[05.event-store-mysql-table]].
 
 ## B. 비-ES 컨텍스트 — 상태 + Outbox (`schedule` · `user` · `authenticate`)
@@ -76,6 +90,7 @@ sequenceDiagram
 - **Zero Payload** 원칙 계승([[07.reservation]]): 메시지는 식별자 중심, 컨슈머가 최신 상태/이벤트 조회. 스키마 진화·DLQ 재처리 안전.
 - **eventVersion** 보유(`AbstractEvent`)로 이벤트 진화 대응. 호환성 규칙·읽기 시 업캐스팅 전략은 [[10.event-schema-evolution]].
 - **재처리**: 스케줄러 기반 미발행 Outbox 재시도, Consumer 실패는 PoisonMessage 별도 관리([[07.reservation]] 계승).
+- **추적 메타 공통 충전**: `AbstractEvent`의 추적 메타(`correlationId`·`causationId`·`traceparent` — [[10-observability]], [[RFC-008-observability]])는 바로 이 공통 발행 경로에서 채운다. `correlationId`는 사슬 루트를 묶어 무변경 전파하고(필수), `causationId`는 **직전 원인 메시지의 `event_id`**(원인이 커맨드면 `commandId`)를 가리키며([[22.event-identity-and-global-ordering]]), `traceparent`는 W3C Trace Context로 OTel 추적을 봉투에 직렬화한다. 발행 경로가 ES·비-ES 무관하게 동일하므로, 추적 메타도 발행자가 일일이 신경 쓰지 않고 이 한 경로에서 일관 충전된다 — 채움 시점은 **Outbox 기록(트랜잭션 내)**이라 발행 단계에서 뒤늦게 채우는 유실을 피한다.
 
 ## 도메인 이벤트 카탈로그 (TBD)
 
