@@ -1,6 +1,6 @@
 # RFC-015 — V2 인가 모델
 
-- **상태**: Open · 논의 중 · 2026-06-15
+- **상태**: 합의됨 (2026-06-16) · [[17.authorization-model]]로 닫힘
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-012-command-query-api-contract]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: 신규 design_doc(인가 모델) + 신규 ADR
 

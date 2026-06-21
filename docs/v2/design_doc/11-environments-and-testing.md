@@ -177,12 +177,48 @@ graph TB
 |--------|---------------|--------|------|
 | **아키텍처/의존성 (ArchUnit·Konsist)** | 모듈 경계·헥사고날·DDD 규칙을 *코드로 강제*: `query↛command 스키마`·`도메인↛JPA`([[07.command-domain-jpa-separation]])·`command↔query는 이벤트로만`. 빈약 도메인·경계 침식을 CI가 잡는다 | 정적·무인프라(단위와 함께) | **1순위** |
 | **속성 기반 (Fixture Monkey 확장)** | 무작위 command 시퀀스에서 `fold(events)==state`·불변식·read model 수렴 — ES 정확성의 정수 | 단위~통합 | 상 |
-| **계약 (consumer-driven, 이벤트 스키마)** | producer가 이벤트를 깨면 consumer 테스트가 CI에서 잡음 — command↔query 경계 보호 | 통합 | 상 |
+| **이벤트 계약 (공유 통합 이벤트 모듈 + 직렬화 테스트)** | 생산자가 이벤트 모양을 깨면 *컴파일/직렬화 테스트*가 런타임 전에 잡음 — 얇은 통합 이벤트를 공유 모듈로 두어 컴파일 보장을, 직렬화/스키마 테스트로 wire 모양 보장을. 내부 도메인 이벤트는 공유 금지, 컴파일 보장은 같은 버전 한정. Pact/SCC는 overspec, 외부 소비자·배포 스큐 시 졸업([[RFC-009-testing-quality-gates]]) | 통합 | 상 |
 | **스키마 진화 회귀 (업캐스팅 픽스처 리플레이)** | `(eventType, eventVersion)`별 고정 JSON 픽스처를 최신 코드가 모두 읽어내는지([[10.event-schema-evolution]]) — 영구 이벤트 안전망 | 통합 | 상 |
 | **카오스/장애 주입** | "느린가"가 아니라 *"깨져도 사는가"* — 앱 레벨 **Chaos Monkey for Spring Boot**(지연·예외 주입), 인프라 레벨 broker 파티션·DB failover·projector kill 중 무손실·effectively-once(T-05) | E2E+ | 중 |
 
 - **ArchUnit/Konsist가 이 프로젝트 1순위다.** 헥사고날·DDD·빈약 도메인 극복이 핵심 목표인데([[02-domain-limitations]]·[[05-aggregate-design]]), 그 규칙을 사람 리뷰가 아니라 *테스트가 강제*하면 경계 침식이 머지 전에 막힌다 — 부하 테스트보다 일상적 가치가 크다.
 - 속성 기반·계약·업캐스팅 회귀는 단위/통합 층에 얹히고, 카오스는 E2E 위에서 T-05와 만난다.
+- **카오스 도구 — 앱 레벨은 확정, 인프라 레벨은 연기**([[RFC-009-testing-quality-gates]]). 앱 레벨(지연·예외 주입)은 **Chaos Monkey for Spring Boot**로 지금 확정한다. 그러나 인프라 레벨(파드 kill·네트워크 분단·broker 파티션·DB failover)은 *지금 도구를 도입하지 않는다* — T-05(무손실·effectively-once) 검증이 실제 운영 리스크로 올라오는 시점을 트리거로 **Chaos Mesh를 1순위 후보**로 둔다. 인프라 카오스를 선제 도입하면 클러스터 운영 성숙도 비용만 먼저 무는 과투자다(YAGNI).
+
+### 5.6 행위 명세(Gherkin) — 살아있는 명세
+
+테스트가 "도는가"를 넘어 "이 동작이 무엇인가"를 비즈니스 언어로 적으면 곧 살아있는 명세가 된다([[RFC-009-testing-quality-gates]]). Given-When-Then을 세 슬라이스에 깐다(현행 슬라이스 전략과 같은 결).
+
+- **usecase(application)**: 출력 포트를 목으로 두고 "주어진 커맨드·포트 상태 → 어떤 포트 호출·결과"를 시나리오로. 오케스트레이션 행위를 고정한다.
+- **service(domain)**: "주어진 도메인 상태 → 도메인 서비스 호출 → 어떤 불변식·결과". 순수 도메인 로직을 비즈니스 언어로 박는다.
+- **controller(standalone)**: 전체 Spring 컨텍스트 없이 standalone MockMvc로 "주어진 HTTP 요청 → 어떤 상태·바디". [[RFC-012-command-query-api-contract]]의 계약(202·에러 분류 등)이 여기서 행위로 검증되고 REST Docs와 엮인다.
+
+도구는 **Kotest `BehaviorSpec`을 기본**으로 본다 — Gherkin 구조의 가독성은 얻으면서 `.feature`+Cucumber 글루 machinery는 피한다(§5.5 계약 절과 같은 overspec 회피 결). 비개발자가 읽는 `.feature` 명세가 실제로 필요해지면 그때 Cucumber를 얹는다. property-based(§5.5)와는 층이 다르다 — 행위 명세는 *명명된 시나리오*로 동작을 고정하고, property-based는 *무작위 입력*으로 불변식을 흔든다(보완 관계).
+
+### 5.7 동적 분산 행위 — 정적 구조 너머
+
+§5.5까지가 코드의 *구조*(경계·계약·불변식)를 잡는다면, 여기서는 런타임에 분산이 일으키는 *행위*를 잡는다. ES/EDA가 실제로 깨지는 곳이고, 각 항목은 다른 RFC가 결정한 메커니즘과 짝지어 "그 결정이 진짜 도는지"를 본다([[RFC-009-testing-quality-gates]]).
+
+| 행위 | 무엇을 본다 | 출처 | 게이트 |
+|------|-------------|------|--------|
+| **멱등성·재전달** | 같은 이벤트·요청 2회 적용 → 상태 동일(전달 멱등·프로젝터 멱등·요청 멱등) | [[RFC-003-messaging-delivery]]·[[RFC-011-projection-rebuild-catchup]]·[[RFC-012-command-query-api-contract]] | 결정적 → CI 필수 |
+| **프로젝션 재구축·catch-up** | 리플레이로 세운 read model == 라이브 투영, blue-green 스왑 원자성, catch-up이 readiness까지 수렴 | [[RFC-011-projection-rebuild-catchup]] | 무거움 → 정기/통합 |
+| **사가 보상·타임아웃** | 타임아웃 → `SeatReleased`, 확정 실패 → `PaymentRefunded` 되감기, 부분 보상 후에도 종결 도달 | [[RFC-006-saga-process-manager]] | 무거움 → 정기/통합 |
+| **이벤트 재생·스냅샷 등가** | 스냅샷+이후 이벤트 재수화 == 처음부터 풀 리플레이(업캐스팅 회귀와는 다른 축 — 리플레이 정확성) | [[RFC-004-event-store-schema-evolution]] | 결정적 → CI 필수 |
+| **동시성·낙관적 락** | 같은 애그리거트 동시 append → 기대 버전 충돌이 409로 정확히 걸림 | [[RFC-004-event-store-schema-evolution]]·[[RFC-012-command-query-api-contract]] | 결정적 → CI 필수 |
+| **종단 비동기 라운드트립** | command→이벤트→프로젝션→query 끝까지 흐름, 그 사이 read-your-writes 신선도가 규약대로 | [[RFC-002-read-model-consistency]]·[[RFC-012-command-query-api-contract]] | 무거움(TC+Kafka) → 정기/통합 |
+
+- 일부는 §5.2/5.3에 이미 박혀 있다(projector 멱등성·스냅샷 reconciliation·최종 일관성 계약·장애 격리) — 이 표는 그 묶음을 *동적 분산 행위*라는 한 범주로 묶고, 빠진 축(사가 보상·동시성 충돌·재구축 수렴)을 채운다.
+- 보상 경로는 가장 안 짜이고 가장 늦게 터지는 곳이라 명시적으로 테스트한다.
+- 게이트 성격이 갈린다 — **결정적**(멱등성·재생 등가·동시성)은 CI 필수, **무거운 통합**(재구축·종단·사가)은 정기/통합 단계. (⚠️) 이 범주는 스토어·Kafka를 띄워야 해 빌드가 무거워진다 — 무엇을 모킹으로 경량화하고 무엇을 실물(Testcontainers+Kafka)로 도울지는 항목별로 Design에서 가른다.
+
+#### V1↔V2 등가성 회귀
+
+[[RFC-013-data-migration-genesis-events]]가 컷오버 게이트로 **소유**한다(이행 건수·핵심 필드·재구성 상태 일치). 본 전략에서는 그 등가성 검증을 *회귀 스위트로 편입*하는 자리만 잡는다 — 컨텍스트 전환이 끝난 뒤에도 V1 스냅샷과 V2 재구성 상태가 계속 일치하는지 회귀로 지킨다.
+
+### 5.8 인가·인증을 행위로 검증한다
+
+[[RFC-012-command-query-api-contract]]가 게이트웨이·인증 서버를 전제로 깔지만, 역할 기반 인가(USER·SELLER·ADMIN)가 command/query 경로마다 옳게 걸리는지는 별도 범주로 둔다([[RFC-015-authorization-model]]). 권한 없는 호출이 거부되고 권한 경계가 컨텍스트마다 일관된지를, controller(standalone) 행위 명세(§5.6) 위에 인가 시나리오로 얹는다. 토큰 발급·검증 자체는 인증 서버 책임이므로 우리 테스트는 *인가 결정*에 집중한다. (인가 규칙이 도메인 깊숙이 들어가는 경우 controller 슬라이스만으로 부족할 수 있어, usecase 슬라이스에도 인가 시나리오가 필요한지는 Design에서 본다.)
 
 ## 6. 환경별 책임 한 장
 
@@ -199,13 +235,23 @@ graph TB
 - **매니페스트 overlay = Helm** — 차트 + 환경별 values로 운영/로컬 분리. [[09-deployment-runtime]] GitOps 방향과 정합.
 - **E2E 최종 일관성 await = Awaitility, 폴링 50ms / 타임아웃 5s** (기본 컨벤션, 시나리오별 조정 가능).
 - **k6 시드 데이터 = 고정 시드 + 스크립트 이벤트 스트림을 픽스처로 커밋** — 재현성(측정·기록 학습목표 직결).
+- **이벤트 계약 = 얇은 통합 이벤트 공유 모듈 + 직렬화/스키마 테스트** — 공유 모듈이 컴파일 보장, 직렬화 테스트가 wire 모양 보장. 내부 도메인 이벤트는 공유 금지, 컴파일 보장은 같은 버전 한정. Pact/SCC는 overspec → 외부 소비자·배포 스큐 시 졸업([[RFC-009-testing-quality-gates]]).
+- **행위 명세 = Kotest `BehaviorSpec`** (usecase·service·controller standalone 슬라이스). `.feature`+Cucumber는 비개발자 명세가 실제로 필요해질 때.
+- **동적 분산 행위 게이트 = 결정적(멱등성·재생 등가·동시성)은 CI 필수, 무거운 통합(재구축·종단·사가)은 정기/통합 단계.**
+- **게이트 차단성 분류**([[RFC-009-testing-quality-gates]]) — 테스트를 "머지 차단 게이트"와 "비-차단 관측"으로 가른다. **차단 게이트(통과 못 하면 머지 불가)**: 아키텍처/의존성 강제(ArchUnit·Konsist, 1순위)·속성 기반·이벤트 계약·업캐스팅 회귀. **비-차단 관측(추세만 본다, 머지 안 막음)**: Chaos Monkey 카오스 주입·k6 부하. 우선순위(1순위/상/중)는 *작성 순서*일 뿐 차단성과 별개다.
+- **커버리지 = ratchet(후퇴 금지) 정책**([[RFC-009-testing-quality-gates]]) — 절대 임계 숫자는 측정 후 정하되, 일단 정해지면 **내려가지 않게(점진 상향만)** 잠근다. 숫자는 측정 의존(아래 TBD)이나, "후퇴 금지"라는 정책 자체는 지금 고정.
 
 **미결정(TBD) — 해소 트리거 명시:**
 - k6 절대 SLO·CI 자동 게이트화 임계 — *트리거: 베이스라인 측정 확보 후*.
+- 커버리지 절대 임계 숫자(ratchet 시작값) — *트리거: 모듈별 베이스라인 측정 후*.
+- 인프라 레벨 카오스 도구(Chaos Mesh) 도입 — *트리거: T-05(무손실·effectively-once) 검증이 실제 운영 리스크로 부상할 때*(§5.5).
 - 스냅샷 주기 N 권고값 — *트리거: §5.4 k6 스윕 결과*([[08-event-store-lifecycle]]).
 - localstack로 검증할 AWS 서비스 최종 목록 — *트리거: 컨텍스트 전환 시 실제 의존 확정*([[04-migration]]).
+- 동적 분산 행위 항목별 경량화 모킹 vs 실물 환경(Testcontainers+Kafka) 경계 — *트리거: 각 메커니즘 구현 사이클*.
+- 인가 시나리오를 controller·usecase 슬라이스 중 어디에 얹을지 — *트리거: [[RFC-015-authorization-model]] 인가 모델 확정*.
 
 ## 관련 문서
 - [[00-design-overview]] · [[01-module-structure]] · [[02-write-model]] · [[03-read-model]] · [[09-deployment-runtime]] · [[08-event-store-lifecycle]] · [[04-migration]]
-- ADR: [[05.event-store-mysql-table]] · [[02.selective-event-sourcing-scope]]
+- RFC: [[RFC-009-testing-quality-gates]](본 문서 상위) · [[RFC-012-command-query-api-contract]] · [[RFC-013-data-migration-genesis-events]] · [[RFC-015-authorization-model]]
+- ADR: [[14.testing-strategy]] · [[05.event-store-mysql-table]] · [[02.selective-event-sourcing-scope]]
 - 계승: [[07.reservation]] · [[01.ddd]]

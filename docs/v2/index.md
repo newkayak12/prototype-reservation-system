@@ -15,6 +15,7 @@
 - [[01-current-state]] — 현 아키텍처·9개 컨텍스트·기존 이벤트 인프라
 - [[02-domain-limitations]] — 이벤트 소싱 관점 한계 (빈약 도메인 등)
 - [[03-open-decisions]] — 논의 과정·옵션·합의 기록
+- [[04-design-completeness-audit]] — **전수 감사(2026-06-16)**: 6/6 N·횡단 미결 7 + 선행 게이트(이벤트 카탈로그)·클러스터별 미결 체크리스트
 
 ## RFC (rfc/)
 - [[RFC-001-v2-cqrs-and-event-sourcing]] — V2 방향 결정의 서사 (라운드1 — 큰 그림)
@@ -34,6 +35,17 @@
 11. [[RFC-008-observability]] — 관측성
 12. [[RFC-009-testing-quality-gates]] — 테스트·품질 게이트
 
+추가 주제 RFC — **라운드3**(기존 RFC가 열어놓고 안 닫은 실 + 아키텍처 결정면 보강):
+13. [[RFC-014-aggregate-concurrency-control]] — 애그리거트 동시성·쓰기 경합 제어
+14. [[RFC-015-authorization-model]] — V2 인가 모델
+15. [[RFC-016-payment-integration-boundary]] — 결제 연동 경계 (payment ACL)
+16. [[RFC-017-disaster-recovery-event-store]] — 재해 복구·이벤트 스토어 복구 의미론
+17. [[RFC-018-caching-redis-role]] — 캐싱·Redis의 V2 역할
+18. [[RFC-019-auth-token-transport]] — 인증 토큰 transport·무상태성·폐기 포기
+19. [[RFC-020-authentication-boundary-gateway]] — 인증 경계: API 게이트웨이 + 인증 서버 (k3s 인클러스터)
+20. [[RFC-021-event-identity-and-global-ordering]] — 이벤트 정체성(`event_id`)·전역 열거 커서(`global_seq`) (감사 ① 마감) · 동시성 비관 전환은 [[RFC-014-aggregate-concurrency-control]] §재개
+21. [[RFC-023-event-schema-evolution]] — 이벤트 스키마 진화: 업캐스터·eventType 매핑·Avro/Protobuf ([[RFC-004-event-store-schema-evolution]]에서 분리)
+
 ## ADR (adr/) — V2 트랙, 01부터
 - [[01.cqrs-command-query-module-split]] — command/query 모듈 분리
 - [[02.selective-event-sourcing-scope]] — 선택적 ES 범위
@@ -49,6 +61,13 @@
 - [[12.kafka-hosting-msk-vs-self-managed]] — Kafka 호스팅: self-managed Strimzi (MSK 실사용 불가·운영 학습)
 - [[13.db-hosting-and-read-write-topology]] — R/W 물리 분리: binlog 복제 + 모듈별 datasource(라우팅 없음)·호스팅 투명
 - [[14.testing-strategy]] — 정확성·경계·진화 테스트, 아키텍처를 ArchUnit/Konsist로 강제
+- [[15.payment-acl-boundary]] — 결제 연동 경계: payment=ACL(상태+Outbox)·사가 3 이벤트 동결·실 PG 별도 사이클 연기
+- [[16.optimistic-concurrency-control]] — **동시성(2026-06-17 비관 전환)**: Redisson 분산 락(1차)+DB 비관 락(Redis 다운 폴백)+`(aggregate_id, sequence_no)` UNIQUE 백스톱·전역 락 없음·교차는 사가
+- [[17.authorization-model]] — 인가: 역할=엣지·소유권=앱(애그리거트 불변식)·query 스코프 조건·프로젝션 스코프 키
+- [[18.event-store-recovery-semantics]] — 복구 의미론: 이벤트 스토어 1급 보호·되감기 없음(보상 이벤트)·셰딩 복원 견딤
+- [[19.caching-redis-role]] — Redis=읽기 캐시 아님, 분산 조정·휘발성 상태 전용(단일 durability)
+- [[20.auth-token-transport]] — 인증 토큰: transport V1 계승+SameSite·무상태 refresh·즉시 폐기 포기
+- [[22.event-identity-and-global-ordering]] — 이벤트 정체성·전역 순서: `event_id`(공통 dedup/causation 앵커)+`global_seq`(재구축 열거 커서, 전순서 아님)·adr/05 스키마 보강
 
 ## 설계 (design_doc/)
 - [[00-design-overview]] — 목표 아키텍처 개요
@@ -63,6 +82,12 @@
 - [[09-deployment-runtime]] — EKS 5개 워크로드 토폴로지·배포/런타임 뷰
 - [[10-observability]] — correlation/causation id 전파 규약·추적 메타데이터 슬롯
 - [[11-environments-and-testing]] — compose/k3s/k6 세 축·테스트 피라미드·로컬 패리티
+- [[12-api-contract]] — command/query 외부 인터페이스 (202 기본·서버측 멱등·한 표면)
+- [[13-authorization]] — 인가 모델 (역할=엣지·소유권=앱·프로젝션 스코프 키)
+- [[14-payment-integration]] — 결제 연동 경계 (그린필드·외부 PG·ACL)
+- [[15-pii-security]] — 크립토 셰딩 (주체별 키·전용 스키마·blind index)
+- [[16-auth-token]] — 인증 토큰 transport·무상태 refresh·폐기 포기
+- [[17-caching]] — Redis 역할: 읽기 캐시 아님·분산 조정/휘발성 상태 전용·단일 durability
 
 ## 계승 (v1)
 - [[07.reservation]] — Kafka 기반 Timetable·Reservation EDA (Outbox·Zero Payload·PoisonMessage)

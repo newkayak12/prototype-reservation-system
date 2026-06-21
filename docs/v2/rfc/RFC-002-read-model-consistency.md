@@ -1,6 +1,6 @@
 # RFC-002 — 읽기 모델·일관성
 
-- **상태**: Open · 논의 중 · 2026-06-15
+- **상태**: 합의됨 (2026-06-21) · design [[03-read-model]] 반영 · ADR [[04.read-model-projection-and-replica]] 개정 대기
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[03-read-model]] 보강 + [[04.read-model-projection-and-replica]] 개정/비준 (필요 시 신규 ADR)
 
@@ -14,9 +14,13 @@
 
 ### 저빈도 lookup을 어떻게 읽기 모델에 실현하나
 
-category·company·menu처럼 거의 안 변하는 참조 데이터부터 보자. 선택지는 셋이다 — (a) query DB에 경량 projection 테이블을 만들어 두기, (b) 해당 lookup을 소유한 컨텍스트가 published한 테이블을 구독해 채우기, (c) 배포 시점에 적재되는 seed 참조 데이터로 두기.
+category·company·menu처럼 거의 안 변하는 참조 데이터부터 보자. 처음엔 셋으로 갈라 봤다 — (a) query DB에 경량 projection 테이블, (b) 소유 컨텍스트가 published한 변경을 구독해 채운 테이블, (c) 배포 시점에 적재되는 seed. 그런데 이 셋은 같은 층위가 아니다.
 
-하나로 통일하고 싶은 유혹이 있지만, 변화 빈도와 소유 컨텍스트가 항목마다 다르기 때문에 단일 정답이 없다. 거의 불변이고 배포 단위로만 바뀌는 것은 (c) seed가 가장 싸다 — 이벤트 파이프라인을 태울 이유가 없다. 소유 컨텍스트가 명확히 있고 그쪽이 변경을 발행한다면 (b) 구독이 자연스럽다. 그 외 읽기 요구는 있는데 발행원이 마땅찮은 것만 (a) 경량 projection으로 둔다. 즉 내 입장은 *컨텍스트·항목별로 (a)/(b)/(c)를 귀속*시키는 것이지 하나로 강제하지 않는 것이다. (이의 여지: company/menu의 실제 변경 빈도와 소유권이 불명확하면 귀속이 흔들린다 — 표 확정은 [[03-read-model]]에서.)
+(a)와 (b)는 둘 다 *"남이 흘리는 걸 비동기로 받아 query DB의 로컬 읽기 테이블을 갱신"*하는 같은 메커니즘이고, 소스만 다르다 — (a)는 내 컨텍스트의 도메인 이벤트, (b)는 다른 소유 컨텍스트의 published 변경. 읽기 지연이 당연한 이유도 둘 다 async-fed라 동일하다. 그래서 lookup 실현 수단은 사실상 **projection ∨ published-subscription** 둘뿐이고, 어느 쪽이냐는 *그 데이터의 소유자가 누구냐*로만 갈린다 — 내가 소유하면 projection, 남이 소유하면 그쪽 published 구독.
+
+반면 (c) seed는 *읽기 전략*이 아니라 *적재 방법*이라 층위가 다르다. projection/published가 "이 테이블을 어떻게 최신으로 읽느냐"라면 seed는 "테이블 초기 행을 어떻게 채웠느냐"다 — 섞으면 범주 오류다. "static해서 seed로 두자"는 케이스를 분해하면 셋 다 seed가 사라진다: 진짜 불변이면 그건 데이터가 아니라 *코드 상수*라 읽기 테이블 자체가 없고(논의 밖), 런타임에 가끔이라도 바뀌면 소유자가 있으니 published-subscription이며, 테이블형인데 배포로만 바뀌면 여전히 로컬 읽기 테이블을 flyway로 초기 적재한 것일 뿐 — "어떻게 읽나"는 똑같은 로컬 조회다. 그래서 seed는 수단 분류에서 뺀다.
+
+한 가지 함정: published를 *조회 시점에 원본을 동기 호출*해 가져오는 것으로 읽으면 안 된다. 그건 읽기 경로에 cross-context 호출을 붙여 CQRS가 떼어내려던 런타임 결합을 다시 들인다. published는 어디까지나 *구독해 로컬에 적재*하는 비동기 카피를 뜻한다 — 동기 cross-context fetch는 금지. (이의 여지: company/menu의 실제 소유권이 불명확하면 projection이냐 published냐의 귀속이 흔들린다 — 항목별 귀속 표 확정은 [[03-read-model]]에서.)
 
 ### read-your-writes를 어디까지 인정하나
 
@@ -44,14 +48,14 @@ category·company·menu처럼 거의 안 변하는 참조 데이터부터 보자
 
 ## Design으로 넘기는 것
 
-- lookup 항목별 (a)/(b)/(c) 귀속 **표** 확정 — [[03-read-model]].
+- lookup 항목별 projection/published-subscription 귀속 **표** 확정 (소유자 기준) — [[03-read-model]].
 - read-your-writes 예외 화면 후보 검증과 수단((b)/(c)/(d)) 선택 — 증거가 나오는 화면별로, 필요 시 신규 ADR("읽기 신선도 예외 정책").
 - 프로젝션 지연 p99 목표 절대값 — [[RFC-003-messaging-delivery]] lag 측정 후 운영 튜닝.
 - 1차 projection 대상 컨텍스트 목록과 "읽기 요구 입증" 기준 — [[03-read-model]].
 - 비-ES 컨텍스트의 ES 데이터 조인 필요성 검증 — Design.
 - query layered 트랜잭션 경계·projection/service 책임 분리 구체 — design_doc.
 
-여기서 정한 방향: 컨텍스트·항목별 lookup 귀속, 기본=최종 일관성·예외는 증명된 화면만, 지연은 측정 트리거 정책, projection은 읽기 요구 입증된 곳부터(YAGNI), 비-ES는 QueryDSL 유지, layered는 projection=갱신/service=조회로 책임 분리.
+여기서 정한 방향: lookup 실현=projection ∨ published-subscription 둘뿐(둘 다 async 로컬 카피, 소유자로 가름·동기 cross-context fetch 금지·seed는 전략 아님), 기본=최종 일관성·예외는 증명된 화면만, 지연은 측정 트리거 정책, projection은 읽기 요구 입증된 곳부터(YAGNI), 비-ES는 QueryDSL 유지, layered는 projection=갱신/service=조회로 책임 분리.
 
 ## 관련 문서
 

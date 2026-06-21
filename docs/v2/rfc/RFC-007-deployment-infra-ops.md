@@ -1,89 +1,60 @@
 # RFC-007 — 배포·인프라·운영
 
-- **상태**: Open · 논의 중 · 2026-06-15
+- **상태**: 합의됨 (2026-06-21) · design [[09-deployment-runtime]] 반영 · ADR [[12.kafka-hosting-msk-vs-self-managed]]·[[13.db-hosting-and-read-write-topology]] 비준 대기
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[09-deployment-runtime]] 보강 + [[12.kafka-hosting-msk-vs-self-managed]]·[[13.db-hosting-and-read-write-topology]] 비준(Proposed→Accepted)
 
 ## 맥락
 
-타깃 런타임은 EKS, Kafka는 self-managed Strimzi, command/query DB는 물리적으로 분리한다. 이 토폴로지의 *방향*은 라운드1에서 이미 잠갔다 — Kafka가 command와 query를 잇는 다리이고, binlog 복제가 HA를 떠받치며, 애플리케이션은 읽기/쓰기를 라우팅하지 않고, 호스팅 형태(RDS냐 자가 관리냐)는 그 위에서 투명하다. 그러니 여기서 다시 "EKS인가 ECS인가" 같은 걸 들출 일은 없다.
+타깃 런타임은 EKS, Kafka는 self-managed Strimzi, command/query DB는 물리적으로 분리한다. 이 토폴로지의 *방향*은 라운드1에서 이미 잠갔다 — Kafka가 command와 query를 잇는 다리, binlog 복제가 HA를 떠받치고, 애플리케이션은 읽기/쓰기를 라우팅하지 않으며, 호스팅 형태(RDS냐 자가 관리냐)는 그 위에서 투명하다. "EKS냐 ECS냐"를 다시 들출 일은 없다.
 
-남은 건 *규격과 시점*이다. namespace를 어떻게 구획할 것인지, command/query를 물리적으로 갈라 배포하는 시점은 언제인지, standby와 복제 지연·페일오버를 어떤 규약으로 운영할지, Strimzi 클러스터를 어떤 스펙으로 세울지. 한 문장으로 줄이면 "방향은 맞는데, 어떤 규격·시점으로 운영하나"이고, 이 RFC는 그 질문을 닫는다. 닫고 나면 [[09-deployment-runtime]]을 보강하고, [[12.kafka-hosting-msk-vs-self-managed]]·[[13.db-hosting-and-read-write-topology]]를 Proposed에서 Accepted로 올린다.
+남은 건 *규격과 시점*이다 — namespace 구획, command/query 물리 분리 시점, DB standby·복제·페일오버 규약, DB 환경별 축소, Strimzi 스펙·메타데이터, k3s~EKS 패리티. 본 RFC는 이것만 닫는다. 닫으면 [[09-deployment-runtime]]을 보강하고 [[12.kafka-hosting-msk-vs-self-managed]]·[[13.db-hosting-and-read-write-topology]]를 Accepted로 올린다.
 
-## 논의
+> **이 문서가 소유하지 않는 것(포인터만).** read model 내부 조직(도메인 스키마)은 [[RFC-002-read-model-consistency]]가, readiness 신호 정의·핵심 SLI·메트릭 카탈로그·알람 임계는 [[RFC-008-observability]]가(catch-up readiness는 [[RFC-011-projection-rebuild-catchup]]) 소유한다. 여기서는 *배포 측 hook*(query 토폴로지, readiness probe 게이팅)만 두고 정의·수치는 그 문서로 넘긴다. 초안에 이 주제들이 섞여 있던 것을 분리했다.
 
-### namespace는 평탄하게 시작한다
+## 결정의 공통 형태 — 방향은 지금, 숫자는 측정 후
 
-가장 먼저 손에 잡히는 건 클러스터 안에서 워크로드를 어떻게 나눠 담느냐다. 단일 평탄 namespace에 다 올릴 수도, app과 data를 갈라 둘로 나눌 수도, 컨텍스트마다 namespace를 쪼갤 수도 있다([[09-deployment-runtime]]). 화려한 쪽으로 끌리기 쉽지만, 분리를 *정당화*하는 건 세 가지뿐이다 — RBAC 경계, 리소스 쿼터, 수명주기 독립. 셋 중 어느 것도 지금 압박이 아니라면 namespace 분리는 순수 비용(매니페스트 중복·NetworkPolicy·디버깅 동선)일 뿐이다.
+아래 결정은 전부 같은 모양이다: **방향(정성)은 지금 잠그고, 절대 수치는 운영 실측 후 튜닝한다.** 복제 지연 허용치·분리 임계·브로커 수·복제 팩터·페일오버 소요 같은 숫자는 정상 범위를 관측하기 전엔 허구의 SLO가 되므로 책상에서 박지 않는다. 그래서 각 절은 *방향*만 적고, 수치는 말미 〈Design으로 넘기는 것〉에 모은다.
 
-그래서 나는 **단일 평탄 namespace를 기본값**으로 둔다. 다만 분리 트리거는 명시해 둔다 — 팀/역할이 갈려 RBAC 경계가 필요해지거나, 특정 워크로드의 리소스 폭주를 쿼터로 격리해야 하거나, 배포 수명주기가 갈라질 때. 트리거가 당겨지기 전까지 평탄화가 옳다. (이의 여지: 컨텍스트 수가 늘어 매니페스트가 한 namespace에서 시야를 잃는 시점이 트리거 셋보다 먼저 올 수 있다 — 그땐 평탄화를 재검토.)
+## A. Kubernetes 배치·배포 시점
 
-### command/query 물리 분리는 신호가 임계를 넘을 때
+**namespace는 평탄하게 시작.** 단일 평탄 namespace를 기본값으로 둔다. 분리를 정당화하는 건 셋뿐 — RBAC 경계, 리소스 쿼터, 수명주기 독립 — 이고, 셋 다 압박이 아니면 namespace 분리는 순수 비용(매니페스트 중복·NetworkPolicy·디버깅 동선)이다. 분리 트리거(팀/역할 분화, 리소스 폭주 격리, 배포 수명주기 분기)는 명시해 두고, 당겨지기 전까진 평탄이 옳다([[09-deployment-runtime]]). (이의 여지: 컨텍스트 수가 늘어 한 namespace에서 시야를 잃는 게 트리거 셋보다 먼저 올 수 있다.)
 
-다음은 command와 query를 별개 배포로 가르는 시점이다([[01.cqrs-command-query-module-split]]·[[06.strangler-migration]]). 여기서 자주 섞이는 게 *모듈 분리(논리)* 와 *배포 분리(물리)* 다. 모듈은 이미 갈라져 있어도, 그걸 두 개의 Deployment로 따로 굴릴 필요는 별개 문제다. 처음부터 별 배포로 가면 운영 표면적이 두 배가 되고, 단일 배포로 시작하면 그 비용을 미룬다.
+**command/query 물리 분리는 신호가 임계를 넘을 때.** *모듈 분리(논리)* 와 *배포 분리(물리)* 는 별개다 — 모듈이 갈라져 있어도 두 Deployment로 굴릴 필요는 별개다([[01.cqrs-command-query-module-split]]). 초기 단일 배포로 시작해, 읽기 스케일이 결합 배포로 감당 안 되거나 한쪽 장애 격리가 필요할 때 분리한다. 모듈이 이미 갈라져 있어 분리는 나중에도 싸므로 이 미루기가 안전하다(전형적 YAGNI). 임계 지표·수치는 측정으로.
 
-내 입장은 **초기 단일 배포, 신호가 임계를 넘으면 분리**다. 분리를 당기는 신호는 둘 — 읽기 측 스케일 요구가 쓰기와 결합된 배포로는 감당이 안 될 때, 혹은 한쪽 장애가 다른 쪽으로 번지는 걸 격리해야 할 때. 이 임계에 닿기 전 분리는 전형적인 YAGNI다. 모듈이 이미 갈라져 있으니 분리 자체는 나중에도 싸게 할 수 있다는 점이 이 미루기를 안전하게 만든다. (Design에서 검증: 임계를 어떤 지표·수치로 잡을지는 운영 측정으로.)
+**웹 티어 IO 확장 레버 = virtual thread.** 영속화가 블로킹 JPA라 non-blocking(코루틴/WebFlux)은 이득 없이 복잡도만 진다 — 채택 안 한다([[RFC-008-observability]] 코루틴 기각). 동시성 확장이 필요해지면 `spring.threads.virtual.enabled=true`(JDK21·Boot 3.4) 한 줄로 명령형 MVC·JPA 코드 그대로 블로킹 비용을 낮춘다(MDC·추적도 안 깨짐). 지금 켤 필요는 없고, *레버*만 박아 둔다.
 
-### Redis는 v1의 Sentinel을 계승한다
+## B. 데이터 계층 — HA·토폴로지·환경 규격
 
-캐시·세션 계층의 페일오버 토폴로지는 Sentinel과 Cluster 사이다([[13.db-hosting-and-read-write-topology]]). v1이 이미 Sentinel로 돌고 있으니 계승이 자연스러운 기본선이다. Cluster는 샤딩과 수평 확장이 *증명된* 요구일 때나 값을 한다 — 단일 마스터 메모리로 못 담는 데이터, 단일 노드 처리량을 넘는 부하.
+**query/command 토폴로지 = 각 1 인스턴스 + HA 레플리카.** 읽기 부하는 HA 레플리카가 흡수하므로 "query를 여러 인스턴스로 쪼갠다"는 기본이 아니다 — 실트래픽이 없어 인스턴스 분할을 유발할 부하 자체가 없고, 분할 샤딩은 부하가 실재할 때의 운영 수단일 뿐 CQRS·프로젝션·HA 레플리카가 이미 주는 것 너머를 가르치지도 않는다. **읽기 확장은 레플리카로, query 인스턴스 분할은 명시적으로 off**([[13.db-hosting-and-read-write-topology]]). (그 한 인스턴스 *안*에서 read model을 도메인별 스키마로 나누는 조직 규약은 [[RFC-002-read-model-consistency]] 소유 — 여기선 토폴로지만.)
 
-현재 워크로드는 세션과 캐시다. 이게 Cluster의 샤딩을 요구한다는 신호는 아직 없다. 그래서 **Sentinel 계승**이 내 입장이고, Cluster 전환은 메모리/처리량이 단일 마스터를 실제로 압박할 때로 미룬다. (이의 여지: 세션 데이터가 예상보다 빨리 불어 단일 마스터 메모리를 위협하면 그 판단을 앞당긴다.)
+**Redis는 v1의 Sentinel 계승.** 현재 워크로드는 세션·캐시이고 Cluster의 샤딩을 요구하는 신호가 없다. v1이 이미 Sentinel로 도므로 계승이 자연스럽다. Cluster 전환은 메모리/처리량이 단일 마스터를 실제로 압박할 때로 미룬다([[13.db-hosting-and-read-write-topology]]). (Redis가 *왜* 읽기 캐시가 아니라 조정 상태 전용인지는 [[RFC-018-caching-redis-role]].)
 
-### standby 1대 + 복제 지연 정책, 페일오버는 측정 후
+**standby 1대 + 복제 지연 허용 정책.** 사이드 프로젝트 규모에 standby 다수는 과하고 0대는 HA가 아니다. **standby 1 + 지연 허용치 + 임계 초과 알람**이라는 정책 *형태*만 지금 잡고, 허용 지연 절대값과 자동 페일오버 도입 여부는 측정 후 — 둘 다 측정 없이 정하면 허구의 SLO다([[13.db-hosting-and-read-write-topology]]).
 
-HA를 binlog 복제로 가져가기로 한 이상, 남는 건 standby를 몇 대 둘지, 복제 지연을 얼마까지 허용할지, 페일오버를 수동으로 할지 자동으로 할지다([[13.db-hosting-and-read-write-topology]]). 사이드 프로젝트 규모에서 standby를 여러 대 두는 건 과하고, 0대는 HA가 아니다.
+**DB는 환경별로 규격 축소.** 물리 분리는 *프로덕션 불변식*이지만 로컬·소규모까지 강제하면 비용만 는다. 프로덕션은 분리 불변식을 지키고, 로컬은 단일 인스턴스, 스테이지는 토폴로지 동형을 지키되 스펙 축소 — *프로덕션 불변식을 흐리지 않는 선에서* 하위 환경 비용을 깎는다. 환경별 축소 매트릭스는 Design([[11-environments-and-testing]]).
 
-그래서 **standby 1대 + 복제 지연 허용 정책**을 기본 후보로 둔다. 다만 여기서 두 가지를 의도적으로 *지금 박지 않는다* — 허용 지연의 절대 숫자(몇 초/몇 밀리초)와 자동 페일오버 도입 여부다. 둘 다 측정 없이 정하면 허구의 SLO가 된다. 정책의 *형태*("standby 1, 지연 허용치를 둔다, 임계 초과 시 알람")는 지금 잡고, 절대 수치와 자동화 스위치는 운영에서 실측한 뒤 튜닝한다. (운영에서 검증.)
+## C. Kafka / Strimzi
 
-### DB는 환경별로 규격을 축소한다
+**메타데이터는 KRaft.** 신규 클러스터를 ZooKeeper에 묶을 이유가 없다 — 별도 앙상블 운영 부담 + 업스트림이 KRaft로 표준 이동. 브로커 수·복제 팩터·PDB·스토리지 클래스·리소스 한도는 처리량·내구성 측정으로 확정([[12.kafka-hosting-msk-vs-self-managed]]).
 
-command/query 물리 분리는 *프로덕션의 불변식*이지만, 로컬과 소규모 환경에까지 같은 규격을 강제하면 비용만 늘어난다([[13.db-hosting-and-read-write-topology]]·[[11-environments-and-testing]]). 환경 무관하게 두 인스턴스를 강제할 수도, 로컬·소규모는 단일 인스턴스로 합칠 수도, 같은 인스턴스에 스키마만 둘로 나눠 분리를 흉내 낼 수도 있다.
+**k3s~EKS 패리티는 속성별로 끊는다.** *동작 정합성*에 영향 주는 속성(리스너 구성·인증 방식·토픽 토폴로지 동형)은 패리티로 묶고, *규모* 속성(브로커 수·스토리지 용량)은 로컬 축소를 허용한다. 그러면 로컬에서 잡히는 버그 대부분(인증·리스너·직렬화)은 잡으면서 자원 부담은 던다. 속성 분류 목록은 Design([[12.kafka-hosting-msk-vs-self-managed]]·[[11-environments-and-testing]]).
 
-내 입장은 **프로덕션은 물리 분리 불변식을 지키되, 로컬·소규모는 축소를 허용**한다는 것이다. 어디까지 (b)단일 인스턴스 또는 (c)스키마 분리를 허용하느냐의 경계를 환경별로 정한다 — 로컬은 단일 인스턴스로 충분하고, 스테이지는 토폴로지 동형을 지키되 인스턴스 스펙은 축소. 핵심은 *프로덕션 불변식을 흐리지 않는 선에서* 하위 환경의 비용을 깎는 것이다. (Design에서 검증: 환경별 축소 매트릭스.)
+## 다른 문서가 소유 — 여기선 배포 측 hook만
 
-### Strimzi는 KRaft로, 규격은 측정으로
-
-Kafka를 self-managed Strimzi로 가기로 한 이상, 클러스터 규격과 메타데이터 관리 방식이 남는다([[12.kafka-hosting-msk-vs-self-managed]]). 메타데이터는 KRaft와 ZooKeeper 둘 중 하나인데, 신규 클러스터를 ZooKeeper에 묶을 이유가 없다 — 별도 앙상블 운영 부담, 그리고 업스트림이 이미 KRaft로 표준을 옮겼다. 그래서 **KRaft 방향**이 내 입장이다.
-
-반면 브로커 수·복제 팩터·PDB·스토리지 클래스·리소스 한도 같은 규격은 *지금 숫자로 박지 않는다*. 이건 처리량·내구성 요구를 측정하고 구현하며 확정할 값이지, 책상에서 정할 값이 아니다. 방향(KRaft)은 지금, 스펙은 구현/측정으로. (운영에서 검증.)
-
-### k3s~EKS 패리티는 속성별로 끊는다
-
-로컬은 k3s, 타깃은 EKS다. 둘의 Strimzi 구성을 얼마나 같게 맞추느냐는 트레이드오프다([[12.kafka-hosting-msk-vs-self-managed]]·[[11-environments-and-testing]]). 완전 패리티면 "로컬에서 통과 = 프로덕션에서 통과"라는 신뢰가 오르지만 로컬 자원 부담이 커지고, 로컬을 단일 브로커로 깎으면 가볍지만 그 신뢰가 무너진다.
-
-내 입장은 **속성을 둘로 끊는 것**이다 — *동작 정합성*에 영향을 주는 속성(복제 팩터의 존재 여부가 아니라 리스너 구성·인증 방식·토픽 토폴로지의 동형)은 패리티로 묶고, *규모* 속성(브로커 수, 스토리지 용량)은 로컬에서 축소를 허용한다. 그러면 로컬에서 잡히는 버그의 대부분(인증·리스너·직렬화)은 잡으면서 자원 부담은 던다. 어떤 속성이 어느 쪽에 들어가는지의 정확한 목록은 Design으로 넘긴다. (Design에서 검증.)
-
-### read model은 한 query DB 인스턴스 안에서 도메인별 스키마로 나눈다
-
-토폴로지는 정해져 있다 — command 1 인스턴스(+ HA 레플리카), query 1 인스턴스(+ HA 레플리카). 그러니 "query를 여러 인스턴스로 쪼갠다"는 선택지는 기본이 아니다. 읽기 부하는 HA 레플리카가 흡수하면 되고, 인스턴스를 더 세우는 건 운영·비용만 늘린다.
-
-여기서 정할 건 그 한 query 인스턴스 *안에서* read model을 어떻게 조직하느냐다. CQRS query 측은 read model이 하나가 아니라 화면·조회 용도마다 여럿 생기는데([[RFC-002-read-model-consistency]]가 무엇을 투영할지 정한다), 이걸 **도메인별로 스키마를 분리**해 담는다. 도메인 경계가 스키마 경계와 맞아 어느 read model이 어느 도메인 소속인지 분명해지고, command 측의 컨텍스트 분리와도 대칭을 이룬다. 읽기 확장이 필요하면 인스턴스를 쪼개는 게 아니라 그 query 인스턴스의 HA 레플리카로 읽기를 분산한다([[13.db-hosting-and-read-write-topology]]).
-
-'무거운 도메인을 별 인스턴스로 뗀다'는 선택지는 명시적으로 접는다. 토폴로지가 query 1 인스턴스 + HA 레플리카로 고정돼 있고, 실트래픽이 없어 인스턴스 분할을 *유발할* 부하 자체가 없다 — 영영 안 만들 코드라 학습으로도 남는 게 없고, 분할 샤딩은 부하 압박이 실재할 때의 운영 수단일 뿐 CQRS·프로젝션·HA 레플리카·도메인 스키마가 이미 주는 것 너머의 분산 개념을 더 가르치지도 않는다. 읽기 확장은 레플리카, 논리 분리는 도메인 스키마 — 그걸로 닫는다.
-
-### projector·outbox relay readiness 신호는 지금 정의한다
-
-projector와 outbox relay가 "준비됨"을 무엇으로 신고하느냐([[09.event-ordering-and-delivery-guarantee]]·[[09-deployment-runtime]]). 단순히 프로세스가 떴다고 ready로 보면, 적체가 쌓인 채 트래픽을 받게 된다. readiness는 *진척*을 반영해야 한다 — consumer lag이 임계 아래인가, Outbox 적체 건수·연령이 임계 아래인가.
-
-그래서 readiness 신호의 *정의*("lag과 Outbox 적체·연령을 readiness 조건에 묶는다")는 지금 잡는다. 다만 그 임계 *숫자*는 운영에서 정상 범위를 관측한 뒤 튜닝한다 — 측정 없이 박으면 기동 때마다 false-negative로 readiness가 막힌다. (운영에서 검증.)
-
-### 핵심 SLI 목록은 지금, 임계는 측정으로
-
-마지막으로 무엇을 보고 알람을 울릴지다([[09-deployment-runtime]]·[[10-observability]]). 이 시스템에서 의미 있는 SLI는 명확하다 — 프로젝션 지연, Outbox 적체, 소비 lag, 페일오버 소요 시간. 이 *목록*은 지금 확정한다.
-
-하지만 대시보드 패널과 알람 임계 *숫자*는 운영 측정의 몫이다. 정상 범위를 모르는 채 임계를 박으면 알람이 노이즈가 되거나 침묵한다. 그리고 이 작업은 [[RFC-008-observability]]와 겹치는 영역이라, SLI 목록만 여기서 못 박고 구체적 계측·대시보드는 그쪽과 연계해 중복을 피한다. (운영에서 검증, RFC-08와 조율.)
+- **read model 내부 조직(도메인별 스키마).** → [[RFC-002-read-model-consistency]] / design [[03-read-model]]. 본 RFC는 query *토폴로지*(1 인스턴스 + HA 레플리카, 분할 off)만 소유.
+- **readiness 신호 정의·임계.** projector·outbox relay가 lag·Outbox 적체·연령으로 "준비됨"을 신고한다는 *정의*와 임계는 [[RFC-008-observability]](메트릭)·[[RFC-011-projection-rebuild-catchup]](catch-up readiness)가 소유. 본 RFC는 **배포가 그 신호를 readiness probe로 게이팅한다**는 와이어링만 [[09-deployment-runtime]]에 둔다.
+- **핵심 SLI·메트릭 카탈로그·알람 임계.** 프로젝션 지연·Outbox 적체·소비 lag 등의 이름·라벨·단위와 알람 임계는 [[RFC-008-observability]] 소유(SLI=사용자 체감, 카탈로그=내부 파이프라인, 같은 현상 이중 명명 금지). 본 RFC는 HA 고유 지표(**페일오버 소요 시간**)만 위 standby 정책에 묶어 둔다.
 
 ## Design으로 넘기는 것
 
-방향은 위에서 잡았고, 다음 값들은 구현/측정으로 확정한다:
+방향은 위에서 잡았고, 다음 수치는 구현/측정으로 확정한다:
 
 - command/query 배포 분리를 당기는 신호의 지표·임계 수치.
-- standby 복제 지연 허용치의 절대 숫자, 자동 페일오버 도입 여부.
+- standby 복제 지연 허용치 절대값, 자동 페일오버 도입 여부, 페일오버 소요 SLI.
 - 환경별 DB 축소 매트릭스(어디까지 단일 인스턴스/스키마 분리를 허용하나).
 - Strimzi 브로커 수·복제 팩터·PDB·스토리지 클래스·리소스 한도.
 - k3s~EKS 패리티로 묶을 속성 / 축소 허용 속성의 정확한 목록.
-- projector·outbox readiness 임계 숫자, 핵심 SLI의 대시보드·알람 임계.
 
 ## 위임
 
@@ -92,4 +63,4 @@ projector와 outbox relay가 "준비됨"을 무엇으로 신고하느냐([[09.ev
 
 ## 관련 문서
 
-[[RFC-INDEX]] · [[09-deployment-runtime]] · [[12.kafka-hosting-msk-vs-self-managed]] · [[13.db-hosting-and-read-write-topology]] · [[RFC-002-read-model-consistency]] · [[RFC-008-observability]]
+[[RFC-INDEX]] · [[09-deployment-runtime]] · [[12.kafka-hosting-msk-vs-self-managed]] · [[13.db-hosting-and-read-write-topology]] · [[RFC-002-read-model-consistency]] · [[RFC-008-observability]] · [[RFC-011-projection-rebuild-catchup]] · [[RFC-018-caching-redis-role]]

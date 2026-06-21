@@ -28,7 +28,7 @@ V1 행을 이벤트로 바꾸는 방법은 크게 셋이다. (a) 행 하나당 �
 
 예외를 (b)로 여는 경우는, 도메인이 정말로 이력 자체를 필요로 하고 V1에 신뢰할 만한 원천이 실제로 남아 있을 때로 한정한다. 그런 컨텍스트가 있는지는 전환 사이클에서 데이터를 보고 판단할 일이다.
 
-다만 genesis 이벤트도 엄연히 이벤트 스토어의 일급 시민이므로 스키마와 버전을 가진다. [[RFC-002-event-store-schema-evolution]]의 진화 규칙을 그대로 따라야 하고, "Imported" 류 이벤트가 일반 도메인 이벤트와 프로젝션에서 어떻게 구분·취급되는지는 설계 디테일로 넘긴다. (이의 여지: genesis 이벤트를 별도 이벤트 타입으로 둘지, 기존 `Created` 계열에 `source=imported` 플래그를 얹을지는 더 따져볼 만하다.)
+다만 genesis 이벤트도 엄연히 이벤트 스토어의 일급 시민이므로 스키마와 버전을 가진다. [[RFC-004-event-store-schema-evolution]]의 진화 규칙을 그대로 따라야 하고, "Imported" 류 이벤트가 일반 도메인 이벤트와 프로젝션에서 어떻게 구분·취급되는지는 설계 디테일로 넘긴다. (이의 여지: genesis 이벤트를 별도 이벤트 타입으로 둘지, 기존 `Created` 계열에 `source=imported` 플래그를 얹을지는 더 따져볼 만하다.)
 
 ### 이중 기록 기간의 정합성
 
@@ -66,7 +66,7 @@ genesis 이벤트를 스토어에 적재했다고 끝이 아니다. 그 이벤�
 
 방향은 위에서 섰다 — genesis 단일 이벤트 기본 + 컨텍스트별 (b) 예외, 단방향 동기, **긴 병행(무중단 단방향 동기 + 플래그 컷오버) 기본**·레퍼런스 한 바퀴 후 잎 컨텍스트는 얇은 컷오버 단축 허용, RFC-011 재사용 백필, 피처 플래그 컷오버 + V1 보존, 동등성 게이트. 다음은 세부와 검증의 몫이다.
 
-- genesis 이벤트를 별도 타입으로 둘지 기존 `Created` 계열에 `source=imported`로 얹을지, 그 스키마·버전 처리([[RFC-002-event-store-schema-evolution]])
+- genesis 이벤트를 별도 타입으로 둘지 기존 `Created` 계열에 `source=imported`로 얹을지, 그 스키마·버전 처리([[RFC-004-event-store-schema-evolution]])
 - 긴 병행의 단방향 동기 파이프 구체(폴링/CDC, lag 허용), 그리고 어느 컨텍스트부터 얇은 컷오버로 단축할지의 경계(레퍼런스 패턴 증명 후)
 - 단방향 동기의 진실 원천을 컨텍스트별로 어느 쪽에 고정할지, 컷오버 직전 부분적 역동기가 필요한 컨텍스트가 있는지
 - V1 보존 기간의 구체값과, 그 기간 중 V2 단독 쓰기의 V1 반영 여부
@@ -75,4 +75,4 @@ genesis 이벤트를 스토어에 적재했다고 끝이 아니다. 그 이벤�
 
 ## 관련 문서
 
-[[RFC-INDEX]] · [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-010-module-structure-migration]] · [[RFC-011-projection-rebuild-catchup]] · [[RFC-002-event-store-schema-evolution]] · [[14.testing-strategy]] · [[04-migration]]
+[[RFC-INDEX]] · [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-010-module-structure-migration]] · [[RFC-011-projection-rebuild-catchup]] · [[RFC-004-event-store-schema-evolution]] · [[14.testing-strategy]] · [[04-migration]]
