@@ -1,6 +1,6 @@
 # RFC-021 — 인증 경계: API 게이트웨이 + 인증 서버 (k3s 인클러스터)
 
-- **상태**: 합의됨 (2026-06-17) · design [[09-deployment-runtime]] 반영 · ADR 비준 대기
+- **상태**: Closed · 합의 · 2026-06-23
 - **선행**: [[RFC-016-authorization-model]] · [[RFC-020-auth-token-transport]] · [[RFC-008-deployment-infra-ops]] · 인덱스 [[RFC-002-decision-queue]]
 - **닫으면**: [[09-deployment-runtime]] 워크로드 토폴로지 보강 + 신규 ADR(인증 경계)
 

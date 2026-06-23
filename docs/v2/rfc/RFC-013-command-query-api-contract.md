@@ -1,6 +1,6 @@
 # RFC-013 — command/query API 계약·비동기 command
 
-- **상태**: Open · 논의 중 · 2026-06-15
+- **상태**: Closed · 합의 · 2026-06-23
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-002-decision-queue]]
 - **닫으면**: 신규 design_doc(API 계약) + ADR 가능
 
