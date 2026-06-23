@@ -1,14 +1,14 @@
 # RFC-009 — 테스트·품질 게이트
 
-- **상태**: Open · 논의 중 · 2026-06-15
+- **상태**: 합의됨 (2026-06-23) · 생산자·소비자 이벤트 계약 절은 [[RFC-024-event-schema-contract-management]]로 분리
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[11-environments-and-testing]] 보강 + [[14.testing-strategy]] 비준 (Proposed→Accepted)
 
 ## 맥락
 
-라운드1에서 *어떤 종류의 테스트를 쌓을지*는 이미 정리됐다. 다섯 범주다. (1) 아키텍처 강제 — query↛command, 도메인↛JPA, command↔query는 이벤트로만 통하게 하는 경계 규칙을 컴파일/테스트 시점에 깨뜨리는 것. 이게 1순위인 이유는 CQRS+ES로 가면서 가장 먼저 무너지는 게 모듈 경계이기 때문이다. 사람이 리뷰로 막을 수 있는 종류의 침범이 아니다. (2) property-based — Fixture Monkey로 도메인 불변식을 무작위 입력에 노출. (3) 소비자 계약 — 이벤트 스키마 생산자와 컨슈머 사이의 합의. (4) 업캐스팅 회귀 — 구버전 이벤트가 신버전 코드로 항상 복원되는지. (5) Chaos Monkey — 장애 주입. 여기에 이 RFC에서 한 범주를 더 세운다 — (6) **행위 명세(Gherkin)** — usecase·service·controller(standalone) 슬라이스의 동작을 Given-When-Then 시나리오로 고정해 살아있는 명세로 삼는 것.
+라운드1에서 *어떤 종류의 테스트를 쌓을지*는 이미 정리됐다. 다섯 범주다. (1) 아키텍처 강제 — query↛command, 도메인↛JPA, command↔query는 이벤트로만 통하게 하는 경계 규칙을 컴파일/테스트 시점에 깨뜨리는 것. 이게 1순위인 이유는 CQRS+ES로 가면서 가장 먼저 무너지는 게 모듈 경계이기 때문이다. 사람이 리뷰로 막을 수 있는 종류의 침범이 아니다. (2) property-based — Fixture Monkey로 도메인 불변식을 무작위 입력에 노출. (3) 소비자 계약 — 이벤트 스키마 생산자와 컨슈머 사이의 합의 (이 범주는 [[RFC-024-event-schema-contract-management]]로 분리해 깊게 다룬다). (4) 업캐스팅 회귀 — 구버전 이벤트가 신버전 코드로 항상 복원되는지. (5) Chaos Monkey — 장애 주입. 여기에 이 RFC에서 한 범주를 더 세운다 — (6) **행위 명세(Gherkin)** — usecase·service·controller(standalone) 슬라이스의 동작을 Given-When-Then 시나리오로 고정해 살아있는 명세로 삼는 것.
 
-그런데 한 걸음 더 들어가야 한다. 위 범주들은 *정적 구조* — 코드가 경계·계약·시나리오를 지키는가 — 에 쏠려 있어, ES/EDA 시스템이 실제로 깨지는 *동적 분산 행위*를 거의 못 본다. 메시지가 두 번 오고, 투영을 다시 세우고, 사가가 중간에 실패하고, 이벤트를 리플레이하고, 같은 애그리거트에 동시 쓰기가 붙는 — 우리가 RFC-002·004·005·007·012·013에서 *결정한 메커니즘*이 진짜 성립하는지는 정적 테스트로 안 보인다. 그래서 이 RFC는 그 메커니즘마다 행위 검증을 짝짓는 **동적 분산 행위 범주군**을 함께 세우고, 더해서 **인가·인증**, 그리고 [[RFC-013-data-migration-genesis-events]]가 선언한 **V1↔V2 등가성 회귀**도 이 전략 안에 자리를 잡는다. 이 RFC가 그 허브이고, 각 범주는 [[14.testing-strategy]] 아래 개별 design_doc으로 펼쳐 나갈 씨앗이다.
+그런데 한 걸음 더 들어가야 한다. 위 범주들은 *정적 구조* — 코드가 경계·계약·시나리오를 지키는가 — 에 쏠려 있어, ES/EDA 시스템이 실제로 깨지는 *동적 분산 행위*를 거의 못 본다. 메시지가 두 번 오고, 투영을 다시 세우고, 사가가 중간에 실패하고, 이벤트를 리플레이하고, 같은 애그리거트에 동시 쓰기가 붙는 — 우리가 RFC-003·004·005·007·012·013에서 *결정한 메커니즘*이 진짜 성립하는지는 정적 테스트로 안 보인다. 그래서 이 RFC는 그 메커니즘마다 행위 검증을 짝짓는 **동적 분산 행위 범주군**을 함께 세우고, 더해서 **인가·인증**, 그리고 [[RFC-013-data-migration-genesis-events]]가 선언한 **V1↔V2 등가성 회귀**도 이 전략 안에 자리를 잡는다. 이 RFC가 그 허브이고, 각 범주는 [[14.testing-strategy]] 아래 개별 design_doc으로 펼쳐 나갈 씨앗이다.
 
 그래서 이 RFC가 남겨 받은 건, 라운드1의 다섯 범주를 각각 어떤 도구로 실현하고 어디까지를 CI 게이트로 묶을지, 그리고 새로 세우는 범주들(행위 명세·동적 분산 행위·인가)의 도구·범위·게이트 배치다. 여기서 그걸 추론한다.
 
@@ -22,19 +22,9 @@
 
 (이의 여지) ArchUnit의 생태계 두께를 포기하는 비용이 정말 작은가. Konsist는 비교적 신생이고, 복잡한 의존성 사이클 탐지 같은 ArchUnit의 검증된 기능군에서 약할 수 있다. 경계 규칙이 단순한 import 금지를 넘어 "사이클 없음" 류로 커진다면 재검토 여지가 있다.
 
-### 생산자·소비자 이벤트 스키마 어긋남을 어떻게 잡나 — 공유 계약 모듈이냐 계약 테스트냐
+### 생산자·소비자 이벤트 스키마 어긋남을 어떻게 잡나 → [[RFC-024-event-schema-contract-management]]
 
-V2에서 생산자는 이벤트를 내고(예: `reservation`이 `ReservationConfirmed`), 소비자/프로젝터는 그걸 읽어 read model을 만든다. 둘은 따로 배포되는 별개 모듈이고 Kafka/JSON으로만 통하므로 사이에 컴파일러가 없다. 그래서 생산자가 이벤트 모양을 바꾸면 — 가령 `ReservationConfirmed`의 `confirmedAt`을 `confirmedTime`으로 고치거나 필드를 빼면 — 빌드는 멀쩡히 통과하고 *배포된 뒤 런타임에* 프로젝터가 못 알아먹어 깨진다. 이런 깨짐은 사람 리뷰로 막기 어렵고 발견도 늦다.
-
-계약 테스트가 그 안전망이다. "생산자가 내는 이벤트 모양"과 "소비자가 기대하는 모양"을 코드로 못박아, 둘이 어긋나는 변경이 들어오면 런타임까지 가기 전에 *빌드에서* 빨갛게 뜨게 한다. (참고: 이건 [[RFC-004-event-store-schema-evolution]]의 업캐스팅과 다른 방향이다 — 업캐스팅은 *과거* 이벤트를 새 코드로 읽는 호환이고, 계약 테스트는 *생산자 변경이 소비자를 깨지 않는지*를 본다. 둘 다 필요하다.)
-
-그 안전망을 무엇으로 치느냐엔, 도구 택일보다 먼저 *machinery를 얼마나 쓸 것이냐*의 스펙트럼이 있다.
-
-가장 가벼운 쪽은 **공유 이벤트 계약 모듈**이다. 이벤트 정의를 한 모듈에 두고 생산자·소비자가 함께 의존하면, 모양이 어긋나는 변경은 런타임이 아니라 *컴파일*에서 깨진다 — 도구도 브로커도 스텁도 없다. 솔로·모노레포 규모에선 가장 단순하고 강력하다. 다만 두 단서가 붙는다. (1) 공유하는 건 *내부 도메인 이벤트*가 아니라 *얇은 통합 이벤트(published language, [[RFC-003-messaging-delivery]])*다 — 내부 도메인 이벤트까지 공유 타입으로 묶으면 이벤트로 떼어 놓은 컨텍스트 내부가 도로 결합된다(내부 이벤트는 각 컨텍스트 소유, 버전·업캐스팅은 [[RFC-004-event-store-schema-evolution]]). (2) 공유 타입의 컴파일 보장은 *같은 모듈 버전*일 때만 성립한다 — 생산자·소비자가 독립 배포돼 서로 다른 버전을 들면 보장은 사라지고 런타임 JSON 호환만 남는다. 그래서 공유 모듈만으로는 *버전 스큐 시 wire 모양 호환*을 못 잡는다.
-
-그 구멍은 무거운 계약 프레임워크 없이 메운다 — **직렬화/스키마 테스트**로 "이 이벤트의 JSON 모양은 이렇다"를 핀으로 박아 두면 필드 rename·삭제가 그 테스트를 깬다. **Pact**(소비자가 기대를 적고 생산자가 검증하는 consumer-driven, Pact Broker라는 별도 서버 필요)와 **Spring Cloud Contract**(생산자가 모양을 선언해 스텁 생성, Spring 빌드에 얹힘, 브로커 불필요)는 그 위의 본격 프레임워크다.
-
-그래서 입장: **얇은 통합 이벤트 공유 계약 모듈 + 직렬화 테스트를 기본**으로 둔다. 공유 모듈이 컴파일 보장을, 직렬화 테스트가 wire 모양 보장을 맡으면 스텁·브로커 machinery 없이 대부분을 덮는다. Spring Cloud Contract는 솔로·내부 단계엔 overspec에 가깝다 — 스텁 생성·생산자/소비자 검증 파이프라인이 지금 우리가 치를 결합 문제보다 무겁다. SCC/Pact는 *소비자가 외부로 나가거나 독립 배포 스큐가 실제 문제가 될 때* 졸업 후보로 남긴다. (이의 여지: 통합 이벤트가 늘고 wire 호환 규칙이 복잡해지면 손으로 쓰는 직렬화 테스트가 감당 안 되는 선이 온다 — 그게 SCC가 값을 하기 시작하는 지점이다. 외부 파트너 구독이 생기면 consumer-driven인 Pact가 살아난다.)
+생산자가 이벤트 모양을 바꾸면(필드 rename·삭제) 빌드는 통과하고 런타임에 프로젝터가 깨진다 — 그 어긋남을 *공유 통합-이벤트 계약 모듈*로 막을지 *계약 테스트*로 막을지의 결정은 이 RFC에서 다루기엔 결이 따로 서서 [[RFC-024-event-schema-contract-management]]로 분리했다(topical, not parked). 그쪽 입장 요약: **얇은 통합 이벤트 공유 계약 모듈(컴파일 보장) + 직렬화 테스트(wire 모양 보장)를 기본**, SCC/Pact는 외부 소비자·독립 배포 스큐가 실제 문제로 올라올 때 졸업. (업캐스팅 — 과거 이벤트를 새 코드로 — 은 또 다른 축이라 [[RFC-023-event-schema-evolution]].)
 
 ### 행위 명세(Gherkin)를 usecase·service·controller 슬라이스에 깐다
 
@@ -44,7 +34,7 @@ V2에서 생산자는 이벤트를 내고(예: `reservation`이 `ReservationConf
 - **service(domain)**: "주어진 도메인 상태에서 도메인 서비스를 호출하면 어떤 불변식·결과가 성립하는가". 순수 도메인 로직을 비즈니스 언어로 고정한다.
 - **controller(standalone)**: 전체 Spring 컨텍스트 없이 standalone MockMvc로 "주어진 HTTP 요청에 어떤 상태·바디가 나오는가". [[RFC-012-command-query-api-contract]]의 API 계약(202·에러 분류 등)이 여기서 행위로 검증되고 REST Docs와도 엮인다.
 
-도구는 두 갈래다 — 진짜 Gherkin `.feature` 파일 + Cucumber(비개발자도 읽는 명세, 단 글루 코드 부담)냐, Kotest `BehaviorSpec`(Given/When/Then 구조를 코틀린으로, 별도 feature 파일·글루 없음)이냐. 스택이 이미 Kotest인 만큼 나는 **Kotest BehaviorSpec을 기본**으로 본다 — Gherkin 구조의 가독성은 얻으면서 `.feature` 글루 machinery는 피한다(앞 계약 절과 같은 overspec 회피 결). 비개발자가 읽는 `.feature` 명세가 실제로 필요해지면 그때 Cucumber를 얹는다. (이의 여지: property-based(2번 범주)와 역할이 겹쳐 보일 수 있으나 층이 다르다 — property-based는 *무작위 입력*으로 불변식을 흔드는 것이고, 행위 명세는 *명명된 시나리오*로 동작을 고정하는 것이라 보완 관계다. 또 controller standalone 명세와 RFC-012 계약·REST Docs의 책임 경계는 Design에서 정리.)
+도구는 두 갈래다 — 진짜 Gherkin `.feature` 파일 + Cucumber(비개발자도 읽는 명세, 단 글루 코드 부담)냐, Kotest `BehaviorSpec`(Given/When/Then 구조를 코틀린으로, 별도 feature 파일·글루 없음)이냐. 스택이 이미 Kotest인 만큼 나는 **Kotest BehaviorSpec을 기본**으로 본다 — Gherkin 구조의 가독성은 얻으면서 `.feature` 글루 machinery는 피한다(앞 계약 절과 같은 overspec 회피 결). 비개발자가 읽는 `.feature` 명세가 실제로 필요해지면 그때 Cucumber를 얹는다. (이의 여지: property-based(2번 범주)와 역할이 겹쳐 보일 수 있으나 층이 다르다 — property-based는 *무작위 입력*으로 불변식을 흔드는 것이고, 행위 명세는 *명명된 시나리오*로 동작을 고정하는 것이라 보완 관계다. 또 controller standalone 명세와 RFC-013 계약·REST Docs의 책임 경계는 Design에서 정리.)
 
 ### 동적 분산 행위를 검증한다 — 정적 구조 너머
 
@@ -99,8 +89,8 @@ localstack로 흉내 낼 AWS 서비스 목록은, 우리가 실제로 어떤 AWS
 - 커버리지·k6 임계: 베이스라인 측정 후 확정할 절대 숫자와 ratchet 정책 — 측정.
 - localstack 서비스 목록: 컨텍스트 전환에서 드러나는 실제 의존에 따라 — 측정. 콜드 S3 항목은 [[RFC-004-event-store-schema-evolution]] 매체 결정에 의존.
 - 인프라 카오스 도구: T-05 확장 트리거 도달 시 Chaos Mesh 채택 여부 재검토 — 측정.
-- 이벤트 계약: 얇은 통합 이벤트 공유 모듈 + 직렬화 테스트 구체화, SCC/Pact 졸업 트리거(외부 소비자·독립배포 스큐).
-- 행위 명세(Gherkin): Kotest BehaviorSpec vs Cucumber `.feature` 택일, usecase·service·controller(standalone) 슬라이스별 시나리오 범위, RFC-012 계약·REST Docs와의 책임 경계.
+- 이벤트 계약: [[RFC-024-event-schema-contract-management]]로 분리(공유 통합-이벤트 모듈 + 직렬화 테스트, SCC/Pact 졸업 트리거).
+- 행위 명세(Gherkin): Kotest BehaviorSpec vs Cucumber `.feature` 택일, usecase·service·controller(standalone) 슬라이스별 시나리오 범위, RFC-013 계약·REST Docs와의 책임 경계.
 - 동적 분산 행위: 멱등성·재구축·사가 보상·재생/스냅샷 등가·동시성·종단 라운드트립의 검증 기법과 게이트 배치(결정적=CI 필수 / 무거운 통합=정기 단계), 경량화 모킹 vs 실제 환경(Testcontainers+Kafka)의 경계.
 - 인가·인증: 역할 기반 인가 시나리오를 controller·usecase 슬라이스 중 어디에 얹을지, 인증 서버 책임과의 경계.
 - V1↔V2 등가성: [[RFC-013-data-migration-genesis-events]]가 컷오버 게이트로 소유, 회귀 편입 지점만 이 전략에서 연계.
