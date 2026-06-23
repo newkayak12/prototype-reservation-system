@@ -1,7 +1,7 @@
-# RFC-011 — 모듈 구조·마이그레이션 확정
+# RFC-010 — 모듈 구조·마이그레이션 확정
 
 - **상태**: Open · 논의 중 · 2026-06-15
-- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-002-decision-queue]]
+- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[01-module-structure]]·[[04-migration]] 보강 + [[06.strangler-migration]]·[[07.command-domain-jpa-separation]] 비준
 
 ## 맥락
@@ -10,7 +10,7 @@
 
 남은 것은 그 원칙을 실제 디렉터리와 일정에 앉히는 일이다. 순수 도메인 코드를 물리적으로 어디 두는가, 도메인↔JPA 분리를 유지하는 대가인 매핑 보일러플레이트를 어떻게 감당하는가, [[06.strangler-migration]]에 "초안"으로 적힌 전환 순서를 무엇 기준으로 확정하는가, 그 순서를 어떤 단위의 사이클로 쪼개 도는가, 그리고 리뷰/포인트/신고 같은 신규 기능을 이 전환 흐름 어디에 끼워 넣는가. 이 RFC는 그 다섯을 추론으로 닫는다 — 방향까지. 디렉터리 트리나 매퍼 시그니처 같은 검증은 Design에 넘긴다.
 
-참고로 command/query의 **물리 배포**(별도 프로세스·별도 배포 파이프라인) 분리 시점은 여기서 다루지 않는다. 그건 [[RFC-008-deployment-infra-ops]]가 맡는다. 이 문서의 "모듈 분리"는 어디까지나 *논리적* 분리, 즉 소스 트리와 빌드 모듈의 경계까지다.
+참고로 command/query의 **물리 배포**(별도 프로세스·별도 배포 파이프라인) 분리 시점은 여기서 다루지 않는다. 그건 [[RFC-007-deployment-infra-ops]]가 맡는다. 이 문서의 "모듈 분리"는 어디까지나 *논리적* 분리, 즉 소스 트리와 빌드 모듈의 경계까지다.
 
 ## 논의
 
@@ -64,4 +64,4 @@
 
 ## 관련 문서
 
-- [[RFC-002-decision-queue]] · [[01-module-structure]] · [[04-migration]] · [[06.strangler-migration]] · [[07.command-domain-jpa-separation]] · [[RFC-008-deployment-infra-ops]]
+- [[RFC-INDEX]] · [[01-module-structure]] · [[04-migration]] · [[06.strangler-migration]] · [[07.command-domain-jpa-separation]] · [[RFC-007-deployment-infra-ops]]

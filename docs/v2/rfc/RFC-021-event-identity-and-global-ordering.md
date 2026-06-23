@@ -1,16 +1,16 @@
-# RFC-022 — 이벤트 정체성·전역 순서
+# RFC-021 — 이벤트 정체성·전역 순서
 
 - **상태**: Open · 논의 중 · 2026-06-17
-- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-005-event-store-schema-evolution]] · 인덱스 [[RFC-002-decision-queue]]
+- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-004-event-store-schema-evolution]] · 인덱스 [[RFC-INDEX]]
 - **계기**: 전수 감사 [[04-design-completeness-audit]] 횡단 미결 ①
-- **닫으면**: [[05.event-store-mysql-table]] 스키마 보강(신규 ADR) + [[02-write-model]]·[[08-event-store-lifecycle]]·[[RFC-012-projection-rebuild-catchup]] 보강
+- **닫으면**: [[05.event-store-mysql-table]] 스키마 보강(신규 ADR) + [[02-write-model]]·[[08-event-store-lifecycle]]·[[RFC-011-projection-rebuild-catchup]] 보강
 
 ## 맥락
 
 전수 감사가 ①로 묶은 것은 사실 **한 모순처럼 보이는 세 구멍**이었다. 풀어 보면 결정해야 할 건 둘이다.
 
 1. **정체성 부재.** [[05.event-store-mysql-table]]의 `event_store` 스키마에 `event_id`가 없다. 그런데 [[09.event-ordering-and-delivery-guarantee]]의 멱등 컨슈머/inbox는 "이 메시지를 봤는가"를 가를 **정체성**을 요구하고, [[02-write-model]]의 추적 메타 `causationId`("직전 원인")도 가리킬 **안정 식별자**가 있어야 한다. ES 이벤트는 `(aggregate_id, sequence_no)`로 정체성이 서지만, **비-ES·lookup 컨텍스트(상태+Outbox)** 이벤트는 `sequence_no`가 없어 정체성이 아예 없다 — dedup 키도, causation 앵커도 없다.
-2. **전역 열거 커서 부재.** `sequence_no`는 per-aggregate다. [[RFC-012-projection-rebuild-catchup]]는 재구축 원천을 이벤트 스토어 리플레이로 두는데, 전역 단조 컬럼이 없으면 **스토어 전체를 빠짐없이·재개 가능하게 훑을 기준**이 없다. 감사는 이를 "스캔 순서 정의 불가"로 적었다.
+2. **전역 열거 커서 부재.** `sequence_no`는 per-aggregate다. [[RFC-011-projection-rebuild-catchup]]는 재구축 원천을 이벤트 스토어 리플레이로 두는데, 전역 단조 컬럼이 없으면 **스토어 전체를 빠짐없이·재개 가능하게 훑을 기준**이 없다. 감사는 이를 "스캔 순서 정의 불가"로 적었다.
 
 이 둘이 "프로젝션·사가는 애그리거트를 가로지르는데 보장은 per-aggregate 순서뿐"이라는 긴장과 얽혀 한 덩어리로 보였다. 본 RFC는 셋을 풀어, **정체성은 `event_id`로, 전역 열거는 `global_seq`로** 닫고, "순서"가 애초에 요구가 아니었음을 명시한다.
 
@@ -41,7 +41,7 @@ ES 이벤트의 dedup은 `(aggregate_id, sequence_no)`로 이미 가능하다([[
 그래서 내 입장은 **`global_seq BIGINT AUTO_INCREMENT`를 전역 삽입 커서로** 둔다. 용도는 딱 하나 — 재구축/백필이 `ORDER BY global_seq`로 스토어를 페이지네이션하고 중단점에서 재개하는 것. **교차-애그리거트 전순서 정확성은 보장하지 않음을 명문화**한다. 이게 안전한 이유:
 
 - 재구축 백필은 **배치**다 — 모든 row가 이미 커밋된 과거를 훑으므로, AUTO_INCREMENT의 commit-순서 skew·gap(라이브 tailing의 함정)이 문제되지 않는다.
-- 실시간 catch-up은 스토어 tailing이 아니라 **Kafka 구독**으로 한다([[RFC-012-projection-rebuild-catchup]] 2단 구조: 스토어로 과거, 토픽으로 현재).
+- 실시간 catch-up은 스토어 tailing이 아니라 **Kafka 구독**으로 한다([[RFC-011-projection-rebuild-catchup]] 2단 구조: 스토어로 과거, 토픽으로 현재).
 
 #### 기각한 대안
 
@@ -75,16 +75,16 @@ event_store(
 - `event_id` 물리 표현 — `BINARY(16)` vs `CHAR(36)`, UUIDv7 채택 여부(대략 시간 정렬 보너스).
 - Outbox 경로의 `event_id` 전파 배선 — 기록 시점 채번 → 봉투 → inbox.
 - 비-ES inbox 적용 범위 — 자연 멱등(Zero-Payload upsert)이라 inbox를 생략할 컨텍스트 판정([[09.event-ordering-and-delivery-guarantee]] 미결과 연동).
-- `global_seq` 기반 재구축 페이지네이션·재개 체크포인트 구현([[RFC-012-projection-rebuild-catchup]]).
+- `global_seq` 기반 재구축 페이지네이션·재개 체크포인트 구현([[RFC-011-projection-rebuild-catchup]]).
 
 ## 닫음
 
-- [[05.event-store-mysql-table]]는 **합의됨**이라 제자리 수정 불가 → 스키마 보강은 신규 ADR로(본 RFC가 그 근거). adr/09·dd02·dd08·RFC-012 동반 보강.
+- [[05.event-store-mysql-table]]는 **합의됨**이라 제자리 수정 불가 → 스키마 보강은 신규 ADR로(본 RFC가 그 근거). adr/09·dd02·dd08·RFC-011 동반 보강.
 
 > 한 줄: **`event_id`가 정체성을 통일하고, `global_seq`는 순서가 아니라 재구축 *열거* 커서다 — 교차 순서는 여전히 사가로 푼다.**
 
 ## 관련 문서
 
-- [[RFC-002-decision-queue]] · [[RFC-012-projection-rebuild-catchup]] · [[RFC-005-event-store-schema-evolution]]
+- [[RFC-INDEX]] · [[RFC-011-projection-rebuild-catchup]] · [[RFC-004-event-store-schema-evolution]]
 - ADR: [[05.event-store-mysql-table]] · [[09.event-ordering-and-delivery-guarantee]] · [[16.optimistic-concurrency-control]]
 - 설계: [[02-write-model]] · [[08-event-store-lifecycle]]

@@ -1,7 +1,7 @@
-# RFC-004 — 메시징·전달 보장
+# RFC-003 — 메시징·전달 보장
 
 - **상태**: Open · 논의 중 · 2026-06-15
-- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-002-decision-queue]]
+- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[07-messaging-topology]] 보강 + [[09.event-ordering-and-delivery-guarantee]] 비준
 
 ## 맥락
@@ -46,7 +46,7 @@ read model·프로젝터는 같은 이벤트 스트림을 각자 다르게 소�
 
 ### 토픽의 retention과 재구축의 진실 원천
 
-토픽을 얼마나 오래 보관할지는 재구축을 어디서 하느냐와 묶여 있다. read model을 토픽 처음부터 다시 흘려 재구축하려면 retention이 그만큼 길어야 한다. 하지만 V2에서 진실 원천은 **이벤트 스토어**다 — 토픽은 전달 채널일 뿐 영속 기록이 아니다. 그러니 토픽 retention은 **짧게** 두고, 재구축은 **스토어 리플레이**로 한다([[RFC-012-projection-rebuild-catchup]] 재구축 소스와 정합). 상태성 lookup 토픽처럼 "최신 상태"가 의미를 갖는 것만 log compaction을 쓴다. (이의 여지: 짧은 retention의 구체 기간과 compaction 대상 토픽 식별은 Design.)
+토픽을 얼마나 오래 보관할지는 재구축을 어디서 하느냐와 묶여 있다. read model을 토픽 처음부터 다시 흘려 재구축하려면 retention이 그만큼 길어야 한다. 하지만 V2에서 진실 원천은 **이벤트 스토어**다 — 토픽은 전달 채널일 뿐 영속 기록이 아니다. 그러니 토픽 retention은 **짧게** 두고, 재구축은 **스토어 리플레이**로 한다([[RFC-011-projection-rebuild-catchup]] 재구축 소스와 정합). 상태성 lookup 토픽처럼 "최신 상태"가 의미를 갖는 것만 log compaction을 쓴다. (이의 여지: 짧은 retention의 구체 기간과 compaction 대상 토픽 식별은 Design.)
 
 ### 무엇을 Kafka로 내보내는가 — 통합 이벤트
 
@@ -58,12 +58,12 @@ read model·프로젝터는 같은 이벤트 스트림을 각자 다르게 소�
 
 파티션 수는 순서 계약의 일부다 — 파티션 키가 `aggregate_id`인 이상, 파티션 수를 사후에 바꾸면 키 해싱이 재분배돼 순서 보장이 깨진다. 그래서 **고정 지향**으로 가고 보수적 초기값(일반 토픽 3, 고처리량 6~12 수준)을 둔다. 증설이 정말 필요하면 in-place 변경이 아니라 **새 토픽으로 마이그레이션**한다. 절대 초기값은 처리량 추정으로 Design에서 잡는다([[09.event-ordering-and-delivery-guarantee]]·[[07-messaging-topology]]·[[12.kafka-hosting-msk-vs-self-managed]]).
 
-consumer lag은 **핵심 SLI**로 삼고 warn/crit 2단 알람을 건다. 임계 숫자는 사전 추정이 아니라 운영 관측치로 튜닝하며, [[RFC-008-deployment-infra-ops]]·[[RFC-009-observability]]의 SLI 체계와 단일화한다([[RFC-003-read-model-consistency]]의 프로젝션 지연 관측과 동반). 정책은 지금, 숫자는 운영시.
+consumer lag은 **핵심 SLI**로 삼고 warn/crit 2단 알람을 건다. 임계 숫자는 사전 추정이 아니라 운영 관측치로 튜닝하며, [[RFC-007-deployment-infra-ops]]·[[RFC-008-observability]]의 SLI 체계와 단일화한다([[RFC-002-read-model-consistency]]의 프로젝션 지연 관측과 동반). 정책은 지금, 숫자는 운영시.
 
 ## Design으로 넘기는 것
 
 - 파티션 절대 초기값(처리량 추정 기반)과 토픽 마이그레이션 절차.
-- lag warn/crit 임계 숫자와 [[RFC-009-observability]] SLI 단일화 방식.
+- lag warn/crit 임계 숫자와 [[RFC-008-observability]] SLI 단일화 방식.
 - 컨슈머별 inbox 유지/생략 귀속(순서 역전 무풍지대 검증)과 inbox 보존 기간·GC 주기.
 - 부수효과 유형별 디듀프/outbox/수동 귀속.
 - DLQ 재시도 횟수·백오프 곡선·자동 재생 조건.
@@ -77,4 +77,4 @@ consumer lag은 **핵심 SLI**로 삼고 warn/crit 2단 알람을 건다. 임계
 
 ## 관련 문서
 
-- [[RFC-002-decision-queue]] · [[07-messaging-topology]] · [[09.event-ordering-and-delivery-guarantee]] · [[09-deployment-runtime]] · [[12.kafka-hosting-msk-vs-self-managed]] · [[RFC-012-projection-rebuild-catchup]]
+- [[RFC-INDEX]] · [[07-messaging-topology]] · [[09.event-ordering-and-delivery-guarantee]] · [[09-deployment-runtime]] · [[12.kafka-hosting-msk-vs-self-managed]] · [[RFC-011-projection-rebuild-catchup]]

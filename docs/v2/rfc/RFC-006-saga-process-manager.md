@@ -1,7 +1,7 @@
-# RFC-007 — Saga·프로세스 매니저
+# RFC-006 — Saga·프로세스 매니저
 
 - **상태**: Open · 논의 중 · 2026-06-15
-- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-002-decision-queue]]
+- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[06-consistency-and-sagas]] 보강 + [[08.saga-orchestration-vs-choreography]] 비준
 
 ## 맥락
@@ -62,4 +62,4 @@ PM은 본질적으로 상태 머신이다. "점유 잡음 → 결제 대기 → 
 
 ## 관련 문서
 
-- [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-002-decision-queue]] · [[06-consistency-and-sagas]] · [[08.saga-orchestration-vs-choreography]] · [[07.reservation]]
+- [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-INDEX]] · [[06-consistency-and-sagas]] · [[08.saga-orchestration-vs-choreography]] · [[07.reservation]]

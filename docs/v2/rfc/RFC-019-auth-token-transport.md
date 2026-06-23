@@ -1,8 +1,8 @@
-# RFC-020 — 인증 토큰의 transport·무상태성과 폐기 포기
+# RFC-019 — 인증 토큰의 transport·무상태성과 폐기 포기
 
 - **상태**: Closed · 합의 · 2026-06-23
-- **선행**: [[RFC-016-authorization-model]] · [[RFC-019-caching-redis-role]] · 인덱스 [[RFC-002-decision-queue]]
-- **닫으면**: 신규 design_doc(인증 토큰) 또는 [[RFC-016-authorization-model]] design_doc 보강 + 신규 ADR
+- **선행**: [[RFC-015-authorization-model]] · [[RFC-018-caching-redis-role]] · 인덱스 [[RFC-INDEX]]
+- **닫으면**: 신규 design_doc(인증 토큰) 또는 [[RFC-015-authorization-model]] design_doc 보강 + 신규 ADR
 
 ## 결정 요약
 
@@ -20,7 +20,7 @@ V1이 그 위에 *하나 더* 얹은 게 있다. refresh 토큰을 서버 측 Re
 
 가를 두 개념을 먼저 평이하게 박는다 — **transport**: 토큰이 클라이언트와 서버 사이를 *어떻게 오가나*(쿠키냐 헤더냐 body냐). **server-side state**: 서버가 토큰의 사본·상태를 *들고 있나*(검증·폐기를 위해). V1은 전자는 갈라 뒀고, 후자는 refresh에 대해 들고 있었다. 이 RFC는 후자를 들어낸다.
 
-V2가 이 그림을 흔드는 지점은 둘이다. 첫째, access는 무상태 서명 JWT로 정리됐다([[RFC-016-authorization-model]] 토대 — 신원·역할은 서명된 클레임으로 흐르고 매 요청 서버 조회가 없다). 둘째, Redis의 역할이 "분산 조정·휘발성 상태"로 좁혀지면서([[RFC-019-caching-redis-role]]), refresh의 서버 저장분이 그 좁힌 역할에 맞는지가 도마에 오른다.
+V2가 이 그림을 흔드는 지점은 둘이다. 첫째, access는 무상태 서명 JWT로 정리됐다([[RFC-015-authorization-model]] 토대 — 신원·역할은 서명된 클레임으로 흐르고 매 요청 서버 조회가 없다). 둘째, Redis의 역할이 "분산 조정·휘발성 상태"로 좁혀지면서([[RFC-018-caching-redis-role]]), refresh의 서버 저장분이 그 좁힌 역할에 맞는지가 도마에 오른다.
 
 구체 시나리오 둘로 긴장을 끌어온다.
 
@@ -33,7 +33,7 @@ V2가 이 그림을 흔드는 지점은 둘이다. 첫째, access는 무상태 �
 
 시나리오 A다. V1은 refresh를 Redis에 저장해 두고 `/refresh`마다 조회·대조했다. 나는 **refresh를 self-contained 서명 JWT로 두고, 검증을 서명·만료·클레임 검사로만 하며, Redis 서버 사본을 제거하는** 쪽을 택한다. 이유는 access가 이미 무상태 서명 JWT로 정리된 것과 정확히 같다 — 서명이 위변조를 막고 만료가 수명을 막으면, *검증*을 위해 서버가 사본을 들 이유는 없다. 서버 사본이 정당화되는 자리는 검증이 아니라 *폐기*(아래 절)인데, 그건 별도 요구이므로 검증 비용으로 끌어오지 않는다.
 
-이 결정의 파급이 [[RFC-019-caching-redis-role]]에 곧장 닿는다. 거기서 Redis는 "인증 부산물 = must-not-evict" 등급(리프레시 저장·폐기 목록)과 "조정 상태 = 손실 허용" 등급으로 갈렸는데, refresh 저장을 들어내면 **must-not-evict 워크로드가 Redis에서 사라진다**. 그러면 Redis에 남는 건 손실 허용 조정 상태(레이트리밋·락·디듀프)뿐 — 단일 durability 등급이다. 이게 "Redis가 다재다능해 인스턴스를 기능별로 쪼개야 하나"라는 물음을 *쪼개기가 아니라 워크로드 제거로* 해소한다. (이의 여지: refresh를 무상태로 두면 한 번 발급된 refresh는 만료까지 서버가 통제하지 못한다 — 이 통제 불능이 받아들일 만한지는 아래 폐기 절의 트레이드오프와 한 몸이다.)
+이 결정의 파급이 [[RFC-018-caching-redis-role]]에 곧장 닿는다. 거기서 Redis는 "인증 부산물 = must-not-evict" 등급(리프레시 저장·폐기 목록)과 "조정 상태 = 손실 허용" 등급으로 갈렸는데, refresh 저장을 들어내면 **must-not-evict 워크로드가 Redis에서 사라진다**. 그러면 Redis에 남는 건 손실 허용 조정 상태(레이트리밋·락·디듀프)뿐 — 단일 durability 등급이다. 이게 "Redis가 다재다능해 인스턴스를 기능별로 쪼개야 하나"라는 물음을 *쪼개기가 아니라 워크로드 제거로* 해소한다. (이의 여지: refresh를 무상태로 두면 한 번 발급된 refresh는 만료까지 서버가 통제하지 못한다 — 이 통제 불능이 받아들일 만한지는 아래 폐기 절의 트레이드오프와 한 몸이다.)
 
 ### transport는 V1을 잇되 V1이 빠뜨린 SameSite를 채운다
 
@@ -45,22 +45,22 @@ V1 쿠키(`RefreshTokenDefinitions`)는 `Secure`·`HttpOnly`·`path=/`까지만 
 
 시나리오 B다. 무상태 토큰의 본질적 빈틈은 즉시 폐기다. 나는 **즉시 강제 폐기(블랙리스트/denylist)를 V2 기본에서 포기하는** 쪽을 택한다. 셋을 근거로 —
 
-1. 폐기 목록을 들면 위 절에서 막 들어낸 must-not-evict 서버 상태를 *다시* 들이는 것이라, [[RFC-019-caching-redis-role]]의 Redis 역할 축소가 무의미해진다.
+1. 폐기 목록을 들면 위 절에서 막 들어낸 must-not-evict 서버 상태를 *다시* 들이는 것이라, [[RFC-018-caching-redis-role]]의 Redis 역할 축소가 무의미해진다.
 2. V1도 사실 즉시 폐기를 못 했다 — `signOut`이 쿠키만 지웠으니, 무상태로 가도 *잃을 게 없다*.
 3. 짧은 access TTL + refresh 만료로 대부분의 "로그아웃" 요구가 덮인다 — 쿠키 삭제로 클라가 refresh를 잃으면 잔여 access는 곧 자연 만료된다.
 
-rotation은 매 `/refresh`마다 새 refresh를 발급해 잇되, **재사용 탐지**(같은 refresh가 두 번 쓰이면 도난으로 보고 끊기)는 *서버 상태가 필요*하므로 함께 포기한다. (이의 여지: "즉시 강제 로그아웃"이 도메인·규제 요구로 실제 입증되면, 그때만 [[RFC-019-caching-redis-role]]의 must-not-evict 등급을 *되살려* denylist를 둔다 — 토큰 잔여 수명만큼만 사는 목록이라 TTL로 자청소된다. 모델 기본은 "폐기 없음", 예외는 "요구가 입증될 때만". 이건 [[RFC-016-authorization-model]]이 "역할은 토큰 발급 시점 스냅샷"으로 남긴 권한 강등 즉시성 문제와 같은 결이다 — 토큰 수명을 짧게 잡을수록 폐기 없이도 덮인다.)
+rotation은 매 `/refresh`마다 새 refresh를 발급해 잇되, **재사용 탐지**(같은 refresh가 두 번 쓰이면 도난으로 보고 끊기)는 *서버 상태가 필요*하므로 함께 포기한다. (이의 여지: "즉시 강제 로그아웃"이 도메인·규제 요구로 실제 입증되면, 그때만 [[RFC-018-caching-redis-role]]의 must-not-evict 등급을 *되살려* denylist를 둔다 — 토큰 잔여 수명만큼만 사는 목록이라 TTL로 자청소된다. 모델 기본은 "폐기 없음", 예외는 "요구가 입증될 때만". 이건 [[RFC-015-authorization-model]]이 "역할은 토큰 발급 시점 스냅샷"으로 남긴 권한 강등 즉시성 문제와 같은 결이다 — 토큰 수명을 짧게 잡을수록 폐기 없이도 덮인다.)
 
 ## Design으로 넘기는 것
 
-- refresh JWT의 클레임 구성·TTL·서명 키와 access TTL의 구체 값 — [[RFC-016-authorization-model]] "역할은 발급 시점 스냅샷"의 stale 창과 한 몸으로 정한다(수명이 즉시성을 대신한다).
+- refresh JWT의 클레임 구성·TTL·서명 키와 access TTL의 구체 값 — [[RFC-015-authorization-model]] "역할은 발급 시점 스냅샷"의 stale 창과 한 몸으로 정한다(수명이 즉시성을 대신한다).
 - 쿠키 속성 확정 — `SameSite` Lax vs Strict(외부 링크 진입 영향), path 스코프(`/` vs `/…/refresh`), 도메인.
 - rotation 정책 — 매 refresh 발급의 만료 연장 방식과, 재사용 탐지를 끝까지 두지 않을지의 최종 확인.
-- 즉시 폐기가 요구로 입증될 경우의 denylist 부활 트리거 — [[RFC-019-caching-redis-role]] must-not-evict 등급·[[RFC-016-authorization-model]] 토큰 수명과 함께.
-- 서명 키의 *호스팅·회전*(키 롤오버, OIDC/Vault 등)은 인증 인프라(백로그 T-13)·[[RFC-008-deployment-infra-ops]]로 넘긴다 — 여긴 토큰 *모델*만 정한다.
+- 즉시 폐기가 요구로 입증될 경우의 denylist 부활 트리거 — [[RFC-018-caching-redis-role]] must-not-evict 등급·[[RFC-015-authorization-model]] 토큰 수명과 함께.
+- 서명 키의 *호스팅·회전*(키 롤오버, OIDC/Vault 등)은 인증 인프라(백로그 T-13)·[[RFC-007-deployment-infra-ops]]로 넘긴다 — 여긴 토큰 *모델*만 정한다.
 - V1의 `General`/`Seller` 분리 sign-in/refresh/signout 컨트롤러를 V2에서 통합할지.
 
 ## 관련 문서
 
-- [[RFC-016-authorization-model]] · [[RFC-019-caching-redis-role]] · [[RFC-013-command-query-api-contract]] · [[RFC-008-deployment-infra-ops]] · [[RFC-002-decision-queue]]
+- [[RFC-015-authorization-model]] · [[RFC-018-caching-redis-role]] · [[RFC-012-command-query-api-contract]] · [[RFC-007-deployment-infra-ops]] · [[RFC-INDEX]]
 - [[02-write-model]] (`user`·`authenticate` 상태 테이블 + Outbox)

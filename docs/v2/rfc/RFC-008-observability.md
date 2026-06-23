@@ -1,7 +1,7 @@
-# RFC-009 — 관측성
+# RFC-008 — 관측성
 
 - **상태**: Open · 논의 중 · 2026-06-15
-- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-002-decision-queue]]
+- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[10-observability]] 보강
 
 ## 맥락
@@ -48,9 +48,9 @@
 
 ### 메트릭 카탈로그를 지금 정의한다
 
-마지막은 무엇을 재느냐다. 프로젝션 지연, Outbox 적체, PoisonMessage 건수, consumer lag — v2 CQRS/ES 구조에서 막히면 가장 먼저 신호가 떠야 할 지점들이다. 절대 임계 숫자는 측정해 보기 전엔 의미가 없으니 [[RFC-008-deployment-infra-ops]]의 측정 트리거로 미루지만, *무엇을 어떤 이름·라벨·단위로 재느냐*는 지금 정의해 둬야 한다. 카탈로그가 없으면 각자 멋대로 메트릭을 찍어 대시보드가 파편화된다.
+마지막은 무엇을 재느냐다. 프로젝션 지연, Outbox 적체, PoisonMessage 건수, consumer lag — v2 CQRS/ES 구조에서 막히면 가장 먼저 신호가 떠야 할 지점들이다. 절대 임계 숫자는 측정해 보기 전엔 의미가 없으니 [[RFC-007-deployment-infra-ops]]의 측정 트리거로 미루지만, *무엇을 어떤 이름·라벨·단위로 재느냐*는 지금 정의해 둬야 한다. 카탈로그가 없으면 각자 멋대로 메트릭을 찍어 대시보드가 파편화된다.
 
-그래서 핵심 메트릭의 이름·라벨·단위 카탈로그를 이 RFC에서 정의한다. 이때 [[RFC-008-deployment-infra-ops]]의 SLI와 겹치지 않게 연계하는 게 중요하다 — SLI는 "사용자가 느끼는 수준"을, 여기 카탈로그는 "내부 파이프라인 건강"을 재므로 층이 다르지만, 같은 현상을 두 이름으로 재면 혼선이 난다. 카탈로그의 구체 메트릭 목록과 라벨 카디널리티는 Design에서 다듬는다.
+그래서 핵심 메트릭의 이름·라벨·단위 카탈로그를 이 RFC에서 정의한다. 이때 [[RFC-007-deployment-infra-ops]]의 SLI와 겹치지 않게 연계하는 게 중요하다 — SLI는 "사용자가 느끼는 수준"을, 여기 카탈로그는 "내부 파이프라인 건강"을 재므로 층이 다르지만, 같은 현상을 두 이름으로 재면 혼선이 난다. 카탈로그의 구체 메트릭 목록과 라벨 카디널리티는 Design에서 다듬는다.
 
 ## Design으로 넘기는 것
 
@@ -59,13 +59,13 @@
 - 재처리 표식을 attribute로 둘지 메타 필드로 둘지, PoisonMessage 경로와의 정합
 - AbstractEvent 추적 메타의 구체 타입과 traceparent 직렬화 위치([[02-write-model]] 스키마 연계)
 - 구조화 로깅: MDC에 넣을 표준 스코프 키 집합, 도메인 스코프 주입 아스펙트의 적용 경계, 전파 매체(OTel Baggage vs 코루틴 컨텍스트)
-- 메트릭 카탈로그의 구체 목록·라벨 카디널리티, [[RFC-008-deployment-infra-ops]] SLI와의 경계
+- 메트릭 카탈로그의 구체 목록·라벨 카디널리티, [[RFC-007-deployment-infra-ops]] SLI와의 경계
 
 ## 위임
 
 - 추적/메트릭/로그 백엔드(Tempo·Prometheus·Grafana·Loki) **배포**는 [[index|docs/todo]] 백로그로 둔다. 벤더 중립 규약을 따르므로 백엔드는 교체 가능하다(예: 매니지드 서비스). 이 배포 결정엔 **메트릭 수집 토폴로지**도 포함된다 — 중앙 Prometheus가 서비스 디스커버리로 파드를 scrape할지, OTel Collector(= Datadog Agent에 해당하는 수집 에이전트)/Prometheus agent를 사이드카·DaemonSet으로 두어 로컬에서 모아 중앙으로 remote-write/forward할지. (직관: 우리가 떠올리는 "수집 에이전트 사이드카"는 Datadog Agent 같은 것이고, 그 OSS/OTel 대응이 OTel Collector다. 반면 Prometheus *서버* 자체를 파드별 사이드카로 두는 건 TSDB가 파편화돼 안티패턴 — 사이드카로 띄우는 건 저장소가 아니라 수집기/agent다. OTel로 통일한 이상 `앱 → OTLP push → Collector(에이전트) → 중앙 백엔드` 경로가 중앙 pull scrape보다 정합적일 수 있다 — 배포 사이클에서 검증.)
-- 절대 임계 숫자는 [[RFC-008-deployment-infra-ops]]의 측정 트리거로 넘긴다.
+- 절대 임계 숫자는 [[RFC-007-deployment-infra-ops]]의 측정 트리거로 넘긴다.
 
 ## 관련 문서
 
-- [[RFC-002-decision-queue]] · [[10-observability]] · [[07.reservation]] · [[02-write-model]] · [[RFC-008-deployment-infra-ops]]
+- [[RFC-INDEX]] · [[10-observability]] · [[07.reservation]] · [[02-write-model]] · [[RFC-007-deployment-infra-ops]]

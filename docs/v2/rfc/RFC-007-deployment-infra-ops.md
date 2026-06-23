@@ -1,7 +1,7 @@
-# RFC-008 — 배포·인프라·운영
+# RFC-007 — 배포·인프라·운영
 
 - **상태**: Open · 논의 중 · 2026-06-15
-- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-002-decision-queue]]
+- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[09-deployment-runtime]] 보강 + [[12.kafka-hosting-msk-vs-self-managed]]·[[13.db-hosting-and-read-write-topology]] 비준(Proposed→Accepted)
 
 ## 맥락
@@ -58,7 +58,7 @@ Kafka를 self-managed Strimzi로 가기로 한 이상, 클러스터 규격과 �
 
 토폴로지는 정해져 있다 — command 1 인스턴스(+ HA 레플리카), query 1 인스턴스(+ HA 레플리카). 그러니 "query를 여러 인스턴스로 쪼갠다"는 선택지는 기본이 아니다. 읽기 부하는 HA 레플리카가 흡수하면 되고, 인스턴스를 더 세우는 건 운영·비용만 늘린다.
 
-여기서 정할 건 그 한 query 인스턴스 *안에서* read model을 어떻게 조직하느냐다. CQRS query 측은 read model이 하나가 아니라 화면·조회 용도마다 여럿 생기는데([[RFC-003-read-model-consistency]]가 무엇을 투영할지 정한다), 이걸 **도메인별로 스키마를 분리**해 담는다. 도메인 경계가 스키마 경계와 맞아 어느 read model이 어느 도메인 소속인지 분명해지고, command 측의 컨텍스트 분리와도 대칭을 이룬다. 읽기 확장이 필요하면 인스턴스를 쪼개는 게 아니라 그 query 인스턴스의 HA 레플리카로 읽기를 분산한다([[13.db-hosting-and-read-write-topology]]).
+여기서 정할 건 그 한 query 인스턴스 *안에서* read model을 어떻게 조직하느냐다. CQRS query 측은 read model이 하나가 아니라 화면·조회 용도마다 여럿 생기는데([[RFC-002-read-model-consistency]]가 무엇을 투영할지 정한다), 이걸 **도메인별로 스키마를 분리**해 담는다. 도메인 경계가 스키마 경계와 맞아 어느 read model이 어느 도메인 소속인지 분명해지고, command 측의 컨텍스트 분리와도 대칭을 이룬다. 읽기 확장이 필요하면 인스턴스를 쪼개는 게 아니라 그 query 인스턴스의 HA 레플리카로 읽기를 분산한다([[13.db-hosting-and-read-write-topology]]).
 
 '무거운 도메인을 별 인스턴스로 뗀다'는 선택지는 명시적으로 접는다. 토폴로지가 query 1 인스턴스 + HA 레플리카로 고정돼 있고, 실트래픽이 없어 인스턴스 분할을 *유발할* 부하 자체가 없다 — 영영 안 만들 코드라 학습으로도 남는 게 없고, 분할 샤딩은 부하 압박이 실재할 때의 운영 수단일 뿐 CQRS·프로젝션·HA 레플리카·도메인 스키마가 이미 주는 것 너머의 분산 개념을 더 가르치지도 않는다. 읽기 확장은 레플리카, 논리 분리는 도메인 스키마 — 그걸로 닫는다.
 
@@ -72,7 +72,7 @@ projector와 outbox relay가 "준비됨"을 무엇으로 신고하느냐([[09.ev
 
 마지막으로 무엇을 보고 알람을 울릴지다([[09-deployment-runtime]]·[[10-observability]]). 이 시스템에서 의미 있는 SLI는 명확하다 — 프로젝션 지연, Outbox 적체, 소비 lag, 페일오버 소요 시간. 이 *목록*은 지금 확정한다.
 
-하지만 대시보드 패널과 알람 임계 *숫자*는 운영 측정의 몫이다. 정상 범위를 모르는 채 임계를 박으면 알람이 노이즈가 되거나 침묵한다. 그리고 이 작업은 [[RFC-009-observability]]와 겹치는 영역이라, SLI 목록만 여기서 못 박고 구체적 계측·대시보드는 그쪽과 연계해 중복을 피한다. (운영에서 검증, RFC-009와 조율.)
+하지만 대시보드 패널과 알람 임계 *숫자*는 운영 측정의 몫이다. 정상 범위를 모르는 채 임계를 박으면 알람이 노이즈가 되거나 침묵한다. 그리고 이 작업은 [[RFC-008-observability]]와 겹치는 영역이라, SLI 목록만 여기서 못 박고 구체적 계측·대시보드는 그쪽과 연계해 중복을 피한다. (운영에서 검증, RFC-08와 조율.)
 
 ## Design으로 넘기는 것
 
@@ -92,4 +92,4 @@ projector와 outbox relay가 "준비됨"을 무엇으로 신고하느냐([[09.ev
 
 ## 관련 문서
 
-[[RFC-002-decision-queue]] · [[09-deployment-runtime]] · [[12.kafka-hosting-msk-vs-self-managed]] · [[13.db-hosting-and-read-write-topology]] · [[RFC-003-read-model-consistency]] · [[RFC-009-observability]]
+[[RFC-INDEX]] · [[09-deployment-runtime]] · [[12.kafka-hosting-msk-vs-self-managed]] · [[13.db-hosting-and-read-write-topology]] · [[RFC-002-read-model-consistency]] · [[RFC-008-observability]]

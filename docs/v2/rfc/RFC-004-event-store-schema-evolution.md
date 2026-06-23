@@ -1,7 +1,7 @@
-# RFC-005 — 이벤트 스토어·스키마 진화
+# RFC-004 — 이벤트 스토어·스키마 진화
 
 - **상태**: Open · 논의 중 · 2026-06-15
-- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-002-decision-queue]]
+- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[08-event-store-lifecycle]] · [[05.event-store-mysql-table]] · [[10.event-schema-evolution]] 보강·비준
 
 ## 맥락
@@ -46,7 +46,7 @@ append-only는 깔끔한 개념이지만, "절대 지우지 않는다"는 약속
 
 같은 DB의 아카이브 테이블이냐, S3 같은 오브젝트 스토리지냐다([[08-event-store-lifecycle]] · [[11-environments-and-testing]]). 콜드 데이터는 재구성 빈도가 낮으니, 판단 기준은 복원 경로와 운영 단순성이다.
 
-나는 오브젝트 스토리지(S3)를 택한다. 흐름은 이렇다 — 식은 시간 파티션(위 파티셔닝 갈래)을 S3로 export한 뒤 drop하고, 드물게 복원이 필요하면 로드해서 리플레이한다. DB 안에 아카이브 테이블을 두면 결국 같은 인스턴스의 용량·백업 부담을 계속 지는데, 콜드는 그럴 가치가 없다. 셰딩(crypto-shredding 등)이 콜드까지 닿는 경로는 여기서 풀지 않고 [[RFC-006-pii-security]]에 맡긴다. 검증은 localstack S3로 한다([[RFC-010-testing-quality-gates]]).
+나는 오브젝트 스토리지(S3)를 택한다. 흐름은 이렇다 — 식은 시간 파티션(위 파티셔닝 갈래)을 S3로 export한 뒤 drop하고, 드물게 복원이 필요하면 로드해서 리플레이한다. DB 안에 아카이브 테이블을 두면 결국 같은 인스턴스의 용량·백업 부담을 계속 지는데, 콜드는 그럴 가치가 없다. 셰딩(crypto-shredding 등)이 콜드까지 닿는 경로는 여기서 풀지 않고 [[RFC-005-pii-security]]에 맡긴다. 검증은 localstack S3로 한다([[RFC-009-testing-quality-gates]]).
 
 ### 시점 질의를 어디까지 열 것인가
 
@@ -95,4 +95,4 @@ JSON 방향은 이미 합의됐고, 남은 건 직렬화 규약의 세부다([[0
 
 ## 관련 문서
 
-- [[RFC-002-decision-queue]] · [[08-event-store-lifecycle]] · [[05.event-store-mysql-table]] · [[10.event-schema-evolution]] · [[11-environments-and-testing]] · [[RFC-006-pii-security]] · [[RFC-010-testing-quality-gates]]
+- [[RFC-INDEX]] · [[08-event-store-lifecycle]] · [[05.event-store-mysql-table]] · [[10.event-schema-evolution]] · [[11-environments-and-testing]] · [[RFC-005-pii-security]] · [[RFC-009-testing-quality-gates]]

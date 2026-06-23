@@ -1,7 +1,7 @@
-# RFC-003 — 읽기 모델·일관성
+# RFC-002 — 읽기 모델·일관성
 
 - **상태**: Open · 논의 중 · 2026-06-15
-- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-002-decision-queue]]
+- **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[03-read-model]] 보강 + [[04.read-model-projection-and-replica]] 개정/비준 (필요 시 신규 ADR)
 
 ## 맥락
@@ -26,7 +26,7 @@ category·company·menu처럼 거의 안 변하는 참조 데이터부터 보자
 
 ### 프로젝션 지연을 얼마나 허용하나
 
-지연 자체를 정상으로 받아들이기로 했으니, 남는 건 "얼마까지"다. 절대 숫자(p99 몇 ms)는 지금 정할 수 없다 — 실제 메시징 lag을 측정하기 전엔 근거 없는 숫자가 된다. 그래서 여기서는 *측정 트리거*와 정책 형태만 정한다: p99 지연 목표를 두고 초과 시 알람을 건다는 골격은 지금, 그 목표의 절대값은 [[RFC-004-messaging-delivery]]의 lag 측정과 함께 운영 단계에서 튜닝한다. 방향은 여기서, 숫자는 거기서.
+지연 자체를 정상으로 받아들이기로 했으니, 남는 건 "얼마까지"다. 절대 숫자(p99 몇 ms)는 지금 정할 수 없다 — 실제 메시징 lag을 측정하기 전엔 근거 없는 숫자가 된다. 그래서 여기서는 *측정 트리거*와 정책 형태만 정한다: p99 지연 목표를 두고 초과 시 알람을 건다는 골격은 지금, 그 목표의 절대값은 [[RFC-003-messaging-delivery]]의 lag 측정과 함께 운영 단계에서 튜닝한다. 방향은 여기서, 숫자는 거기서.
 
 ### 컨텍스트별 초기 읽기 전략과 프로젝션 적용 범위
 
@@ -46,7 +46,7 @@ category·company·menu처럼 거의 안 변하는 참조 데이터부터 보자
 
 - lookup 항목별 (a)/(b)/(c) 귀속 **표** 확정 — [[03-read-model]].
 - read-your-writes 예외 화면 후보 검증과 수단((b)/(c)/(d)) 선택 — 증거가 나오는 화면별로, 필요 시 신규 ADR("읽기 신선도 예외 정책").
-- 프로젝션 지연 p99 목표 절대값 — [[RFC-004-messaging-delivery]] lag 측정 후 운영 튜닝.
+- 프로젝션 지연 p99 목표 절대값 — [[RFC-003-messaging-delivery]] lag 측정 후 운영 튜닝.
 - 1차 projection 대상 컨텍스트 목록과 "읽기 요구 입증" 기준 — [[03-read-model]].
 - 비-ES 컨텍스트의 ES 데이터 조인 필요성 검증 — Design.
 - query layered 트랜잭션 경계·projection/service 책임 분리 구체 — design_doc.
@@ -55,4 +55,4 @@ category·company·menu처럼 거의 안 변하는 참조 데이터부터 보자
 
 ## 관련 문서
 
-- [[RFC-002-decision-queue]] · [[03-read-model]] · [[04.read-model-projection-and-replica]] · [[13.db-hosting-and-read-write-topology]] · [[03.command-hexagonal-query-layered]] · [[03-open-decisions]]
+- [[RFC-INDEX]] · [[03-read-model]] · [[04.read-model-projection-and-replica]] · [[13.db-hosting-and-read-write-topology]] · [[03.command-hexagonal-query-layered]] · [[03-open-decisions]]
