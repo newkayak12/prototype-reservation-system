@@ -1,8 +1,16 @@
 # RFC-020 — 인증 토큰의 transport·무상태성과 폐기 포기
 
-- **상태**: Open · 논의 중 · 2026-06-16
+- **상태**: Closed · 합의 · 2026-06-23
 - **선행**: [[RFC-016-authorization-model]] · [[RFC-019-caching-redis-role]] · 인덱스 [[RFC-002-decision-queue]]
 - **닫으면**: 신규 design_doc(인증 토큰) 또는 [[RFC-016-authorization-model]] design_doc 보강 + 신규 ADR
+
+## 결정 요약
+
+- **transport**: refresh=HttpOnly 쿠키(SameSite Lax), access=body→Authorization 헤더. V1 계승 + SameSite 보완.
+- **refresh 검증**: 서명 JWT로 무상태 검증. Redis 서버 사본 제거.
+- **Refresh rotation**: `/refresh` 마다 새 refresh 발급.
+- **재사용 탐지 + 강제 로그아웃**: `authenticate` 테이블에 `current_refresh_jti` 컬럼 추가. `/refresh` 시 jti 대조(DB 조회는 /refresh 시에만, 일반 API는 JWT 서명만). jti 불일치 = 탈취 의심 → jti NULL로 전 세션 무효화. 강제 로그아웃 = jti NULL → 다음 /refresh 실패 → access 자연 만료.
+- **즉시 폐기(denylist)**: 기본 포기. 요구 입증 시에만 부활.
 
 ## 맥락
 
