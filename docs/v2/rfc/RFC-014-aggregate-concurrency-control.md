@@ -1,6 +1,6 @@
 # RFC-014 — 애그리거트 동시성·쓰기 경합 제어
 
-- **상태**: 재개 (2026-06-17) — **비관 락으로 전환**. 원안(낙관, 2026-06-16)은 아래 §재개에 의해 supersede됨. ADR: [[16.optimistic-concurrency-control]] 재작성.
+- **상태**: 🏷 합의 (2026-06-17) · 비관 락 전환 — 원안(낙관, 2026-06-16)은 아래 §재개가 supersede · ADR [[16.optimistic-concurrency-control]] 재작성
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **계기(재개)**: 전수 감사 [[04-design-completeness-audit]] ① 처리 중 동시성 재검토 + Redisson 활용 결정
 - **닫으면**: [[05-aggregate-design]] 보강 + [[16.optimistic-concurrency-control]] 재작성(비관 락)

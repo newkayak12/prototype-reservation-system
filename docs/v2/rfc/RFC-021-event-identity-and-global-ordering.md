@@ -1,6 +1,6 @@
 # RFC-021 — 이벤트 정체성·전역 순서
 
-- **상태**: Open · 논의 중 · 2026-06-17
+- **상태**: 🔴 논의 중 (2026-06-17)
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-004-event-store-schema-evolution]] · 인덱스 [[RFC-INDEX]]
 - **계기**: 전수 감사 [[04-design-completeness-audit]] 횡단 미결 ①
 - **닫으면**: [[05.event-store-mysql-table]] 스키마 보강(신규 ADR) + [[02-write-model]]·[[08-event-store-lifecycle]]·[[RFC-011-projection-rebuild-catchup]] 보강

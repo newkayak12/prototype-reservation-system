@@ -1,6 +1,6 @@
 # RFC-002 — 읽기 모델·일관성
 
-- **상태**: 합의됨 (2026-06-21) · design [[03-read-model]] 반영 · ADR [[04.read-model-projection-and-replica]] 개정 대기
+- **상태**: 🏷 합의 (2026-06-21) · design [[03-read-model]] 반영 · ADR [[04.read-model-projection-and-replica]] 개정 대기
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[03-read-model]] 보강 + [[04.read-model-projection-and-replica]] 개정/비준 (필요 시 신규 ADR)
 

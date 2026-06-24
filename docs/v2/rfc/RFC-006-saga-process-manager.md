@@ -1,6 +1,6 @@
 # RFC-006 — Saga·프로세스 매니저
 
-- **상태**: 합의됨 (2026-06-21) · design [[06-consistency-and-sagas]] 반영 · ADR [[08.saga-orchestration-vs-choreography]] 비준 대기
+- **상태**: 🏷 합의 (2026-06-21) · design [[06-consistency-and-sagas]] 반영 · ADR [[08.saga-orchestration-vs-choreography]] 비준 대기
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[06-consistency-and-sagas]] 보강 + [[08.saga-orchestration-vs-choreography]] 비준
 

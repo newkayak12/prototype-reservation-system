@@ -31,7 +31,9 @@ refresh를 self-contained 서명 JWT로 두고, 검증은 **서명·만료·클�
 2. V1도 즉시 폐기를 못 했다 — `signOut`이 쿠키만 지웠으니, 무상태로 가도 잃을 게 없다.
 3. 짧은 access TTL + refresh 만료로 대부분의 "로그아웃" 요구가 덮인다 — 쿠키 삭제로 클라가 refresh를 잃으면 잔여 access는 곧 자연 만료된다.
 
-rotation(매 `/refresh`마다 새 refresh 발급)은 잇되, **재사용 탐지**(같은 refresh가 두 번 쓰이면 도난으로 보고 끊기)는 서버 상태가 필요하므로 함께 포기한다.
+rotation(매 `/refresh`마다 새 refresh 발급)은 잇는다. 다만 **재사용 탐지 + 강제 로그아웃**은 포기하지 *않고* 든다 — 단, denylist를 되살리지 않고 *최소 상태*로. `authenticate` 테이블(쓰기 모델)에 `current_refresh_jti` 컬럼 하나를 두고, 발급한 refresh의 `jti`만 적어 둔다. 검증은 여전히 무상태(§1)다 — 일반 API는 JWT 서명만 보고, DB 조회는 `/refresh` 때만 일어난다. `/refresh`가 들고 온 refresh의 `jti`를 `current_refresh_jti`와 대조해서, **일치하면** 새 refresh를 발급하며 컬럼을 갱신하고, **불일치하면**(rotation으로 폐기됐어야 할 옛 refresh가 다시 쓰임 = 도난 의심) 컬럼을 `NULL`로 밀어 전 세션을 무효화한다. 강제 로그아웃도 같은 손잡이다 — 컬럼을 `NULL`로 두면 다음 `/refresh`가 대조에 실패하고, 잔여 access는 곧 자연 만료된다.
+
+이건 §3 첫머리의 "denylist 포기"와 모순되지 않는다. denylist는 *발급한 모든 토큰*을 잔여 수명만큼 들고 있어야 하는 must-not-evict 목록이지만, `current_refresh_jti`는 주체당 *최신 refresh 한 개*의 식별자뿐이고 쓰기 모델 위에 산다 — Redis must-not-evict 워크로드를 되살리지 않는다(§1 파급 유지). 무상태 토큰이 본질적으로 못 막는 "즉시 강제 폐기"는 여전히 포기하되, rotation이 *이미 만드는* "옛 refresh는 폐기됐다"는 사실을 한 컬럼으로 강제하는 것뿐이다.
 
 > **예외** — "즉시 강제 로그아웃"이 도메인·규제 요구로 실제 입증되면, 그때만 [[RFC-018-caching-redis-role]]의 must-not-evict 등급을 되살려 denylist를 둔다(토큰 잔여 수명만큼만 사는 목록이라 TTL로 자청소). 모델 기본은 "폐기 없음", 예외는 "요구가 입증될 때만". 이는 [[13-authorization]]의 "역할 = 토큰 발급 시점 스냅샷"이 남긴 권한 강등 즉시성 문제와 한 몸이다 — 토큰 수명을 짧게 잡을수록 폐기 없이도 덮인다.
 
@@ -39,7 +41,7 @@ rotation(매 `/refresh`마다 새 refresh 발급)은 잇되, **재사용 탐지*
 
 - refresh JWT 클레임 구성·TTL·서명 키와 access TTL의 구체 값 — [[13-authorization]] "발급 시점 스냅샷"의 stale 창과 한 몸으로 정한다(수명이 즉시성을 대신).
 - 쿠키 속성 확정 — `SameSite` Lax vs Strict(외부 링크 진입 영향), path 스코프(`/` vs `/…/refresh`), 도메인.
-- rotation 정책 — 매 refresh 발급의 만료 연장 방식과, 재사용 탐지를 끝까지 두지 않을지의 최종 확인.
+- rotation 정책 — 매 refresh 발급의 만료 연장 방식(슬라이딩 vs 고정 만료)과 `current_refresh_jti` 갱신·대조의 동시성(같은 주체의 병렬 `/refresh` 경합) 처리.
 - 즉시 폐기가 요구로 입증될 경우의 denylist 부활 트리거 — [[RFC-018-caching-redis-role]] must-not-evict 등급과 함께.
 - 서명 키의 *호스팅·회전*(키 롤오버, OIDC/Vault 등) — 인증 인프라 백로그 T-13·[[09-deployment-runtime]].
 - V1의 `General`/`Seller` 분리 sign-in/refresh/signout 컨트롤러를 V2에서 통합할지.

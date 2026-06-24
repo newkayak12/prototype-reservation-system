@@ -1,6 +1,6 @@
 # RFC-019 — 인증 토큰의 transport·무상태성과 폐기 포기
 
-- **상태**: Closed · 합의 · 2026-06-23
+- **상태**: ✅ 종결 (2026-06-23)
 - **선행**: [[RFC-015-authorization-model]] · [[RFC-018-caching-redis-role]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: 신규 design_doc(인증 토큰) 또는 [[RFC-015-authorization-model]] design_doc 보강 + 신규 ADR
 

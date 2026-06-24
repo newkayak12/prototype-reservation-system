@@ -1,6 +1,6 @@
 # RFC-018 — 캐싱·Redis의 V2 역할
 
-- **상태**: Closed · 합의 · 2026-06-23
+- **상태**: ✅ 종결 (2026-06-23)
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-002-read-model-consistency]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[03-read-model]] 보강 + 신규 ADR
 

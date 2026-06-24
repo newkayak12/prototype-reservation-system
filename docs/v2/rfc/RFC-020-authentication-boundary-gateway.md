@@ -1,6 +1,6 @@
 # RFC-020 — 인증 경계: API 게이트웨이 + 인증 서버 (k3s 인클러스터)
 
-- **상태**: Closed · 합의 · 2026-06-23
+- **상태**: ✅ 종결 (2026-06-23)
 - **선행**: [[RFC-015-authorization-model]] · [[RFC-019-auth-token-transport]] · [[RFC-007-deployment-infra-ops]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[09-deployment-runtime]] 워크로드 토폴로지 보강 + 신규 ADR(인증 경계)
 

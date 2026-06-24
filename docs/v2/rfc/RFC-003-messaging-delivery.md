@@ -1,6 +1,6 @@
 # RFC-003 — 메시징·전달 보장
 
-- **상태**: 합의됨 (2026-06-21) · design [[07-messaging-topology]] 반영 · ADR [[09.event-ordering-and-delivery-guarantee]] 비준 대기
+- **상태**: 🏷 합의 (2026-06-21) · design [[07-messaging-topology]] 반영 · ADR [[09.event-ordering-and-delivery-guarantee]] 비준 대기
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[07-messaging-topology]] 보강 + [[09.event-ordering-and-delivery-guarantee]] 비준
 

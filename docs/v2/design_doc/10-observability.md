@@ -24,6 +24,8 @@
 
 블로킹 MVC라 *한 요청 안*에서는 MDC(ThreadLocal)가 그대로 살아 있다([[RFC-008-observability]] — 코루틴은 기각). 기본 trace_id가 끊기는 곳은 스레드가 바뀌는 *비동기·메시지 경계*뿐이다 — `@Async`·스케줄러, 그리고 Kafka 소비. 그 경계를 넘는 순간 ThreadLocal MDC는 조용히 사라진다 — correlationId가 로그에 찍히다 말다 하는 전형적 증상이 여기서 나온다.
 
+> **왜 블로킹 MVC를 유지하나 — 코루틴 기각([[RFC-008-observability]]).** 영속화가 블로킹 JPA/QueryDSL이라 코루틴을 얹어도 결국 스레드풀로 디스패치돼 throughput 이득은 없고, 디스패처 전환으로 MDC가 깨지는 전파 비용만 진다 — 성능상 마이너스다. 그래서 V2도 블로킹 MVC를 유지하고, IO 확장이 필요해지면 코루틴/WebFlux가 아니라 **virtual thread**(JDK21·Boot 3.4)를 레버로 둔다([[RFC-007-deployment-infra-ops]]) — 명령형 코드 그대로, MDC도 안 깨진다. 그 결과 본 문서는 "코루틴 컨텍스트 전파" 규약을 다루지 않는다 — 끊김은 위 비동기·메시지 경계에만 남고, 요청 내 MDC 유지가 §0~§4 전 규약의 전제다.
+
 그래서 전파 매체를 **OTel Context로 일급화**하고, MDC는 그것을 로그 포맷에 비추는 *투영*으로만 둔다. 계측을 OTel로 통일한 이상 추적 컨텍스트의 진짜 출처는 OTel Context다. 경계별로 — **인-프로세스 비동기(`@Async`·스케줄러)**는 Micrometer context-propagation(`ContextSnapshot`/`taskDecorator`)으로 OTel Context를 넘긴 스레드에 복원하고, **Kafka 경계**는 봉투에 traceparent를 직렬화해 consumer 진입 시 복원한다(§3). 어느 쪽이든 로깅 시점에 그 값을 MDC로 복사해 찍는다.
 
 > 이 "전파는 OTel Context, MDC는 투영" 원칙은 trace_id·correlationId뿐 아니라 §4의 도메인 스코프 키에도 똑같이 적용된다. 아래 모든 규약(§3 Kafka 경계 span 복원, §4 구조화 로깅의 스코프 키)이 이 한 매체 위에 선다. 어느 `taskDecorator`·context-propagation 수단으로 비동기 경계를 잇고 어느 경계마다 거는지는 구현 디테일이라 구현 사이클에서 검증한다.

@@ -1,6 +1,6 @@
 # RFC-017 — 재해 복구·백업 (이벤트 스토어 복구 의미론)
 
-- **상태**: 합의됨 (2026-06-16) · [[18.event-store-recovery-semantics]]로 닫힘
+- **상태**: ✅ 종결 (2026-06-16) · [[18.event-store-recovery-semantics]]로 닫힘
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-011-projection-rebuild-catchup]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[08-event-store-lifecycle]] 보강 + 신규 ADR(이벤트 스토어 복구 의미론)
 

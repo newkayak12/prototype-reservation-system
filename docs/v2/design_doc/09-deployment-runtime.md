@@ -144,6 +144,7 @@ sequenceDiagram
 
 - **헬스/레디니스**: command·query는 HTTP probe. projector·relay의 readiness는 *프로세스가 떴는가*가 아니라 *진척이 따라붙었는가*를 반영해야 한다 — **projector는 consumer lag이 임계 아래, relay는 Outbox 적체 건수·연령이 임계 아래**일 때 ready. 단순 liveness로 ready를 신고하면 적체가 쌓인 채 트래픽을 받는다. 신호의 *정의*는 지금 고정하고, 임계 *숫자*는 정상 범위를 관측한 뒤 튜닝한다(미측정 임계는 기동마다 false-negative, [[RFC-007-deployment-infra-ops]]).
 - **확장 축**: query·projector는 읽기 부하로, command는 쓰기 부하로 독립 스케일. relay는 스케일하지 않음(단일성).
+- **웹 티어 IO 확장 레버 = virtual thread(레버만 박고 지금은 off)**: 영속화가 블로킹 JPA라 non-blocking(코루틴/WebFlux)은 이득 없이 복잡도만 진다 — 채택 안 한다([[RFC-008-observability]] 코루틴 기각). command·query 웹 티어의 동시성 확장이 필요해지면 `spring.threads.virtual.enabled=true`(JDK21·Boot 3.4) 한 줄로 명령형 MVC·JPA 코드 그대로 블로킹 비용을 낮춘다(MDC·추적도 안 깨짐). 지금 켤 필요는 없고 *레버*만 박아 둔다([[RFC-007-deployment-infra-ops]]).
 - **핵심 SLI 목록(확정) / 임계(측정)**: 이 시스템에서 의미 있는 SLI는 넷이다 — **프로젝션 지연, Outbox 적체, 소비 lag, 페일오버 소요 시간**(최종 일관성 건강도 + HA 건강도). 이 *목록*은 지금 못 박는다. 대시보드 패널·알람 임계 *숫자*는 운영 측정의 몫이고, 구체 계측·대시보드는 [[10-observability]]/[[RFC-008-observability]]와 연계해 중복을 피한다([[RFC-007-deployment-infra-ops]]).
 - **GitOps**: 매니페스트를 Git 단일 출처로 두고 ArgoCD/Flux로 동기화하는 방향을 **선호**한다. 다만 채택·도구 선정·파이프라인 설계는 본 사이클 범위 밖 — **별도 todo로 보류**한다(아키텍처 결정 아님).
 
