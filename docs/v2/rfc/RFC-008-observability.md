@@ -1,6 +1,6 @@
 # RFC-008 — 관측성
 
-- **상태**: 합의됨 (2026-06-21) · design [[10-observability]] 반영 · 코루틴 기각(블로킹 MVC 유지)
+- **상태**: 🏷 합의 (2026-06-21) · design [[10-observability]] 반영 · 코루틴 기각(블로킹 MVC 유지)
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[10-observability]] 보강
 

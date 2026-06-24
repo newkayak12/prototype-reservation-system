@@ -1,6 +1,6 @@
 # RFC-012 — command/query API 계약·비동기 command
 
-- **상태**: Closed · 합의 · 2026-06-23
+- **상태**: ✅ 종결 (2026-06-23)
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: 신규 design_doc(API 계약) + ADR 가능
 

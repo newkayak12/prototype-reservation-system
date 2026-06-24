@@ -8,14 +8,15 @@
 ```
 prototype-reservation-system
 ├── shared-module                  # enum, 추상예외, 유틸 (현행 유지)
+├── core-module            (현행 유지)  # 의존성 없는 순수 도메인: 애그리거트·도메인 이벤트·도메인 서비스 (컨텍스트별 패키지)
 ├── contract-module        (신규)  # 이벤트 계약: AbstractEvent + 구체 이벤트, 공유 ID/타입
 ├── infrastructure-module          # 횡단 기술: 이벤트 스토어 엔진·Kafka·Outbox 배관·ID 생성·DB 설정
 │
-├── command-module         (신규)  # ── hexagonal, 도메인 = 패키지
+├── command-module         (신규)  # ── hexagonal, application/adapter (도메인은 core-module)
 │   └── com.reservation.command
-│       ├── reservation/   domain/ · application/ · adapter/
-│       ├── restaurant/    domain/ · application/ · adapter/
-│       ├── timetable/     domain/ · application/ · adapter/
+│       ├── reservation/   application/ · adapter/   (도메인 → core-module)
+│       ├── restaurant/    application/ · adapter/
+│       ├── timetable/     application/ · adapter/
 │       ├── schedule/      …
 │       ├── user/  authenticate/  menu/  category/  company/
 │       └── (공통) com.reservation.command.support
@@ -29,23 +30,31 @@ prototype-reservation-system
 
 > 기존 `core-module` / `application-module` / `adapter-module` 의 쓰기 측 코드는 `command-module` 의 각 도메인 패키지로, 조회 측 코드는 `query-module` 로 이전한다. 이전은 [[04-migration]] 의 Strangler 순서를 따른다.
 
-> **순수 도메인의 거처 — 별도 `core-module`을 두지 않는다.** V1처럼 의존성 없는 `core-module`로 도메인을 떼어내면 "도메인은 인프라를 모른다"가 빌드 의존성으로 강제되지만, CQRS를 모듈 최상단에서 가른 이상([[01.cqrs-command-query-module-split]]) command 컨텍스트의 도메인은 그 command 모듈에 응집시키는 편이 경계와 일치한다 — 컨텍스트를 쪼개 옮길 때 도메인이 함께 움직이고, "이 도메인이 어느 컨텍스트 소속인가"가 디렉터리만으로 드러난다. 별도 모듈이 강제하던 순수성은 *물리 경계 대신 검증 경계*로 지킨다 — `domain` 패키지가 JPA·Spring을 import하지 못하게 ArchUnit/Konsist 규칙으로 막는다(아래 §경계 강제). 즉 **(도메인=command 패키지) + (순수성=검증 규칙)**이다([[RFC-010-module-structure-migration]] · [[07.command-domain-jpa-separation]]). 모듈이 비대해져 응집 이점이 약해지면 경계 재검토는 열려 있다.
+> **순수 도메인의 거처 — V1처럼 의존성 없는 별도 `core-module`을 유지한다.** 순수 도메인을 command 모듈 안 `domain` 패키지로 함께 두는 대안(모듈 통합)은 **비채택**이다([[RFC-010-module-structure-migration]]). (b) 별도 모듈을 택하는 핵심은 순수성의 강제 방식이다 — 별도 모듈이라는 *물리 경계*가 "도메인은 인프라를 모른다"를 빌드 차원에서 강제하므로, 순수성이 검증 규칙이 아니라 *컴파일 의존성*으로 보장된다. 통합안의 매력은 CQRS를 모듈 최상단에서 가른 경계와의 일치(command 도메인이 그 모듈에 응집)였으나, 그 응집은 ArchUnit/Konsist 같은 *검증 경계*로만 순수성을 지켜야 해 물리 경계만큼 안 새지는 못한다. 현행이 이미 (b)인 이상 전환 비용도 들지 않는다. 즉 **(도메인=별도 `core-module`) + (순수성=컴파일 의존성)**이다([[01.cqrs-command-query-module-split]] · [[07.command-domain-jpa-separation]]). `command-module` 의 각 컨텍스트 패키지는 도메인을 `core-module` 에서 가져다 쓰고, application/adapter 만 담는다.
 
-## command-module — hexagonal (도메인 패키지 내부)
+> 컨텍스트가 늘어 단일 `core-module` 이 비대해지면 "이 도메인이 어느 컨텍스트 소속인가"가 흐려질 수 있다. 그때의 답은 통합안으로의 회귀가 아니라 `core-module` 내부를 **컨텍스트별 패키지·서브모듈**로 가르는 것이다. 단일 core 가 컨텍스트 응집을 해치는 임계는 전환을 돌려 보며 본다([[RFC-010-module-structure-migration]]).
 
-각 도메인 패키지는 내부적으로 헥사고날 3층을 **하위 패키지**로 가진다.
+## command-module — hexagonal (도메인은 core-module)
+
+각 컨텍스트는 헥사고날 3층 중 **도메인을 `core-module`** 에 두고, application/adapter 를 `command-module` 의 컨텍스트 패키지에 가진다.
 
 ```
-com.reservation.command.reservation
-├── domain/          # 애그리거트(행위 중심), 도메인 이벤트, 도메인 서비스(꼭 필요한 경우만)
-├── application/
-│   ├── port/in/     # command 유스케이스 인터페이스 (CreateReservation, CancelReservation …)
-│   ├── port/out/    # 이벤트 스토어/상태/Outbox 저장 포트
-│   └── service/     # 유스케이스 구현 (애그리거트 조립·실행)
-└── adapter/
-    ├── in/web/      # command 컨트롤러
-    └── out/         # event-store writer · state writer · outbox publisher (infrastructure-module 사용)
+core-module                          # 의존성 없는 순수 도메인 (컨텍스트별 패키지)
+└── com.reservation.reservation
+    └── domain/          # 애그리거트(행위 중심), 도메인 이벤트, 도메인 서비스(꼭 필요한 경우만)
+
+command-module
+└── com.reservation.command.reservation
+    ├── application/
+    │   ├── port/in/     # command 유스케이스 인터페이스 (CreateReservation, CancelReservation …)
+    │   ├── port/out/    # 이벤트 스토어/상태/Outbox 저장 포트
+    │   └── service/     # 유스케이스 구현 (core-module 애그리거트 조립·실행)
+    └── adapter/
+        ├── in/web/      # command 컨트롤러
+        └── out/         # event-store writer · state writer · outbox publisher (infrastructure-module 사용)
 ```
+
+- `command-module` 은 도메인을 `core-module` 에서 가져다 쓴다 (`command → core`). `core-module` 은 어디에도 의존하지 않는다.
 
 - 애그리거트는 `handle(command) → List<DomainEvent>` + `apply(event) → newState` 책임을 **스스로** 진다 (빈약 도메인 탈피, 상세 [[02-write-model]]).
 - ES/비-ES 차이는 `adapter/out` 구현에만 나타난다 (event store vs 상태+Outbox).
@@ -71,10 +80,12 @@ com.reservation.query.reservation
 graph TD
     contract[contract-module]
     shared[shared-module]
+    core[core-module]
     infra[infrastructure-module]
     cmd[command-module]
     qry[query-module]
 
+    cmd --> core
     cmd --> contract
     cmd --> infra
     cmd --> shared
@@ -85,17 +96,19 @@ graph TD
     infra --> shared
 
     qry -. 금지 .-> cmd
+    qry -. 금지 .-> core
 ```
 
 | 모듈 | 허용 의존 | 금지 |
 |------|-----------|------|
-| `command` | `contract`, `infrastructure`, `shared` | `query` |
-| `query` | `contract`, `infrastructure`(읽기 부분), `shared` | **`command`, 도메인 core** |
+| `core` (순수 도메인) | (없음 — 의존성 없음) | `command`, `query`, `contract`, `infrastructure`, JPA·Spring |
+| `command` | `core`, `contract`, `infrastructure`, `shared` | `query` |
+| `query` | `contract`, `infrastructure`(읽기 부분), `shared` | **`command`, `core`(도메인)** |
 | `contract` | `shared` | `command`, `query`, `infrastructure` |
-| `infrastructure` | `contract`, `shared` | `command`, `query` |
+| `infrastructure` | `contract`, `shared` | `command`, `query`, `core` |
 
-- **query → command/도메인 core 의존은 컴파일 차단**이 목표. Gradle 모듈 경계로 1차 강제.
-- 도메인 패키지 간 경계(예: `reservation` 가 `restaurant` 도메인 패키지를 직접 참조 금지)는 모듈로는 못 막으므로 **ArchUnit/Konsist 규칙**으로 강제한다.
+- **query → command/`core`(도메인) 의존은 컴파일 차단**이 목표. 별도 모듈인 `core` 가 JPA·Spring 을 import하지 못하는 순수성도 **모듈 경계(컴파일 의존성)** 로 강제된다.
+- 도메인 패키지 간 경계(예: `core` 안에서 `reservation` 가 `restaurant` 도메인 패키지를 직접 참조 금지)는 모듈로는 못 막으므로 **ArchUnit/Konsist 규칙**으로 강제한다.
 
 ## 경계 강제 (ArchUnit / Konsist)
 

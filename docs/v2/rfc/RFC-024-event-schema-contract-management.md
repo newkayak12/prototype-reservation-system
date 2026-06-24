@@ -1,6 +1,6 @@
 # RFC-024 — 이벤트 스키마 관리: 생산자·소비자 계약 (공유 통합-이벤트 모듈·계약 테스트)
 
-- **상태**: Open · 논의 중 · 2026-06-23
+- **상태**: 🔴 논의 중 (2026-06-23)
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-003-messaging-delivery]] · [[RFC-009-testing-quality-gates]]에서 분리 · 인덱스 [[RFC-INDEX]]
 - **이웃과의 경계**: [[RFC-023-event-schema-evolution]](과거 이벤트를 새 코드로 끌어올리는 업캐스팅)·[[RFC-004-event-store-schema-evolution]](저장·보존 라이프사이클)와 다른 축이다 — 이쪽은 *같은 시점에 생산자 변경이 소비자를 깨뜨리지 않는가*라는 wire 계약이다.
 - **닫으면**: [[07-messaging-topology]](통합 이벤트 = published language) + [[14.testing-strategy]](직렬화·계약 테스트) 보강 + 신규 ADR

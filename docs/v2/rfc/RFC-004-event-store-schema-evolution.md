@@ -1,6 +1,6 @@
 # RFC-004 — 이벤트 스토어·스키마 진화
 
-- **상태**: 합의됨 (2026-06-21) · design [[08-event-store-lifecycle]] 반영 · ADR [[05.event-store-mysql-table]] 비준 대기 · 스키마 진화는 [[RFC-023-event-schema-evolution]]로 분리
+- **상태**: 🏷 합의 (2026-06-21) · design [[08-event-store-lifecycle]] 반영 · ADR [[05.event-store-mysql-table]] 비준 대기 · 스키마 진화는 [[RFC-023-event-schema-evolution]]로 분리
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[08-event-store-lifecycle]] · [[05.event-store-mysql-table]] 보강·비준 (스키마 진화·업캐스터·[[10.event-schema-evolution]]은 [[RFC-023-event-schema-evolution]]가 닫음)
 

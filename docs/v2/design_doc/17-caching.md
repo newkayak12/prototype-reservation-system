@@ -39,12 +39,12 @@ V2가 이 그림을 둘에서 흔든다.
 |---|---|---|
 | **① 요청-단 멱등 디듀프** | [[12-api-contract]] 잔여 케이스 (자연 유니크 불변식 없는 생성 command) | 짧은 윈도·TTL 자동 청소·다중 인스턴스 공유 |
 | **② 레이트리밋 카운터** | V1 `AcquireRateLimitRedisAdapter` 계승 | 다중 인스턴스가 공유하는 분산 카운터 — 인스턴스 로컬 불가 |
-| **③ 일시적 분산 락** | V1 Redisson 락 계승 | 인프라 레벨 상호배제 |
+| **③ 분산 락 (Redisson)** | V1 Redisson 락 계승 + [[RFC-014-aggregate-concurrency-control]] L1 | 애그리거트 쓰기 경합 직렬화(1차) + 인프라 레벨 상호배제 |
 
 세 후보의 공통점: "읽기를 빠르게 하려는 캐시"가 아니라 "분산 환경에서 인스턴스 간에 공유해야 하는, 본질적으로 휘발성이고 TTL이 자연스러운 조정 상태"다.
 
 **경계 둘을 못 박는다:**
-- **도메인 동시성은 Redis 락이 아니다.** 좌석 경합 등 도메인 불변식의 동시성 제어는 애그리거트 + 낙관적 락([[16-auth-token]]이 아니라 [[02-write-model]]·ADR `16.optimistic-concurrency-control`)이 먼저 흡수한다. 분산 락 ③은 *도메인 불변식으로 못 푸는 인프라 레벨 상호배제*에만 — 사용 면적이 V1보다 줄어든다.
+- **애그리거트 쓰기 경합은 Redisson 분산 락이 1차로 직렬화한다([[RFC-014-aggregate-concurrency-control]] L1).** RFC-018 원안은 도메인 동시성을 낙관적 락으로 흡수한다고 봤으나, [[RFC-014-aggregate-concurrency-control]](합의)가 이를 **비관 락 3층**으로 뒤집었다 — L0 `(aggregate_id, sequence_no)` UNIQUE 불변식([[05.event-store-mysql-table]]) + L1 단일 `aggregate_id` **Redisson 분산 락**(Redis 정상 시 라이터 큐잉) + L1′ DB 비관 락(`SELECT … FOR UPDATE`) 폴백(Redis 불가 시; *낙관으로 회귀하지 않는다*). 즉 분산 락 ③은 V1보다 *줄어든* 사용 면적이 아니라 — 인프라 레벨 상호배제에 더해 **애그리거트 경합 직렬화의 1차 메커니즘**으로 쓰인다([[02-write-model]]·[[05-aggregate-design]]·ADR `16.optimistic-concurrency-control`(비관 락으로 재작성)). 따라서 **V2는 Redisson 분산 락 인프라를 *반드시 provision*해야 한다** — 이는 선택적 가속이 아니라 쓰기 경로 정확성이 의존하는 컴포넌트다(다운 시 L1′ DB 폴백으로 강등될 뿐 경합 직렬화 자체는 포기하지 않는다).
 - **사가 임시 점유 TTL은 Redis가 아니다.** 점유 만료는 스케줄러 DB 폴링으로 결정됐다([[RFC-006-saga-process-manager]]·[[06-consistency-and-sagas]]). V1 `timetable` Redisson 세마포어를 V2 점유로 끌어오지 말 것.
 
 (V1 잔재 — 피처 플래그·재시도 컨텍스트·Redisson 락 사용 면적 — 의 V2 항목별 귀속은 각 항목의 V2 거취가 정해질 때. 본 문서는 "캐시냐 조정 상태냐"의 분류 원칙만 확정.)

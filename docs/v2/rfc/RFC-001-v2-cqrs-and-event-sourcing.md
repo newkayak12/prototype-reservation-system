@@ -1,6 +1,6 @@
 # RFC-001: V2 — CQRS 모듈 분리와 선택적 이벤트 소싱
 
-- **상태**: 합의됨 (2026-06-12)
+- **상태**: 🏷 합의 (2026-06-12)
 - **사이클**: `20260612-v2-cqrs-es-architecture` (exploration)
 - **범위**: V1 → V2 전환의 아키텍처 방향 결정
 - **선행 분석**: [[00-overview]] · [[01-current-state]] · [[02-domain-limitations]] · [[03-open-decisions]]

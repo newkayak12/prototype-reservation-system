@@ -1,6 +1,6 @@
 # RFC-016 — 결제 연동 경계
 
-- **상태**: 합의됨 (2026-06-16) · [[15.payment-acl-boundary]]로 닫힘
+- **상태**: ✅ 종결 (2026-06-16) · [[15.payment-acl-boundary]]로 닫힘
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-006-saga-process-manager]] · 인덱스 [[RFC-INDEX]]
 - **닫힘**: [[14-payment-integration]] (design_doc) + [[15.payment-acl-boundary]] (ADR). 사가 표면 3 이벤트 동결은 [[06-consistency-and-sagas]] 보강.
 

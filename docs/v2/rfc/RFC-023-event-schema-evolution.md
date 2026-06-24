@@ -1,6 +1,6 @@
 # RFC-023 — 이벤트 스키마 진화 (업캐스팅·타입 레지스트리·스키마 포맷)
 
-- **상태**: Open · 논의 중 · 2026-06-21
+- **상태**: 🔴 논의 중 (2026-06-21)
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-004-event-store-schema-evolution]]에서 분리 · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[10.event-schema-evolution]] 보강·비준
 

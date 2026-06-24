@@ -1,6 +1,6 @@
 # RFC-005 — PII·보안
 
-- **상태**: 합의됨 (2026-06-21) · design [[15-pii-security]] 반영 · ADR [[11.es-pii-crypto-shredding]] 비준 대기 (Proposed→Accepted)
+- **상태**: 🏷 합의 (2026-06-21) · design [[15-pii-security]] 반영 · ADR [[11.es-pii-crypto-shredding]] 비준 대기 (Proposed→Accepted)
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[11.es-pii-crypto-shredding]] 보강·비준 (Proposed→Accepted)
 

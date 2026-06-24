@@ -1,6 +1,6 @@
 # RFC-010 — 모듈 구조·마이그레이션 확정
 
-- **상태**: 합의됨 (2026-06-23) · 순수 도메인 거처 (b) 현행 `core-module` 유지로 확정
+- **상태**: 🏷 합의 (2026-06-23) · 순수 도메인 거처 (b) 현행 `core-module` 유지로 확정
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[01-module-structure]]·[[04-migration]] 보강 + [[06.strangler-migration]]·[[07.command-domain-jpa-separation]] 비준
 

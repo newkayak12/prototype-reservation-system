@@ -1,6 +1,6 @@
 # RFC-009 — 테스트·품질 게이트
 
-- **상태**: 합의됨 (2026-06-23) · 생산자·소비자 이벤트 계약 절은 [[RFC-024-event-schema-contract-management]]로 분리
+- **상태**: 🏷 합의 (2026-06-23) · 생산자·소비자 이벤트 계약 절은 [[RFC-024-event-schema-contract-management]]로 분리
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[11-environments-and-testing]] 보강 + [[14.testing-strategy]] 비준 (Proposed→Accepted)
 
