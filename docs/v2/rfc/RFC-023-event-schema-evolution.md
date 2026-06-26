@@ -1,37 +1,105 @@
-# RFC-023 — 이벤트 스키마 진화 (업캐스팅·타입 레지스트리·스키마 포맷)
+# RFC-023 — 이벤트 스키마 진화 (업캐스터·타입명 매핑·직렬화 포맷)
 
-- **상태**: 🔴 논의 중 (2026-06-21)
+- **상태**: 🔴 논의 중 (2026-06-21 · 2026-06-25 재작성)
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-004-event-store-schema-evolution]]에서 분리 · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[10.event-schema-evolution]] 보강·비준
 
-## 맥락
+---
 
-[[RFC-004-event-store-schema-evolution]]은 append-only 이벤트 스토어가 운영에 닿을 때의 네 압력을 따라갔다 — 리플레이 비용(스냅샷), 영구 성장(파티셔닝·콜드), 시점 질의, 그리고 **코드는 바뀌는데 이벤트는 영원히 남는다**는 스키마 진화. 앞의 셋은 *저장소를 시간 축에서 어떻게 운영하나*라는 라이프사이클 문제라 RFC-005에 남겼다. 그러나 넷째는 결이 다르다 — 저장·보존이 아니라 *직렬화 계약이 시간에 따라 어떻게 진화하나*의 문제다. 그래서 이 RFC로 분리한다(topical, not parked).
+## 배경 (Background)
 
-긴장은 구체적이다. `ReservationCreated v1`로 저장된 이벤트가 있는데 코드가 `v2`로 바뀌었다면, 그 옛 이벤트를 읽는 순간 새 코드가 이해할 모양으로 끌어올려야 한다. 이때 셋이 얽힌다 — (1) 옛 버전을 새 모양으로 변환하는 **업캐스터**를 어떻게 등록·탐색하나, (2) 저장된 이벤트의 디스크리미네이터인 **논리 타입명(eventType)**을 클래스에 어떻게 묶나(클래스명을 리팩터링해도 안 흔들리게), (3) 언젠가 JSON+업캐스팅을 **Avro/Protobuf 스키마 레지스트리**로 갈아탈 것인가. JSON 페이로드·읽기 시 업캐스팅·eventType 디스크리미네이터라는 *메커니즘*은 [[RFC-001-v2-cqrs-and-event-sourcing]]에서 이미 합의됐고, 여기서는 그 메커니즘의 *등록·매핑·포맷* 결정을 잡는다. (직렬화 규약의 세부 — null/enum/시간/금액 — 와 스냅샷 포맷 진화는 저장 계약이라 [[RFC-004-event-store-schema-evolution]]·[[05.event-store-mysql-table]]에 남겼다.)
+### 시나리오: 코드가 v2로 바뀌어도 1월에 저장한 v1 이벤트를 읽어야 한다
 
-## 논의
+1월에 `ReservationCreated`를 v1으로 저장했다.
 
-### 옛 이벤트를 새 코드로 어떻게 읽을 것인가 — 업캐스터
+```json
+{ "eventType": "ReservationCreated", "version": 1,
+  "reservationId": "...", "guestCount": 4 }
+```
 
-이벤트는 영원히 남고 코드는 바뀌니, 읽을 때 옛 버전 이벤트를 새 모양으로 끌어올리는 업캐스터가 필요하다([[10.event-schema-evolution]] · [[08-event-store-lifecycle]]). 문제는 이걸 어떻게 등록·탐색하느냐다 — 레지스트리 빈에 명시 등록하느냐, 어노테이션을 스캔해 자동 수집하느냐. 자동 스캔은 보일러플레이트가 적지만, 무엇이 등록됐는지 코드로 추적하기 어렵고 `(eventType, fromVersion)` 키 충돌을 탐지할 책임이 흐려진다.
+6월에 "흡연/금연 좌석" 요구가 생겨 `seatingType` 필드를 더한 v2로 코드를 바꿨다. 이제 새 코드가 1월의 v1 이벤트를 읽으면 `seatingType`이 없다. 옛 이벤트는 고칠 수 없고(append-only), 새 코드는 v2 모양을 기대한다. 읽는 순간 v1을 v2 모양으로 끌어올려야 한다.
 
-나는 명시 등록 레지스트리 빈을 택한다. `(eventType, fromVersion)`을 키로 등록하고, 애플리케이션 시작 시 키 충돌을 탐지해 빠르게 실패시킨다. 스캔의 마법보다 명시성과 테스트 용이성을 위에 둔다 — 업캐스터는 데이터 정합성에 직결되는 코드라, "어디선가 스캔돼 등록됐겠지"보다 "여기 다 적혀 있다"가 안전하다.
+이 끌어올림의 메커니즘은 [[RFC-001-v2-cqrs-and-event-sourcing]]에서 합의됐다 — JSON 페이로드, 읽을 때 업캐스팅, `eventType` 문자열 디스크리미네이터. 본 RFC가 정하는 건 그 메커니즘을 운영할 때 갈리는 결정 셋이고, 셋은 두 층으로 나뉜다.
 
-### 논리 타입명(eventType)을 어떻게 매핑할 것인가
+- **층 1 — 우리 코드 안의 배선**: ① 업캐스터를 어떻게 등록·탐색하나, ② `eventType` 문자열을 어느 클래스에 묶나.
+- **층 2 — 직렬화 포맷**: ③ JSON을 유지하나, Avro/Protobuf + 스키마 레지스트리로 가나.
 
-eventType 레지스트리도 같은 갈림길이다 — `@JsonTypeName`을 스캔하느냐, 명시 등록 빈으로 매핑하느냐([[10.event-schema-evolution]]). 목표는 분명하다 — 논리 이름을 클래스명에서 떼어내 고정하는 것. 클래스를 리팩터링해도 저장된 이벤트의 디스크리미네이터는 흔들리면 안 된다.
+---
 
-나는 명시 등록 빈으로 eventType↔클래스 매핑을 잡는다. `@JsonTypeName` 스캔을 배제하는 이유는 위 업캐스터와 같은 철학이다 — 논리명을 클래스에 묶어두면 클래스명을 바꾸는 순간 사고가 난다. 명시 매핑은 "이 논리명은 이 클래스"라는 계약을 코드 한곳에 박아 클래스명 변경으로부터 분리한다.
+## 맥락 (Context)
 
-### 스키마 레지스트리(Avro/Protobuf)를 도입할 것인가
+[[RFC-004-event-store-schema-evolution]]은 append-only 이벤트 스토어가 운영에 닿을 때의 압력 넷을 다뤘다 — 리플레이 비용, 영구 성장, 시점 질의, 스키마 진화. 앞의 셋은 *저장소를 시간 축에서 어떻게 운영하나*라는 라이프사이클 문제다. 넷째는 *직렬화 계약이 시간에 따라 어떻게 진화하나*라 결이 달라 이 RFC로 분리했다(topical, not parked).
 
-언젠가는 JSON+업캐스팅 대신 Avro/Protobuf 같은 스키마 레지스트리를 써야 하지 않느냐는 압력이 있다([[10.event-schema-evolution]]). 지금 이걸 도입하는 건 YAGNI다 — 현재는 JSON 페이로드를 우리 코드가 읽을 때 업캐스팅하는 것으로 충분하다. 다만 막연히 "안 한다"가 아니라 도입 기준을 적어둔다. 우리 코드 밖, 즉 외부·폴리글랏 컨슈머가 이 이벤트를 직접 역직렬화하거나 구독한다는 게 증명될 때다. 그 전까지는 스키마 계약을 우리 업캐스터가 들고 있는 게 더 싸고 통제 가능하다. (이 판단은 [[RFC-003-messaging-delivery]] §별도 RFC로 분리의 *통합 이벤트 페이로드 모양* 논의와 맞닿는다 — 외부로 나가는 통합 이벤트의 스키마 전략과 함께 봐야 한다.)
+정하는 것은 위 ①②③이다. 직렬화 규약의 미세 항목(null·enum·시간·금액 표현)과 스냅샷 포맷 진화는 저장 계약이라 [[RFC-004-event-store-schema-evolution]]·[[05.event-store-mysql-table]]에 남긴다.
 
-## Design으로 넘기는 것
+---
 
-- **업캐스터·eventType 레지스트리 구현** — 명시 등록 빈, 시작 시 `(eventType, fromVersion)`·eventType↔클래스 키 충돌 탐지로 빠른 실패. → [[10.event-schema-evolution]] `Accepted` 승급.
-- **스키마 레지스트리 도입 기준** — YAGNI 보류 유지. 외부·폴리글랏 컨슈머의 직접 구독·역직렬화가 증명되면 별도 ADR로. [[RFC-003-messaging-delivery]] 통합 이벤트 페이로드 논의와 연계.
+## Goal / Non-goal
+
+**Goal**
+- 옛 버전 이벤트를 새 코드로 읽는 **업캐스터의 등록·탐색 방식**을 정한다.
+- 저장된 **`eventType` 문자열을 클래스명 변경으로부터 분리**한다.
+- **직렬화 포맷**의 현재 결정(JSON 유지)과 전환 기준을 정한다.
+
+**Non-goal**
+- Avro/Protobuf·스키마 레지스트리 지금 도입.
+- 직렬화 미세 규약(null·enum·시간·금액) → [[RFC-004-event-store-schema-evolution]]·[[05.event-store-mysql-table]].
+- 스냅샷 포맷 진화 → [[RFC-004-event-store-schema-evolution]].
+
+---
+
+## 논의 (Discussion)
+
+### 논점 1. 업캐스터를 어떻게 등록·탐색하나 → [[10.event-schema-evolution]]
+
+업캐스터는 옛 버전 이벤트를 다음 버전 모양으로 바꾸는 변환 함수다 — 위 예라면 "v1 JSON에 `seatingType`이 없으면 기본값 `UNKNOWN`을 채워 v2로 만든다". 이벤트가 영원히 남으니 변환기가 버전마다 쌓인다([[08-event-store-lifecycle]]).
+
+검토한 선택지:
+- **어노테이션 스캔** — 변환기 클래스에 꼬리표를 붙이고 시작 시 classpath를 훑어 자동 수집.
+- **명시 등록 빈** — `(eventType, fromVersion)`을 키로 한곳에 직접 등록.
+  ```kotlin
+  registry.upcaster("ReservationCreated", from = 1, ReservationV1toV2Upcaster())
+  registry.upcaster("ReservationCreated", from = 2, ReservationV2toV3Upcaster())
+  ```
+
+**결론: 명시 등록 빈.** 업캐스터는 데이터 정합성에 직결되는 코드라 추적성이 스캔의 편의보다 우선한다. 애플리케이션 시작 시 `(eventType, fromVersion)` 키 충돌을 탐지해 즉시 실패시킨다 — 같은 키에 변환기가 둘 등록되면 뜨자마자 죽는 게 운영 중 옛 이벤트를 조용히 잘못 변환하는 것보다 안전하다. (이의 여지: 변환기가 늘면 명시 등록의 보일러플레이트가 는다 — 그 명시성이 곧 추적성이라 감수한다.)
+
+### 논점 2. eventType 문자열을 어느 클래스에 묶나 → [[10.event-schema-evolution]]
+
+저장된 이벤트의 `"eventType": "ReservationCreated"`로 역직렬화할 클래스를 고른다. 이 문자열을 클래스명에 묶으면, 클래스명을 `ReservationCreated` → `ReservationPlaced`로 리팩터링하는 순간 저장된 옛 이벤트가 어느 클래스도 못 가리켜 깨진다. 목표는 논리 타입명을 클래스명에서 떼어내 고정하는 것이다.
+
+검토한 선택지:
+- **`@JsonTypeName` 스캔** — 클래스에 `@JsonTypeName("ReservationCreated")` 어노테이션.
+- **명시 등록 매핑** — `registry.type("ReservationCreated", ReservationCreatedV2::class)`.
+
+**결론: 명시 등록 매핑.** `@JsonTypeName`은 논리명을 클래스에 얹어 클래스 리팩터링 시 사고 위험이 남는다. 명시 매핑은 "이 논리명 = 이 클래스" 계약을 코드 한곳에 박아 클래스명 변경과 분리한다(논점 1과 같은 철학). 시작 시 eventType↔클래스 누락·충돌도 검사한다.
+
+### 논점 3. JSON을 유지하나, Avro/Protobuf로 가나 → [[10.event-schema-evolution]]
+
+직렬화 포맷 후보를 같은 층에서 비교한다.
+
+| | JSON (현재) | Avro / Protobuf |
+|---|---|---|
+| 형태 | 텍스트, 필드명 포함(자기서술) | 바이너리, 필드명 없이 태그·순서 |
+| 스키마 위치 | 우리 코드(클래스) | 별도 스키마 파일(.avsc / .proto) |
+| 진화 방식 | 읽을 때 코드가 업캐스팅(논점 1·2) | 포맷이 호환 규칙 내장(필드 추가+default 등) |
+| 크기·속도 | 큼·느림 | 작음·빠름 |
+
+스키마 레지스트리는 포맷이 아니라 별도 인프라 서비스다 — Avro/Protobuf를 쓸 때 스키마 버전을 중앙에 보관하고 생산자·소비자 호환성을 기계로 강제한다(예: Confluent Schema Registry). 메시지엔 `schema-id`만 싣고 소비자가 그 id로 스키마를 받아 푼다. "Avro로 간다"와 "레지스트리를 둔다"는 별개 결정이다.
+
+**결론: JSON+업캐스팅 유지, Avro/레지스트리 미도입(YAGNI).** 판단 기준은 *누가 이벤트를 푸느냐*다. 지금은 우리 코드만 이 이벤트를 읽으니, 스키마 계약을 업캐스터(논점 1·2)가 들고 있는 게 더 싸고 통제된다. Avro+레지스트리의 값은 우리가 통제하지 못하는 외부·폴리글랏 컨슈머가 이 이벤트를 직접 역직렬화·구독할 때 나온다. 도입 기준은 *우리 코드 밖의 컨슈머가 이 이벤트를 직접 구독·역직렬화한다는 게 증명될 때*이며, 그때 별도 ADR로 도입한다([[RFC-003-messaging-delivery]]의 통합 이벤트 페이로드 논의와 연계).
+
+---
+
+## 결정 요약
+
+| # | 결정 | ADR |
+|---|------|-----|
+| 1 | 업캐스터 = **명시 등록 빈**, 시작 시 `(eventType, fromVersion)` 충돌로 빠른 실패 | [[10.event-schema-evolution]] |
+| 2 | eventType↔클래스 = **명시 등록 매핑** (클래스명 변경과 분리) | [[10.event-schema-evolution]] |
+| 3 | 직렬화 = **JSON+업캐스팅 유지**, Avro/레지스트리는 외부·폴리글랏 컨슈머 직접 구독 증명 시 별도 ADR | [[10.event-schema-evolution]] · [[RFC-003-messaging-delivery]] |
+
+---
 
 ## 관련 문서
 

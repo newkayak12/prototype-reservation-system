@@ -1,7 +1,7 @@
 # RFC-INDEX — V2 결정 RFC 인덱스
 
 - **성격**: 인덱스 (결정 없음, 추적 전용)
-- **업데이트**: 2026-06-24
+- **업데이트**: 2026-06-25
 
 > RFC-001이 큰 그림을 잡았고, 이후 RFC들이 주제별 결정을 닫는다.
 > 정독 순서는 아래 "열려있는 RFC" 섹션의 우선순위를 따른다.
@@ -28,7 +28,7 @@
 | 8 | [[RFC-008-observability]] | 관측성 | 🏷 합의 (2026-06-21) | [[10-observability]] |
 | 9 | [[RFC-009-testing-quality-gates]] | 테스트·품질 게이트 (이벤트 계약은 [[RFC-024-event-schema-contract-management]] 분리) | 🏷 합의 (2026-06-23) | [[11-environments-and-testing]]·[[14.testing-strategy]] |
 | 10 | [[RFC-010-module-structure-migration]] | 모듈 구조·마이그레이션 확정 | 🏷 합의 (2026-06-23) | [[01-module-structure]]·[[04-migration]]·[[06.strangler-migration]]·[[07.command-domain-jpa-separation]] |
-| 11 | [[RFC-011-projection-rebuild-catchup]] | 프로젝션 재구축·catch-up 운영 | 🔴 논의 중 | [[03-read-model]] |
+| 11 | [[RFC-011-projection-rebuild-catchup]] | 프로젝션 재구축·catch-up 운영 | 🏷 합의 (2026-06-25) | [[03-read-model]] |
 | 12 | [[RFC-012-command-query-api-contract]] | command/query API 계약·비동기 command | ✅ 종결 (2026-06-23) | [[12-api-contract]] |
 | 13 | [[RFC-013-data-migration-genesis-events]] | V1→V2 데이터 이행(제네시스 이벤트) | ✅ 종결 (2026-06-23) | [[04-migration]] |
 | 14 | [[RFC-014-aggregate-concurrency-control]] | 애그리거트 동시성·쓰기 경합 제어 | 🏷 합의 (2026-06-17) · 비관 락 전환 | [[05-aggregate-design]]·[[16.optimistic-concurrency-control]] |
@@ -38,7 +38,7 @@
 | 18 | [[RFC-018-caching-redis-role]] | 캐싱·Redis의 V2 역할 | ✅ 종결 (2026-06-23) | [[17-caching]]·[[19.caching-redis-role]] |
 | 19 | [[RFC-019-auth-token-transport]] | 인증 토큰 transport·무상태성과 폐기 포기 | ✅ 종결 (2026-06-23) | [[16-auth-token]]·[[20.auth-token-transport]] |
 | 20 | [[RFC-020-authentication-boundary-gateway]] | 인증 경계: API 게이트웨이 + 인증 서버 | ✅ 종결 (2026-06-23) | [[09-deployment-runtime]] 워크로드 토폴로지 보강 |
-| 21 | [[RFC-021-event-identity-and-global-ordering]] | 이벤트 정체성·글로벌 순서 | 🔴 논의 중 | [[07-messaging-topology]]·[[08-event-store-lifecycle]]·[[22.event-identity-and-global-ordering]] |
+| 21 | [[RFC-021-event-identity-and-global-ordering]] | 이벤트 정체성·글로벌 순서 | 🏷 합의 (2026-06-25) | [[07-messaging-topology]]·[[08-event-store-lifecycle]]·[[22.event-identity-and-global-ordering]] |
 | 23 | [[RFC-023-event-schema-evolution]] | 이벤트 스키마 진화 (업캐스팅·타입 레지스트리·스키마 포맷) | 🔴 논의 중 | [[08-event-store-lifecycle]]·[[10.event-schema-evolution]] |
 | 24 | [[RFC-024-event-schema-contract-management]] | 이벤트 스키마 관리: 생산자·소비자 계약 (공유 통합-이벤트 모듈·계약 테스트) | 🔴 논의 중 | [[11-environments-and-testing]] |
 
@@ -48,10 +48,10 @@
 
 EDA/ES 코어 → 전환 실무 → K8s/운영 → 품질 → 라운드3 하류 순.
 
-1. [[RFC-021-event-identity-and-global-ordering]] — 이벤트 정체성·글로벌 순서
-2. [[RFC-011-projection-rebuild-catchup]] — 프로젝션 재구축·catch-up 운영
-3. [[RFC-023-event-schema-evolution]] — 이벤트 스키마 진화 (업캐스팅·레지스트리)
-4. [[RFC-024-event-schema-contract-management]] — 이벤트 스키마 관리 (생산자·소비자 계약)
+1. [[RFC-023-event-schema-evolution]] — 이벤트 스키마 진화 (업캐스팅·레지스트리)
+2. [[RFC-024-event-schema-contract-management]] — 이벤트 스키마 관리 (생산자·소비자 계약)
+
+> ✅ RFC-021·RFC-011 합의 완료 (2026-06-25) — 쌍으로 게이트·정합 확인 후 닫음.
 
 ## 진행 규칙
 
