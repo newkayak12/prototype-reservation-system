@@ -1,8 +1,7 @@
 # RFC-011 — 프로젝션 재구축·catch-up 운영
 
-- **상태**: 🏷 합의 (2026-06-25) · 독립 리뷰 게이트 통과(정합·메커니즘) · design [[03-read-model]] 보강 + 신규 ADR(프로젝션 운영 전략) 비준 대기
+- **상태**: 🏷 합의 (2026-06-25) · 하류 산출물 없음 — 구현 시점에 BE가 처리
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
-- **닫으면**: [[03-read-model]] 보강 + 신규 ADR(프로젝션 운영 전략) 가능
 
 ---
 
@@ -166,12 +165,12 @@ graph LR
 
 | # | 결정 | ADR |
 |---|------|-----|
-| 1 | 재구축 진실 원천 = **이벤트 스토어 리플레이**(과거) + **토픽 catch-up**(현재)의 2단 구조, 비-ES는 원본 테이블 재빌드 | [[03-read-model]] · [[RFC-021-event-identity-and-global-ordering]] · 신규 ADR(프로젝션 운영 전략) 예정 |
-| 2 | 무중단 교체 = **blue-green 프로젝션 스왑**(green 빌드→catch-up→원자 스왑→blue 롤백 윈도), in-place 비기본 | [[03-read-model]] · 신규 ADR(프로젝션 운영 전략) 예정 |
-| 3 | catch-up 완료 = **스왑 오케스트레이터 1회 컷오버 판정**(목표 오프셋 도달), 상시 readiness 게이트 아님, 임계 수치는 측정 | [[03-read-model]] · [[RFC-002-read-model-consistency]] |
-| 4 | projector **멱등 강제** = 키 upsert + `sequence_no` 버전 가드 + 프로젝션별 오프셋, dedup(`event_id` inbox)·순서 가드 분리, 다중 행은 단일 TX | [[03-read-model]] · [[RFC-021-event-identity-and-global-ordering]] |
-| 5 | 스키마 변경 = **프로젝션 버전 태깅 + blue-green 재구축**, 트리거 규약화·실행은 운영 승인 게이트 | [[03-read-model]] · 신규 ADR(프로젝션 운영 전략) 예정 |
-| 6 | 신규 프로젝션 투입 = **"구독 먼저 → 백필 나중 → 멱등 무버퍼 봉합"**, gap 불가·겹침 흡수 | [[03-read-model]] · [[RFC-021-event-identity-and-global-ordering]] |
+| 1 | 재구축 진실 원천 = **이벤트 스토어 리플레이**(과거) + **토픽 catch-up**(현재)의 2단 구조, 비-ES는 원본 테이블 재빌드 | — |
+| 2 | 무중단 교체 = **blue-green 프로젝션 스왑**(green 빌드→catch-up→원자 스왑→blue 롤백 윈도), in-place 비기본 | — |
+| 3 | catch-up 완료 = **스왑 오케스트레이터 1회 컷오버 판정**(목표 오프셋 도달), 상시 readiness 게이트 아님, 임계 수치는 측정 | — |
+| 4 | projector **멱등 강제** = 키 upsert + `sequence_no` 버전 가드 + 프로젝션별 오프셋, dedup(`event_id` inbox)·순서 가드 분리, 다중 행은 단일 TX | — |
+| 5 | 스키마 변경 = **프로젝션 버전 태깅 + blue-green 재구축**, 트리거 규약화·실행은 운영 승인 게이트 | — |
+| 6 | 신규 프로젝션 투입 = **"구독 먼저 → 백필 나중 → 멱등 무버퍼 봉합"**, gap 불가·겹침 흡수 | — |
 
 상세 설계는 [[03-read-model]] 참조.
 
