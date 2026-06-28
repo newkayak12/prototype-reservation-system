@@ -91,15 +91,15 @@ graph LR
 **맥락에서 나온 질문.** upsert는 재적용해도 같은 상태로 수렴하니 멱등이 거저 얻어진다. 문제는 그렇게 흡수되지 않는 부수효과다(맥락 3) — 알림 발송·외부 결제 연동은 at-least-once 재처리에서 **두 번 발사**된다.
 
 검토한 갈래:
-- **디듀프 테이블** — 멱등키를 키로 두고 같은 멱등키면 두 번째 시도를 무시. 자기 트랜잭션에 묶을 수 있는 경우의 기본.
+- **inbox(기본)** — Kafka에서 받은 이벤트를 `event_id` + 페이로드 + 상태(PENDING/DONE/FAILED)로 inbox 테이블에 기록. 이미 처리한 `event_id`면 스킵. 프로젝터(논점 1)와 같은 패턴 — Outbox(발신) ↔ Inbox(수신) 대칭. 페이로드를 보존하므로 DLQ 수동 재생(논점 5) 시 inbox에서 꺼내 재처리할 수 있다.
 - **부수효과 outbox** — 외부 시스템 연동처럼 자기 트랜잭션에 묶을 수 없는 건 outbox로 빼서 발행 자체를 한 번만 보장.
 - **수동 보정** — 자동 보정이 불가능한 잔여.
 
-**내 의견(AI):** 단일 해법은 없고 부수효과의 성격을 따라 갈래가 나뉜다. "재처리는 정상"을 전제로 깔았으니 **모든 비-멱등 부수효과는 디듀프나 outbox로 감싸는 게 기본값**이고, 수동은 예외다.
+**내 의견(AI):** 단일 해법은 없고 부수효과의 성격을 따라 갈래가 나뉜다. "재처리는 정상"을 전제로 깔았으니 **모든 비-멱등 부수효과는 inbox로 감싸는 게 기본값**이고, 수동은 예외다. inbox는 페이로드까지 기록하므로 단순 멱등키 기록보다 넓은 개념이며, 프로젝터(논점 1)와 패턴이 통일된다. 외부 API 호출 자체의 멱등은 inbox와 별개로 외부 API의 idempotency-key 또는 부수효과 outbox로 처리한다.
 
-**네 결정:** 디듀프 테이블 기본, 트랜잭션에 못 묶는 외부 연동은 부수효과 outbox, 자동 불가 잔여만 수동 보정. 〔근거 확인/보강 필요〕
+**네 결정:** inbox 기본(`event_id` + 페이로드 + 상태 기록), 트랜잭션에 못 묶는 외부 연동은 부수효과 outbox, 자동 불가 잔여만 수동 보정. 〔근거 확인/보강 필요〕
 
-**결론:** 비-멱등 부수효과 = 디듀프/outbox로 감싸는 게 기본, 수동은 예외. (이의 여지: outbox-of-side-effects는 relay를 하나 더 늘리는 비용이 있다 — 부수효과 유형별 귀속은 Design.)
+**결론:** 비-멱등 부수효과 = inbox(기본)/부수효과 outbox로 감싸는 게 기본, 수동은 예외. (이의 여지: outbox-of-side-effects는 relay를 하나 더 늘리는 비용이 있다 — 부수효과 유형별 귀속은 Design.)
 
 ### 논점 3. Outbox relay의 단일성 → [[09-deployment-runtime]]
 
@@ -182,7 +182,7 @@ graph LR
 | # | 결정 | ADR |
 |---|------|-----|
 | 1 | **수동 커밋 + 드레인 셧다운**, 중복은 inbox로 흡수(기본 유지), 자연 멱등+순서 역전 무풍 컨슈머만 생략 | [[09.event-ordering-and-delivery-guarantee]] |
-| 2 | 비-멱등 외부 부수효과는 **디듀프/부수효과 outbox로 감싸는 게 기본**, 수동 보정은 예외 | [[09.event-ordering-and-delivery-guarantee]] |
+| 2 | 비-멱등 외부 부수효과는 **inbox(기본) / 부수효과 outbox로 감싸는 게 기본**, 수동 보정은 예외 | [[09.event-ordering-and-delivery-guarantee]] |
 | 3 | Outbox relay 단일성 = **`SELECT … FOR UPDATE SKIP LOCKED`** 경쟁 소비(leader election 미도입) | [[09-deployment-runtime]] |
 | 4 | **폴링 relay로 시작** + CDC 전환은 명시적 트리거로 정의 | [[05.event-store-mysql-table]] · [[12.kafka-hosting-msk-vs-self-managed]] |
 | 5 | 실패 루프 = **재시도→지수 백오프→DLQ→Slack 알람→수동 재생** | [[07-messaging-topology]] |
@@ -210,7 +210,7 @@ graph LR
         PJ --> RM[(read model)]
     end
     subgraph side [외부 부수효과]
-        SE[알림·결제<br/>디듀프/outbox]
+        SE[알림·결제<br/>inbox/outbox]
     end
     K --> SE
     K -. 실패 .-> DLQ[(DLQ)]
@@ -220,7 +220,7 @@ graph LR
 
 - 전달은 **at-least-once + 멱등 컨슈머**로 effectively-once를 합성한다(순서는 `aggregate_id` 단위).
 - relay는 폴링 + `SKIP LOCKED`로 단일 발행, CDC는 명시 트리거로 전환.
-- 프로젝터는 처리 후 수동 커밋·inbox 멱등, 외부 부수효과는 디듀프/outbox로 감싼다.
+- 프로젝터는 처리 후 수동 커밋·inbox 멱등, 외부 부수효과도 inbox(기본)/부수효과 outbox로 감싼다 — 컨슈머는 모두 inbox 패턴으로 통일(Outbox↔Inbox 대칭).
 - 실패는 재시도→백오프→DLQ→Slack 알람→수동 재생, 재구축 진실 원천은 이벤트 스토어(토픽 retention 짧게).
 
 상세 토폴로지·시퀀스는 [[07-messaging-topology]] · [[09.event-ordering-and-delivery-guarantee]] 참조.

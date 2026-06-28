@@ -1,7 +1,7 @@
 # V2 Design Doc — 03. Read Model
 
 - **상위 결정**: [[04.read-model-projection-and-replica]]
-- **근거 RFC**: [[RFC-002-read-model-consistency]] (무엇을 읽기 모델에 두나·일관성) · [[RFC-011-projection-rebuild-catchup]] (어떻게 운영하나·재구축)
+- **근거 RFC**: [[RFC-002-read-model-consistency]] (무엇을 읽기 모델에 두나·일관성)
 - **개요**: [[00-design-overview]]
 
 > query 측은 layered이며, command의 도메인/스키마를 모른다. 읽기 소스는 **이벤트 프로젝션 read model**이 기본, 저빈도 lookup은 **경량 프로젝션/published 테이블**이다. 둘 다 **query 전용 MySQL**(projector가 Kafka 이벤트로 채움)에 있고, query-module은 그 DB에 정적 바인딩된다 — command DB와 물리 분리, 다리는 Kafka(라우팅 코드 없음 — [[13.db-hosting-and-read-write-topology]]).
@@ -98,32 +98,6 @@ query 측은 layered(web/service/repository/projection/model)다([[03.command-he
 
 - 지연을 정상으로 받아들이기로 했으니 남는 건 "얼마까지"다. 절대 수치(p99 몇 ms)는 실제 메시징 lag을 재기 전엔 근거 없는 숫자가 된다. 그래서 **정책 형태만 지금 확정**한다 — p99 지연 목표를 두고 초과 시 알람을 건다는 골격. 목표의 절대값은 [[RFC-003-messaging-delivery]]의 lag 측정과 함께 운영 단계에서 튜닝한다.
 
-## 프로젝션 재구축·catch-up 운영
-
-> read model은 이벤트로부터 파생된 **2차 구조물**이다 — 진실 원천(이벤트 스토어·토픽)이 따로 있으니 언제든 버리고 다시 만들 수 있어야 한다. 스키마가 바뀌었을 때, 프로젝터 버그로 잘못 채워졌을 때, 새 read model을 운영 중에 투입할 때 모두 "다시 만든다". 이 절차의 방향을 [[RFC-011-projection-rebuild-catchup]]에서 잡았고, 여기 옮긴다. (구체 수치·원자성 수단은 구현 사이클.)
-
-```mermaid
-graph LR
-    EV[(event store<br/>전체 이력)] -->|리플레이| G[green read model<br/>처음부터 빌드]
-    K[(Kafka)] -->|catch-up| G
-    B[(blue read model<br/>현재 트래픽)] -.->|swap 후 폐기| X((x))
-    G -->|catch-up 완료=ready| SW{원자적 스왑}
-    SW --> B2[읽기 경로가 green을 가리킴]
-```
-
-- **재구축 원천 = 이벤트 스토어 리플레이.** Kafka 토픽은 보존기간이 짧아([[RFC-003-messaging-delivery]]) "최근 이벤트의 전달 통로"일 뿐 "전체 이력 보관소"가 아니다. from-beginning으로 재소비해 봐야 보존 경계까지밖에 못 거슬러 올라가 그 이전 상태가 비어버린다. 그래서 **스토어로 과거를 채우고, 토픽 구독으로 현재를 따라잡는 2단 구조**다. (비-ES 컨텍스트는 이벤트 스토어가 없으므로 원본 테이블에서 다시 빌드하는 별도 경로 — 토픽 from-beginning은 retention 때문에 신뢰 못 함.)
-- **무중단 교체 = blue-green 스왑.** 현재 트래픽이 보는 테이블(blue)은 그대로 두고, 새 테이블(green)을 리플레이로 처음부터 빌드한다. green이 catch-up까지 끝나 blue와 동등해지면 읽기 경로가 가리키는 대상을 green으로 **원자적으로 스왑**하고, blue는 롤백 안전망으로 잠시 남겼다가 폐기한다. in-place 재구축은 채우는 동안 읽기가 불완전하므로 기본값으로 두지 않는다. (스왑 원자성 수단 — 뷰/별칭 vs 애플리케이션 라우팅 스위치 — 은 구현 사이클.)
-- **catch-up 완료 = readiness 신호.** 프로세스가 떠 있다고 ready가 아니라 "목표 오프셋 도달(lag ≤ 임계) = ready"를 규약으로 잡는다. readiness가 거짓인 동안 라우팅을 보류하면 미완성 프로젝션으로 트래픽이 흐르지 않는다 — [[09-deployment-runtime]] readiness 프로브·[[RFC-007-deployment-infra-ops]] catch-up 규약과 직접 연결. lag 임계 절대값은 측정 트리거로 남기고, 규약(읽기 트래픽은 readiness=true에만)만 지금 확정.
-- **프로젝터는 멱등.** 재구축·catch-up·장애 복구 모두 같은 이벤트를 다시 적용하게 되고, 토픽이 at-least-once인 한 중복은 정상이다. 그래서 (1) 키 기반 **upsert**로 쓰고, (2) 이벤트의 버전/시퀀스를 **가드**로 두어 이미 반영된(또는 더 최신인) 상태에 과거 이벤트를 덮어쓰지 않으며, (3) 프로젝션별 **처리 오프셋**을 추적한다. 절대값 치환처럼 자연 멱등인 프로젝션은 버전 가드를 생략할 수 있지만, **누적·증분 갱신은 두 번 더하면 틀리므로 반드시 가드**가 필요하다. (멱등 책임을 프로젝터 코드에 둘지 공통 inbox 인프라로 풀지는 [[RFC-003-messaging-delivery]] inbox 논의와 함께 구현 사이클.)
-- **스키마 변경 = 새 프로젝션 버전.** read model 스키마는 파생 구조라 버리고 다시 만드는 비용이 싸다. 스키마를 바꾸면 새 프로젝션 버전 등장으로 취급해 위 blue-green 절차를 그대로 재사용한다 — 별도 "스키마 마이그레이션" 메커니즘이 필요 없다. 대량 재구축의 무인 자동 실행은 위험이 있어 **트리거 조건만 규약화하고 실행엔 운영 승인 게이트**를 둔다.
-- **신규 프로젝션 투입 = "구독 먼저, 백필 나중, 멱등으로 봉합".** 먼저 실시간 구독을 켜 현재 시점 이후 이벤트를 받기 시작하고, 그 다음 스토어에서 과거를 백필한 뒤, 겹치는 구간은 멱등 프로젝터(upsert+버전 가드)로 흡수한다. 이 순서면 백필과 실시간 사이 gap이 안 생기고, 겹침은 멱등이 자동 처리한다. "백필 먼저, 구독 나중"은 그 사이 이벤트를 놓칠 수 있어 택하지 않는다.
-
-### 재구축 리플레이와 스냅샷
-
-프로젝션 재구축의 리플레이 가속에 애그리거트 스냅샷([[RFC-004-event-store-schema-evolution]]에서 두기로 확정 — 존재 여부는 미정이 아니다)을 쓸 수 있는지는 read model 성격에 달렸다.
-
-- **현재 상태만 반영하는** read model이면 최신 스냅샷 + 이후 이벤트로 리플레이를 **단축**할 수 있다.
-- **전체 이력을 펼치는** 투영(타임라인·감사 뷰 등)은 스냅샷이 중간을 건너뛰므로 **풀 리플레이가 불가피**하다.
 
 ## Redis·캐싱의 자리 — 프로젝션 위에 캐시를 얹지 않는다
 
@@ -140,5 +114,5 @@ graph LR
 
 ## 관련 문서
 - [[00-design-overview]] · [[01-module-structure]] · [[02-write-model]] · [[09-deployment-runtime]]
-- RFC: [[RFC-002-read-model-consistency]] · [[RFC-011-projection-rebuild-catchup]] · [[RFC-003-messaging-delivery]] · [[RFC-007-deployment-infra-ops]]
+- RFC: [[RFC-002-read-model-consistency]] · [[RFC-003-messaging-delivery]] · [[RFC-007-deployment-infra-ops]]
 - ADR: [[04.read-model-projection-and-replica]] · [[03.command-hexagonal-query-layered]]
