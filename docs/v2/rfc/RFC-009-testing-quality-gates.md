@@ -1,6 +1,6 @@
 # RFC-009 — 테스트·품질 게이트
 
-- **상태**: 🏷 합의 (2026-06-23) · 생산자·소비자 이벤트 계약 절은 [[RFC-024-event-schema-contract-management]]로 분리
+- **상태**: 🏷 합의 (2026-06-23) · 생산자·소비자 이벤트 계약 절은 [[RFC-023-event-schema-contract-management]]로 분리
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 - **닫으면**: [[11-environments-and-testing]] 보강 + [[14.testing-strategy]] 비준 (Proposed→Accepted)
 
@@ -66,8 +66,8 @@ graph TD
 
 **Non-goal (이번에 하지 않음)**
 - 커버리지·k6 절대 임계 숫자 확정. → 베이스라인 측정 후.
-- 생산자·소비자 이벤트 스키마 계약의 깊은 결정. → [[RFC-024-event-schema-contract-management]]로 분리.
-- 업캐스팅(과거 이벤트→새 코드)의 스키마 진화 결정. → [[RFC-023-event-schema-evolution]].
+- 생산자·소비자 이벤트 스키마 계약의 깊은 결정. → [[RFC-023-event-schema-contract-management]]로 분리.
+- 업캐스팅(과거 이벤트→새 코드)의 스키마 진화 결정. → [[RFC-022-event-schema-evolution]].
 - localstack AWS 서비스 목록의 임의 완결.
 
 ---
@@ -82,9 +82,9 @@ graph TD
 
 **결론:** Konsist. 검증 대상(Kotlin 패키지·import)과 도구 언어가 일치한다. (이의 여지: 사이클 탐지 등 복잡한 규칙이 필요해지면 ArchUnit 재검토.)
 
-### 논점 2. 생산자·소비자 이벤트 스키마 어긋남을 어떻게 잡나 → [[RFC-024-event-schema-contract-management]]
+### 논점 2. 생산자·소비자 이벤트 스키마 어긋남을 어떻게 잡나 → [[RFC-023-event-schema-contract-management]]
 
-**결론:** [[RFC-024-event-schema-contract-management]]로 분리. 공유 계약 모듈(컴파일 보장) + 직렬화 테스트(wire 모양 보장)가 기본, SCC/Pact는 졸업 조건. 업캐스팅은 [[RFC-023-event-schema-evolution]].
+**결론:** [[RFC-023-event-schema-contract-management]]로 분리. 공유 계약 모듈(컴파일 보장) + 직렬화 테스트(wire 모양 보장)가 기본, SCC/Pact는 졸업 조건. 업캐스팅은 [[RFC-022-event-schema-evolution]].
 
 ### 논점 3. 행위 명세(Gherkin)를 어느 슬라이스에 깔고 무슨 도구로 쓰나 → [[14.testing-strategy]]
 
@@ -146,7 +146,7 @@ k6로 부하 테스트를 한다.
 | # | 결정 | ADR |
 |---|------|-----|
 | 1 | 아키텍처 강제 도구 = **Konsist**(Kotlin 네이티브 DSL), 경계 규칙을 컴파일/테스트 시점 강제 | [[14.testing-strategy]] · [[01.cqrs-command-query-module-split]] |
-| 2 | 생산자·소비자 이벤트 스키마 계약은 **[[RFC-024-event-schema-contract-management]]로 분리**(공유 계약 모듈+직렬화 테스트 기본, SCC/Pact 졸업) | [[RFC-024-event-schema-contract-management]] |
+| 2 | 생산자·소비자 이벤트 스키마 계약은 **[[RFC-023-event-schema-contract-management]]로 분리**(공유 계약 모듈+직렬화 테스트 기본, SCC/Pact 졸업) | [[RFC-023-event-schema-contract-management]] |
 | 3 | 행위 명세 = **Kotest BehaviorSpec**(Gherkin 구조), usecase·service·controller(standalone) 3슬라이스 | [[14.testing-strategy]] |
 | 4 | 동적 분산 행위 6범주(멱등성·재구축·사가 보상·재생/스냅샷 등가·동시성·종단)를 메커니즘별 검증, **결정적=CI 필수 / 무거운 통합=정기 단계** | [[14.testing-strategy]] |
 | 5 | 인가 = controller(standalone) 행위 명세 위 **역할 기반 인가 시나리오**, 토큰 발급·검증은 인증 서버 책임 | [[14.testing-strategy]] |
@@ -182,7 +182,7 @@ graph TD
     AUTHZ[인가 시나리오 · controller] --> CI
 ```
 
-- **정적 구조**: 아키텍처 강제(Konsist)·property-based·계약(RFC-024)·업캐스팅 회귀 → CI 필수.
+- **정적 구조**: 아키텍처 강제(Konsist)·property-based·계약(RFC-023)·업캐스팅 회귀 → CI 필수.
 - **행위 명세**: Kotest BehaviorSpec, 3슬라이스 + 인가 시나리오 → CI 필수.
 - **동적 분산 행위**: 결정적(멱등성·재생 등가·동시성) = CI 필수, 무거운 통합(재구축·사가·종단) = 정기 단계.
 - **부하**: k6 = 정기/릴리스 전 게이트.
@@ -197,6 +197,6 @@ graph TD
 
 - 인덱스: [[RFC-INDEX]]
 - ADR/설계: [[14.testing-strategy]] · [[11-environments-and-testing]] · [[01.cqrs-command-query-module-split]] · [[01-module-structure]]
-- 후속/분리: [[RFC-024-event-schema-contract-management]] · [[RFC-023-event-schema-evolution]]
+- 후속/분리: [[RFC-023-event-schema-contract-management]] · [[RFC-022-event-schema-evolution]]
 - 연계: [[RFC-002-read-model-consistency]] · [[RFC-003-messaging-delivery]] · [[RFC-004-event-store-schema-evolution]] · [[RFC-006-saga-process-manager]] · [[RFC-011-projection-rebuild-catchup]] · [[RFC-012-command-query-api-contract]] · [[RFC-013-data-migration-genesis-events]]
 - 계승: [[RFC-001-v2-cqrs-and-event-sourcing]]

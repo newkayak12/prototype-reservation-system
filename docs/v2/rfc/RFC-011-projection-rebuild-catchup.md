@@ -91,11 +91,11 @@ graph LR
     K[(Kafka<br/>retention 짧음)] -->|② 현재를 따라잡는다| RM
 ```
 
-**내 의견(AI):** 재구축의 기본 원천을 **이벤트 스토어 리플레이로** 둔다. ES 컨텍스트(`reservation`·`timetable`·`restaurant`)는 거기서 애그리거트별·전역 스트림을 처음부터 다시 읽어 프로젝션을 재구축한다. 전역 스캔의 열거·재개 기준은 `global_seq` 커서다([[RFC-021-event-identity-and-global-ordering]] · ADR [[22.event-identity-and-global-ordering]]) — 이는 *진행/열거 커서*이지 교차-애그리거트 *전순서 보장*이 아니다. 정확성 불변식은 RFC-021이 박은 그대로 — per-애그리거트 순서(파티션 키=`aggregate_id`) + 멱등 upsert + per-애그리거트 버전 가드(`sequence_no`) — 이므로 아래 §멱등에서 "멱등이 흡수한다"는 *같은 애그리거트 스트림의 재전달·역전*에 한정된 말이다. 여러 애그리거트를 가로지르는 불변식이 실제로 필요하면 그건 projector가 아니라 **사가**가 진다([[RFC-021-event-identity-and-global-ordering]] · [[16.optimistic-concurrency-control]]). 토픽은 재구축 원천이 아니라 실시간 catch-up 구간에서만 쓴다 — "스토어로 과거를 채우고, 토픽 구독으로 현재를 따라잡는다"는 2단 구조다.
+**내 의견(AI):** 재구축의 기본 원천을 **이벤트 스토어 리플레이로** 둔다. ES 컨텍스트(`reservation`·`timetable`·`restaurant`)는 거기서 애그리거트별·전역 스트림을 처음부터 다시 읽어 프로젝션을 재구축한다. 전역 스캔의 열거·재개 기준은 `event_id`(UUIDv7) keyset(`WHERE event_id > :last ORDER BY event_id`)다([[RFC-021-event-identity-and-global-ordering]] · ADR [[22.event-identity-and-global-ordering]]) — 이는 *진행/열거 커서*이지 교차-애그리거트 *전순서 보장*이 아니다. 정확성 불변식은 RFC-021이 박은 그대로 — per-애그리거트 순서(파티션 키=`aggregate_id`) + 멱등 upsert + per-애그리거트 버전 가드(`sequence_no`) — 이므로 아래 §멱등에서 "멱등이 흡수한다"는 *같은 애그리거트 스트림의 재전달·역전*에 한정된 말이다. 여러 애그리거트를 가로지르는 불변식이 실제로 필요하면 그건 projector가 아니라 **사가**가 진다([[RFC-021-event-identity-and-global-ordering]] · [[16.optimistic-concurrency-control]]). 토픽은 재구축 원천이 아니라 실시간 catch-up 구간에서만 쓴다 — "스토어로 과거를 채우고, 토픽 구독으로 현재를 따라잡는다"는 2단 구조다.
 
 **네 결정:** 재구축 기본 원천 = 이벤트 스토어 리플레이, 토픽은 실시간 catch-up 전용의 2단 구조. 비-ES 컨텍스트는 원본 테이블에서 read model을 다시 빌드하는 별도 경로. 〔근거 확인/보강 필요〕
 
-**결론:** ES 컨텍스트는 스토어 리플레이(`global_seq` 커서로 열거)로 과거를 채우고 토픽으로 catch-up한다. 비-ES 컨텍스트는 이벤트 스토어가 없어 진실 원천이 약하므로 원본 테이블 기반 재빌드를 쓰고, 여기에 토픽 from-beginning을 끼우는 건 retention 때문에 신뢰할 수 없다. (이의 여지: 비-ES 쪽 재구축 경로가 ES 쪽과 절차가 갈리면 운영이 복잡해진다는 반론 — 다만 애초에 진실 원천이 다른 두 세계라 절차가 같을 수 없다. 구체 절차는 [[03-read-model]] Design.)
+**결론:** ES 컨텍스트는 스토어 리플레이(`event_id` keyset으로 열거)로 과거를 채우고 토픽으로 catch-up한다. 비-ES 컨텍스트는 이벤트 스토어가 없어 진실 원천이 약하므로 원본 테이블 기반 재빌드를 쓰고, 여기에 토픽 from-beginning을 끼우는 건 retention 때문에 신뢰할 수 없다. (이의 여지: 비-ES 쪽 재구축 경로가 ES 쪽과 절차가 갈리면 운영이 복잡해진다는 반론 — 다만 애초에 진실 원천이 다른 두 세계라 절차가 같을 수 없다. 구체 절차는 [[03-read-model]] Design.)
 
 ### 논점 2. 재구축 중에 읽기를 끊지 않으려면
 
@@ -106,7 +106,7 @@ graph LR
 - **blue-green 스왑** — blue를 둔 채 green을 빌드 후 원자 전환, 롤백 안전망 확보. 대신 테이블 두 벌을 동시에 유지한다.
 - **섀도 빌드 후 비교** — 검증 정밀도가 높다. 다만 가용성 문제 자체는 blue-green과 같은 방식으로 푼다.
 
-**내 의견(AI):** **blue-green 프로젝션 스왑**이다. 현재 트래픽이 보는 테이블(blue)은 그대로 두고, 새 테이블(green)을 이벤트 스토어 리플레이로 처음부터 빌드한다 — green 빌드도 아래 §운영 중 신규 프로젝션의 "구독 먼저 → 백필" 순서와 `global_seq ≤ HWM` 경계를 그대로 따른다(라이브 구독이 백필의 commit-skew 구멍을 메우고 버전 가드가 겹침을 dedup한다, [[RFC-021-event-identity-and-global-ordering]]). green이 catch-up까지 끝나 blue와 동등해지면 읽기 경로가 가리키는 대상을 green으로 원자적으로 스왑한다(뷰/별칭 교체 또는 라우팅 스위치). blue는 롤백 안전망으로 잠시 남겼다가 폐기한다. in-place는 단순하지만 가용성을 희생하므로 기본값으로 두지 않는다.
+**내 의견(AI):** **blue-green 프로젝션 스왑**이다. 현재 트래픽이 보는 테이블(blue)은 그대로 두고, 새 테이블(green)을 이벤트 스토어 리플레이로 처음부터 빌드한다 — green 빌드도 아래 §운영 중 신규 프로젝션의 "구독 먼저 → 백필" 순서와 `event_id ≤ HWM`(UUIDv7) 경계를 그대로 따른다(라이브 구독이 백필의 commit-skew 구멍을 메우고 버전 가드가 겹침을 dedup한다, [[RFC-021-event-identity-and-global-ordering]]). green이 catch-up까지 끝나 blue와 동등해지면 읽기 경로가 가리키는 대상을 green으로 원자적으로 스왑한다(뷰/별칭 교체 또는 라우팅 스위치). blue는 롤백 안전망으로 잠시 남겼다가 폐기한다. in-place는 단순하지만 가용성을 희생하므로 기본값으로 두지 않는다.
 
 **네 결정:** blue-green 프로젝션 스왑을 기본값으로, in-place는 비기본. green은 catch-up 완료 후 원자 스왑, blue는 롤백 윈도 후 폐기. 〔근거 확인/보강 필요〕
 
@@ -181,7 +181,7 @@ graph LR
 ```mermaid
 graph LR
     SUB[실시간 구독 ON] --> GREEN[(green<br/>프로젝션 vN)]
-    ES[(이벤트 스토어)] -->|백필 리플레이 global_seq| GREEN
+    ES[(이벤트 스토어)] -->|백필 리플레이 event_id keyset| GREEN
     K[(Kafka)] -->|catch-up| GREEN
     GREEN -->|upsert + sequence_no 가드| GREEN
     ORCH{스왑 오케스트레이터<br/>목표 오프셋 도달?} -->|컷오버| SWAP[(원자 스왑)]
