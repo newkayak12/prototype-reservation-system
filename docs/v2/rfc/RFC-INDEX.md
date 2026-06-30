@@ -13,6 +13,7 @@
 | 🔴 | 논의 중 | 아직 결정 전, 열려 있음 |
 | 🏷 | 합의 | 결정 합의 완료 · ADR 비준 대기 |
 | ✅ | 종결 | 합의 + ADR 비준/닫힘까지 완료 |
+| 🔒 | 닫힘 | 결정 일부만 채택하고 닫음(나머지 불채택·이력 보존) |
 
 ## RFC 전체 목록
 
@@ -21,12 +22,12 @@
 | 1 | [[RFC-001-v2-cqrs-and-event-sourcing]] | V2 방향 결정 (큰 그림 라운드1) | 🏷 합의 (2026-06-12) | 기준 문서 |
 | 2 | [[RFC-002-read-model-consistency]] | 읽기 모델·일관성 | 🏷 합의 (2026-06-21) | [[03-read-model]]·[[04.read-model-projection-and-replica]] |
 | 3 | [[RFC-003-messaging-delivery]] | 메시징·전달 보장 | 🏷 합의 (2026-06-21) | [[07-messaging-topology]]·[[09.event-ordering-and-delivery-guarantee]] |
-| 4 | [[RFC-004-event-store-schema-evolution]] | 이벤트 스토어·스키마 진화 (진화는 [[RFC-023-event-schema-evolution]] 분리) | 🏷 합의 (2026-06-21) | [[08-event-store-lifecycle]]·[[05.event-store-mysql-table]] |
+| 4 | [[RFC-004-event-store-schema-evolution]] | 이벤트 스토어·스키마 진화 (진화는 [[RFC-022-event-schema-evolution]] 분리) | 🏷 합의 (2026-06-21) | [[08-event-store-lifecycle]]·[[05.event-store-mysql-table]] |
 | 5 | [[RFC-005-pii-security]] | PII·보안 | 🏷 합의 (2026-06-21) | [[15-pii-security]]·[[11.es-pii-crypto-shredding]] |
 | 6 | [[RFC-006-saga-process-manager]] | Saga·프로세스 매니저 | 🏷 합의 (2026-06-21) | [[06-consistency-and-sagas]]·[[08.saga-orchestration-vs-choreography]] |
 | 7 | [[RFC-007-deployment-infra-ops]] | 배포·인프라·운영 (K8s/Strimzi) | 🏷 합의 (2026-06-21) | [[09-deployment-runtime]]·[[12.kafka-hosting-msk-vs-self-managed]]·[[13.db-hosting-and-read-write-topology]] |
 | 8 | [[RFC-008-observability]] | 관측성 | 🏷 합의 (2026-06-21) | [[10-observability]] |
-| 9 | [[RFC-009-testing-quality-gates]] | 테스트·품질 게이트 (이벤트 계약은 [[RFC-024-event-schema-contract-management]] 분리) | 🏷 합의 (2026-06-23) | [[11-environments-and-testing]]·[[14.testing-strategy]] |
+| 9 | [[RFC-009-testing-quality-gates]] | 테스트·품질 게이트 (이벤트 계약은 [[RFC-023-event-schema-contract-management]] 분리) | 🏷 합의 (2026-06-23) | [[11-environments-and-testing]]·[[14.testing-strategy]] |
 | 10 | [[RFC-010-module-structure-migration]] | 모듈 구조·마이그레이션 확정 | 🏷 합의 (2026-06-23) | [[01-module-structure]]·[[04-migration]]·[[06.strangler-migration]]·[[07.command-domain-jpa-separation]] |
 | 11 | [[RFC-011-projection-rebuild-catchup]] | 프로젝션 재구축·catch-up 운영 | 🏷 합의 (2026-06-25) | [[03-read-model]] |
 | 12 | [[RFC-012-command-query-api-contract]] | command/query API 계약·비동기 command | ✅ 종결 (2026-06-23) | [[12-api-contract]] |
@@ -37,21 +38,18 @@
 | 17 | [[RFC-017-disaster-recovery-event-store]] | 재해 복구·이벤트 스토어 복구 의미론 | ✅ 종결 (2026-06-16) · [[18.event-store-recovery-semantics]] | [[08-event-store-lifecycle]] |
 | 18 | [[RFC-018-caching-redis-role]] | 캐싱·Redis의 V2 역할 | ✅ 종결 (2026-06-23) | [[17-caching]]·[[19.caching-redis-role]] |
 | 19 | [[RFC-019-auth-token-transport]] | 인증 토큰 transport·무상태성과 폐기 포기 | ✅ 종결 (2026-06-23) | [[16-auth-token]]·[[20.auth-token-transport]] |
-| 20 | [[RFC-020-authentication-boundary-gateway]] | 인증 경계: API 게이트웨이 + 인증 서버 | ✅ 종결 (2026-06-23) | [[09-deployment-runtime]] 워크로드 토폴로지 보강 |
-| 21 | [[RFC-021-event-identity-and-global-ordering]] | 이벤트 정체성·글로벌 순서 | 🏷 합의 (2026-06-25) | [[07-messaging-topology]]·[[08-event-store-lifecycle]]·[[22.event-identity-and-global-ordering]] |
-| 23 | [[RFC-023-event-schema-evolution]] | 이벤트 스키마 진화 (업캐스팅·타입 레지스트리·스키마 포맷) | 🔴 논의 중 | [[08-event-store-lifecycle]]·[[10.event-schema-evolution]] |
-| 24 | [[RFC-024-event-schema-contract-management]] | 이벤트 스키마 관리: 생산자·소비자 계약 (공유 통합-이벤트 모듈·계약 테스트) | 🔴 논의 중 | [[11-environments-and-testing]] |
+| 20 | [[RFC-020-authentication-boundary-gateway]] | 인증 경계: 엣지 1회 검증(기성 프록시 무상태) + 인증 서버=Spring AS(로그인/로그아웃·JTI 집중) | ✅ 종결 (2026-06-30) | [[09-deployment-runtime]] 워크로드 토폴로지 보강 |
+| 21 | [[RFC-021-event-identity-and-global-ordering]] | 이벤트 정체성·전역 순서 (`event_id`만 채택, `global_seq` 불채택) | 🔒 닫힘 (2026-06-30) | [[22.event-identity-and-global-ordering]] |
+| 22 | [[RFC-022-event-schema-evolution]] | 이벤트 스키마 진화 (업캐스팅·타입 레지스트리·스키마 포맷) | ✅ 종결 (2026-06-30) | [[08-event-store-lifecycle]]·[[10.event-schema-evolution]] |
+| 23 | [[RFC-023-event-schema-contract-management]] | 이벤트 스키마 관리: 생산자·소비자 계약 (공유 통합-이벤트 모듈·계약 테스트) | ✅ 종결 (2026-06-30) | [[11-environments-and-testing]]·[[14.testing-strategy]] |
 
-> ※ RFC-022 번호는 없다 — 이벤트 정체성·전역 순서는 RFC-021이 소유하고, 대응 ADR만 [[22.event-identity-and-global-ordering]]이다.
+> ※ RFC 번호와 ADR 번호는 1:1이 아니다 — 이벤트 정체성·전역 순서는 RFC-021이 소유하지만 대응 ADR은 [[22.event-identity-and-global-ordering]](22번)다. (이전 RFC-022 결번은 RFC-023→022·RFC-024→023 당김으로 메워졌다.)
 
 ## 열려있는 RFC (우선순위 순)
 
-EDA/ES 코어 → 전환 실무 → K8s/운영 → 품질 → 라운드3 하류 순.
+열린 RFC 없음 — 전 RFC 닫힘 (2026-06-30). 후속은 design_doc 보강 + 신규/개정 ADR로 이어진다.
 
-1. [[RFC-023-event-schema-evolution]] — 이벤트 스키마 진화 (업캐스팅·레지스트리)
-2. [[RFC-024-event-schema-contract-management]] — 이벤트 스키마 관리 (생산자·소비자 계약)
-
-> ✅ RFC-021·RFC-011 합의 완료 (2026-06-25) — 쌍으로 게이트·정합 확인 후 닫음.
+> ✅ RFC-021(닫힘)·RFC-011 합의 완료 (2026-06-25) · RFC-022 종결 (2026-06-30) — 게이트·정합 확인 후 닫음.
 
 ## 진행 규칙
 

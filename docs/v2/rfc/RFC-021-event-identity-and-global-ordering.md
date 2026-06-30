@@ -1,6 +1,6 @@
 # RFC-021 — 이벤트 정체성·전역 순서
 
-- **상태**: 🏷 합의 (2026-06-25) · 독립 리뷰 게이트 통과(정합·메커니즘) · event_store=BC별 분리(B)·global_seq=store-global 확정 · ADR [[22.event-identity-and-global-ordering]] 비준 대기(Proposed→Accepted) + design 보강
+- **상태**: 🔒 **닫힘 (2026-06-30)** — 두 결정 중 정체성 `event_id`만 채택([[22.event-identity-and-global-ordering]]). **둘째 결정 `global_seq`는 불채택**: `event_id`를 UUIDv7로 확정하자 그 시간정렬 단조가 재구축 열거 커서를 겸해 전용 `global_seq` 컬럼이 잉여가 됐다(`WHERE event_id > :last ORDER BY event_id` keyset). 아래 논점 2·3·5(`global_seq`·백필 완전성·대안 기각)는 **이력으로 보존**하며 어느 설계 문서에도 반영하지 않는다. 〔합의 이력: 🏷 2026-06-25 독립 리뷰 게이트 통과 → UUIDv7 확정으로 global_seq 축소·닫힘.〕
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-004-event-store-schema-evolution]] · 인덱스 [[RFC-INDEX]]
 - **계기**: 전수 감사 [[04-design-completeness-audit]] 횡단 미결 ①
 - **닫으면**: [[05.event-store-mysql-table]] 스키마 보강(신규 ADR) + [[02-write-model]]·[[08-event-store-lifecycle]]·[[RFC-011-projection-rebuild-catchup]] 보강

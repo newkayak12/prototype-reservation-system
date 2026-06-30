@@ -1,8 +1,8 @@
 # RFC-004 — 이벤트 스토어·스키마 진화
 
-- **상태**: 🏷 합의 (2026-06-21) · design [[08-event-store-lifecycle]] 반영 · ADR [[05.event-store-mysql-table]] 비준 대기 · 스키마 진화는 [[RFC-023-event-schema-evolution]]로 분리
+- **상태**: 🏷 합의 (2026-06-21) · design [[08-event-store-lifecycle]] 반영 · ADR [[05.event-store-mysql-table]] 비준 대기 · 스키마 진화는 [[RFC-022-event-schema-evolution]]로 분리
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
-- **닫으면**: [[08-event-store-lifecycle]] · [[05.event-store-mysql-table]] 보강·비준 (스키마 진화·업캐스터·[[10.event-schema-evolution]]은 [[RFC-023-event-schema-evolution]]가 닫음)
+- **닫으면**: [[08-event-store-lifecycle]] · [[05.event-store-mysql-table]] 보강·비준 (스키마 진화·업캐스터·[[10.event-schema-evolution]]은 [[RFC-022-event-schema-evolution]]가 닫음)
 
 ---
 
@@ -37,7 +37,7 @@ graph TD
     AP --> P2[② 테이블이 무한히 자란다<br/>→ 보존·콜드 이관]
     AP --> P3[③ 시간 축이 생긴다<br/>→ 시점 질의]
     AP --> P4[④ 코드는 바뀐다<br/>→ 스키마 진화]
-    P4 -. RFC-023으로 분리 .-> OUT[직렬화 계약의 시간 진화]
+    P4 -. RFC-022로 분리 .-> OUT[직렬화 계약의 시간 진화]
 ```
 
 | 압력 | append-only가 주는 것 | 따라오는 질문 | 이 RFC가 다루나 |
@@ -45,7 +45,7 @@ graph TD
 | 스냅샷 | 재구성 가속 | 얼마나 자주·몇 개·이벤트와 일치하나 | ✅ |
 | 보존·콜드 | 무한 이력 | 어떤 단위로 보존·어디에 식히나·언제 식나 | ✅ |
 | 시점 질의 | as-of 재구성 | 운영 한정인가 제품 API인가 | ✅ |
-| 스키마 진화 | (없음 — 부담만) | 업캐스터·eventType 매핑·스키마 레지스트리 | → [[RFC-023-event-schema-evolution]] |
+| 스키마 진화 | (없음 — 부담만) | 업캐스터·eventType 매핑·스키마 레지스트리 | → [[RFC-022-event-schema-evolution]] |
 
 ---
 
@@ -71,7 +71,7 @@ graph TD
 - 스냅샷 포맷 변경 시의 처방을 정한다.
 
 **Non-goal (이번에 하지 않음)**
-- 스키마 진화 — 업캐스터(명시 등록 vs 어노테이션 스캔), eventType↔클래스 매핑, Avro/Protobuf 스키마 레지스트리 도입. → [[RFC-023-event-schema-evolution]]로 분리.
+- 스키마 진화 — 업캐스터(명시 등록 vs 어노테이션 스캔), eventType↔클래스 매핑, Avro/Protobuf 스키마 레지스트리 도입. → [[RFC-022-event-schema-evolution]]로 분리.
 - 컨텍스트별 "종결 상태" 카탈로그의 실제 작성(경계 기준의 형태만 합의).
 - crypto-shredding 등 셰딩이 콜드까지 닿는 경로. → [[RFC-005-pii-security]].
 
@@ -185,15 +185,15 @@ graph TD
 
 **결론:** 이벤트 직렬화 규약을 위와 같이 고정. JSON 컬럼 이득은 측정으로 재확인 가능.
 
-### 논점 10. 스키마 진화는 어디서 다루는가 → [[RFC-023-event-schema-evolution]]
+### 논점 10. 스키마 진화는 어디서 다루는가 → [[RFC-022-event-schema-evolution]]
 
 **맥락에서 나온 질문.** 압력 ④의 본체 — 옛 이벤트를 새 코드로 읽는 **업캐스터**(명시 등록 vs 어노테이션 스캔), 논리 타입명(**eventType**)↔클래스 매핑(`@JsonTypeName` 스캔 vs 명시 빈), JSON+업캐스팅을 **Avro/Protobuf 스키마 레지스트리**로 갈아탈지.
 
-**내 의견(AI):** 이 세 갈래는 *저장소를 시간 축에서 운영하는* 이 RFC의 라이프사이클 관심사와 결이 다르다 — 직렬화 계약이 시간에 따라 진화하는 문제라 한 묶음으로 [[RFC-023-event-schema-evolution]]에서 다룬다. 원래 여기 있던 입장(명시 등록 레지스트리 빈, `@JsonTypeName` 스캔 배제, Avro/Protobuf YAGNI 보류)도 그쪽으로 옮겼다.
+**내 의견(AI):** 이 세 갈래는 *저장소를 시간 축에서 운영하는* 이 RFC의 라이프사이클 관심사와 결이 다르다 — 직렬화 계약이 시간에 따라 진화하는 문제라 한 묶음으로 [[RFC-022-event-schema-evolution]]에서 다룬다. 원래 여기 있던 입장(명시 등록 레지스트리 빈, `@JsonTypeName` 스캔 배제, Avro/Protobuf YAGNI 보류)도 그쪽으로 옮겼다.
 
-**네 결정:** 스키마 진화 일체를 [[RFC-023-event-schema-evolution]]로 분리(기존 입장 이관). 〔근거 확인/보강 필요〕
+**네 결정:** 스키마 진화 일체를 [[RFC-022-event-schema-evolution]]로 분리(기존 입장 이관). 〔근거 확인/보강 필요〕
 
-**결론:** 업캐스터·eventType 매핑·스키마 레지스트리는 본 RFC 범위 밖, [[RFC-023-event-schema-evolution]]가 닫는다.
+**결론:** 업캐스터·eventType 매핑·스키마 레지스트리는 본 RFC 범위 밖, [[RFC-022-event-schema-evolution]]가 닫는다.
 
 ---
 
@@ -210,7 +210,7 @@ graph TD
 | 7 | 시점(temporal) 질의 = **운영·디버깅 한정**, 제품 API 노출 보류(YAGNI) | [[08-event-store-lifecycle]] |
 | 8 | 스냅샷 포맷 변경 = **폐기 후 이벤트 리플레이 재생성**, 스냅샷 업캐스팅 없음 | [[10.event-schema-evolution]] · [[08-event-store-lifecycle]] |
 | 9 | 직렬화 규약 = **MySQL JSON 컬럼**, 모르는 필드 무시, enum=이름·시간 ISO-8601 UTC·금액 정수 최소단위·null 명시 | [[05.event-store-mysql-table]] |
-| 10 | 스키마 진화(업캐스터·eventType·스키마 레지스트리)는 **[[RFC-023-event-schema-evolution]]로 분리** | [[10.event-schema-evolution]] |
+| 10 | 스키마 진화(업캐스터·eventType·스키마 레지스트리)는 **[[RFC-022-event-schema-evolution]]로 분리** | [[10.event-schema-evolution]] |
 
 상세 설계는 [[08-event-store-lifecycle]] · [[05.event-store-mysql-table]] 참조.
 
@@ -233,7 +233,7 @@ graph LR
 - **보존·콜드**: 월 파티셔닝으로 식은 파티션을 S3로 export 후 drop, 핫/콜드 경계는 도메인 종결 상태 + 유예.
 - **시점 질의**: as-of 재구성은 운영·디버깅 전용.
 - **직렬화**: MySQL JSON 컬럼, 모르는 필드 무시·enum 이름·ISO-8601 UTC·금액 정수 최소단위·null 명시.
-- **스키마 진화**: 이벤트만 업캐스팅(스냅샷은 폐기·재생성), 업캐스터·eventType·스키마 레지스트리는 [[RFC-023-event-schema-evolution]]가 닫는다.
+- **스키마 진화**: 이벤트만 업캐스팅(스냅샷은 폐기·재생성), 업캐스터·eventType·스키마 레지스트리는 [[RFC-022-event-schema-evolution]]가 닫는다.
 
 상세 라이프사이클·시퀀스는 [[08-event-store-lifecycle]] 참조.
 
@@ -244,5 +244,5 @@ graph LR
 - 분석/인덱스: [[RFC-INDEX]]
 - ADR: [[05.event-store-mysql-table]] · [[10.event-schema-evolution]]
 - 설계: [[08-event-store-lifecycle]] · [[11-environments-and-testing]]
-- 후속/분리: [[RFC-023-event-schema-evolution]] · [[RFC-005-pii-security]] · [[RFC-009-testing-quality-gates]]
+- 후속/분리: [[RFC-022-event-schema-evolution]] · [[RFC-005-pii-security]] · [[RFC-009-testing-quality-gates]]
 - 계승: [[RFC-001-v2-cqrs-and-event-sourcing]]
