@@ -67,11 +67,11 @@ graph LR
 - 스냅샷에 `schema_version` 을 박는다. 코드의 현재 버전과 다르면 **그 스냅샷을 무효 취급**하고 무시한다.
 - 무효 스냅샷은 **이벤트 리플레이로 안전하게 재생성**된다 — 삭제·마이그레이션이 강제되지 않는다. 이벤트(진실) → 새 코드의 `apply` → 새 스키마 스냅샷.
 - **스냅샷은 업캐스팅하지 않는다 — 폐기 후 재생성으로 확정**([[RFC-004-event-store-schema-evolution]]). 스냅샷이 "버릴 수 있는 최적화"인 이상(§1.1), 포맷이 바뀌었을 때 굳이 업캐스팅 코드를 둘 이유가 없다. 배경에서 이벤트를 다시 재생해 새 포맷으로 찍으면 된다. **업캐스팅은 이벤트에만 둔다.**
-- 이벤트 페이로드 자체의 진화는 별개 문제다. in-place 마이그레이션은 기각하고([[10.event-schema-evolution]]), `event_version`([[05.event-store-mysql-table]])과 **읽기 시 업캐스팅**(낡은 버전 이벤트를 읽는 시점에 최신 모양으로 변환)으로 흡수한다. (업캐스터·eventType 매핑·스키마 레지스트리의 결정 근거는 **[[RFC-023-event-schema-evolution]]**로 분리.)
+- 이벤트 페이로드 자체의 진화는 별개 문제다. in-place 마이그레이션은 기각하고([[10.event-schema-evolution]]), `event_version`([[05.event-store-mysql-table]])과 **읽기 시 업캐스팅**(낡은 버전 이벤트를 읽는 시점에 최신 모양으로 변환)으로 흡수한다. (업캐스터·eventType 매핑·스키마 레지스트리의 결정 근거는 **[[RFC-022-event-schema-evolution]]**로 분리.)
 
 #### 업캐스터·eventType 레지스트리 — 명시 등록
 
-옛 이벤트를 새 코드로 읽는 장치는 **어노테이션 스캔이 아니라 명시 등록 레지스트리 빈**으로 잡는다([[RFC-023-event-schema-evolution]] · [[10.event-schema-evolution]]). 업캐스터는 데이터 정합성에 직결되는 코드라 "어디선가 스캔돼 등록됐겠지"보다 "여기 다 적혀 있다"가 안전하다.
+옛 이벤트를 새 코드로 읽는 장치는 **어노테이션 스캔이 아니라 명시 등록 레지스트리 빈**으로 잡는다([[RFC-022-event-schema-evolution]] · [[10.event-schema-evolution]]). 업캐스터는 데이터 정합성에 직결되는 코드라 "어디선가 스캔돼 등록됐겠지"보다 "여기 다 적혀 있다"가 안전하다.
 
 - **업캐스터**: `(eventType, fromVersion)`을 키로 명시 등록하고, 애플리케이션 시작 시 키 충돌을 탐지해 **빠르게 실패**시킨다.
 - **eventType↔클래스 매핑**: `@JsonTypeName` 스캔을 배제하고 명시 등록 빈으로 잡는다. 논리명을 클래스에 묶어두면 클래스명을 리팩터링하는 순간 저장된 이벤트의 디스크리미네이터가 흔들린다 — 명시 매핑이 "이 논리명은 이 클래스"라는 계약을 한곳에 박아 클래스명 변경으로부터 분리한다.
@@ -117,7 +117,7 @@ graph LR
 
 - 일상 적재는 **스냅샷+증분**으로 리플레이 길이를 N 이하로 묶는다(§1.3).
 - 전체 리플레이(스냅샷 폐기/검증/프로젝션 재구축)는 **배치·오프피크** 작업으로 분리. 핫 경로에서 seq 0 전체 리플레이가 일어나면 안 된다.
-- 프로젝션 재구축([[03-read-model]])도 이벤트 스토어 전체 스캔이므로 같은 가드레일 적용 — 콜드 파티션 포함 여부를 재구축 목적에 따라 선택. 스캔은 `ORDER BY global_seq`로 **열거·재개**한다([[22.event-identity-and-global-ordering]]) — 이는 진행 커서이지 교차-애그리거트 순서 보장이 아니며, 프로젝터 정확성은 per-aggregate 순서+멱등+버전 가드가 진다([[RFC-011-projection-rebuild-catchup]]).
+- 프로젝션 재구축([[03-read-model]])도 이벤트 스토어 전체 스캔이므로 같은 가드레일 적용 — 콜드 파티션 포함 여부를 재구축 목적에 따라 선택. 스캔은 `event_id`(UUIDv7) keyset(`WHERE event_id > :last ORDER BY event_id`)로 **열거·재개**한다([[22.event-identity-and-global-ordering]]) — 이는 진행 커서이지 교차-애그리거트 순서 보장이 아니며, 프로젝터 정확성은 per-aggregate 순서+멱등+버전 가드가 진다([[RFC-011-projection-rebuild-catchup]]).
 
 ## 3. Temporal / As-of 조회
 
@@ -126,7 +126,7 @@ ES의 보상: 과거 어느 시점이든 상태를 되살릴 수 있다. 감사�
 ### 3.1 메커니즘
 
 - **as-of sequence**: `sequence_no <= S` 인 이벤트만 `apply` → "S번째 이벤트 직후" 상태.
-- **as-of time**: `occurred_at <= T` 인 이벤트만 `apply` → "시점 T의 상태". (단일 애그리거트 내 동률 `occurred_at`은 `sequence_no`로 결정적 정렬. 교차-애그리거트 시점 스냅이 필요하면 `global_seq <= G`가 결정적 기준 — [[22.event-identity-and-global-ordering]].)
+- **as-of time**: `occurred_at <= T` 인 이벤트만 `apply` → "시점 T의 상태". (단일 애그리거트 내 동률 `occurred_at`은 `sequence_no`로 결정적 정렬. 교차-애그리거트 시점 스냅이 필요하면 `event_id <= :g`(UUIDv7 시간정렬)가 결정적 기준 — [[22.event-identity-and-global-ordering]].)
 - 스냅샷 활용: `snapshot.sequence_no <= S` 인 최신 스냅샷에서 출발해 S까지 증분 리플레이 → 시점 질의도 단축.
 
 ```kotlin
@@ -199,7 +199,7 @@ graph TB
 - 스냅샷 주기 `N`(기본 100, 타입별·k6 조정). 보관은 핫 1개 + 직전본 Glacier로 확정(§1.1).
 - 파티션 키(시간 vs `aggregate_type`)와 핫/콜드 경계, 종료 애그리거트 판정 기준.
 - reconciliation 빈도·표본률.
-- 이벤트 업캐스팅 카탈로그(페이로드 진화)는 **[[RFC-023-event-schema-evolution]]**로 분리 — 이벤트 카탈로그 확정 의존([[02-write-model]]).
+- 이벤트 업캐스팅 카탈로그(페이로드 진화)는 **[[RFC-022-event-schema-evolution]]**로 분리 — 이벤트 카탈로그 확정 의존([[02-write-model]]).
 - temporal 조회 노출 범위.
 
 > 본 문서는 [[05.event-store-mysql-table]]가 "무엇으로 저장하나"를 정한 데 이어, "그 저장소를 시간 축에서 어떻게 살리나"를 정한다. PII 삭제 의무 문제(불변 vs 진짜 삭제)는 append-only의 또 다른 대가이며 [[11.es-pii-crypto-shredding]]에서 별도로 다룬다.

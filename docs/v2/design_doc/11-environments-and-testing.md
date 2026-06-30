@@ -177,7 +177,7 @@ graph TB
 |--------|---------------|--------|------|
 | **아키텍처/의존성 (ArchUnit·Konsist)** | 모듈 경계·헥사고날·DDD 규칙을 *코드로 강제*: `query↛command 스키마`·`도메인↛JPA`([[07.command-domain-jpa-separation]])·`command↔query는 이벤트로만`. 빈약 도메인·경계 침식을 CI가 잡는다 | 정적·무인프라(단위와 함께) | **1순위** |
 | **속성 기반 (Fixture Monkey 확장)** | 무작위 command 시퀀스에서 `fold(events)==state`·불변식·read model 수렴 — ES 정확성의 정수 | 단위~통합 | 상 |
-| **이벤트 계약 (공유 통합 이벤트 모듈 + 직렬화 테스트)** | 생산자가 이벤트 모양을 깨면 *컴파일/직렬화 테스트*가 런타임 전에 잡음 — 얇은 통합 이벤트를 공유 모듈로 두어 컴파일 보장을, 직렬화/스키마 테스트로 wire 모양 보장을. 내부 도메인 이벤트는 공유 금지, 컴파일 보장은 같은 버전 한정. Pact/SCC는 overspec, 외부 소비자·배포 스큐 시 졸업. 계약 본체는 [[RFC-024-event-schema-contract-management]]가 소유(생산자·소비자 어긋남 방지), 과거 이벤트를 새 코드로 읽는 업캐스팅 축은 [[RFC-023-event-schema-evolution]]로 분리 | 통합 | 상 |
+| **이벤트 계약 (공유 통합 이벤트 모듈 + 직렬화 테스트)** | 생산자가 이벤트 모양을 깨면 *컴파일/직렬화 테스트*가 런타임 전에 잡음 — 얇은 통합 이벤트를 공유 모듈로 두어 컴파일 보장을, 직렬화/스키마 테스트로 wire 모양 보장을. 내부 도메인 이벤트는 공유 금지, 컴파일 보장은 같은 버전 한정. Pact/SCC는 overspec, 외부 소비자·배포 스큐 시 졸업. 계약 본체는 [[RFC-023-event-schema-contract-management]]가 소유(생산자·소비자 어긋남 방지), 과거 이벤트를 새 코드로 읽는 업캐스팅 축은 [[RFC-022-event-schema-evolution]]로 분리 | 통합 | 상 |
 | **스키마 진화 회귀 (업캐스팅 픽스처 리플레이)** | `(eventType, eventVersion)`별 고정 JSON 픽스처를 최신 코드가 모두 읽어내는지([[10.event-schema-evolution]]) — 영구 이벤트 안전망 | 통합 | 상 |
 | **카오스/장애 주입** | "느린가"가 아니라 *"깨져도 사는가"* — 앱 레벨 **Chaos Monkey for Spring Boot**(지연·예외 주입), 인프라 레벨 broker 파티션·DB failover·projector kill 중 무손실·effectively-once(T-05) | E2E+ | 중 |
 
@@ -235,7 +235,7 @@ graph TB
 - **매니페스트 overlay = Helm** — 차트 + 환경별 values로 운영/로컬 분리. [[09-deployment-runtime]] GitOps 방향과 정합.
 - **E2E 최종 일관성 await = Awaitility, 폴링 50ms / 타임아웃 5s** (기본 컨벤션, 시나리오별 조정 가능).
 - **k6 시드 데이터 = 고정 시드 + 스크립트 이벤트 스트림을 픽스처로 커밋** — 재현성(측정·기록 학습목표 직결).
-- **이벤트 계약 = 얇은 통합 이벤트 공유 모듈 + 직렬화/스키마 테스트** — 공유 모듈이 컴파일 보장, 직렬화 테스트가 wire 모양 보장. 내부 도메인 이벤트는 공유 금지, 컴파일 보장은 같은 버전 한정. Pact/SCC는 overspec → 외부 소비자·배포 스큐 시 졸업. 계약 본체(생산자·소비자 어긋남 방지)는 [[RFC-009-testing-quality-gates]]에서 [[RFC-024-event-schema-contract-management]]로 분리(topical, not parked) — 본 문서는 그 분리를 참조·요약만 하고, 업캐스팅 축은 [[RFC-023-event-schema-evolution]] 소관이다.
+- **이벤트 계약 = 얇은 통합 이벤트 공유 모듈 + 직렬화/스키마 테스트** — 공유 모듈이 컴파일 보장, 직렬화 테스트가 wire 모양 보장. 내부 도메인 이벤트는 공유 금지, 컴파일 보장은 같은 버전 한정. Pact/SCC는 overspec → 외부 소비자·배포 스큐 시 졸업. 계약 본체(생산자·소비자 어긋남 방지)는 [[RFC-009-testing-quality-gates]]에서 [[RFC-023-event-schema-contract-management]]로 분리(topical, not parked) — 본 문서는 그 분리를 참조·요약만 하고, 업캐스팅 축은 [[RFC-022-event-schema-evolution]] 소관이다.
 - **행위 명세 = Kotest `BehaviorSpec`** (usecase·service·controller standalone 슬라이스). `.feature`+Cucumber는 비개발자 명세가 실제로 필요해질 때.
 - **동적 분산 행위 게이트 = 결정적(멱등성·재생 등가·동시성)은 CI 필수, 무거운 통합(재구축·종단·사가)은 정기/통합 단계.**
 - **게이트 차단성 분류**([[RFC-009-testing-quality-gates]]) — 테스트를 "머지 차단 게이트"와 "비-차단 관측"으로 가른다. **차단 게이트(통과 못 하면 머지 불가)**: 아키텍처/의존성 강제(ArchUnit·Konsist, 1순위)·속성 기반·이벤트 계약·업캐스팅 회귀. **비-차단 관측(추세만 본다, 머지 안 막음)**: Chaos Monkey 카오스 주입·k6 부하. 우선순위(1순위/상/중)는 *작성 순서*일 뿐 차단성과 별개다.
@@ -253,6 +253,6 @@ graph TB
 
 ## 관련 문서
 - [[00-design-overview]] · [[01-module-structure]] · [[02-write-model]] · [[03-read-model]] · [[09-deployment-runtime]] · [[08-event-store-lifecycle]] · [[04-migration]]
-- RFC: [[RFC-009-testing-quality-gates]](본 문서 상위) · [[RFC-012-command-query-api-contract]] · [[RFC-013-data-migration-genesis-events]] · [[RFC-015-authorization-model]] · [[RFC-024-event-schema-contract-management]] · [[RFC-023-event-schema-evolution]]
+- RFC: [[RFC-009-testing-quality-gates]](본 문서 상위) · [[RFC-012-command-query-api-contract]] · [[RFC-013-data-migration-genesis-events]] · [[RFC-015-authorization-model]] · [[RFC-023-event-schema-contract-management]] · [[RFC-022-event-schema-evolution]]
 - ADR: [[14.testing-strategy]] · [[05.event-store-mysql-table]] · [[02.selective-event-sourcing-scope]]
 - 계승: [[07.reservation]] · [[01.ddd]]

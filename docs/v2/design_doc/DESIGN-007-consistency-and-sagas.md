@@ -233,7 +233,7 @@ sequenceDiagram
 | `ReservationConfirmed` (예약 확정)   | `ReservationCancelled` (취소) |
 
 - 보상은 **삭제가 아니라 새 이벤트**다. ES 컨텍스트에서 점유를 "없던 일"로 지우지 않고 `SeatReleased` 를 append 한다 — append-only 불변식 유지(ADR-05.event-store-mysql-table), 이력·감사 보존.
-- 보상은 **멱등**이어야 한다. 같은 보상 이벤트를 두 번 받아도 한 번 적용한 것과 같아야 한다(이벤트 재처리·중복 전달 대비). 판단은 **자기 aggregate 상태 + `sequence_no` 가드**로 한다("이미 풀린 점유면 무시" = Last-Writer-Wins seq 가드, [[DESIGN-020-ordering-and-failure-handling]] §4). 이벤트는 event-carried라 자기 시점 사실을 실어 오므로 별도 최신-상태 재조회가 필요 없다([[RFC-029-event-carried-payload-uniform]] — Zero Payload 폐기).
+- 보상은 **멱등**이어야 한다. 같은 보상 이벤트를 두 번 받아도 한 번 적용한 것과 같아야 한다(이벤트 재처리·중복 전달 대비). Zero Payload 재조회(`07.reservation`)로 "이미 풀린 점유면 무시"를 판단한다.
 - 각 컨텍스트가 **자기 aggregate 상태를 보고 자기 보상을 판단**한다. 중앙에서 보상 순서를 제어할 필요 없다 — `payment`는 자기가 `Confirmed` 상태인지 보고 환불을 결정하고, `timetable`은 자기가 `SeatHeld` 상태인지 보고 해제를 결정한다.
 - `07.reservation`이 미결정으로 남겼던 "Reservation 생성 불가 시 Timetable 상태 보정"이 바로 이 보상이다. V2는 이를 코레오그래피의 명시적 보상 이벤트로 끌어올린다.
 
@@ -286,22 +286,9 @@ graph LR
 컨텍스트 횡단 일관성의 실무 난점은 대부분 메시징 특성에서 온다. V2는 새로 발명하지 않고 `07.reservation` 자산을 재사용한다.
 
 - **순서**: Kafka 파티션 키 = `aggregate_id` 로 애그리거트별 순서 보장. 토픽 분할·전달 보장의 세부는 DESIGN-008-messaging-topology.
-- **중복(at-least-once)**: 컨슈머·보상 모두 **멱등** 설계. event-carried 이벤트 + `sequence_no` 가드(Last-Writer-Wins, [[DESIGN-020-ordering-and-failure-handling]] §4)로 판단 — 최신-상태 재조회 없음([[RFC-029-event-carried-payload-uniform]]).
-- **순서 결정적 소비(사가·보상·부수효과)의 실패**: 바운드 재시도 → 꼬리 격리([[DESIGN-020-ordering-and-failure-handling]] §5). transient(DB blip·락 타임아웃)는 제자리 재시도, poison(N회 초과)은 그 `aggregate_id`를 stuck으로 표시하고 이후 이벤트를 seq 순서로 park(다른 aggregate는 계속) + 알림. DLQ는 되쏘지 않고 알림·감사만([[DESIGN-020-ordering-and-failure-handling]] §6, [[RFC-025-ordering-relay-dlq-reconciliation]]).
-
-### 4.9 부분 보상 잔류 상태 — 꼬리 격리 채택 (트리아지 C10·C11·C13 종결)
-
-코레오그래피의 진짜 미결은 하나로 수렴한다: **"좌석은 풀렸는데 환불이 실패한" 부분 보상 잔류 상태를 어떻게 표현·복구하나.** (트리아지 C11 핵심 = C13 잔여가 같은 질문.) 이전엔 "v1 PoisonMessage vs 사가 전용 경로"를 TBD로 열어뒀으나, 후속 결정들이 답을 이미 만들었다 — **사가 전용 경로(꼬리 격리)를 채택**한다(범용 PoisonMessage 아님).
-
-| 조각 | 어디서 결정됐나 |
-|---|---|
-| **환불 복구 = 멱등 정방향 재호출** (되돌리기 아님) | [[DESIGN-015-payment-integration]] §6.6 (의도-먼저 + outbox+relay, Idempotency-Key) |
-| **poison 잔류 = 꼬리 격리** (stuck 표시·seq park·알림·드레인) | [[DESIGN-020-ordering-and-failure-handling]] §5 · [[RFC-025-ordering-relay-dlq-reconciliation]] |
-| **관측 = DLQ 알림 + correlationId 상관분석** | [[DESIGN-020-ordering-and-failure-handling]] §6 · [[RFC-008-observability]] |
-
-**한 가지 경계 — 환불은 재구축으로 못 되돌린다.** 프로젝션은 event_store 재구축으로 복구되지만(§[[RFC-011-projection-rebuild-catchup]]), 실패한 환불은 외부 효과라 재구축이 안 된다(C13 핵심). 따라서 park된 환불의 드레인 트리거는 "버그 수정"이 아니라 **PG 복구 또는 수동 환불 같은 운영 액션**이다 → [[DESIGN-015-payment-integration]]의 **운영 보정 큐**가 그 자리. 이 부분은 아키텍처가 아니라 **운영 런북**(누가 언제 수동 드레인) 항목으로, 구현 사이클에서 절차만 확정한다.
-
-**단일 조회지점 부재**(C10 관측 축)는 ADR-08 트레이드오프로 이미 수용됐고 재론하지 않는다. **코레오 가드가 서로 맞물리는지 정적 검증**(C10 검증 축)은 계약 테스트로 다룬다 → [[RFC-009-testing-quality-gates]]. **PM 전환 3조건**(ADR-08 §54-59)은 정성적 판정으로 두되 무트래픽 단계에선 운영화하지 않는다(YAGNI).
+- **중복(at-least-once)**: 컨슈머·보상 모두 **멱등** 설계. Zero Payload 재조회로 현재 상태 기준 판단.
+- **재처리 실패**: 스케줄러 기반 Outbox 재시도 + PoisonMessage 별도 관리(v1 계승). 사가 단계 실패도 같은 PoisonMessage 운영 흐름에 태운다.
+- **미결 — v1 PoisonMessage 모델이 "부분 보상 상태"를 담는가**(RFC-006-saga-process-manager). 단순 메시지 실패와 달리 사가 단계 실패는 **보상을 이미 일부만 돌린 중간 상태**일 수 있다(예: `SeatReleased`는 됐는데 `PaymentRefunded`가 실패). 이 부분 보상 상태를 v1 PoisonMessage·수동 재생 루프가 그대로 표현·복구할 수 있는지, 아니면 사가 전용 보정 경로가 따로 필요한지는 구현 사이클에서 확정한다(TBD).
 
 ## 5. Alternatives Considered
 
@@ -329,8 +316,8 @@ graph LR
 | 위험 | 완화 |
 |------|------|
 | paid-after-expiry 레이스 | aggregate 상태 가드로 확정 거부 + `RefundRequired` 트리거 |
-| 부분 보상 상태 (사가 단계 실패) | **꼬리 격리 채택**(§4.9): 멱등 정방향 재호출([[DESIGN-015-payment-integration]] §6.6) + poison은 stuck·park·알림([[DESIGN-020-ordering-and-failure-handling]] §5). 환불 실패 잔류는 운영 보정 큐 + 수동 드레인 런북 |
-| 중복 보상 이벤트 | 멱등 보상 설계 + event-carried + `sequence_no` 가드(LWW, [[DESIGN-020-ordering-and-failure-handling]] §4) |
+| 부분 보상 상태 (사가 단계 실패) | 구현 사이클에서 v1 PoisonMessage 모델 적용 여부 확정 (TBD) |
+| 중복 보상 이벤트 | 멱등 보상 설계 + Zero Payload 재조회로 현재 상태 기준 판단 |
 | 폴링 주기 > TTL | 구현 사이클에서 두 값을 함께 검증 |
 
 ## 8. Appendix
@@ -345,8 +332,8 @@ graph LR
 
 ### 8.2 Reference
 
-- DESIGN-001-overview · DESIGN-003-write-model · DESIGN-004-read-model · DESIGN-008-messaging-topology · DESIGN-015-payment-integration · [[DESIGN-020-ordering-and-failure-handling]]
-- RFC: RFC-006-saga-process-manager · RFC-016-payment-integration-boundary · [[RFC-025-ordering-relay-dlq-reconciliation]] · [[RFC-029-event-carried-payload-uniform]] · [[RFC-009-testing-quality-gates]]
+- DESIGN-001-overview · DESIGN-003-write-model · DESIGN-004-read-model · DESIGN-008-messaging-topology · DESIGN-015-payment-integration
+- RFC: RFC-006-saga-process-manager · RFC-016-payment-integration-boundary
 - ADR: 08.saga-orchestration-vs-choreography · 09.event-ordering-and-delivery-guarantee · 05.event-store-mysql-table · 02.selective-event-sourcing-scope
 - 계승: 07.reservation
 
@@ -354,35 +341,4 @@ graph LR
 
 | 날짜 | 변경 내용 |
 |------|-----------|
-| 2026-07-05 | §4.9 신설 — 부분 보상 잔류 상태를 **꼬리 격리 채택**으로 종결(트리아지 C10·C11·C13). 후속 결정 배선: 멱등 정방향 재호출([[DESIGN-015-payment-integration]] §6.6)·꼬리 격리([[DESIGN-020-ordering-and-failure-handling]] §5)·DLQ 알림. §4.5·§4.8·§7의 "Zero Payload 재조회"를 event-carried + seq 가드로 정정([[RFC-029-event-carried-payload-uniform]]). PoisonMessage-vs-사가전용 TBD 종결(사가 전용=꼬리격리). Weakness 6개 항목 처분 주석. |
 | 2026-06-30 | 초안 작성. 06-consistency-and-sagas.md에서 DESIGN-007 템플릿으로 재구성 |
-
----
-
-## Weakness (Devil's Advocate 반박 포인트)
-
-> **처분 (2026-07-05, 트리아지 C10·C11·C13 종결 · §4.9)** — 아래 6개 항목은 코레오그래피 결정을 세 각도에서 물은 것으로, 대부분 후속 결정으로 닫혔다:
-> - "주인 없음=관측 불가"(§363) → 단일 조회지점 부재는 ADR-08 **트레이드오프 수용**, 관측은 DLQ 알림 + correlationId([[DESIGN-020-ordering-and-failure-handling]] §6).
-> - "2~3스텝 전제"·"PM 전환 트리거 없음"(§365) → 전환 3조건은 ADR-08 §54-59에 **이미 존재**(정성적, 무트래픽 단계 운영화는 YAGNI).
-> - "흩어진 상태 머신=오버부킹 정적검증 불가"(§367) → 단일 슬롯은 timetable **단일 애그리거트 직렬화 + L0 UNIQUE**([[DESIGN-006-aggregate-design]] §183-188)가 구조적 백스톱; 교차-슬롯 정원은 이벤트 스토밍/사가로 이미 punt(§104); 가드 맞물림 검증은 계약 테스트 [[RFC-009-testing-quality-gates]].
-> - "레이스=환불로 전가"·"환불 실패 시 무력"(§369) → §4.7(라) `RefundRequired` + §4.9 **꼬리 격리 + 운영 보정 큐**로 환불 실패 잔류 처리.
-> - "멱등+Zero Payload 순환 의존"(§371) → Zero Payload **폐기**, event-carried + seq 가드(LWW)로 인터리빙 안전화([[RFC-029-event-carried-payload-uniform]]·[[DESIGN-020-ordering-and-failure-handling]] §4).
-> - "부분 보상 복구 TBD인 채 Accepted"(§373) → §4.9에서 **사가 전용 경로(꼬리 격리) 채택**으로 TBD 종결.
->
-> 원 반박 문구는 이력 보존을 위해 아래 그대로 둔다.
-
-- **코레오그래피의 "주인 없음"은 관측 불가능성과 동의어** — §4.4가 "흐름의 주인은 없다"고 선언하지만, 이는 곧 사가의 현재 진행 상태를 한곳에서 조회할 단일 지점도 없다는 뜻이다. §4.8의 "부분 보상 상태"(예: `SeatReleased`는 됐는데 `PaymentRefunded` 실패)가 발생하면 그 사가가 지금 어느 단계에 멎어 있는지를 재구성하려면 3개 컨텍스트의 이벤트 스트림을 correlationId로 조인해 사후 상관분석을 해야 한다. PM이라면 상태 머신 한 행을 보면 끝날 일이다. "복잡도를 위치만 옮긴다"는 기각 논거(§4.3-3)는 *운영 가시성* 비용을 계산에서 뺐다.
-
-- **2~3스텝 선형이라는 전제가 기각의 유일한 축** — §4.3·§5 전체가 "흐름이 2~3스텝 선형"이라는 사실 하나에 코레오그래피 채택을 걸고 있다. 그런데 §4.4는 이미 확정·취소·타임아웃·노쇼·paid-after-expiry 5개 흐름을 그리며, 이들이 상태 가드로 서로 간섭한다(EXPIRED에서 PaymentConfirmed 도착 → RefundRequired). 이건 선형이 아니라 상태·이벤트 매트릭스다. 6번째 흐름(부분 환불, 좌석 변경, 그룹 예약)이 추가되는 순간 채택 근거가 무너지는데, 문서는 그 전환 트리거(언제 PM으로 옮기는가)를 명시하지 않는다.
-
-- **상태 가드가 곳곳에 흩어진 암묵적 상태 머신** — §4.4의 모든 시퀀스가 "상태 가드: PENDING → EXPIRED", "Confirmed → Refund" 같은 전이 규칙에 의존한다. 이 규칙들의 총합이 곧 사가의 상태 머신인데, 코레오그래피는 이를 각 aggregate의 handle 로직에 분산 매설한다. 한 컨텍스트가 자기 가드를 잘못 구현하거나(예: EXPIRED에서 확정을 거부하지 않음) 새 상태를 추가하면서 다른 컨텍스트의 가정과 어긋나면, 컴파일도 통과하고 테스트도 개별로는 통과하지만 오버부킹이 난다. 분산된 상태 머신은 전역 불변식을 정적으로 검증할 방법이 없다.
-
-- **폴링 TTL과 결제 완료 사이 레이스는 "방어"가 아니라 "환불로 전가"** — §4.7(다)·(라)는 paid-after-expiry를 aggregate 상태 가드로 "방어한다"고 하지만, 실제로 방어되는 건 오버부킹뿐이고 사용자는 이미 결제→즉시 환불이라는 실패를 겪는다. 폴링 주기가 길수록 이 창이 커지고(§4.7-다는 "폴링 주기 ≤ TTL"만 요구), 인기 슬롯에서는 "결제했는데 자리가 날아갔다"가 상시 발생할 수 있다. PG 환불 자체가 실패하면(§4.6이 payment 내부로 위임한 문제) 상태 가드는 무력하다. 이는 완화가 아니라 결함을 결제 컨텍스트로 밀어낸 것이다.
-
-- **멱등 보상 + Zero Payload 재조회의 순환 의존** — §4.5·§4.8은 "보상은 멱등, Zero Payload 재조회로 현재 상태 기준 판단"이라 한다. 그런데 Zero Payload 재조회는 이벤트 도착 시점의 현재 상태를 읽어 판단하므로, 두 보상 이벤트가 순서 역전되어 도착하면(교차 애그리거트 순서는 DESIGN-008 §4.3이 보장하지 않음) "현재 상태"가 중간 상태일 수 있다. 멱등성은 같은 이벤트 중복에는 안전하지만 서로 다른 보상 이벤트의 인터리빙에는 안전을 보장하지 않는다 — 이 구분이 문서에 없다.
-
-- **부분 보상 복구를 TBD로 남긴 채 Accepted** — §4.8·§7이 인정하듯, 사가 단계 실패 시 "부분 보상 상태"를 v1 PoisonMessage 모델이 표현·복구할 수 있는지가 미결(TBD)이다. 그러나 이건 사가 설계의 부차 항목이 아니라 *코레오그래피가 오케스트레이션보다 나은가*를 판가름하는 핵심이다. PM은 부분 보상 복구를 상태 머신 재개로 자연 해결하는데, 코레오그래피에서 이걸 어떻게 하는지가 미정인 상태로 "코레오그래피 채택"을 Accepted로 확정한 것은 결론이 근거를 앞선 순서 도치다.
-
-- **결제 컨텍스트를 "참여자일 뿐"으로 축소한 프레이밍** — §4.6은 payment를 "SeatHeld를 듣고 PaymentConfirmed를 돌려주는 참여자일 뿐"이라 규정하고 외부 PG의 타임아웃·재시도·환불 실패를 전부 payment 내부로 위임한다. 하지만 사가의 가장 신뢰 불가능한 구간(외부 세계와의 유일한 접점)을 "참여자일 뿐"으로 평면화하면, 사가 전체의 실패 모드 대부분이 이 한 참여자에 응축되는데도 본 문서의 흐름도에서는 단일 화살표로 추상화된다. 사가 설계 문서가 사가의 최대 위험원을 다른 문서(DESIGN-015)로 위임하는 것은 경계 설정이 아니라 회피일 수 있다.
-
-> 본 절은 리뷰용 반박 정리이며, 문서의 결정을 뒤집지 않는다. 각 항목은 후속 검토 대상.

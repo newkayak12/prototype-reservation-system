@@ -23,7 +23,7 @@
 - `payment` 컨텍스트를 ACL(Anti-Corruption Layer)로 정의하고, 외부 PG와의 번역 책임 경계를 확정한다.
 - PG 알림(웹훅·콜백)을 도메인 이벤트로 안전하게 들이는 인바운드 규율을 확정한다.
 - 아웃바운드 PG 호출에서 dual-write 함정을 회피하는 의도-먼저 기록 패턴을 확정한다.
-- 보상(환불)에서 사가 조율(코레오그래피)과 ACL의 책임 경계를 확정한다.
+- 보상(환불)에서 PM과 ACL의 책임 경계를 확정한다.
 - 주기적 대사(reconciliation)를 통해 외부 진실과 우리 상태를 안전망으로 맞추는 원칙을 확정한다.
 - 실 PG 없이 경계를 검증하는 포트+스텁 전략을 확정한다.
 - 사가에 노출하는 이벤트 표면을 3개로 동결한다.
@@ -47,7 +47,7 @@ PG는 자기 어휘로 말한다 — `transactionId`, `paid`/`failed`/`cancelled
 
 ```mermaid
 graph LR
-    saga[reservation·timetable<br/>사가 참여 컨텍스트] -->|SeatHeld·ReservationCancelled<br/>이벤트 구독| ACL
+    saga[사가/PM] -->|RequestPayment| ACL
     subgraph payment [payment · ACL]
         ACL[번역 경계] --> ST[(상태+Outbox<br/>requested/confirmed/<br/>failed/refunded)]
     end
@@ -76,12 +76,12 @@ graph LR
 
 ### 4.3 Interface / Contract
 
-`payment`가 사가에서 구독하는 인바운드 이벤트와 발행하는 아웃바운드 이벤트 (코레오그래피 — 중앙 조율자 없이 `payment`가 이벤트를 구독해 자율 반응):
+`payment`가 사가에 노출하는 인바운드 커맨드와 아웃바운드 이벤트:
 
 | 방향 | 이름 | 설명 |
 |------|------|------|
-| 인바운드 (구독) | `SeatHeld` → 결제 개시 | `payment`가 점유 이벤트를 구독해 결제를 자율 개시 (중앙 위임 아님) |
-| 인바운드 (구독) | `ReservationCancelled`·`ReservationExpired` → 환불 개시 | `payment`가 취소·만료 이벤트를 구독, **자기 `confirmed` 상태를 보고** 환불을 자율 판단 ([[DESIGN-007]] §4.5) |
+| 인바운드 커맨드 | `RequestPayment` | 사가/PM이 결제 요청 위임 |
+| 인바운드 커맨드 | `RefundPayment` | 사가/PM이 환불 요청 위임 |
 | 아웃바운드 이벤트 | `PaymentConfirmed` | PG 결제 확정 → 도메인 이벤트 번역 (동결) |
 | 아웃바운드 이벤트 | `PaymentFailed` | PG 결제 실패 → 도메인 이벤트 번역 (동결) |
 | 아웃바운드 이벤트 | `PaymentRefunded` | PG 환불 완료 → 도메인 이벤트 번역 (동결) |
@@ -176,7 +176,7 @@ graph LR
 
 결제까지 됐는데 예약 확정이 깨지면 사가는 환불로 되감는다([[DESIGN-007]] 보상: `PaymentConfirmed` ↔ `PaymentRefunded`). 두 가지를 못 박는다.
 
-먼저 **사가 조율과 ACL의 책임 경계**를 분명히 한다([[RFC-006-saga-process-manager]]·ADR-08 — 코레오그래피 기본, **중앙 PM 없음**). 보상을 *언제* 돌릴지 — "확정이 깨졌으니 환불하라"를 판단하는 것 — 은 흐름 전체를 든 중앙 조율자가 아니라 **`payment` 자신의 몫**이다. `reservation`이 취소·만료·확정실패 이벤트(`ReservationCancelled`·`ReservationExpired`)를 발행하면, `payment`가 이를 구독해 **자기 aggregate 상태(`confirmed`인가)를 보고** 환불을 자율 판단·개시한다([[DESIGN-007]] §4.5 보상 원칙 — 각 컨텍스트가 자기 상태로 자기 보상을 판단). 반면 그 판단 뒤 *어떻게* 외부 PG에 환불을 성사시킬지 — 호출 실패 흡수·재시도·중복 통지 무력화·verify·대사 — 는 전적으로 ACL이 자기 경계 안에서 흡수한다. 즉 사가 본류(다른 컨텍스트)는 외부 PG의 비동기·실패를 보지 않고 `PaymentRefunded` 한 이벤트로만 결과를 받는다 — 외부 연동의 불확실성이 예약 사가 본류로 새지 않게 하는 것이 이 경계의 목적이다. (타임아웃 감시도 중앙 PM이 아니라 `timetable`의 TTL 자치다 — ADR-08.)
+먼저 **PM과 ACL의 책임 경계**를 분명히 한다([[RFC-006-saga-process-manager]]). 보상을 *언제* 돌릴지 — 흐름의 현재 위치를 보고 "확정이 깨졌으니 환불하라"를 판단하고 트리거하는 것 — 은 흐름 전체 상태를 든 **PM(프로세스 매니저)의 몫**이다. PM은 오케스트레이션·보상 트리거(환불 명령)·타임아웃 감시를 소유한다. 반면 그 환불 명령을 받아 *어떻게* 외부 PG에 환불을 성사시킬지 — 호출 실패 흡수·재시도·중복 통지 무력화·verify·대사 — 는 전적으로 ACL이 자기 경계 안에서 흡수한다. 즉 PM은 외부 PG의 비동기·실패를 보지 않고 `payment`에 `RefundPayment` 한 단계를 위임할 뿐이며, 그 결과는 `PaymentRefunded` 한 이벤트로만 돌아온다 — 외부 연동의 불확실성이 예약 사가 본류로 새지 않게 하는 것이 이 경계의 목적이다.
 
 - **환불도 아웃바운드 호출**이라 dual-write 함정을 똑같이 탄다 → "의도 기록 → 멱등키 단 릴레이 호출 → 결과 이벤트"의 같은 경로를 쓴다. 보상이라고 특별 취급하지 않는다.
 - **환불은 반드시 멱등**이다([[DESIGN-007]]). 사가가 타임아웃에 보상을 두 번 트리거하거나 환불 웹훅이 중복으로 와도 *이중 환불*이 나면 안 된다. 정방향 청구와 같은 멱등키 공간을 쓰되, "이미 환불된 거래면 무시"를 PG verify로 판별한다 — 외부 상태를 진실로 삼는 인바운드 규율을 보상에도 적용한다.
@@ -206,35 +206,6 @@ graph LR
 - 계승할 V1이 없다 — 그린필드이므로 마이그레이션은 불필요하다.
 - **실 PG 없이 학습하기 — 포트 + 스텁**: 지금 붙일 실 PG가 없다. "가짜 인라인 호출"로 때우면 ACL·웹훅·멱등·대사라는 *배울 가치가 있는 구조*가 통째로 증발한다. 그래서 **PG 인터페이스(포트)는 실제처럼 정의하고, 그 뒤에 비동기·실패·중복을 흉내 내는 PG 스텁/시뮬레이터를 꽂는다** — 스텁이 지연 후 웹훅을 콜백으로 쏘고, 가끔 중복·유실·순서뒤집기를 일으켜 우리 인바운드 방어(§6.1 세 겹)가 진짜로 동작하는지 검증한다. 핵심은 *경계의 모양*(ACL 포트 + 웹훅 인바운드 + 부수효과 릴레이 + 대사)이 실 PG 유무와 무관하게 동일하다는 것이다.
 - 실 PG 롤백: 실 PG 연동 사이클에서 포트 구현체만 교체하면 된다. 사가 계약(세 이벤트)과 내부 ACL 구조는 변경 없다.
-
-### 6.6 아웃바운드 멱등 책임 분업 (outbox=우리 / 호출=PG)
-
-의도-먼저 기록(§6.1)은 "로컬 커밋 ↔ 원격 부수효과"를 하나의 트랜잭션으로 못 묶는 한계를 **양쪽이 각자 멱등**으로 메운다. 책임이 둘로 갈린다:
-
-| 경계 | 멱등 주체 | 수단 |
-|------|:---:|------|
-| outbox append / 도메인 이벤트 발행 | **우리** | 의도-먼저 기록 + append↔outbox **동일 트랜잭션**([[RFC-024-domain-event-type-and-replay-layering]]) + `event_id` dedup([[RFC-021-event-identity-and-global-ordering]]·[[RFC-025-ordering-relay-dlq-reconciliation]]) |
-| outbox fetch → PG 호출 | **PG** | 우리가 `Idempotency-Key`를 실어 보내 PG가 재시도를 **같은 거래로 수렴** |
-
-```mermaid
-sequenceDiagram
-    participant CMD as Command
-    participant OBX as intent/outbox (우리 DB)
-    participant RL as relay (scheduled)
-    participant PG as PG (또는 log 스텁)
-    CMD->>OBX: intent 기록 + 멱등키 민팅 (로컬 txn)
-    RL->>OBX: fetch pending
-    RL->>PG: call(Idempotency-Key=민팅키)  %% 재시도해도 PG가 1건으로 수렴
-    RL->>OBX: mark done / 결과 이벤트 append (event_id dedup)
-```
-
-- **payment 고유 machinery가 아니다** — 일반 "아웃바운드 부수효과 + 이벤트 발행" 패턴의 적용이다. [[DESIGN-019-event-execution-layering]](append↔outbox 계층)·[[DESIGN-020-ordering-and-failure-handling]](relay·재구축)이 이미 소유하고, payment는 그 위에 **키를 intent 시점 민팅**만 얹는다.
-- **릴레이는 at-least-once다.** "PG 호출 성공 → row done 표시" 사이 크래시 시 재기동이 **재호출**한다. 안전의 근거는 원자성이 아니라 *재호출이 멱등*이라는 것 — 중복 호출을 PG가 한 거래로 흡수한다.
-- **키는 우리가 민팅한다(§6.1 아웃바운드 1단계).** PG 거래 ID는 호출 *후* 생기는 결과라 아웃바운드 재시도를 못 막는다(재시도 시점엔 그 ID를 모른다). 우리가 쥔 입력 키(민팅)만이 재시도-이전에 존재한다. PG 거래 ID는 반대로 **인바운드 중복 통지** dedup용(§6.1 디듀프 테이블)이다 — 두 키가 두 방향을 맡는다.
-
-> **log·내부-only 전제의 구멍**: "호출 멱등=PG"는 *실 PG*일 때 성립한다. log 대체에선 강제 주체가 없고 — 재시도 시 로그가 두 번 찍힐 뿐 **무해**해서 통과된다. log→실 PG 승격 시 `Idempotency-Key` 계약을 실제로 채워야 한다.
->
-> **미룬 외부-PG 축**(부분환불 표현·4xx/5xx 재시도소진→failed·대사 SLA·청구/환불 멱등키 공간 분리·verify 열거 공격면)은 실 PG 없음(log)·내부-only 전제라 지금 범위 밖 — 정석 안과 근거를 [[RFC-027-payment-external-boundary-proposal]](📎 안 제시·미채택)에 기록. §6.1/§6.2의 청구·환불 키 공간 서술(동일 vs 분리) 모순도 RFC-027이 "분리"안으로 정리(미채택).
 
 ## 7. Risks & Mitigations
 
@@ -280,7 +251,7 @@ sequenceDiagram
 | 부수효과 릴레이 | 기록된 의도를 보고 실제 PG API를 호출하는 별도 워커 |
 | 대사 (Reconciliation) | PG 원장과 우리 상태를 주기적으로 비교해 불일치를 보정하는 작업 |
 | 운영 보정 큐 | 자동으로 해소할 수 없는 대사 미스매치를 수동 처리 대기열로 올리는 구조 |
-| PM (Process Manager) | 사가 흐름을 중앙에서 지휘하는 오케스트레이션 컴포넌트. **ADR-08에서 기각** — V2 예약 도메인은 코레오그래피(각 컨텍스트가 이벤트 구독·자기 상태로 자치)를 택했다 |
+| PM (Process Manager) | 사가 흐름의 단계·보상 트리거·타임아웃을 소유하는 조율 컴포넌트 |
 | effectively-once | at-least-once 전달 + 멱등 처리로 결과적으로 한 번만 처리된 것과 같은 효과 |
 
 ### 9.2 Calculations / Benchmarks
@@ -294,7 +265,7 @@ sequenceDiagram
 ### 9.3 Reference
 
 - [[RFC-016-payment-integration-boundary]] — payment 경계 설계 결정 원본
-- [[RFC-006-saga-process-manager]] — 사가 조율(코레오그래피 채택, PM 기각) 설계
+- [[RFC-006-saga-process-manager]] — 사가 및 PM 설계
 - [[RFC-003-messaging-delivery]] — 전달 멱등·부수효과-Outbox·DLQ
 - [[DESIGN-007]] (구 `06-consistency-and-sagas`) — 일관성 경계 및 사가 계약
 - [[DESIGN-003]] (구 `02-write-model`) — 상태+Outbox·ES 쓰기 모델
@@ -310,23 +281,3 @@ sequenceDiagram
 | 날짜 | 내용 |
 |------|------|
 | 2026-06-30 | 최초 작성 — `14-payment-integration.md`를 DESIGN-015 템플릿으로 재구성 |
-| 2026-07-01 | 정합성 정정 — §2·§4.1·§4.3·§6.1·Glossary의 "PM(프로세스 매니저) 오케스트레이션" 서술을 코레오그래피(payment가 이벤트 구독·자기 상태로 자율 보상)로 수정. RFC-006 파일명(`saga-process-manager`) 잔재로 뒤집힌 ADR-08 결정(코레오그래피 채택)을 반영하지 못했던 오류 정정 |
-| 2026-07-05 | §6.6 신설 — 아웃바운드 멱등 책임 분업(outbox=우리·event_id dedup / 호출=PG·Idempotency-Key, 키는 intent 민팅) 확정. 트리아지 C35 "우리 쪽 outbox 멱등"을 기결정([[RFC-024-domain-event-type-and-replay-layering]]·[[RFC-025-ordering-relay-dlq-reconciliation]]) 적용으로 닫음. 외부-PG 축(C34·C35 잔여)은 [[RFC-027-payment-external-boundary-proposal]](📎 안 제시·미채택)로 라우팅 |
-
----
-
-## Weakness (Devil's Advocate 반박 포인트)
-
-- **사가 표면 3이벤트 동결이 부분환불·분쟁을 표현할 수 없음** — §4.2가 표면을 `PaymentConfirmed`/`PaymentFailed`/`PaymentRefunded`로 동결하는데, §4.4 데이터 모델에는 `partially_refunded` 상태가 이미 있다. 부분 환불이 발생하면 사가는 `PaymentRefunded` 한 이벤트로 "얼마가 환불됐는지"를 못 받거나, 이벤트 페이로드에 금액을 실어야 하는데 그러면 "3개로 동결"이 이름만 동결이고 스키마는 진화한다. §4.1 자신이 "부분환불이 겹치면 ES가 다시 후보"라 인정하면서 표면은 동결했다 — 이 동결이 예약 사가의 보상 로직(전액 기준 되감기)과 부분환불 현실 사이의 간극을 흡수한다는 근거가 없다.
-
-- **verify 조회 자체가 dual-write 함정에서 자유롭지 않다** — §6.1은 확정 근거를 "웹훅 + verify"로 삼지만, verify 응답을 받고 `PaymentConfirmed`를 Outbox에 적기 직전 프로세스가 죽으면, 재기동 후 다시 verify하고 다시 적으려 한다 — 인바운드 디듀프 테이블이 PG 거래 ID로 이를 잡아야 하나, verify는 웹훅과 별개 경로라 "웹훅은 아직 안 왔고 콜백만 왔을 때 verify로 승격"하는 경로(§6.1이 허용)에서는 디듀프 키(PG 거래 ID)를 verify 시점에 이미 알고 있어야 성립한다. 콜백이 위조 가능·비신뢰라면서 그 콜body의 거래 ID로 verify를 트리거하는데, 거짓 거래 ID로 verify를 유발하는 리소스 소모/열거 공격면은 다루지 않는다.
-
-- **의도-먼저 기록이 릴레이 무한 재시도와 진짜 실패를 구분 못 함** — §6.1 아웃바운드는 "의도 기록 → 릴레이가 PG 호출 → 재시도"로 at-least-once를 effectively-once로 만든다. 그러나 PG가 4xx(영구 거절: 카드 한도 초과, 잘못된 계좌)를 주는 경우와 5xx/타임아웃(재시도 가능)을 릴레이가 어떻게 가르는지 미정이다. 영구 거절을 재시도 가능으로 오판하면 릴레이가 죽은 의도를 영원히 두드리고, `PaymentFailed`가 영영 안 나가 사가가 타임아웃까지 매달린다. `payment_intent` 상태 머신에 "재시도 소진→failed" 전이가 Phase 2 산출물에 없다.
-
-- **환불과 청구가 "같은 멱등키 공간"이라는 §6.1/6.2가 서로 모순** — 6.1 보상 절은 "정방향 청구와 같은 멱등키 공간을 쓰되"라 하고, §6.2 Security는 "청구 멱등키와 환불 멱등키는 충돌하지 않도록 *분리*한다"고 한다. 같은 공간인가 분리 공간인가? 이 모순은 사소하지 않다 — 같은 공간이면 청구 멱등키와 환불 멱등키가 우연히 겹쳐 환불이 청구로/청구가 환불로 흡수될 위험이고, 분리면 6.1의 "같은 멱등키 공간을 쓴다"가 거짓이다. 이중 환불 방어의 핵심 축이 문서 내에서 상충한다.
-
-- **대사(reconciliation)를 안전망이라며 "누락 이벤트를 늦게라도 발행"하는데 그 늦음의 상한이 없음** — §7 첫 행은 웹훅 유실 시 대사가 "누락된 이벤트를 늦게라도 발행"해 예약 확정을 구제한다 한다. 그러나 §6.3/Non-Goal이 대사 주기를 "벤더에 달리며 구현 사이클에 위임"으로 미룬다. 대사 주기가 예컨대 일 1회 정산 파일이면, 웹훅 유실 시 예약 확정이 최대 24시간 지연된다 — 사용자는 결제했는데 예약이 안 잡힌 상태로 하루를 보낸다. "안전망"이 SLA를 가진 확정 경로를 대체할 수 없는데, 문서는 대사를 유실의 유일한 백스톱으로 세운다.
-
-- **PG 스텁으로 학습한 인바운드 방어가 실 PG의 실제 어휘·서명·순서 규약과 다를 위험을 스텁 충실도에 전가** — §6.5는 실 PG 없이 포트+스텁으로 ACL·웹훅·멱등·대사를 검증한다. 그러나 스텁의 결함 주입(지연·중복·유실·순서뒤집기)은 *우리가 상상한* 실패 모드만 담는다. 실 PG의 실제 웹훅 재전송 정책, 서명 스킴, 부분환불 상태 표현, 멱등키 헤더 미지원 여부는 벤더별로 갈리고(§4.1이 나열한 토스·아임포트·스트라이프는 실제로 서로 다르다), Phase 6 "포트 구현체만 교체"가 인바운드 방어 재설계 없이 끝난다는 보장이 없다. "경계의 모양이 실 PG 유무와 무관하게 동일"은 검증된 가설이 아니라 희망이다.
-
-> 본 절은 리뷰용 반박 정리이며, 문서의 결정을 뒤집지 않는다. 각 항목은 후속 검토 대상.

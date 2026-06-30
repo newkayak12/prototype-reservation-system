@@ -32,17 +32,16 @@ class Reservation private constructor(/* state */) {
 
 ```
 event_store(
-  global_seq   BIGINT AUTO_INCREMENT,          -- 재구축/백필 열거·재개 커서 전용(교차 전순서 아님). [[22.event-identity-and-global-ordering]]
-  event_id     BINARY(16),                      -- 전역 유일 정체성: inbox/dedup·causation 앵커·Kafka messageId
+  event_id     BINARY(16),                      -- UUIDv7. 전역 유일 정체성 + 재구축 keyset 커서: inbox/dedup·causation 앵커·Kafka messageId
   aggregate_type, aggregate_id, sequence_no,    -- (aggregate_id, sequence_no) UNIQUE
   event_type, event_version, payload(JSON),
   occurred_at,
   -- 봉투 추적메타: correlation_id, causation_id, traceparent (§공통)
-  PRIMARY KEY (global_seq), UNIQUE (aggregate_id, sequence_no), UNIQUE (event_id)
+  PRIMARY KEY (event_id), UNIQUE (aggregate_id, sequence_no)   -- UUIDv7 PK: 삽입 지역성 양호, 재구축 keyset = PK 스캔
 )
 ```
 
-- **정체성·열거**: `event_id`(전 컨텍스트 공통 dedup/causation 앵커)와 `global_seq`(재구축 *열거* 커서, 순서 정확성 아님)는 [[22.event-identity-and-global-ordering]]에서 확정. 비-ES Outbox 이벤트도 `event_id` 보유.
+- **정체성·열거**: `event_id`(UUIDv7, 전 컨텍스트 공통 dedup/causation 앵커 + 재구축 *keyset* 열거 커서 겸용 — 순서 정확성 아님)는 [[22.event-identity-and-global-ordering]]에서 확정. 비-ES Outbox 이벤트도 `event_id` 보유. (전용 `global_seq`는 [[RFC-021-event-identity-and-global-ordering]] 닫힘으로 불채택 — UUIDv7이 커서를 겸한다.)
 - **동시성 = 비관 락 + UNIQUE 백스톱**([[16.optimistic-concurrency-control]] 2026-06-17 개정): 한 자리에 대한 결정을 한 줄로 세운다.
   ```
   lock(aggregate_id)            # L1: Redisson 분산 락 (Redis 불가 시 L1′: DB lock-row FOR UPDATE 폴백)

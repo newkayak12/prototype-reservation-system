@@ -137,9 +137,8 @@ V1 `timetable` Redisson 세마포어를 V2 점유로 이어오는 방안. 점유
 ### 6.1 Error Handling
 
 - **Redis 장애 시 분산 락 폴백**: Redisson 분산 락(L1) 불가 시 DB 비관 락(`SELECT … FOR UPDATE`)으로 자동 강등(L1′). 쓰기 경합 직렬화 자체는 포기하지 않는다. 낙관적 락으로 회귀하지 않는다([[RFC-014-aggregate-concurrency-control]]).
-- **Redis 장애 시 레이트리밋 = fail-open (통과 허용)**([[RFC-028-redis-fault-fallback-semantics]]). 레이트리밋은 정확성 불변식이 아니라 부하 보호 heuristic이므로, Redis 불가 시 요청을 거부하면 내부 fault를 사용자 장애로 전이시킨다. 통과시켜 가용성을 지키고, 심층방어로 애플리케이션 레벨 써킷 브레이커를 별도 검토.
-- **Redis 장애 시 멱등 디듀프 = cache-through, fail-to-DB**([[RFC-028-redis-fault-fallback-semantics]]). 디듀프는 정확성 불변식이라 fail-open을 그대로 얹을 수 없다. DB를 SoR로 두고 Redis를 그 앞의 coherent 캐시로 쓴다(write-through로 DB UNIQUE에 착지, read-through로 조회). Redis 불가 시 **통과가 아니라 DB로 강등** — 정확성에 창(window)이 없다. eviction도 무해해진다(read-through miss가 DB에서 재적재 → §4.4 line 119 구멍이 닫힌다). **동시 중복 직렬화의 가드는 캐시가 아니라 DB UNIQUE**다(event_store `(aggregate_id, sequence_no)` UNIQUE + 도메인 자연 유니크 [[DESIGN-013]]).
-  - *구현 방향 메모(구현 사이클)*: 레이트리밋은 GCRA 권장 — 직접 구현 시 TAT 갱신은 반드시 서버측 원자(Lua), 또는 Redisson GCRA 사용(③ 락이 이미 Redisson을 provision하므로 스택에 남는다). 디듀프 idem 레코드는 DB에도 남으므로 DB쪽 보존/GC 정책 필요(§8).
+- **Redis 장애 시 레이트리밋**: Redis 불가 시 레이트리밋 카운터 미동작 — 정책 결정 필요(통과 허용 vs 요청 거부). 후속 사이클로 넘김.
+- **Redis 장애 시 멱등 디듀프**: Redis 불가 시 디듀프 미작동 — 자연 유니크 불변식이 없는 생성 command에 한해 중복 처리 위험. 후속 사이클에서 허용 staleness·폴백 정책 확정.
 
 ### 6.2 Security Considerations
 
@@ -177,9 +176,8 @@ V1 `timetable` Redisson 세마포어를 V2 점유로 이어오는 방안. 점유
 | 위험 | 완화 |
 |------|------|
 | Redis 장애 시 분산 락 미작동 → 쓰기 경합 직렬화 저하 | DB 비관 락(L1′) 자동 폴백; 낙관 락 회귀 금지([[RFC-014-aggregate-concurrency-control]]) |
-| 멱등 디듀프 키 윈도 내 eviction → 중복 처리 허용 | **cache-through로 해소**([[RFC-028-redis-fault-fallback-semantics]]) — read-through miss가 DB에서 재적재, DB UNIQUE가 가드. eviction 무해 |
-| Redis 장애 시 레이트리밋 미작동 → 과부하 허용 | **fail-open 확정**([[RFC-028-redis-fault-fallback-semantics]]) — 통과 허용(내부 fault 외부 전이 방지); 써킷 브레이커 별도 검토 |
-| HA(Sentinel/Cluster) 과설계로 운영 복잡도 증가 | role 설계에서 불채택([[RFC-028-redis-fault-fallback-semantics]]) — 폴백 시맨틱으로 Redis가 손실 허용이 되어 단일 인스턴스 정당; HA는 배포 사이클([[RFC-007-deployment-infra-ops]]) 옵션 |
+| 멱등 디듀프 키 윈도 내 eviction → 중복 처리 허용 | 윈도 길이·메모리 한도 설계 시 eviction 확률 계산; 후속 확정(§8) |
+| Redis 장애 시 레이트리밋 미작동 → 과부하 허용 | 폴백 정책(통과 vs 차단) 후속 확정; 애플리케이션 레벨 써킷 브레이커 검토 |
 | denylist 부활 시 단일 durability 가정 파괴 | 부활 조건 명시(§6.5); [[RFC-007-deployment-infra-ops]]와 재검토 경로 확보 |
 | 2차 staleness(프로젝션 + 캐시 TTL) 두 겹 도입 | read model 앞 캐시 층 기본 미도입; 예외 시 화면별 허용 staleness 전제 |
 | V1 Redisson 세마포어(점유)를 V2에 끌어오는 실수 | 사가 점유 만료는 DB 폴링으로 명시 확정([[DESIGN-007]]); 이 문서로 경계 못 박음 |
@@ -190,7 +188,7 @@ V1 `timetable` Redisson 세마포어를 V2 점유로 이어오는 방안. 점유
 |------|------|------|
 | Phase 1 (현재) | Redis 역할 원칙 확정(본 문서). read 캐시 미도입 결정. 단일 durability 확정. | [[DESIGN-017]] 완료 |
 | Phase 2 | V1 RedisCacheManager·refresh 저장 제거. 프로젝션 read model로 전환. | [[DESIGN-004]] 프로젝션 구현 |
-| Phase 3 | 멱등 디듀프 cache-through 구현(DB SoR·UNIQUE + Redis 캐시). Redis 키 구성·윈도 길이 + **DB idem 레코드 보존/GC 정책** 확정. 레이트리밋 GCRA(Redisson or Lua) 구현. | [[DESIGN-013]] 잔여 케이스 확정 · [[RFC-028-redis-fault-fallback-semantics]] |
+| Phase 3 | 멱등 디듀프 Redis 키 구성·윈도 길이 확정. eviction 정책 상호작용 검증. | [[DESIGN-013]] 잔여 케이스 확정 |
 | Phase 4 | V1 피처 플래그·재시도 컨텍스트 V2 귀속 확정. | 각 항목 V2 거취 결정 시 |
 | Phase 5 (조건부) | denylist 부활 시 등급별 인스턴스 분리 재설계. | 즉시 폐기 요구 입증 시 |
 
@@ -246,23 +244,4 @@ V1 `timetable` Redisson 세마포어를 V2 점유로 이어오는 방안. 점유
 
 | 날짜 | 변경 내용 |
 |------|-----------|
-| 2026-07-05 | §6.1·§7·§8 갱신 — Redis 장애 폴백 시맨틱 확정([[RFC-028-redis-fault-fallback-semantics]], 트리아지 C40): 레이트리밋=fail-open, 디듀프=cache-through(DB SoR·UNIQUE 보장·fail-to-DB·eviction 무해), HA=role 불채택(배포 사이클 이월). §4.4 line 119 eviction 구멍이 cache-through로 닫힘. 구현 메모(GCRA·DB idem GC) 추가. |
 | 2026-06-30 | DESIGN-018로 재포맷. 템플릿 구조(Background/Goal/Non-Goal/Proposed Solution/Alternatives/Details/Risks/Milestones/Appendix) 적용. 상호 참조 번호 갱신 (03-read-model → DESIGN-004, 16-auth-token → DESIGN-017, 12-api-contract → DESIGN-013, 02-write-model → DESIGN-003, 06-consistency-and-sagas → DESIGN-007, 05-aggregate-design → DESIGN-006, 09-deployment-runtime → DESIGN-010). 원본 17-caching.md 전체 내용 보존. |
-
----
-
-## Weakness (Devil's Advocate 반박 포인트)
-
-- **단일 인스턴스 = SPOF인데 락은 "쓰기 경로 정확성 의존"으로 승격됨** — §4.3은 Redisson 분산 락을 "선택적 가속이 아니라 쓰기 경로 정확성이 의존하는 컴포넌트"로 못 박고, §4.4·§9.2는 동시에 "인스턴스 하나면 충분"이라 한다. 두 결정이 충돌한다: 정확성이 의존하는 컴포넌트를 SPOF로 두면, 그 인스턴스가 죽는 순간 L1′ DB 폴백으로 넘어가는 *전환 자체*가 경합이다. 페일오버 없는 단일 Redis에서 락 상태가 유실되면 L1과 L1′가 동시에 다른 판단을 내리는 split-brain 창이 열리고, 이 전환 중 정확성을 무엇이 보장하는지가 공백이다. 호스팅을 §3 Non-Goal로 밀어냈지만 "정확성 의존"으로 승격한 이상 토폴로지는 더 이상 배포 사이클의 몫으로만 미룰 수 없다.
-
-- **Redisson 분산 락 자체가 안전한 상호배제라는 가정(Redlock 논쟁)** — §4.3은 L1 분산 락을 애그리거트 경합 직렬화의 *1차*로 삼는다. 그러나 Redis 기반 락은 GC 일시정지·네트워크 지연·watchdog 갱신 실패로 인해 "락을 쥐었다고 믿는데 실제로는 TTL 만료로 뺏긴" 상황(the fencing token 문제)이 잘 알려져 있다. 문서는 락 획득을 정확성의 근거로 삼으면서 fencing token·단조 증가 경계 같은 상호배제 안전장치를 언급하지 않는다 — L0의 `(aggregate_id, sequence_no)` UNIQUE가 사실상 최종 방어라면, L1 락은 정확성 의존이 아니라 경합 완화(가속)로 재분류하는 게 정직하다.
-
-- **read model 앞 캐시 거부가 P99 지연·프로젝션 폭증 비용을 감춤** — 결정 1은 핫 쿼리 대응을 "화면 전용 프로젝션 추가"로 돌린다. 그러나 프로젝션 하나 추가는 새 이벤트 구독·프로젝터·스키마·백필·재구축 파이프라인을 수반하는 무거운 자산이고, "오늘 X식당 예약 목록"처럼 파라미터가 많은 핫 쿼리는 프로젝션으로 미리 만들 조합이 폭발한다(모든 식당×모든 날짜). 마이크로초 단위 in-memory 캐시로 풀 문제를 "프로젝션 한 벌 더"로 돌리는 것은 저지연·고팬아웃 읽기에서 오히려 더 비싸고 느리다 — 2차 staleness 회피라는 이득이 이 비용을 정당화하는지 측정이 없다.
-
-- **레이트리밋·디듀프 장애 폴백이 전부 미결인데 단일 인스턴스로 확정** — §6.1은 Redis 장애 시 레이트리밋(통과 vs 차단)과 멱등 디듀프(중복 허용) 폴백을 모두 "후속 확정"으로 미뤘다. 그런데 §4.4·§9.2는 이미 "인스턴스 하나로 충분"을 확정했다. 폴백 정책이 미정인 상태에서 단일 인스턴스를 확정하면, Redis가 잠깐 흔들리는 순간 레이트리밋 붕괴(과부하 통과)나 디듀프 붕괴(결제·예약 중복 생성) 중 무엇이 일어날지 아무도 모른 채 운영에 들어간다. 가용성 결정을 미루면서 인스턴스 수 결정을 확정한 것은 순서가 뒤집혔다.
-
-- **멱등 디듀프 키를 `allkeys-lru`에 태우는 것은 정책 자기모순** — §4.4 경고·§6.2가 스스로 인정하듯, 디듀프 키가 윈도 내 evict되면 막으려던 중복이 다시 열린다. 즉 디듀프 키는 *윈도 동안 evict되면 안 되는* 준-must-not-evict 성격인데, 결정 3은 "손실 허용 조정 상태뿐이라 `allkeys-lru` 단일로 충분"이라고 단언한다. 디듀프의 존재 자체가 "단일 durability 등급" 전제에 대한 반례다 — 최소한 `volatile-lru` + 명시 TTL로 분리하지 않으면, 결제/예약 중복이 메모리 압박이라는 *비기능적 사건*에 좌우된다.
-
-- **"인증 부산물 제거"가 durability 단순화의 유일 근거라 되돌림 비용이 크다** — 결정 3·§5.2·§6.5는 단일 durability를 전적으로 "[[DESIGN-017]]이 refresh를 들어냈으니 must-not-evict가 사라졌다"에 건다. 그런데 DESIGN-017의 즉시 폐기 포기는 스스로 "요구 입증 시 denylist 부활"이라는 미결 조건을 달고 있다. 즉 이 문서의 핵심 단순화(단일 등급·단일 인스턴스)는 아직 확정되지 않은 상위 결정에 얹혀 있고, denylist가 부활하는 순간 §6.5대로 durability 가정·인스턴스 분리·eviction 정책을 통째로 재설계해야 한다. 단순화의 근거가 취약한 상위 가정 하나에 전부 걸려 있다.
-
-> 본 절은 리뷰용 반박 정리이며, 문서의 결정을 뒤집지 않는다. 각 항목은 후속 검토 대상.
