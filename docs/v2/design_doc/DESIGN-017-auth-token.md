@@ -137,3 +137,21 @@ V1 방식대로 refresh를 Redis에 저장·대조하는 것. 검증이 stateful
 | 날짜 | 변경 내용 |
 |------|-----------|
 | 2026-06-30 | DESIGN-017로 재포맷. 템플릿 구조(Background/Goal/Non-Goal/Proposed Solution/Alternatives/Details/Risks/Appendix) 적용. "관련 문서" → Appendix > Reference 이동. 상호 참조 번호 갱신 |
+
+---
+
+## Weakness (Devil's Advocate 반박 포인트)
+
+- **무상태 refresh + 즉시 폐기 포기 = 탈취 노출 창을 명시적으로 수용했으나 창 크기·보완책이 얕다** — §4.3은 "잔여 access 수명 동안 강제 폐기 불가"를 리스크로 인정하고 완화를 "짧은 access TTL"로 돌린다. 그런데 정작 그 TTL 값은 §6에서 [[DESIGN-014-authorization]]와 함께 후속으로 미뤄, 노출 창의 실제 크기가 이 문서에서 결정되지 않는다. 게다가 refresh는 쿠키 수명 내내 유효하고 서버 사본이 없어 *탈취된 refresh 하나로 만료까지 무제한 rotation*이 가능한데, 디바이스 바인딩·IP/UA 핀·토큰 지문 같은 보완책은 언급조차 없다. "짧은 TTL이 다 덮는다"는 서사가 실측 없이 결론을 지탱한다.
+
+- **재사용 탐지가 오히려 정상 사용자를 강제 로그아웃시키는 오탐 엔진** — §4.3의 `current_refresh_jti` 불일치 → 전 세션 무효화 로직은, 공격자뿐 아니라 *정상 클라이언트의 흔한 경합*에서도 발동한다: 병렬 탭·모바일+웹 동시 로그인·네트워크 재시도로 인한 refresh 중복 전송·rotation 응답 유실 후 재시도. §6이 인정하듯 병렬 `/refresh` 동시성이 미해결인 채, 이 미해결 경합이 곧바로 "도난 의심 → NULL화 → 전 세션 무효화"라는 최대 처벌로 이어진다. 재사용 탐지의 false positive 처리(유예·grace window·refresh 체이닝) 설계 없이 탐지만 켜는 것은 로그아웃 폭탄이다.
+
+- **`current_refresh_jti` = 주체당 refresh 1개 → 다중 디바이스 동시 세션 불가** — 컬럼이 "최신 refresh 한 개"만 들면, 폰에서 rotation한 순간 노트북의 refresh jti가 stale이 되어 노트북 다음 `/refresh`가 무효화된다. 즉 이 모델은 구조적으로 *동시 다중 세션을 지원하지 못한다*. 예약 시스템에서 한 사용자가 여러 기기를 쓰는 건 일상적인데, 문서는 이 기능 상실을 리스크로도 다루지 않는다 — "최소 상태"의 대가가 제품 요구와 충돌하는지 검토되지 않았다.
+
+- **denylist 포기의 논거 2("V1도 못 했으니 잃을 게 없다")는 부채의 정당화** — §4.3-근거2와 §5.2는 "V1 `signOut`이 쿠키만 지웠으니 무상태로 가도 잃을 게 없다"고 한다. 이는 V1의 미구현을 V2의 요구 부재로 치환하는 논리다. 계정 탈취·비밀번호 변경·관리자 강제 차단 시 "지금 즉시 모든 토큰 무효화"는 보안 기본기이며, V1이 안 했다는 사실은 그 요구가 없었다는 증거가 아니라 V1의 결함일 수 있다. "요구가 입증되면 그때"라는 예외 경로는 사고가 터진 뒤에야 부활하는 사후약방문이다.
+
+- **CSRF 방어를 SameSite Lax + body 비대칭에만 의존** — §4.2는 access를 cross-origin body로 내려 CSRF 면역이라 주장하나, 공격자가 `/refresh` CSRF를 성공시키면 응답을 못 읽어도 *서버 측에서 rotation이 발생*해 victim의 유효 refresh가 교체되고(정상 세션 파괴 = 이 자체가 DoS), SameSite Lax는 top-level GET 네비게이션을 허용하므로 `/refresh`가 GET이거나 method 혼용 시 뚫린다. 진짜 방어인 CSRF 토큰·Origin 검증·Strict 채택은 모두 §6 후속으로 미뤄, 이 문서가 "CSRF 표면을 막는다"고 단언한 것과 실제 보장 사이에 간극이 있다.
+
+- **in-memory access 저장 강제가 SPA UX·리프레시 폭주를 유발** — §4.2는 access를 in-memory에만 두고 새로고침 시 refresh로 재발급하라 한다. 이는 모든 페이지 리로드·새 탭·앱 복귀마다 `/refresh` 왕복을 강제해 인증 서버 부하와 지연을 만들고, 짧은 access TTL과 결합되면 refresh 호출 빈도가 급증한다(재사용 탐지 오탐 확률도 함께 상승). "localStorage는 XSS-readable"이라는 반대급부만 보고, in-memory 강제가 만드는 운영 비용·UX 저하는 계량되지 않았다.
+
+> 본 절은 리뷰용 반박 정리이며, 문서의 결정을 뒤집지 않는다. 각 항목은 후속 검토 대상.

@@ -54,7 +54,7 @@
 - [[05.event-store-mysql-table]] — 이벤트 스토어 구현
 - [[06.strangler-migration]] — 점진 마이그레이션
 - [[07.command-domain-jpa-separation]] — DDD/JPA 엔티티 분리 유지 (도메인 순수성)
-- [[08.saga-orchestration-vs-choreography]] — 컨텍스트 간 조율: 오케스트레이션/안무 혼합
+- [[08.saga-orchestration-vs-choreography]] — 컨텍스트 간 조율: 코레오그래피 기본 (오케스트레이션·혼합 기각)
 - [[09.event-ordering-and-delivery-guarantee]] — 순서(파티션 키=aggregate_id)·at-least-once+멱등
 - [[10.event-schema-evolution]] — 읽기 시 업캐스팅·eventVersion 버저닝 (in-place 마이그레이션 기각)
 - [[11.es-pii-crypto-shredding]] — append-only PII 삭제: 크립토 셰딩 + PII 최소화

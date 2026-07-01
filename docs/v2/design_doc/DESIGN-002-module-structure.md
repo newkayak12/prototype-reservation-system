@@ -291,3 +291,17 @@ dependencies {
 |------|------|
 | 2026-07-01 | command-module 서브모듈 구조로 개정 (command-core/application/adapter/infrastructure). top-level core-module·infrastructure-module 폐지. Alternatives에 3안 비교 추가 |
 | 2026-06-30 | DESIGN-002 템플릿으로 재작성 (원본: `01-module-structure.md`) |
+
+---
+
+## Weakness (Devil's Advocate 반박 포인트)
+
+- **§4.2 command-infrastructure → command-core 금지 + ES 엔진이 infrastructure에 거주 — 리플레이가 도메인 `apply`를 못 부른다** — ES 엔진(append/replay/snapshot)은 command-infrastructure에 있고 이 모듈은 command-core를 import하면 안 된다(§4.4 매트릭스 "**command-core**" 금지). 그런데 리플레이란 이벤트를 애그리거트의 `apply(event)→newState`(command-core 소유)로 접어 상태를 재구성하는 일이다. 엔진이 도메인을 모른다면 재구성 조립은 command-adapter가 떠맡아야 하는데, 그러면 "ES 엔진"이 실제로는 raw 이벤트 I/O만 하는 반쪽이 되고 리플레이 오케스트레이션이 어댑터로 새 나간다. 이 분업선을 문서가 그리지 않는다.
+- **§4.4 command-core는 shared만 의존, contract 금지 — 도메인 이벤트가 어느 타입인지 불명** — command-core의 애그리거트가 `handle()→List<DomainEvent>`를 반환하는데(§4.2), `DomainEvent`가 contract-module 타입이면 core→contract 의존이 생겨 매트릭스 위반이고, core 자체 타입이면 application이 이를 contract 이벤트로 매핑하는 계층이 필요하다. 후자를 택한 흔적이 없어, "도메인 이벤트 = 발행 이벤트"라는 암묵 동일시가 core의 contract 금지 규칙과 정면 충돌한다.
+- **§4.1 컨텍스트가 4개 서브모듈에 수직 분산 — §4.8 "패키지 통째로 들어내기" 마이크로서비스 분할이 사실상 불가** — 한 컨텍스트(reservation)의 코드가 core/application/adapter/infrastructure 네 서브모듈에 흩어진다. §4.8은 "4개 서브모듈에서 해당 컨텍스트 패키지를 함께 들어내면 된다"고 하지만, 이는 4곳의 빌드 스크립트·의존성·공유 인프라 배관(kafka/persistence/idgen는 컨텍스트 공유)을 분리하는 작업이다. C안(컨텍스트별 모듈)을 "YAGNI"로 기각하면서 얻은 향후 분할 용이성을 스스로 반납했다 — 분할이 필요해지는 시점엔 이미 수직 분산이 마이크로서비스화의 최대 장애물이 된다.
+- **§4.4 "Gradle 의존성 그래프가 강제한다 > ArchUnit" — 정작 핵심 격리(컨텍스트 간)는 전부 ArchUnit** — 문서의 논리축은 "컴파일 의존성 > 정적분석"이다. 그러나 §4.5에서 컨텍스트 간 직접 참조 금지(reservation→restaurant)는 서브모듈이 아니라 ArchUnit/Konsist로 강제한다. 즉 실무에서 가장 자주 위반될 경계(9개 컨텍스트 상호 참조)는 정확히 문서가 "열등하다"고 규정한 수단에 의존한다. 자기 원칙이 가장 필요한 곳에서 적용되지 않는다.
+- **§4.6 신규 기능(리뷰·포인트·신고) 투입을 "레퍼런스 전환 완료 후"로 게이팅 — 사업 우선순위와 구조 규율의 교착** — "패턴 검증 전 신규 코드 금지"는 옳지만, 신규 도메인이 사업상 급하면 §4.6 스스로 "순서 뒤집힐 시 리스크 명시"로 물러선다. 이는 완화가 아니라 문제의 재기술이다. 레퍼런스 전환이 몇 주씩 걸리는 동안 신규 기능을 어디에(V1 구조? 미확정 신구조?) 짓는지에 대한 실행 가능한 답이 없다.
+- **§4.7 비-ES 도메인↔JPA 수동 매핑 유지 + "국소 컨벤션으로 대응" — 9개 컨텍스트 반복 비용을 과소평가** — MapStruct류를 "경계를 흐린다"며 기각하고 손매핑을 컨텍스트마다 유지한다. 도메인 필드가 바뀔 때마다 매핑 함수를 수동 동기화해야 하고, 누락은 컴파일이 아니라 런타임/테스트에서만 잡힌다("같은 시그니처 컨벤션"은 강제력이 없다). Risk 표는 "생산성 저하"로만 적었지, 매핑 누락으로 인한 *데이터 정합성 결함* 가능성은 다루지 않는다.
+- **§6.1 command-core build.gradle에서 Spring 배제 = 검증(Bean Validation)·로깅 등 흔한 도메인 헬퍼도 배제** — 순수성 보장은 강력하지만, `jakarta.validation`, SLF4J 파사드, 심지어 일부 코틀린 확장까지 core에서 못 쓰게 된다. 애그리거트 불변식 검증(DESIGN-003 `require(canCancel(...))`)을 순수 코틀린으로만 짜야 하고, 공유 밸리데이션 어노테이션을 shared-module에 재구현하거나 검증을 application으로 올리는 우회가 생긴다 — 후자는 "리치 도메인" 목표와 충돌한다.
+
+> 본 절은 리뷰용 반박 정리이며, 문서의 결정을 뒤집지 않는다. 각 항목은 후속 검토 대상.
