@@ -207,6 +207,35 @@ graph LR
 - **실 PG 없이 학습하기 — 포트 + 스텁**: 지금 붙일 실 PG가 없다. "가짜 인라인 호출"로 때우면 ACL·웹훅·멱등·대사라는 *배울 가치가 있는 구조*가 통째로 증발한다. 그래서 **PG 인터페이스(포트)는 실제처럼 정의하고, 그 뒤에 비동기·실패·중복을 흉내 내는 PG 스텁/시뮬레이터를 꽂는다** — 스텁이 지연 후 웹훅을 콜백으로 쏘고, 가끔 중복·유실·순서뒤집기를 일으켜 우리 인바운드 방어(§6.1 세 겹)가 진짜로 동작하는지 검증한다. 핵심은 *경계의 모양*(ACL 포트 + 웹훅 인바운드 + 부수효과 릴레이 + 대사)이 실 PG 유무와 무관하게 동일하다는 것이다.
 - 실 PG 롤백: 실 PG 연동 사이클에서 포트 구현체만 교체하면 된다. 사가 계약(세 이벤트)과 내부 ACL 구조는 변경 없다.
 
+### 6.6 아웃바운드 멱등 책임 분업 (outbox=우리 / 호출=PG)
+
+의도-먼저 기록(§6.1)은 "로컬 커밋 ↔ 원격 부수효과"를 하나의 트랜잭션으로 못 묶는 한계를 **양쪽이 각자 멱등**으로 메운다. 책임이 둘로 갈린다:
+
+| 경계 | 멱등 주체 | 수단 |
+|------|:---:|------|
+| outbox append / 도메인 이벤트 발행 | **우리** | 의도-먼저 기록 + append↔outbox **동일 트랜잭션**([[RFC-024-domain-event-type-and-replay-layering]]) + `event_id` dedup([[RFC-021-event-identity-and-global-ordering]]·[[RFC-025-ordering-relay-dlq-reconciliation]]) |
+| outbox fetch → PG 호출 | **PG** | 우리가 `Idempotency-Key`를 실어 보내 PG가 재시도를 **같은 거래로 수렴** |
+
+```mermaid
+sequenceDiagram
+    participant CMD as Command
+    participant OBX as intent/outbox (우리 DB)
+    participant RL as relay (scheduled)
+    participant PG as PG (또는 log 스텁)
+    CMD->>OBX: intent 기록 + 멱등키 민팅 (로컬 txn)
+    RL->>OBX: fetch pending
+    RL->>PG: call(Idempotency-Key=민팅키)  %% 재시도해도 PG가 1건으로 수렴
+    RL->>OBX: mark done / 결과 이벤트 append (event_id dedup)
+```
+
+- **payment 고유 machinery가 아니다** — 일반 "아웃바운드 부수효과 + 이벤트 발행" 패턴의 적용이다. [[DESIGN-019-event-execution-layering]](append↔outbox 계층)·[[DESIGN-020-ordering-and-failure-handling]](relay·재구축)이 이미 소유하고, payment는 그 위에 **키를 intent 시점 민팅**만 얹는다.
+- **릴레이는 at-least-once다.** "PG 호출 성공 → row done 표시" 사이 크래시 시 재기동이 **재호출**한다. 안전의 근거는 원자성이 아니라 *재호출이 멱등*이라는 것 — 중복 호출을 PG가 한 거래로 흡수한다.
+- **키는 우리가 민팅한다(§6.1 아웃바운드 1단계).** PG 거래 ID는 호출 *후* 생기는 결과라 아웃바운드 재시도를 못 막는다(재시도 시점엔 그 ID를 모른다). 우리가 쥔 입력 키(민팅)만이 재시도-이전에 존재한다. PG 거래 ID는 반대로 **인바운드 중복 통지** dedup용(§6.1 디듀프 테이블)이다 — 두 키가 두 방향을 맡는다.
+
+> **log·내부-only 전제의 구멍**: "호출 멱등=PG"는 *실 PG*일 때 성립한다. log 대체에선 강제 주체가 없고 — 재시도 시 로그가 두 번 찍힐 뿐 **무해**해서 통과된다. log→실 PG 승격 시 `Idempotency-Key` 계약을 실제로 채워야 한다.
+>
+> **미룬 외부-PG 축**(부분환불 표현·4xx/5xx 재시도소진→failed·대사 SLA·청구/환불 멱등키 공간 분리·verify 열거 공격면)은 실 PG 없음(log)·내부-only 전제라 지금 범위 밖 — 정석 안과 근거를 [[RFC-027-payment-external-boundary-proposal]](📎 안 제시·미채택)에 기록. §6.1/§6.2의 청구·환불 키 공간 서술(동일 vs 분리) 모순도 RFC-027이 "분리"안으로 정리(미채택).
+
 ## 7. Risks & Mitigations
 
 | 위험 | 완화 |
@@ -282,6 +311,7 @@ graph LR
 |------|------|
 | 2026-06-30 | 최초 작성 — `14-payment-integration.md`를 DESIGN-015 템플릿으로 재구성 |
 | 2026-07-01 | 정합성 정정 — §2·§4.1·§4.3·§6.1·Glossary의 "PM(프로세스 매니저) 오케스트레이션" 서술을 코레오그래피(payment가 이벤트 구독·자기 상태로 자율 보상)로 수정. RFC-006 파일명(`saga-process-manager`) 잔재로 뒤집힌 ADR-08 결정(코레오그래피 채택)을 반영하지 못했던 오류 정정 |
+| 2026-07-05 | §6.6 신설 — 아웃바운드 멱등 책임 분업(outbox=우리·event_id dedup / 호출=PG·Idempotency-Key, 키는 intent 민팅) 확정. 트리아지 C35 "우리 쪽 outbox 멱등"을 기결정([[RFC-024-domain-event-type-and-replay-layering]]·[[RFC-025-ordering-relay-dlq-reconciliation]]) 적용으로 닫음. 외부-PG 축(C34·C35 잔여)은 [[RFC-027-payment-external-boundary-proposal]](📎 안 제시·미채택)로 라우팅 |
 
 ---
 

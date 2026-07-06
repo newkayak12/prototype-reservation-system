@@ -123,6 +123,7 @@ PM을 정당화하던 두 논거를 검증했다.
 **결론:** **V1 PoisonMessage 운영 흐름에 그대로 태운다.** 사가 실패만을 위한 별도 파이프라인을 세우면 운영 표면이 둘로 늘어난다. 메시지가 반복 실패하면 PoisonMessage로 격리·저장·추적·수동 재처리·알림 — 사가 스텝 실패도 같은 경로.
 
 - 미결: 부분 보상 상태(예: `SeatReleased`는 됐는데 `PaymentRefunded`가 실패)를 PoisonMessage 모델이 담을 수 있는지는 구현 사이클에서 확정(TBD).
+  - **종결 (2026-07-05, 트리아지 C11·C13 → [[DESIGN-007-consistency-and-sagas]] §4.9)**: 이 결론(단일 운영 표면)은 유지하되, 부분 보상 잔류는 범용 PoisonMessage 루프가 아니라 **순서-인지 꼬리 격리**([[DESIGN-020-ordering-and-failure-handling]] §5)로 처리한다 — 같은 운영 표면(저장·추적·알림) 위의 특화지 별도 파이프라인이 아니다. 환불 복구는 멱등 정방향 재호출([[DESIGN-015-payment-integration]] §6.6), 환불 실패 잔류는 운영 보정 큐 + 수동 드레인 런북. "PoisonMessage vs 사가 전용 경로" TBD는 **꼬리 격리 채택**으로 닫힘.
 
 ### 논점 5. 예약 외 흐름 — 취소·노쇼·환불
 

@@ -3,6 +3,8 @@
 - **상태**: ✅ 종결 (2026-06-23) · 하류 산출물 없음 — 구현 시점에 결정
 - **선행**: [[RFC-001-v2-cqrs-and-event-sourcing]] · 인덱스 [[RFC-INDEX]]
 
+> **⚠ 부분 supersede (2026-07-05, [[RFC-030-read-freshness-command-response-contract]], 트리아지 C14):** 본 RFC의 "**command 기본 응답 = 즉시 202 Accepted**"(논점 line 98·154·175)는 **동기 권위 응답(생성 201/상태전이 200 + 바디)** 으로 대체됐다. command는 커밋 시점에 이미 권위 결과를 쥐므로(불변식 동기 확정, [[RFC-014-aggregate-concurrency-control]]) 202로 그걸 버리고 밀린 projection 재조회를 강제할 이유가 없다 — "CQRS ≠ 비동기 쓰기". 202는 **사가·외부 게이트(결제·승인) 결과에만** 남는다. read-your-writes는 여정별 신선도 등급 + `sequence_no` 토큰으로 계약화. 본 RFC의 페이징·에러 매핑 계약은 그대로 유효.
+
 ---
 
 ## 배경 (Background)
