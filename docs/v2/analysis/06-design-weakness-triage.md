@@ -20,7 +20,7 @@
 | C34 | 결제 사가 표면 동결이 부분환불·분쟁·재시도 소진을 표현 못 하고 확정 경로가 얕다                       | D-007,D-015             | HIGH | open              | accept-new-rfc ⚙️ | HIGH |
 | C35 | 멱등키·의도-먼저 기록의 문서 내 모순과 verify 경로의 dual-write·열거 공격면                  | D-015                   | HIGH | open              | accept-new-rfc ⚙️ | HIGH |
 | C40 | 장애 폴백 미정 상태로 단일 인스턴스만 먼저 확정한 순서 역전                                   | D-018                   | HIGH | open              | accept-new-rfc ⚙️ | HIGH |
-| C45 | '잎 먼저' 1차 기준과 허브 reservation을 앞세운 실제 순서의 모순                          | D-005                   | HIGH | open              | accept-new-rfc ⚙️ | HIGH |
+| ~~C45~~ | ✅ 종결(OVER 2026-07-08) leaf-first 준수→모순 소멸 + V1→V2 비실시간 컷오버→식당명 갭·브리지 불요 | D-005 | HIGH | closed | over ✅ | — |
 | C02 | Zero Payload 재처리가 미래 상태로 과거 이벤트를 오염시키는 time-travel 결함                | D-004                   | HIGH | partially-decided | accept-new-rfc    | HIGH |
 | C10 | 주인 없는 코레오그래피가 사가 상태의 단일 조회지점·정적 전역 불변식 검증을 없앤다                       | D-007,D-011             | HIGH | partially-decided | accept-new-rfc    | HIGH |
 | C11 | 코레오그래피 채택 근거가 '선형 2~3스텝'에 걸려 있고 전환 트리거·부분보상 복구가 미결인 채 Accepted       | D-007                   | HIGH | partially-decided | accept-new-rfc    | HIGH |
@@ -282,7 +282,9 @@
 
 ### C45 — '잎 먼저' 1차 기준과 허브 reservation을 앞세운 실제 순서의 모순
 
-`HIGH` · 판정 **open** (conf high) · 처분안 **accept-new-rfc** ⚙️검토필요 · 우선 HIGH
+`HIGH` · 판정 **closed (OVER)** (2026-07-08) · ~~처분안 accept-new-rfc~~ → **결정 불요** · 우선 —
+
+> **✅ 종결 (2026-07-08, OVER — 결정 불요):** leaf-first를 준수하면(restaurant→reservation) "규칙 vs 순서" 모순 자체가 소멸 — fail-fast override를 버리는 것으로 끝. 파생 문제(restaurant가 V1인 동안 식당명 비정규화 갭)는 갈래1에 기생한 것으로, restaurant를 먼저 V2로 올리면 reservation 프로젝션 시점엔 이벤트 소스가 이미 있고 **V1→V2가 비실시간 배치 컷오버**라 두 컨텍스트가 V1/V2로 공존하는 창이 없다 → 임시 이벤트 브리지·컷오버후 백필 결정 모두 불요. 요구하던 새 RFC 2건 증발. **잔여 조치(결정 아님):** D-005 §4.2·RFC-010 순서표를 leaf-first로 정정 + "fail-fast는 leaf-first 위반 않는 범위에서만 tie-break"로 강등 명시.
 
 - **문서/항목**: D-005 §4.2
 - **설명**: 의존성(잎 먼저)을 1차 기준으로 못박지만 실제 시퀀스는 restaurant·timetable에 의존하는 허브 reservation을 restaurant보다 먼저 옮긴다. fail-fast를
