@@ -229,3 +229,4 @@ cycles/
 .claude/CLAUDE.md
 .claude/v1/harness/
 .claude/settings.json
+.claude/.harness-markers/

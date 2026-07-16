@@ -1,0 +1,4 @@
+{
+  "patterns": ["src/.*\\.kt$"],
+  "window_hours": 2
+}
