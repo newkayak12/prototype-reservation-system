@@ -60,22 +60,21 @@ design_doc가 확정한 결정들을 ADR로 옮기는 작업 계획이다. 무�
 
 | ADR | 제목 | 근거 | 상태 |
 |-----|------|------|------|
-| ADR-011 | 이벤트 스토어 PII = 크립토 셰딩 | DESIGN-016 | ⏳ |
-| ADR-013 | 읽기/쓰기 물리 분리 · DB 토폴로지 | DESIGN-010 | ⏳ |
-| ADR-012 | Kafka 호스팅 (MSK vs Strimzi) | DESIGN-010 | ⏳ |
-| ADR-019 | Redis 역할 (읽기 캐시 아님, 분산 조정 전용) | DESIGN-018 | ⏳ |
-| ADR-017 | 인가 모델 (역할=엣지, 소유권=앱) | DESIGN-014 | ⏳ |
-| ADR-020 | 인증 토큰 transport (무상태 refresh) | DESIGN-017 | ⏳ |
-| ADR-024 | 인증 경계 (모델 A: 엣지 검증 + 헤더 전파) | DESIGN-010 | ⏳ |
-| ADR-015 | 결제 연동 경계 = ACL | DESIGN-015 | ⏳ |
-| ADR-014 | V2 테스트 전략 (아키텍처를 테스트로 강제) | DESIGN-012 | ⏳ |
+| ADR-011 | 이벤트 스토어 PII = 크립토 셰딩 | DESIGN-016 | ✅ |
+| ADR-013 | 읽기/쓰기 물리 분리 · DB 토폴로지 | DESIGN-010 | ✅ |
+| ADR-012 | Kafka 호스팅 (MSK vs Strimzi) | DESIGN-010 | ✅ |
+| ADR-019 | Redis 역할 (읽기 캐시 아님, 분산 조정 전용) | DESIGN-018 | ✅ |
+| ADR-017 | 인가 모델 (역할=엣지, 소유권=앱) | DESIGN-014 | ✅ |
+| ADR-020 | 인증 토큰 transport (무상태 refresh) | DESIGN-017 | ✅ |
+| ADR-024 | 인증 경계 (모델 A: 엣지 검증 + 헤더 전파) | DESIGN-010 | ✅ |
+| ADR-015 | 결제 연동 경계 = ACL | DESIGN-015 | ✅ |
+| ADR-014 | V2 테스트 전략 (아키텍처를 테스트로 강제) | DESIGN-012 | ✅ |
 | ADR-025 | 읽기 신선도 예외 정책 | DESIGN-004 | ◽ |
 
 ---
 
 ## 손봐야 할 항목
 
-- **ADR-011** — 이미 `Proposed→Accepted 비준 대기` 상태로 표시돼 있다. 전사 시 상태 처리 확인 필요.
 - **ADR-025** — DESIGN-004가 "필요 시"로 남긴 조건부 결정이다. 읽기 신선도 예외가 실제로 필요해질 때만 작성한다.
 
 ## ADR를 만들지 않는 설계 문서
