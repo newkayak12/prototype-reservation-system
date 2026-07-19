@@ -13,11 +13,11 @@
   - [2025.07.29 ~ 2025.08.12](https://github.com/users/newkayak12/projects/9)
   - [2025.09.30 ~ 2025.10.14](https://github.com/users/newkayak12/projects/11): 휴일/ 시간/ 테이블/ 스케쥴
 
-## 3. [🎯 프로젝트 목표](/docs/PROJECT.md)
-## 4. [🧑🏻‍💻 코드 퀄리티를 위한 도구 도입](docs/CODE_STYLE.md)
-## 5. [♟️ 테스트 전략 수립](docs/teststrategy/TestStrategy.md)
-## 6. [💻 기술적인 고민](docs/technical/index.md)
-## 7. [📇 비개발적인 부분에 대한 고민](docs/non-technical/index.md)
+## 3. [🎯 프로젝트 목표](/docs/v1/PROJECT.md)
+## 4. [🧑🏻‍💻 코드 퀄리티를 위한 도구 도입](docs/v1/CODE_STYLE.md)
+## 5. [♟️ 테스트 전략 수립](docs/v1/teststrategy/TestStrategy.md)
+## 6. [💻 기술적인 고민](docs/v1/technical/index.md)
+## 7. [📇 비개발적인 부분에 대한 고민](docs/v1/non-technical/index.md)
 
 ---
 

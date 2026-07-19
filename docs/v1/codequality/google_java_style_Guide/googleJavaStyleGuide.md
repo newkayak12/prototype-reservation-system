@@ -8,6 +8,6 @@
   2. IDEA에서 아래와 같이 code style XML을 import
   
   ### 2. Settings others
-  ![intellijSettings.png](../../../img/intellijSettings.png)
+  ![intellijSettings.png](../../../../img/intellijSettings.png)
 - Class count to use import with '*'; 에 999 설정으로 import로 wildcard 방지
 - Names count to use static import with '*'; 에 999 설정으로 static member import에 wildcard 방지
