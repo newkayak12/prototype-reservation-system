@@ -43,8 +43,8 @@
 17. [[RFC-018-caching-redis-role]] — 캐싱·Redis의 V2 역할
 18. [[RFC-019-auth-token-transport]] — 인증 토큰 transport·무상태성·폐기 포기
 19. [[RFC-020-authentication-boundary-gateway]] — 인증 경계: API 게이트웨이 + 인증 서버 (k3s 인클러스터)
-20. [[RFC-021-event-identity-and-global-ordering]] — 이벤트 정체성(`event_id`, UUIDv7) (감사 ① 마감 · `global_seq`는 불채택·🔒닫힘) · 동시성 비관 전환은 [[RFC-014-aggregate-concurrency-control]] §재개
-21. [[RFC-022-event-schema-evolution]] — 이벤트 스키마 진화: 업캐스터·eventType 매핑·Avro/Protobuf ([[RFC-004-event-store-schema-evolution]]에서 분리)
+20. [[RFC-021-event-identity-and-global-ordering]] — 이벤트 정체성(`event_id`)·전역 열거 커서(`global_seq`) (감사 ① 마감) · 동시성 비관 전환은 [[RFC-014-aggregate-concurrency-control]] §재개
+21. [[RFC-023-event-schema-evolution]] — 이벤트 스키마 진화: 업캐스터·eventType 매핑·Avro/Protobuf ([[RFC-004-event-store-schema-evolution]]에서 분리)
 
 ## ADR (adr/) — V2 트랙, 01부터
 - [[01.cqrs-command-query-module-split]] — command/query 모듈 분리
@@ -67,7 +67,7 @@
 - [[18.event-store-recovery-semantics]] — 복구 의미론: 이벤트 스토어 1급 보호·되감기 없음(보상 이벤트)·셰딩 복원 견딤
 - [[19.caching-redis-role]] — Redis=읽기 캐시 아님, 분산 조정·휘발성 상태 전용(단일 durability)
 - [[20.auth-token-transport]] — 인증 토큰: transport V1 계승+SameSite·무상태 refresh·즉시 폐기 포기
-- [[22.event-identity-and-global-ordering]] — 이벤트 정체성: `event_id`(UUIDv7 공통 dedup/causation 앵커 + 재구축 keyset 커서 겸용, 전순서 아님)·adr/05 스키마 보강 (`global_seq` 불채택)
+- [[22.event-identity-and-global-ordering]] — 이벤트 정체성·전역 순서: `event_id`(공통 dedup/causation 앵커)+`global_seq`(재구축 열거 커서, 전순서 아님)·adr/05 스키마 보강
 
 ## 설계 (design_doc/)
 - [[00-design-overview]] — 목표 아키텍처 개요

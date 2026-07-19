@@ -137,9 +137,8 @@ V1 `timetable` Redisson 세마포어를 V2 점유로 이어오는 방안. 점유
 ### 6.1 Error Handling
 
 - **Redis 장애 시 분산 락 폴백**: Redisson 분산 락(L1) 불가 시 DB 비관 락(`SELECT … FOR UPDATE`)으로 자동 강등(L1′). 쓰기 경합 직렬화 자체는 포기하지 않는다. 낙관적 락으로 회귀하지 않는다([[RFC-014-aggregate-concurrency-control]]).
-- **Redis 장애 시 레이트리밋 = fail-open (통과 허용)**([[RFC-028-redis-fault-fallback-semantics]]). 레이트리밋은 정확성 불변식이 아니라 부하 보호 heuristic이므로, Redis 불가 시 요청을 거부하면 내부 fault를 사용자 장애로 전이시킨다. 통과시켜 가용성을 지키고, 심층방어로 애플리케이션 레벨 써킷 브레이커를 별도 검토.
-- **Redis 장애 시 멱등 디듀프 = cache-through, fail-to-DB**([[RFC-028-redis-fault-fallback-semantics]]). 디듀프는 정확성 불변식이라 fail-open을 그대로 얹을 수 없다. DB를 SoR로 두고 Redis를 그 앞의 coherent 캐시로 쓴다(write-through로 DB UNIQUE에 착지, read-through로 조회). Redis 불가 시 **통과가 아니라 DB로 강등** — 정확성에 창(window)이 없다. eviction도 무해해진다(read-through miss가 DB에서 재적재 → §4.4 line 119 구멍이 닫힌다). **동시 중복 직렬화의 가드는 캐시가 아니라 DB UNIQUE**다(event_store `(aggregate_id, sequence_no)` UNIQUE + 도메인 자연 유니크 [[DESIGN-013]]).
-  - *구현 방향 메모(구현 사이클)*: 레이트리밋은 GCRA 권장 — 직접 구현 시 TAT 갱신은 반드시 서버측 원자(Lua), 또는 Redisson GCRA 사용(③ 락이 이미 Redisson을 provision하므로 스택에 남는다). 디듀프 idem 레코드는 DB에도 남으므로 DB쪽 보존/GC 정책 필요(§8).
+- **Redis 장애 시 레이트리밋**: Redis 불가 시 레이트리밋 카운터 미동작 — 정책 결정 필요(통과 허용 vs 요청 거부). 후속 사이클로 넘김.
+- **Redis 장애 시 멱등 디듀프**: Redis 불가 시 디듀프 미작동 — 자연 유니크 불변식이 없는 생성 command에 한해 중복 처리 위험. 후속 사이클에서 허용 staleness·폴백 정책 확정.
 
 ### 6.2 Security Considerations
 
@@ -177,9 +176,8 @@ V1 `timetable` Redisson 세마포어를 V2 점유로 이어오는 방안. 점유
 | 위험 | 완화 |
 |------|------|
 | Redis 장애 시 분산 락 미작동 → 쓰기 경합 직렬화 저하 | DB 비관 락(L1′) 자동 폴백; 낙관 락 회귀 금지([[RFC-014-aggregate-concurrency-control]]) |
-| 멱등 디듀프 키 윈도 내 eviction → 중복 처리 허용 | **cache-through로 해소**([[RFC-028-redis-fault-fallback-semantics]]) — read-through miss가 DB에서 재적재, DB UNIQUE가 가드. eviction 무해 |
-| Redis 장애 시 레이트리밋 미작동 → 과부하 허용 | **fail-open 확정**([[RFC-028-redis-fault-fallback-semantics]]) — 통과 허용(내부 fault 외부 전이 방지); 써킷 브레이커 별도 검토 |
-| HA(Sentinel/Cluster) 과설계로 운영 복잡도 증가 | role 설계에서 불채택([[RFC-028-redis-fault-fallback-semantics]]) — 폴백 시맨틱으로 Redis가 손실 허용이 되어 단일 인스턴스 정당; HA는 배포 사이클([[RFC-007-deployment-infra-ops]]) 옵션 |
+| 멱등 디듀프 키 윈도 내 eviction → 중복 처리 허용 | 윈도 길이·메모리 한도 설계 시 eviction 확률 계산; 후속 확정(§8) |
+| Redis 장애 시 레이트리밋 미작동 → 과부하 허용 | 폴백 정책(통과 vs 차단) 후속 확정; 애플리케이션 레벨 써킷 브레이커 검토 |
 | denylist 부활 시 단일 durability 가정 파괴 | 부활 조건 명시(§6.5); [[RFC-007-deployment-infra-ops]]와 재검토 경로 확보 |
 | 2차 staleness(프로젝션 + 캐시 TTL) 두 겹 도입 | read model 앞 캐시 층 기본 미도입; 예외 시 화면별 허용 staleness 전제 |
 | V1 Redisson 세마포어(점유)를 V2에 끌어오는 실수 | 사가 점유 만료는 DB 폴링으로 명시 확정([[DESIGN-007]]); 이 문서로 경계 못 박음 |
@@ -190,7 +188,7 @@ V1 `timetable` Redisson 세마포어를 V2 점유로 이어오는 방안. 점유
 |------|------|------|
 | Phase 1 (현재) | Redis 역할 원칙 확정(본 문서). read 캐시 미도입 결정. 단일 durability 확정. | [[DESIGN-017]] 완료 |
 | Phase 2 | V1 RedisCacheManager·refresh 저장 제거. 프로젝션 read model로 전환. | [[DESIGN-004]] 프로젝션 구현 |
-| Phase 3 | 멱등 디듀프 cache-through 구현(DB SoR·UNIQUE + Redis 캐시). Redis 키 구성·윈도 길이 + **DB idem 레코드 보존/GC 정책** 확정. 레이트리밋 GCRA(Redisson or Lua) 구현. | [[DESIGN-013]] 잔여 케이스 확정 · [[RFC-028-redis-fault-fallback-semantics]] |
+| Phase 3 | 멱등 디듀프 Redis 키 구성·윈도 길이 확정. eviction 정책 상호작용 검증. | [[DESIGN-013]] 잔여 케이스 확정 |
 | Phase 4 | V1 피처 플래그·재시도 컨텍스트 V2 귀속 확정. | 각 항목 V2 거취 결정 시 |
 | Phase 5 (조건부) | denylist 부활 시 등급별 인스턴스 분리 재설계. | 즉시 폐기 요구 입증 시 |
 
@@ -246,7 +244,6 @@ V1 `timetable` Redisson 세마포어를 V2 점유로 이어오는 방안. 점유
 
 | 날짜 | 변경 내용 |
 |------|-----------|
-| 2026-07-05 | §6.1·§7·§8 갱신 — Redis 장애 폴백 시맨틱 확정([[RFC-028-redis-fault-fallback-semantics]], 트리아지 C40): 레이트리밋=fail-open, 디듀프=cache-through(DB SoR·UNIQUE 보장·fail-to-DB·eviction 무해), HA=role 불채택(배포 사이클 이월). §4.4 line 119 eviction 구멍이 cache-through로 닫힘. 구현 메모(GCRA·DB idem GC) 추가. |
 | 2026-06-30 | DESIGN-018로 재포맷. 템플릿 구조(Background/Goal/Non-Goal/Proposed Solution/Alternatives/Details/Risks/Milestones/Appendix) 적용. 상호 참조 번호 갱신 (03-read-model → DESIGN-004, 16-auth-token → DESIGN-017, 12-api-contract → DESIGN-013, 02-write-model → DESIGN-003, 06-consistency-and-sagas → DESIGN-007, 05-aggregate-design → DESIGN-006, 09-deployment-runtime → DESIGN-010). 원본 17-caching.md 전체 내용 보존. |
 
 ---

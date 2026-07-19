@@ -57,7 +57,7 @@
 key_store.subject_key(
   subject_id,            -- 데이터 주체(예: userId), 주체당 1행
   key_id,
-  key_material,          -- 주체 키를 마스터 키로 감싼(wrap) 상태로 저장 (아래 봉투 결정)
+  key_material,          -- 주체 생성 시 동적 생성된 키
   status,                -- ACTIVE | SHREDDED
   created_at, shredded_at
 )
@@ -65,21 +65,18 @@ key_store.subject_key(
 
 키 라이프사이클(생성·조회·삭제)은 **한 포트 뒤에 캡슐화**한다. 크립토 셰딩의 신뢰성은 매체가 무엇이냐보다 *키를 정말 지웠는가*에 달렸고, 그 보장은 라이프사이클을 한 군데 모았느냐에서 나오기 때문이다. 매체를 갈아끼우더라도 이 경계는 유지한다.
 
-> **봉투 (마스터 키 wrap) — 채택 (2026-07-05, 트리아지 C19):** `key_material`은 평문이 아니라 **마스터 키 1개로 감싸(wrap) 저장**한다. 마스터 키는 **DB 밖(K8s secret/env)** 에 두고 부팅 시 1회 로드해 메모리 상주 — 그래서 **DB(키 테이블 포함)가 통째로 유출돼도 마스터 키 없이는 복호 불가**("DB 유출 ≠ PII 유출"). 접근통제는 그대로 병행. 이건 KMS 제품·키 회전이 아니라 **secret 하나 + wrap/unwrap 한 겹**이다 — overhead는 마스터 키 인메모리 상주 + 언랩 키 TTL 캐시로 per-op 실질 0. per-subject 키는 회전하지 않고 파기(셰딩)만 한다. 완전 KMS·자동 회전·per-message DEK는 규제·격리 요구가 실재할 때 졸업.
->
-> **대안 기각**: (a) 평문 키 저장 — DB 유출 시 전 PII 복호(폭탄 돌리기), 기각. (b) keysets를 secrets manager(Vault)에 직접 — 스택에 Vault 부재(신규 인프라)이고 K8s Secret은 per-subject 키 저장에 부적합(~1MB·etcd 압박), 기각. (c) AAD 별도 테이블로 split — wrap이 이미 "두 저장소 다 필요" property를 표준으로 주고, AAD row 유실 시 영구 복구 불능 위험이라 기각.
+> 테이블의 키는 그 스키마 접근통제만큼만 안전하다 — 테이블이 읽히면 전 PII가 복호 가능하다. 그래서 키 스키마는 별도 자격/역할로 접근을 좁힌다. 봉투 암호화는 격리·규제 요구가 실재할 때 도입하는 졸업 경로다.
 
 ### 4.2 페이로드 — PII만 암호화 봉투
 
 ```json
 {
   "...비-PII 필드(평문)...",
-  "_encrypted": { "key_id": "...", "subject_id": "...", "cipher": "..." }   // AEAD, AAD 바인딩 없음
+  "_encrypted": { "key_id": "...", "subject_id": "...", "cipher": "..." }
 }
 ```
 
 - **쓰기**: PII 필드는 주체 키로 암호화한 봉투로 페이로드에 넣는다. 비-PII(예약 시각·상태·식당 식별자)는 평문 — 리플레이·정합성에 필요하다.
-- **AEAD (Tink) · AAD 바인딩 없음 (2026-07-05 확정, 트리아지 C19)**: 암호화는 **AEAD**로 한다(Tink 참조). **AAD 컨텍스트 바인딩은 하지 않는다** — per-subject 키가 이미 복호를 그 주체로 스코프하므로(주체 X 키로만 X의 PII가 풀림), `필드명`·`event_id` 바인딩은 스키마 진화([[RFC-022-event-schema-evolution]])·재구축에 취약하기만 하고 이득이 미미하다. (이전 판의 `subject_id+event_id+필드명` AAD 구성은 AI 초안이었고 폐기 — [[ai-draft-laundered-as-user-decision]].)
 - **읽기/리플레이**: `apply` 시 키가 `ACTIVE`면 복호해 PII를 채운다. `SHREDDED`(키 행이 삭제돼 조회 불가)면 PII 자리는 **익명 토큰**으로 두고 나머지 상태는 정상 복원한다. 복호 실패는 예외가 아니라 *정상 경로*다.
 - **삭제 요청**: 해당 `subject_id` 키를 즉시 하드 삭제한다. 이벤트는 건드리지 않는다 → append-only 유지.
 - **스냅샷도 동일**: 스냅샷([[DESIGN-009-event-store-lifecycle]] §1)도 PII를 담을 수 있으므로 같은 봉투를 적용한다. 키 폐기 시 스냅샷 PII도 복호 불능.
@@ -179,7 +176,6 @@ PII 필드가 암호화 경로를 우회해 평문으로 저장되면 셰딩은 
 
 | 날짜 | 변경 내용 |
 |------|-----------|
-| 2026-07-06 | **트리아지 C19 종결** — 봉투(마스터 키 wrap) 채택: `key_material`을 DB 밖(K8s secret) 마스터 키로 감싸 저장 → "DB 유출 ≠ PII 유출"(§4.1). 대안(평문 키·Vault·AAD split) 기각 근거 기록. §4.2 **AAD 바인딩 없음** 확정(per-subject 키가 이미 스코프), 이전 AI 초안 AAD 구성 폐기. 키 테이블 백업 짧은 보존으로 셰딩 창 bounded. |
 | 2026-06-30 | DESIGN-016으로 재포맷. 템플릿 구조(Background/Goal/Non-Goal/Proposed Solution/Alternatives/Details/Risks/Appendix) 적용. 상호 참조 번호 갱신 |
 
 ---

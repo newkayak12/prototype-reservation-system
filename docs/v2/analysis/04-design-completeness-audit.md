@@ -8,7 +8,7 @@
 
 | 클러스터 | 판정 | 가장 load-bearing 미결 |
 |---|---|---|
-| 이벤트스토어·쓰기모델·스키마진화·동시성 | **N** | 시퀀스 채번 chokepoint·lock-wait/409타이밍 (① `event_id`(UUIDv7)·동시성 비관전환은 닫힘 — `global_seq`는 [[RFC-021-event-identity-and-global-ordering]] 닫힘으로 불채택) |
+| 이벤트스토어·쓰기모델·스키마진화·동시성 | **N** | 시퀀스 채번 chokepoint·lock-wait/409타이밍 (① `event_id`/`global_seq`·동시성 비관전환은 2026-06-17 닫힘) |
 | 메시징·읽기모델·재구축 | **N** | consumer checkpoint 저장위치·projector별 inbox/guard 결정표·교차 애그리거트 순서 |
 | 사가·일관성·결제 | **N** | 크래시 재개·stuck 사가 조회·paid-after-expiry·3-event 계약 |
 | API·인가·캐싱·토큰 | **N** | 202 결과조회·비동기 command 인가 신선도·revocation blast-radius |
@@ -38,7 +38,7 @@
 > 괄호 = 독립적으로 같은 구멍을 지적한 클러스터 수(신호 강도). 이게 전수 검사의 핵심 산출물.
 
 - [x] **① 글로벌 순서 & 이벤트 정체성 — 닫힘 (2026-06-17 · [[RFC-021-event-identity-and-global-ordering]] → [[22.event-identity-and-global-ordering]])**
-  - 결정: `event_id`(UUIDv7, 전 컨텍스트 공통 정체성 = inbox/dedup·causation 앵커 + 재구축 *keyset* 열거 커서 겸용, 교차 전순서 아님) 추가. `(aggregate_id, sequence_no)` UNIQUE 유지. (전용 `global_seq`는 [[RFC-021-event-identity-and-global-ordering]] 닫힘으로 불채택 — UUIDv7이 커서를 겸한다.)
+  - 결정: `event_id`(전 컨텍스트 공통 정체성 = inbox/dedup·causation 앵커) + `global_seq`(재구축 *열거* 커서, 교차 전순서 아님) 추가. `(aggregate_id, sequence_no)` UNIQUE 유지.
   - 핵심 reframe: "순서"는 요구가 아니었다 — 재구축은 *열거/재개*만 필요. 프로젝터 정확성 = per-aggregate 순서+멱등+버전 가드, 교차 순서는 사가([[09.event-ordering-and-delivery-guarantee]]).
   - `adr/05`는 합의됨(immutable)이라 제자리 수정 대신 [[22.event-identity-and-global-ordering]]가 스키마 보강. dd02/dd08/RFC-012 동반 반영 완료.
 
@@ -91,7 +91,7 @@
 ### B. 메시징·읽기모델 (판정 N)
 - [ ] consumer offset/checkpoint 저장 위치 미명 (`__consumer_offsets` vs query DB checkpoint 행) — at-least-once 중복 창 정확성 좌우
 - [ ] projector별 inbox/guard/upsert 결정표 부재 ("inversion-free AND naturally-idempotent면 skip" 조건만, 분류는 보류)
-- [x] 교차 애그리거트 프로젝션 순서 규칙 없음 — **닫힘(reframe)**: 교차 순서는 정확성 비의존(멱등+per-aggregate 버전 가드가 흡수), 진짜 교차 순서는 사가. 재구축 열거 커서는 `event_id`(UUIDv7) keyset이지 순서 보장 아님 — 전용 `global_seq`는 불채택 ([[22.event-identity-and-global-ordering]])
+- [x] 교차 애그리거트 프로젝션 순서 규칙 없음 — **닫힘(reframe)**: 교차 순서는 정확성 비의존(멱등+per-aggregate 버전 가드가 흡수), 진짜 교차 순서는 사가. `global_seq`는 열거 커서지 순서 보장 아님 ([[22.event-identity-and-global-ordering]])
 - [ ] read-your-writes 미해결 + 클라 표면화 미정 (→ 횡단 ②)
 - [ ] read-model 테이블 DDL 소유·마이그레이션 툴 미명 (→ 횡단 ⑤)
 - [ ] blue-green swap 원자성 메커니즘 보류(alias vs app-switch) — 재구축 정확성이 여기 의존 + swap 창 도착 이벤트 미처리
