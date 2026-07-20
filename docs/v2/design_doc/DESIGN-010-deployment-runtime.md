@@ -38,6 +38,8 @@ V2의 목표 런타임 토폴로지를 확정한다:
 
 ## 4. Proposed Solution
 
+> **[2026-07-20 개정]** 아래 §4의 엣지 서술은 **Ingress(ingress-nginx, TLS) + Spring Cloud Gateway** 두 홉으로 쓰였으나, ADR-024(authentication-boundary) 결정 4와 정합화해 **Envoy Gateway(Gateway API) 단일 홉**으로 대체됐다(SCG는 ADR-024가 기각한 ①). 원 서술은 이력으로 남기며, 확정 내용은 하단 "## 개정 (2026-07-20)" 참조.
+
 ### 4.1 배치 단위 (logical workload)
 
 V2의 런타임 구성요소는 일곱이다. 모듈과의 대응 관계를 먼저 못 박는다.
@@ -235,11 +237,29 @@ sequenceDiagram
 - ADR: ADR-012(kafka-hosting-msk-vs-self-managed) · ADR-013(db-hosting-and-read-write-topology) · ADR-005(event-store-mysql-table)
 - 계승: ADR-008(reservation)
 
+## 개정 (2026-07-20) — 엣지: Ingress(ingress-nginx)+SCG → Envoy Gateway(Gateway API)
+
+§4.1·§4.2·§4.4·§5와 다이어그램은 엣지를 **Ingress(ingress-nginx, TLS) + API Gateway(Spring Cloud Gateway, 검증)** 두 홉으로 그렸다. 이 서술을 **Envoy Gateway(Gateway API) 단일 홉**으로 대체한다. 원문은 이력 보존을 위해 남긴다.
+
+**바뀐 것**
+- 엣지 = **Envoy Gateway** 하나. TLS 종단·경로 라우팅·무상태 JWT 검증(`SecurityPolicy`, JWKS 참조)·클레임 헤더 주입·rate limit을 한 제품이 진다. 별도 Ingress(ingress-nginx)와 SCG 앱은 두지 않는다.
+- 흐름: `Client → Envoy Gateway(TLS+JWT+strip+헤더+rate limit) → command/query`. `/auth/**`는 JWT 정책 미부착으로 통과 → 인증 서버.
+- 인증 서버(Spring Authorization Server)의 역할은 그대로 — 발급·refresh rotation·JWKS 노출. Envoy Gateway가 그 JWKS URL을 `SecurityPolicy`에 걸어 검증한다.
+
+**이유**
+- **SCG는 ADR-024 결정 4가 이미 기각한 ①(게이트웨이 앱 직접)이다.** 본 문서(2026-06-30)는 ADR-024 확정 전 서술이라 SCG를 그대로 뒀고, Accepted ADR와 충돌 상태였다 — 이 개정으로 정합화.
+- **ingress-nginx는 OSS에서 무상태 JWT 검증이 1급 기능이 아니다**(NGINX Plus 상용) → `auth_request`로 외부 검증 앱을 하나 더 세워야 함 = ADR-024가 피하려던 "인증 위해 앱 세우기". 기각.
+- **Envoy Gateway = Gateway API 표준 구현**(구세대 ingress controller 개념 대체), 내부 엔진 Envoy라 모델 B(mesh mTLS) 승격 경로도 이어짐.
+- 근거 상세·로컬 실습 확인 경로: 07-k8s-edge-gateway-study.
+
+§5의 "관리형(AWS API Gateway) 기각"(k3s~EKS 패리티) 논거는 유효하며, 인클러스터 엣지 = **Envoy Gateway**로 읽는다.
+
 ## Changelog
 
 | 날짜 | 변경 내용 |
 |------|-----------|
 | 2026-06-30 | 초안 작성 — DESIGN-010 템플릿 적용, 09-deployment-runtime.md에서 변환 |
+| 2026-07-20 | 개정 — 엣지 프록시를 Ingress(ingress-nginx)+SCG에서 Envoy Gateway(Gateway API) 단일 홉으로 대체(ADR-024 결정 4와 정합, 07-k8s-edge-gateway-study 수용). 원 서술은 §개정 참조. |
 
 ---
 
