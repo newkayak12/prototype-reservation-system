@@ -36,8 +36,8 @@ V1은 인증(JwtFilter·토큰 발급)이 adapter-module 안에 있었다. V2는
 | 라이브러리 | 버전 | 용도 |
 |-----------|------|------|
 | `spring-boot-starter-security` | `3.4.5` | 인증 서버 보안 기반 |
-| `spring-boot-starter-oauth2-authorization-server` | ⚠️ **카탈로그 미등재 — 추가 필요** | Spring Authorization Server(발급·JWKS 표준) |
-| `jjwt` | `0.12.6` | JWT 생성/서명 (V1 계승 — SAS 미채택 시 직접 발급 경로) |
+| `spring-boot-starter-oauth2-authorization-server` | **카탈로그 추가 필요(확정)** | Spring Authorization Server — **채택 확정**([[RFC-020-authentication-boundary-gateway]] ✅ 종결 2026-06-30 · [[ADR-024]] 결정 6: 기성 IdP(Keycloak 등) 기각, SAS 직접 구축) |
+| `jjwt` | `0.12.6` | JWT 서명/검증 하위 유틸(SAS 내부 키 처리 보조) — V1 계승 직접발급 경로는 **더 이상 대안이 아님**(SAS로 확정) |
 | `spring-security-crypto` | `6.4.2` | credential 해싱(password) |
 | `spring-boot-starter-data-jpa` | `3.4.5` | `authenticate` 테이블(`current_refresh_jti` 컬럼) |
 | `mysql-connector-j` | `8.0.33` | 드라이버 |
@@ -45,7 +45,7 @@ V1은 인증(JwtFilter·토큰 발급)이 adapter-module 안에 있었다. V2는
 | (테스트) `spring-security-test` | (Boot BOM) | 인증 흐름 |
 | (테스트) `kotest-*` / `testcontainers-mysql` | `5.9.0` / `2.0.3` | rotation·JTI 재사용 테스트 |
 
-> ⚠️ **라이브러리 결정 필요**: Spring Authorization Server(`spring-boot-starter-oauth2-authorization-server`)를 `libs.versions.toml`에 추가할지, 아니면 V1처럼 `jjwt` 직접 발급으로 갈지 확정. [[DESIGN-010]] §4.2는 "Spring Authorization Server"를 명시 → **카탈로그 추가 권장**. redisson/`data-redis`는 **불필요** — refresh 무상태화로 Redis 사본 제거([[DESIGN-017]] §4.1).
+> **확정**: 인증 서버 구현 방식은 [[RFC-020-authentication-boundary-gateway]](✅ 종결 2026-06-30)와 [[ADR-024]] 결정 6이 이미 정했다 — **Spring Authorization Server 직접 구축**, 기성 IdP(Keycloak 등)는 기각(블랙박스라 [[ADR-020]]이 정한 JTI 재사용 탐지를 코드로 남길 수 없음). `spring-boot-starter-oauth2-authorization-server`를 `libs.versions.toml`에 추가한다. §5 구조도의 커스텀 `LoginEndpoint`/`RefreshEndpoint`/`JwtIssuer`는 SAS의 확장점(로그인/로그아웃 통합, JTI 재사용 탐지) 위에 구현하는 것으로 Phase 7-4에서 재검토한다 — SAS의 기본 필터체인·엔드포인트와 겹치지 않는지 확인 필요. redisson/`data-redis`는 **불필요** — refresh 무상태화로 Redis 사본 제거([[DESIGN-017]] §4.1).
 
 ## 5. 구조
 
@@ -97,7 +97,7 @@ auth-server-module/com.reservation.auth
 
 ## 8. 할 일
 
-- [ ] SAS 채택 여부 확정 + 카탈로그 의존성 추가(⚠️ §4)
+- [ ] SAS 카탈로그 의존성 추가(§4 — 채택은 확정, [[RFC-020]]·[[ADR-024]])
 - [ ] 모듈 뼈대 + JWT 발급(access+refresh) + JWKS
 - [ ] refresh rotation + `current_refresh_jti`
 - [ ] JTI 재사용 탐지 → 전 세션 무효화
@@ -108,7 +108,7 @@ auth-server-module/com.reservation.auth
 
 - **M-7**: `authenticate` 컨텍스트 존속 범위 — (a) auth-server 완전 흡수 (b) command-user 병합 (c) 축소 유지
 - **M-8**: 배포 단위 — (a) 별도 Spring Boot 앱 (b) 같은 프로세스, 모듈만 분리
-- **라이브러리**: SAS vs jjwt 직접 발급 확정
+- ~~라이브러리: SAS vs jjwt 직접 발급 확정~~ — **확정**: SAS 채택 → [[RFC-020]](종결 2026-06-30) · [[ADR-024]] 결정 6. 남은 것은 §5 구조도를 SAS 확장점 기준으로 재검토하는 실행 과제(Phase 7-4)
 
 ## 10. 악마의 변호인 (Devil's Advocate)
 

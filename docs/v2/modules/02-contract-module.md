@@ -70,9 +70,9 @@ interface AbstractEvent {
 }
 ```
 
-### 5.2 페이로드 정책 (미결, 방향만) — ES/비-ES 분기
+### 5.2 페이로드 정책 — event-carried 일원화 ([[RFC-029]] 🏷 합의 2026-07-05)
 
-[[DESIGN-008]] §4.12는 "thin(Zero Payload) 지향"을 잠정 전제로 깐다. [[DESIGN-003]] 자기리뷰는 **ES=이벤트-carried(불변이라 실어도 stale 아님) / 비-ES=Zero Payload** 분기를 제안한다. contract 이벤트 필드 설계 시 이 분기를 반영하되, 최종 확정은 스키마 RFC([[RFC-029]] event-carried-payload-uniform)에서.
+**확정**: 모든 내부 도메인 이벤트(ES·비-ES 구분 없이)는 **event-carried**로 통일한다 — 이벤트가 발생 시점의 값을 페이로드에 직접 싣는다. [[DESIGN-003]] 자기리뷰가 제안했던 "ES=event-carried / 비-ES=Zero Payload" 분기안은 RFC-029가 **supersede**했다 — 매 이벤트마다 "이게 ES 컨텍스트인가"를 판단해야 하는 인지 부담·오적용 위험을 없애기 위해 단일 규칙으로 통일됐다. Zero Payload("식별자만 싣고 소비 측이 최신 상태를 조회") 정책은 **폐기**됐다 — ES 재생(replay) 시 v3 이벤트에 조회 시점의 v5 값이 박히는 time-travel 오염(트리아지 C02)을 근본에서 차단한다. "현재 값"이 필요한 프로젝션은 해당 소스의 갱신 이벤트를 별도 구독·조인해 해결한다([[RFC-029]] — 페이로드 정책이 막지 않는다).
 
 ## 6. 할 일
 
@@ -84,7 +84,7 @@ interface AbstractEvent {
 
 ## 7. 미결
 
-- **M**: 페이로드 thin/fat 및 ES/비-ES 분기 확정 → [[RFC-029]]
+- ~~페이로드 thin/fat 및 ES/비-ES 분기 확정~~ — **확정**: event-carried 일원화, Zero Payload 폐기 → [[RFC-029]] (합의 2026-07-05, §5.2)
 - **M**: 업캐스터·`eventType` 레지스트리를 contract에 둘지 infra/application에 둘지 → [[RFC-022]] · [[DESIGN-019]] §6
 
 ## 8. 악마의 변호인 (Devil's Advocate)
@@ -103,7 +103,7 @@ interface AbstractEvent {
 
 ### 반론
 
-1. **[structural · high]** *§5.2 페이로드 정책이 이미 종결된 상위 결정과 모순된다.* — Steel-man: "최종 확정은 스키마 RFC에서"라 미결로 남기는 건 신중해 보인다. 그러나 [[RFC-029]]는 **2026-07-05 합의**로 "ES=event-carried / 비-ES=Zero Payload" **분기 제안 자체(D-003 line 193)를 supersede**하고 event-carried 일원화로 닫았으며, 통합 이벤트는 이미 값을 싣는다고 못박았다([[RFC-023]] 정합, RFC-029 Non-goal). 이 문서 §5.2·§7-M은 폐기된 분기를 여전히 "방향"으로 들고 미결로 표기한다 — **이미 죽은 정책에 맞춰 이벤트 필드를 설계할 위험**이 그대로 남아 있다. 선례: 상위 RFC가 supersede한 뒤 갱신 안 된 하위 스펙에 맞춰 스키마를 구현하는 drift — 흔한 실패 패턴.
+1. **[structural · high] — 해소됨(2026-07-19 동기화)** *§5.2 페이로드 정책이 이미 종결된 상위 결정과 모순된다.* — 이 반론은 §5.2·§7-M이 폐기된 ES/비-ES 분기안을 여전히 "방향"으로 들고 미결 표기하고 있을 때 성립했다. §5.2를 [[RFC-029]](합의 2026-07-05)의 event-carried 일원화 결정으로 갱신했다 — 이제 이 문서와 상위 RFC가 정합한다.
 2. **[assumption · high]** *모듈 존재 근거가 상위 RFC의 YAGNI 논거와 정면충돌한다.* — Steel-man: 계약을 별도 모듈로 반출하면 경계가 명시되어 규율이 선다. 그러나 [[RFC-022]] 논점 3은 "**지금은 우리 코드만 이 이벤트를 읽으니**" JSON 유지·Avro/레지스트리 미도입(YAGNI)을 결론냈다. 같은 전제(외부 컨슈머 없음)라면 §1의 "이벤트 스키마가 곧 **팀/서비스 간 계약**"이라는 격상도, `eventVersion`·published 봉투 apparatus도 아직 **없는 생산자/소비자 독립성**을 위한 선반영이다. RFC-022는 그 전제로 Avro를 유예하면서, 이 모듈은 같은 전제 위에 계약 세리머니를 Phase 7-1 최우선으로 세운다 — 동일 YAGNI 기준의 비일관 적용. 선례: 서비스를 결합만 늘리는 공용 "common/contract" jar의 조기 반출.
 3. **[structural · medium]** *하나의 봉투가 이벤트 스토어 의미를 published 계약으로 누설한다.* — Steel-man: 봉투 통일은 추적메타·정체성을 한곳에 모아 편하다. 그러나 `sequenceNo`는 쓰기모델/이벤트 스토어의 순서 개념인데, 이걸 query/auth가 소비하는 **공유 계약 봉투**에 실으면 내부 저장 순서가 published 언어로 샌다. 게다가 [[DESIGN-019]] line 114는 event_store에 **contract(통합) 이벤트를 저장하지 말라**(리플레이가 발행 계약에 묶임)고 명시하고 §6은 스토어에 내부 `StoredEvent`를 넣는다 — 그렇다면 통합 이벤트 봉투가 왜 스토어 정체성 필드(`sequenceNo`)를 지녀야 하는지 근거가 무너진다. 선례: 전송·저장·계약을 겸하는 봉투-갓오브젝트가 관심사 누설로 진화를 잠근다.
 

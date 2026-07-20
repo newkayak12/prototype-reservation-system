@@ -46,7 +46,7 @@ command-module/command-adapter
     │   │   ├── ReservationCommandController.kt   # POST /reservations, POST /reservations/{id}/cancel
     │   │   └── dto/                              # 요청/응답 DTO (+ validation)
     │   └── out/
-    │       ├── EventStoreJpaAdapter.kt           # EventStorePort 구현 (append-only, optimistic)
+    │       ├── EventStoreJpaAdapter.kt           # EventStorePort 구현 (append-only, L0 UNIQUE 백스톱 예외 번역 — ADR-016)
     │       ├── OutboxJpaAdapter.kt               # OutboxPort 구현
     │       ├── StoredEventJpaEntity.kt           # event_store 매핑
     │       ├── OutboxJpaEntity.kt
@@ -59,15 +59,22 @@ command-module/command-adapter
 
 ## 5. 핵심 설계
 
-### 5.1 EventStoreJpaAdapter — append-only + 동시성 백스톱 ([[DESIGN-003]] §4.1)
+### 5.1 EventStoreJpaAdapter — append-only + L0 예외 번역 ([[DESIGN-003]] §4.1 · [[ADR-016]])
 
 ```kotlin
 @Component
 class EventStoreJpaAdapter(private val repo: StoredEventJpaRepository) : EventStorePort {
     override fun append(events: List<StoredEvent>) {
-        // (aggregate_id, sequence_no) UNIQUE = 정확성 백스톱(L0, 절대 제거 금지)
-        // 위반 시 DataIntegrityViolation → application이 리플레이-재시도 or 409 매핑
-        repo.saveAll(events.map(::toEntity))
+        // (aggregate_id, sequence_no) UNIQUE = L0 정확성 백스톱(절대 제거 금지).
+        // 정상 경로 경합은 04의 AggregateLockPort(Redisson L1 + DB 폴백 L1')가 append 이전에 이미 직렬화한다 —
+        // 여기서의 UNIQUE 위반은 락 유실 등 잔여 엣지 케이스에서만 발생한다.
+        try {
+            repo.saveAll(events.map(::toEntity))
+        } catch (e: DataIntegrityViolationException) {
+            // 같은 세션에서 재시도하지 않는다 — 세션이 이미 오염됐을 수 있어 in-place 재시도는 비결정적이다.
+            // 타입 있는 예외로 번역해 애플리케이션이 "infra는 raw 예외를 절대 노출하지 않는다"는 경계를 지키게 한다.
+            throw AggregateConflictException(events.first().aggregateId)
+        }
     }
     override fun load(aggregateId: String, fromSeq: Long) =
         repo.findByAggregateIdAndSequenceNoGreaterThanEqualOrderBySequenceNo(aggregateId, fromSeq)
@@ -85,7 +92,7 @@ JwtFilter는 **여기 없다**. 엣지(API Gateway)가 JWT를 검증하고 `X-Us
 
 ## 6. 할 일
 
-- [ ] `EventStoreJpaAdapter` (append-only + optimistic concurrency)
+- [ ] `EventStoreJpaAdapter` (append-only + `DataIntegrityViolationException` → `AggregateConflictException` 번역)
 - [ ] `StoredEventJpaEntity` + JPA Repository (event_store 매핑)
 - [ ] `OutboxJpaAdapter` + 엔티티
 - [ ] 비-ES: `StateStoreJpaAdapter` (도메인 상태 ↔ JPA 수동 매핑, `@Entity` 도메인 금지)
@@ -107,15 +114,15 @@ JwtFilter는 **여기 없다**. 엣지(API Gateway)가 JWT를 검증하고 `X-Us
 **Steel-man**: 팀이 이미 숙달한 Spring Data JPA/Testcontainers 스택을 재사용해 별도 이벤트스토어 엔진 도입 비용 없이 append-only + `(aggregate_id, sequence_no)` UNIQUE로 정확성을 확보하고, 컨텍스트별 수직 슬라이스(reservation/·restaurant/)로 인바운드·아웃바운드를 응집시킨다.
 
 **숨은 가정**
-1. Hibernate가 insert-only 엔티티를 다룰 때 세션(1차 캐시·dirty checking·flush 순서) 오버헤드와 의미론이 append 워크로드에 무해하다.
-2. UNIQUE 위반이 flush 시점에 깔끔하게 잡히고, 그 예외 이후에도 같은 트랜잭션/세션에서 "리플레이-재시도"(5.1)가 성립한다.
+1. ~~Hibernate가 insert-only 엔티티를 다룰 때 세션 오버헤드·의미론이 append 워크로드에 무해하다~~ — 더 이상 핵심 리스크가 아니다: 정상 경합은 애초에 락(04 `AggregateLockPort`)이 append 이전에 직렬화하므로, UNIQUE 위반 자체가 예외 케이스로 축소됐다.
+2. UNIQUE 위반 이후 **같은 세션에서 재시도하지 않는다**는 전제가 이제 §5.1 코드에 명시적으로 반영돼 있다 — 재시도는 애플리케이션이 새 트랜잭션/유스케이스 호출로 다시 시도할 때만 일어난다.
 3. 도메인↔JPA 수동 매핑과 파생 쿼리 메서드가 이벤트 스키마·애그리거트 수가 늘어도 국소적으로 싸게 유지된다.
 
 **반론**
-1. `[정확성]` · **high** · 선례: Axon/EventStoreDB가 JPA가 아닌 전용 JDBC/append 경로를 쓰는 이유. — `saveAll` flush 중 `(aggregate_id, sequence_no)` UNIQUE가 터지면 `DataIntegrityViolationException`이 나는데, 이 시점 Hibernate 영속성 컨텍스트는 이미 오염(부분 flush·insert 순서 깨짐)된다. 세션 `clear()` 없이 같은 트랜잭션에서 5.1이 약속한 "리플레이-재시도"를 돌리면 stale 엔티티가 재-flush되며 비결정적으로 깨진다. 즉 동시성 백스톱을 "예외로 잡아 재시도"하는 계약이 JPA 세션 의미론과 정면 충돌한다.
+1. `[정확성]` · **high — 해소됨(2026-07-20 동기화)** · 선례: Axon/EventStoreDB가 JPA가 아닌 전용 JDBC/append 경로를 쓰는 이유. — 이 반론은 §5.1이 "UNIQUE 위반 → 같은 세션에서 리플레이-재시도"를 암묵 전제할 때 성립했다. §5.1을 갱신해 (a) 정상 경합은 04의 `AggregateLockPort`(Redisson L1+DB 폴백 L1')가 append 전에 이미 직렬화하고, (b) 잔여 UNIQUE 위반은 `DataIntegrityViolationException`을 잡아 **같은 세션에서 재시도하지 않고** `AggregateConflictException`으로 타입 번역해 던지도록 명시했다 — 오염된 세션에서의 비결정적 in-place 재시도라는 근본 결함이 제거됐다.
 2. `[결합]` · **medium** · 선례: no clear precedent — speculative concern. — 어댑터가 event_store **물리 스키마**에 이중 강결합한다: 매핑은 컬럼명에, 로드는 파생 메서드명 `findByAggregateIdAndSequenceNoGreaterThanEqualOrderBySequenceNo`에 하드코딩된다. 파티셔닝·PK 변경·아카이빙 등 append-only 스토어에서 흔한 물리 진화가 포트 시그니처와 무관하게 어댑터를 깨뜨린다.
 3. `[응집도]` · **medium** · 선례: 헥사고날 원전은 인바운드/아웃바운드 어댑터를 분리. — 컨트롤러(web-slice·MockK)와 영속(Testcontainers·실 MySQL)은 변경 동인과 테스트 비용이 정반대인데 한 모듈로 묶으면 web+jpa+security+testcontainers 의존을 전부 끌고 오고, 아웃바운드 한 줄 수정이 인바운드까지 재빌드·재테스트시킨다. (컨텍스트별 수직 슬라이스라는 반론 방어는 유효하나, 그것이 인바운드·아웃바운드 **기술 스택 혼재**까지 정당화하진 않는다.)
 
-**핵심 취약점**: 5.1의 "UNIQUE 위반 → application이 리플레이-재시도"가 Hibernate 세션 오염 위에 세워져 있다는 점. 동시성 정확성의 근간이 ORM 우발 동작에 의존하므로, 재시도 시 조용한 이벤트 유실/중복 append가 발생할 수 있다.
+**핵심 취약점**: 정확성-재시도 결합(구 반론 1)은 해소됐다. **남은 핵심 취약점은 반론 2** — event_store 물리 스키마(컬럼명·파생 쿼리 메서드명)에 대한 이중 강결합으로, 파티셔닝·PK 변경 같은 흔한 진화가 포트 시그니처와 무관하게 어댑터를 깨뜨릴 수 있다는 점이다.
 
 **가역성**: reversible — 포트 경계(`EventStorePort`)가 살아 있어 어댑터 내부를 JPA→JDBC/전용 append로 교체하는 건 되돌릴 수 있다. 단 "예외 기반 동시성"을 대외 계약으로 굳혀 application·테스트가 그 예외 매핑에 의존하기 시작하면 그 계약 자체는 one-way door에 가까워진다.

@@ -21,15 +21,15 @@
 
 ### 7-2: command-core (Day 6-10) → [[03-command-core]]
 
-`EventSourcingAggregate`/`StatefulAggregate` · TimeTable·Reservation ES 전환 · Kotest 상태전이 · ArchUnit 컨텍스트 경계.
+`EventSourcingAggregate`/`StatefulAggregate` · TimeTable·Reservation ES 전환 · Kotest 상태전이 · Konsist 컨텍스트 경계([[RFC-031]] — ArchUnit 아님).
 
 ### 7-3: command-application (Day 11-14) → [[04-command-application]]
 
-EventStore/Outbox/StateStore 포트 · EventSerializer(eventType 레지스트리) · UseCase · core→contract 매핑 · JUnit+MockK.
+EventStore/Outbox/StateStore/AggregateLock 포트 · EventSerializer(eventType 레지스트리) · UseCase(비관 락 — [[ADR-016]]) · core→contract 매핑 · Kotest `BehaviorSpec`+MockK([[ADR-014]]).
 
 ### 7-4: command-adapter + infrastructure + auth-server (Day 15-22) → [[05-command-adapter]] · [[06-command-infrastructure]] · [[09-auth-server-module]]
 
-Flyway(event_store/outbox) · EventStoreJpaAdapter · Outbox relay(SKIP LOCKED) · Kafka producer · Command Controller · 인증 서버 · Testcontainers.
+Flyway(event_store/outbox) · EventStoreJpaAdapter(예외 번역: `AggregateConflictException`) · Outbox relay(ShedLock 단일 리더 — [[RFC-025]]) · Kafka producer · Command Controller · 인증 서버(Spring Authorization Server — [[RFC-020]]·[[ADR-024]]) · Testcontainers.
 
 ### 7-5: query — projection + read model 서버 (Day 23-28) → [[07-query-projection-server]] · [[08-query-read-model-server]]
 
@@ -57,19 +57,21 @@ Parallel Consumer 설정 · TimeTableAvailability/ReservationList/RestaurantSear
 | M-6 | Read DB 물리 분리 시점 | (a) 초기부터 별 스키마 (b) 추후 분리 | [[08-query-read-model-server]] |
 | M-7 | `authenticate` 컨텍스트 존속 범위 | (a) auth 흡수 (b) user 병합 (c) 축소 유지 | [[09-auth-server-module]] |
 | M-8 | auth-server 배포 단위 | (a) 별도 앱 (b) 같은 프로세스, 모듈만 분리 | [[09-auth-server-module]] |
-| M-9 | SAS vs jjwt 직접 발급 | 카탈로그 의존성 추가 여부 | [[09-auth-server-module]] |
+| M-9 | ~~SAS vs jjwt 직접 발급~~ | **확정: SAS 채택** — [[RFC-020]](종결 2026-06-30)·[[ADR-024]] 결정 6 | [[09-auth-server-module]] |
 
 ## 3. 설계 반박 → 구현 시 확정 항목 (Devil's Advocate 트리아지)
 
-| # | 항목 | 귀속 |
-|---|------|------|
-| C-1 | event_store + outbox **동일 트랜잭션·datasource** 명문화 | [[06-command-infrastructure]] · [[DESIGN-003]] |
-| C-2 | 다중 소스 프로젝션 원자성·순서 | [[07-query-projection-server]] §6 |
-| C-3 | Zero Payload 재처리 time-travel 오염 → ES=event-carried 분기 | [[02-contract-module]] · [[RFC-029]] |
-| C-4 | DLQ 재생·relay 병렬성 순서 보존 | [[RFC-025]] |
-| C-5 | read-your-writes(예약 확정 직후) 정책 | [[RFC-030]] · 신규 ADR |
-| C-6 | projector 쓰기 병목 스케일(HA 레플리카는 읽기만) | [[DESIGN-004]] · [[DESIGN-010]] |
-| C-7 | 상시 Redis 락 vs 락프리 낙관 append — 도메인별 혼용 | [[04-command-application]] · [[DESIGN-003]] |
+**2026-07-20 갱신**: C-3·C-4·C-5·C-7은 해당 RFC가 합의되고 모듈 문서에 반영되어 **해소**됐다. C-1·C-2·C-6은 여전히 미결 — 실측(k6) 또는 명시적 설계 결정이 필요하며, 문서 동기화만으로는 안 닫힌다.
+
+| # | 항목 | 귀속 | 상태 |
+|---|------|------|------|
+| C-1 | event_store + outbox **동일 트랜잭션·datasource** 명문화 | [[06-command-infrastructure]] · [[DESIGN-003]] | 미결 — RFC-025가 Non-goal로 명시 유예("구현 시 확인"), 저장소 분리 시 one-way door |
+| C-2 | 다중 소스 프로젝션 원자성·순서 | [[07-query-projection-server]] §6 | 미결 — 부분 갱신을 정상 동작으로 받아들일지 첫 레퍼런스에서 확정 필요 |
+| C-3 | ~~Zero Payload 재처리 time-travel 오염~~ | [[02-contract-module]] · [[RFC-029]] | **해소** — event-carried 일원화 확정(합의 2026-07-05), §5.2 갱신 완료 |
+| C-4 | ~~DLQ 재생·relay 병렬성 순서 보존~~ | [[RFC-025]] | **해소** — ShedLock 단일 relay + LWW seq 가드 + DLQ=알림/재구축, 06·07 갱신 완료 |
+| C-5 | ~~read-your-writes(예약 확정 직후) 정책~~ | [[RFC-030]] · 신규 ADR | **해소** — `sequenceNo` 토큰 + `ReadFreshnessGate`, 08 갱신 완료 (대기 상한 수치는 구현 시 결정) |
+| C-6 | projector 쓰기 병목 스케일(HA 레플리카는 읽기만) | [[DESIGN-004]] · [[DESIGN-010]] | 미결 — 실제 쓰기 상한 미측정, 레플리카로 못 가려짐 |
+| C-7 | ~~상시 Redis 락 vs 락프리 낙관 append~~ | [[04-command-application]] · [[DESIGN-003]] | **해소** — 비관 락(Redisson L1+DB 폴백 L1')+UNIQUE 백스톱 확정([[RFC-014]]·[[ADR-016]]), 04 갱신 완료 |
 
 ## 4. 관련 문서
 

@@ -157,7 +157,8 @@ include(
 | Spring Boot | `3.4.5` | BOM |
 | Spring Framework | `6.2.1` | |
 | Gradle | Version Catalog(`libs.versions.toml`) + TYPESAFE_PROJECT_ACCESSORS | |
-| Detekt | `1.23.7` (maxIssues: 0) | 컨텍스트 경계 규칙도 여기 편입 |
+| Detekt | `1.23.7` (maxIssues: 0) | 스타일·정적분석 전용 |
+| Konsist | (신규 — [[RFC-031]]) | 컨텍스트 경계·계층 방향·core 순수성 재확인(Tier 2, Gradle 그래프 보완). **한계**: `eventType` 문자열/enum 판별자 기반 런타임 분기(타입 미참조)는 이 도구로도 못 잡음 — 코드 리뷰 컨벤션으로 보완 필요 |
 | Spotless | `6.25.0` + Ktlint `1.2.1` | |
 | Jacoco | `0.8.11` | |
 

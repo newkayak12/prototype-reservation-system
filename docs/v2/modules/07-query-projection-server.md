@@ -92,22 +92,33 @@ graph LR
 각 projector는 **자기 전용 컨슈머 그룹**을 가진다. `reservation.reservation` 토픽을 `ReservationListProjector`와 (식당명 비정규화가 필요한) 다른 projector가 각자 오프셋으로 독립 소비.
 
 - **리밸런싱 전략**: `cooperative-sticky`(incremental) — stop-the-world 방지, 영향받는 파티션만 점진 이양
-- **competing consumers**: 한 projector 수평 확장 = 같은 그룹에 인스턴스 추가. 병렬 상한 = 파티션 수. 동일 `aggregate_id`는 한 인스턴스가 순서대로
+- **두 개의 서로 다른 스케일 축(혼동 주의)**:
+  - **인스턴스 내부 동시성** — Parallel Consumer의 `max-concurrency`(§3.1, 4→8→16)가 한 인스턴스가 맡은 파티션들의 메시지를 KEY별 스레드 풀로 병렬 처리한다. 이 축은 파티션 수와 무관하게 튜닝 가능 — §3.1의 "20→200 msg/s"는 **이 축**의 개선이다.
+  - **인스턴스 간 수평 확장(competing consumers)** — 같은 컨슈머 그룹에 인스턴스를 추가하는 것. **병렬 상한 = 파티션 수**(Kafka 컨슈머 그룹 메커니즘) — 파티션 수를 넘는 인스턴스는 idle 상태로 남는다. 동일 `aggregate_id`는 항상 같은 파티션·같은 인스턴스가 순서대로 처리
+  - **운영 함정**: lag이 커졌다고 인스턴스를 파티션 수 이상으로 늘리면 초과분은 그냥 논다 — 그 경우 먼저 `max-concurrency`를 올렸는지(인스턴스 내부 축) 확인하고, 그래도 부족하면 파티션 증설(인스턴스 간 축 자체를 늘림)을 검토한다.
 
-### 5.2 멱등 — inbox 패턴 ([[DESIGN-008]] §4.5)
+### 5.2 멱등 + 순서 보장 — inbox의 aggregate별 `sequence_no` LWW 가드 ([[RFC-025]] 결정 2·5)
 
 ```kotlin
-// read model 갱신 + inbox 기록을 한 트랜잭션으로
+// read model 갱신 + inbox(사건 dedup) + seq 가드(LWW)를 한 트랜잭션으로
 @Transactional
 fun on(event: ReservationCancelled) {
-    if (inbox.exists(event.eventId)) return          // 이미 처리 → skip
-    readModel.upsert(project(event))                 // 비정규화 갱신
-    inbox.mark(event.eventId)                         // 처리완료 (같은 txn)
+    if (inbox.exists(event.eventId)) return                          // 이미 처리 → skip (event_id dedup)
+
+    val lastApplied = inbox.lastAppliedSeq(event.aggregateId)         // aggregate별 last-applied sequence_no
+    if (lastApplied != null && event.sequenceNo <= lastApplied) {     // Last-Writer-Wins 가드
+        inbox.mark(event.eventId)                                    // superseded — 무시하되 dedup 기록은 남김
+        return
+    }
+
+    readModel.upsert(project(event), appliedSequenceNo = event.sequenceNo)  // 비정규화 갱신 + 원본 seq 보유
+    inbox.mark(event.eventId, aggregateId = event.aggregateId, appliedSeq = event.sequenceNo)  // 같은 txn
 }
 ```
 
-- **inbox 생략 자격**: "순서 역전 없음 **+** 자연 멱등 upsert"를 **동시에** 만족할 때만. 둘 중 하나라도 깨지면 inbox 유지. Zero Payload upsert는 두 번 처리해도 결과 동일이라 생략 후보지만, 파티션 증설·리밸런싱·relay 재시도가 순서 가정을 국소적으로 깰 수 있어([[DESIGN-008]] 자기리뷰) **컨슈머별 검증 후** 결정
-- **inbox 수명**: 무한 축적 금지. 재처리 윈도를 덮을 만큼 짧게 보존 + 주기적 GC
+- **inbox 스키마 확장**([[RFC-025]] 결정 5): `event_id` dedup(현행)의 **상위집합**으로, aggregate별 last-applied `sequence_no`를 추가한다. e2(seq6)가 e1(seq5)보다 먼저 도착해도 e2가 이기고, 뒤늦게 온 e1은 가드가 떨어뜨린다 — 재정렬 자가치유. read model row 자체도 적용한 원본 `sequence_no`를 `appliedSequenceNo` 컬럼으로 보유한다 — [[08-query-read-model-server]] §7의 read-after-write 신선도 확인이 이 컬럼을 그대로 읽는다.
+- **inbox 생략 자격**: "순서 역전 없음 **+** 자연 멱등 upsert"를 **동시에** 만족할 때만 event_id-only로 축소 가능. 둘 중 하나라도 깨지면(대부분의 프로젝션이 이에 해당) 위 seq 가드를 유지. commutative 집계(순서 무관)는 `event_id` dedup만으로 안전([[RFC-025]] 논점 2)
+- **inbox 수명**: 무한 축적 금지. 재처리 윈도를 덮을 만큼 짧게 보존 + 주기적 GC (aggregate별 last-applied seq는 GC 대상에서 제외 — LWW 가드의 영구 토대)
 
 ### 5.3 오프셋·드레인 ([[DESIGN-008]] §4.6)
 
@@ -160,11 +171,11 @@ lag = 토픽 최신 오프셋 − 컨슈머 커밋 오프셋 = read model 최종
 
 > **미결(반박)**: 읽기 확장을 "HA 레플리카"로만 풀면 프로젝션 **쓰기** 병목은 안 풀린다(프라이머리 집중). 핫 스트림 lag은 레플리카로 안 줄어듦 — projector 쪽 스케일 축을 별도로 관리해야([[DESIGN-004]] 자기리뷰).
 
-### 8.2 DLQ 운영 루프 ([[DESIGN-008]] §4.10)
+### 8.2 DLQ 운영 루프 ([[RFC-025]] 결정 3)
 
-즉시 3회 재시도 → 지수 백오프 → DLQ 격리 → **알람 채널(Slack) + 기본 수동 재생**.
+즉시 3회 재시도 → 지수 백오프 → DLQ 격리 → **알람/감사 로그(Slack)뿐 — 라이브 스트림에 되쏘지 않는다.**
 
-> **미결(반박)**: DLQ 수동 재생이 순서 보장을 깬다 — seq 5가 DLQ로 빠지고 6·7이 처리된 뒤 5를 재생하면 애그리거트별 순서 역전. inbox는 "중복"만 보지 "앞 순서 건너뜀"은 못 봄 → [[RFC-025]] ordering-relay-dlq-reconciliation에서 확정.
+**확정**([[RFC-025]] 🏷 합의 2026-07-04, 결정 3): DLQ 수동 재생은 supersede됐다. DLQ로 격리된 이벤트는 event_store에 원본이 그대로 남아 있으므로, 복구는 **버그 수정 후 프로젝션 재구축**([[RFC-011]])이다 — 재구축은 event_store를 seq 순서로 재적용하므로 순서가 보장된다. DLQ를 라이브 스트림에 되쏘면 seq 5가 6·7 처리 후 뒤늦게 재주입되어 순서가 역전되므로 — 이 경로는 **금지**. 순서 결정적 소비(사가·부수효과)는 재시도 실패 시 해당 aggregate의 꼬리째 격리하고, 다른 aggregate는 계속 처리한다([[RFC-025]] 결정 4).
 
 ### 8.3 비-멱등 부수효과 ([[DESIGN-008]] §4.8)
 
@@ -179,7 +190,8 @@ lag = 토픽 최신 오프셋 − 컨슈머 커밋 오프셋 = read model 최종
 - [ ] 레퍼런스: `TimeTableAvailabilityProjector`
 - [ ] 레퍼런스: `ReservationListProjector` (+ 식당명 비정규화 다중 소스)
 - [ ] 레퍼런스: `RestaurantSearchProjector`
-- [ ] inbox 테이블 + 멱등 기록/GC (도메인별 스키마)
+- [ ] inbox 테이블 (`event_id` dedup + aggregate별 last-applied `sequence_no`) + 멱등·LWW 가드 기록/GC (도메인별 스키마 — [[RFC-025]] 결정 5)
+- [ ] read model row에 `appliedSequenceNo` 컬럼 추가 (read-after-write 신선도 확인용 — [[08-query-read-model-server]] §7)
 - [ ] Flyway: read model + inbox 스키마 (도메인별 분리)
 - [ ] 재구축·catch-up·blue-green 오케스트레이션([[RFC-011]])
 - [ ] DLQ + 재시도/백오프 + Slack 알람
@@ -193,7 +205,7 @@ lag = 토픽 최신 오프셋 − 컨슈머 커밋 오프셋 = read model 최종
 | P-1 | 다중 소스 프로젝션 원자성·순서 | 구현 사이클 · [[DESIGN-004]] |
 | P-2 | inbox 생략 자격 컨슈머별 검증 | 구현 사이클 · [[DESIGN-008]] |
 | P-3 | Zero Payload 재처리 time-travel 오염 | [[02-contract-module]] · [[RFC-029]] |
-| P-4 | DLQ 재생·relay 병렬성 순서 보존 | [[RFC-025]] |
+| P-4 | ~~DLQ 재생·relay 병렬성 순서 보존~~ — **확정**: ShedLock 단일 relay(06) + LWW seq 가드(§5.2) + DLQ=알림/재구축(§8.2) | [[RFC-025]] (합의 2026-07-04) |
 | P-5 | projector 쓰기 병목 스케일 | [[DESIGN-004]] · [[DESIGN-010]] |
 
 ## 11. 악마의 변호인 (Devil's Advocate)
@@ -212,32 +224,28 @@ lag = 토픽 최신 오프셋 − 컨슈머 커밋 오프셋 = read model 최종
 
 ### 반론
 
-**반론 1 — 이 문서는 자기 의존 문서(RFC-025)에 이미 superseded된 결정을 그대로 싣고 있다.**
-Steel-man: 재시도→DLQ→수동 재생(§8.2)과 competing-consumers/SKIP LOCKED(§5.1)는 표준 메시징 운영 패턴이다.
-이 문서 한정 비판: [[RFC-025]]는 상태 **🏷 합의(2026-07-04)**로, (a) SKIP LOCKED 경쟁 relay를 **단일 순차 relay(ShedLock)**로 supersede하고, (b) **DLQ는 라이브 스트림에 절대 되쏘지 않음 — 복구는 event_store 재구축**으로 수동 재생을 supersede했다. 그런데 §8.2는 여전히 "기본 수동 재생"을, §5.1은 여전히 "competing consumers"를 규범으로 적는다. P-4는 이걸 "[[RFC-025]]에서 확정"이라며 미결로 미루지만 RFC-025는 이미 확정됐다 — 문서가 자기 의존성보다 뒤처져 있다. 구현자가 이 문서만 보면 이미 폐기된 복구 절차를 코딩한다.
-`[구조적 / structural]` · **치명적(critical)** · 선례: 상류 결정과 하류 런북이 어긋난 채 배포되어 on-call이 폐기된 절차를 따라 사고를 키운 사례는 흔하다 — Knight Capital(구·신 코드 경로 혼재로 45분 만에 $440M 손실).
+**반론 1 — 이 문서는 자기 의존 문서(RFC-025)에 이미 superseded된 결정을 그대로 싣고 있다.** `[구조적 / structural]` · **치명적(critical) — 해소됨(2026-07-19 동기화)**
+이 반론은 §8.2가 "기본 수동 재생"을, §5.1이 "competing consumers"를 규범으로 적고 있을 때 성립했다. §5(06 연동)를 ShedLock 단일 relay로, §8.2를 "DLQ=알림/재구축, 되쏘지 않음"으로 갱신해 [[RFC-025]](🏷 합의 2026-07-04) 결정 1·3과 이제 정합한다. 남은 것은 이 drift가 재발하지 않도록 RFC 합의 시 module 문서를 전파 대상에 포함시키는 프로세스뿐이다(원 반론의 선례: Knight Capital 사례는 "구·신 절차 혼재 배포"의 일반적 위험성 예시로 유효하게 남는다).
 
-**반론 2 — 이 projector의 inbox 스키마로는 문서가 약속한 정확성 불변식을 구현할 수 없다.**
-Steel-man: §7이 "정확성 불변식 재사용(per-aggregate 순서 + 멱등 upsert + `sequence_no` 버전 가드)"을 명시했으니 순서 역전은 가드가 잡는다.
-이 문서 한정 비판: 그 가드의 물리적 토대를 [[RFC-025]] 결정 5가 못박았다 — "inbox에 **aggregate별 last-applied `sequence_no`** 추가". 그런데 §5.2의 inbox는 `event_id`만 기록한다("봤나?"만 봄). sequence_no가 없으면 Last-Writer-Wins 가드도, 갭 감지도 불가능하다. 즉 §7이 "재사용한다"고 선언한 불변식은 §5.2가 정의한 자료구조 위에서 **성립하지 않는다**. §9 할 일 목록에도 "inbox 테이블 + 멱등 기록/GC"만 있고 seq 칼럼이 없다. 문서가 스스로 모순된다.
-`[구조적 / structural]` · **높음(high)** · 선례: dedup만 하고 순서 갭을 못 보는 컨슈머가 재정렬 하에 조용히 오염되는 것은 at-least-once 프로젝션의 전형적 실패다(RFC-025 §59가 직접 자인).
+**반론 2 — 이 projector의 inbox 스키마로는 문서가 약속한 정확성 불변식을 구현할 수 없다.** `[구조적 / structural]` · **높음(high) — 해소됨(2026-07-19 동기화)**
+§5.2의 inbox를 `event_id` dedup + aggregate별 last-applied `sequence_no`(LWW 가드)로 확장하고, read model row에 `appliedSequenceNo`를 추가해 [[RFC-025]] 결정 5가 요구하는 물리적 토대를 실제로 갖췄다. §7이 선언한 "정확성 불변식 재사용"이 이제 §5.2의 자료구조 위에서 실제로 성립한다.
 
-**반론 3 — "병렬 상한 = 파티션 수"와 "Parallel Consumer로 파티션 한계 돌파"는 같은 문서 안에서 충돌하고, 진짜 상한(DB 쓰기)은 아무도 재지 않았다.**
+**반론 3 — "병렬 상한 = 파티션 수"와 "Parallel Consumer로 파티션 한계 돌파"는 같은 문서 안에서 충돌하고, 진짜 상한(DB 쓰기)은 아무도 재지 않았다.** `[가정 / assumption]` · **높음(high) — 표현은 명확화됨(2026-07-20), DB 쓰기 상한 미측정은 미해소**
 Steel-man: 파티션 증설로 competing consumers를 늘리면 lag이 준다(§8.1).
-이 문서 한정 비판: §3은 Parallel Consumer의 존재 이유가 "파티션=동시성" 한계를 깨서 단일 컨슈머로 20→200 msg/s를 내는 것이라고 자랑한다. 그런데 §5.1·§8.1은 "병렬 상한 = 파티션 수"라는 **정반대** 스케일 모델을 규범으로 삼는다. 두 모델이 공존한다. 게다가 무트래픽 프로토타입에서 실제 상한은 파티션도 concurrency도 아니라 **read model DB upsert**다 — 특히 RFC-025의 LWW seq 가드는 aggregate 행에 대한 read-modify-write(버전 비교)라 핫 애그리거트(예: 식당 리네임이 수천 예약 행에 팬아웃)에서 **행 잠금 경합**을 만든다. concurrency를 4→8→16으로 올릴수록 경합은 악화된다. 문서는 이 상한을 한 번도 측정하지 않는다(P-5는 "레플리카로 안 풀린다"까지만 말하고 쓰기 상한 자체는 미측정).
-`[가정 / assumption]` · **높음(high)** · 선례: 컨슈머 병렬도를 올려도 downstream DB 쓰기에서 막혀 lag이 안 줄고 오히려 락 경합으로 악화되는 것은 CDC/프로젝션 파이프라인의 흔한 벽이다.
+이 문서 한정 비판(갱신): §3의 "20→200 msg/s"와 §5.1·§8.1의 "병렬 상한=파티션 수"는 실제로는 **서로 다른 축**이다 — 전자는 인스턴스 내부 KEY별 동시성(max-concurrency), 후자는 인스턴스 간 수평 확장(Kafka 컨슈머 그룹 메커니즘)이며 §5.1에 이제 이 구분과 "인스턴스를 파티션 수 이상 늘리면 idle"이라는 운영 함정을 명시했다 — **표현 충돌(§충돌 부분)은 해소**됐다. 그러나 무트래픽 프로토타입에서 실제 상한이 파티션도 concurrency도 아니라 **read model DB upsert**라는 지적은 그대로 유효하다 — RFC-025의 LWW seq 가드는 aggregate 행에 대한 read-modify-write(버전 비교)라 핫 애그리거트(예: 식당 리네임이 수천 예약 행에 팬아웃)에서 **행 잠금 경합**을 만들고, concurrency를 4→8→16으로 올릴수록 경합은 오히려 악화될 수 있다. 이 DB 쓰기 상한은 여전히 미측정이다(P-5는 "레플리카로 안 풀린다"까지만 말함) — k6 등 실측이 필요한 항목([[12-implementation-plan]] C-6과 동일 사안).
+선례: 컨슈머 병렬도를 올려도 downstream DB 쓰기에서 막혀 lag이 안 줄고 오히려 락 경합으로 악화되는 것은 CDC/프로젝션 파이프라인의 흔한 벽이다.
 
 ### 다중 페르소나 공격
 
 **On-call / SRE — 새벽 3시.**
-`reservation.reservation` lag이 임계치를 넘겨 페이지가 뜬다. 런북대로 projector 인스턴스를 4→6으로 스케일아웃한다 — 파티션이 4개라 5·6번째 인스턴스는 그냥 놀고(idle) lag은 안 줄어든다(§5.1의 "상한=파티션"이 물어버린 함정). 진짜 원인은 한 인기 식당의 `RestaurantRenamed`가 수천 예약 행에 팬아웃하며 LWW 버전 가드가 행 잠금을 붙잡는 DB 경합인데, 대시보드엔 그 지표가 없다(lag만 있음, §8.1). 동시에 DLQ Slack 알람이 울리고 이 문서 §8.2 런북은 "수동 재생"을 지시한다. 그대로 seq 5를 되쏘지만 6·7은 이미 처리됐고, 순서 역전을 잡아줄 LWW 가드는 이 projector에 구현돼 있지 않다(반론 2) — 한 예약이 취소→확정으로 뒤집힌 채 굳는다. 최후 수단인 blue-green 재구축을 걸지만 event_store 전체 리플레이는 진행률 표시도 fencing도 없어(§7 "원자 스왑"은 한 줄), 몇 시간짜리 리플레이가 끝날 때까지 green이 blue의 마지막 오프셋을 실제로 따라잡았는지 확인할 길이 없다.
+`reservation.reservation` lag이 임계치를 넘겨 페이지가 뜬다. 런북대로 projector 인스턴스를 4→6으로 스케일아웃한다 — 파티션이 4개라 5·6번째 인스턴스는 그냥 놀고(idle) lag은 안 줄어든다(§5.1의 "상한=파티션"이 물어버린 함정, 반론 3 — **미해소**). 진짜 원인은 한 인기 식당의 `RestaurantRenamed`가 수천 예약 행에 팬아웃하며 LWW 버전 가드(§5.2, 이제 실제로 구현됨)가 행 잠금을 붙잡는 DB 경합인데, 대시보드엔 그 지표가 없다(lag만 있음, §8.1). DLQ Slack 알람이 울려도 이제 §8.2는 재구축을 지시하므로(반론 1 — **해소됨**) 순서 역전 재주입 리스크는 없지만, blue-green 재구축 자체는 진행률 표시도 fencing도 없어(§7 "원자 스왑"은 한 줄), 몇 시간짜리 리플레이가 끝날 때까지 green이 blue의 마지막 오프셋을 실제로 따라잡았는지 확인할 길이 없다.
 
 **주니어 — 입사 첫날.**
-§5.2의 깔끔한 inbox 예시를 그대로 베껴 `ReservationListProjector`를 짠다 — `event_id`만 기록. RFC-025가 요구하는 aggregate `sequence_no`는 이 문서 어디에도 코드로 없으니 넣을 생각을 못 한다. 그리고 §3.1의 "복합 키 `timeTableId_timeTableOccupancyId`"를 Parallel Consumer의 ordering 키로 쓴다 — 하지만 §5 mermaid와 RFC-021의 파티션 키는 `aggregate_id`다. 순서 단위가 갈린다: 같은 aggregate의 두 이벤트가 서로 다른 KEY 레인으로 흩어져 부하 상황에서 재정렬된다. 로컬 단일 스레드 E2E(§10)는 통과한다 — 재정렬은 동시성이 있어야 드러나므로. 프로덕션 concurrency=16에서만 조용히 깨진다.
+§3.1의 "복합 키 `timeTableId_timeTableOccupancyId`"를 Parallel Consumer의 ordering 키로 쓴다 — 하지만 §5 mermaid와 RFC-021의 파티션 키는 `aggregate_id`다. 순서 단위가 갈린다: 같은 aggregate의 두 이벤트가 서로 다른 KEY 레인으로 흩어져 부하 상황에서 재정렬된다(반론 3 — **미해소**). 로컬 단일 스레드 E2E(§10)는 통과한다 — 재정렬은 동시성이 있어야 드러나므로. 프로덕션 concurrency=16에서만 조용히 깨진다. (inbox의 `event_id`-only 문제는 §5.2 갱신으로 더 이상 해당하지 않는다.)
 
 ### 핵심 취약점 (하나)
 
-**projector의 inbox가 `event_id`-only라는 점.** relay 재정렬·DLQ·재구축 하의 정확성 서사(§7·§8) 전체가, 문서가 정의하지도 스케줄하지도 않은 자료구조(aggregate별 last-applied `sequence_no`, [[RFC-025]] 결정 5)에 의존한다. 이 한 칼럼의 부재가 반론 1·2·3과 두 페르소나 시나리오를 모두 관통한다.
+**남은 것은 반론 3 — "병렬 상한 = 파티션 수"와 "Parallel Consumer로 파티션 한계 돌파"의 공존, 그리고 미측정 상태인 진짜 상한(read model DB upsert, 특히 LWW seq 가드의 read-modify-write 행 잠금 경합).** inbox `event_id`-only 문제(구 핵심 취약점)와 relay/DLQ 순서 모순(반론 1)은 §5.2·§8.2 갱신으로 해소됐다.
 
 ### 가역성
 

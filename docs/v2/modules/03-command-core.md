@@ -19,7 +19,7 @@ command-module hexagonal 4층 중 **가장 안쪽**. 순수 도메인.
 |------|-----|
 | **허용 의존** | `shared-module` **만** |
 | **금지** | JPA · Spring · `contract-module` · 다른 command-* 서브모듈 · `query` |
-| **순수성 보장** | build.gradle.kts에서 JPA/Spring 의존성 **물리적 배제** → 컴파일 타임 강제(ArchUnit 아님, Gradle 그래프) |
+| **순수성 보장** | build.gradle.kts에서 JPA/Spring 의존성 **물리적 배제** → 컴파일 타임 강제(Konsist 아님, Gradle 그래프) — Konsist는 Gradle이 못 막는 컨텍스트 간 참조만 보완([[RFC-031]] 2-tier) |
 | **구현 시점** | **Phase 7-2** |
 
 > **contract 금지의 함의**([[DESIGN-002]] 자기리뷰 §301 · [[DESIGN-019]]): 애그리거트가 반환하는 `DomainEvent`는 **core 자체 타입**이다. 이를 contract 통합 이벤트로 번역하는 계층은 `command-application`이다. core는 발행 이벤트를 모른다.
@@ -73,7 +73,7 @@ class Reservation private constructor(/* immutable state */) {
 
 ### 5.2 컨텍스트 간 참조 금지
 
-`reservation → restaurant` 직접 import 금지. 서브모듈로는 못 막으므로(같은 서브모듈 내 패키지) **ArchUnit/Konsist**로 강제, 위반 시 빌드 실패([[DESIGN-002]] §4.5).
+`reservation → restaurant` 직접 import 금지. 서브모듈로는 못 막으므로(같은 서브모듈 내 패키지) **Konsist**로 강제, 위반 시 빌드 실패([[DESIGN-002]] §4.5 · [[RFC-009-testing-quality-gates]] 결정 1 · [[RFC-031]]).
 
 ## 6. 할 일
 
@@ -82,7 +82,7 @@ class Reservation private constructor(/* immutable state */) {
 - [ ] 레퍼런스: `TimeTable` 애그리거트 ES 전환 (가장 단순한 ES 대상)
 - [ ] 레퍼런스: `Reservation` 애그리거트 ES 전환 (사가 포함)
 - [ ] 순수 Kotlin 검증 전략 확정 (jakarta.validation 대체 — 미결 M-4)
-- [ ] ArchUnit/Konsist 컨텍스트 간 참조 금지 규칙
+- [ ] Konsist 컨텍스트 간 참조 금지 규칙
 - [ ] 단위 테스트 (Kotest — 상태 전이 검증)
 
 ## 7. 미결 / 반박 대응
