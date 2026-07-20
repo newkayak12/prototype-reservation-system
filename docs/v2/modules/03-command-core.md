@@ -73,7 +73,9 @@ class Reservation private constructor(/* immutable state */) {
 
 ### 5.2 컨텍스트 간 참조 금지
 
-`reservation → restaurant` 직접 import 금지. 서브모듈로는 못 막으므로(같은 서브모듈 내 패키지) **Konsist**로 강제, 위반 시 빌드 실패([[DESIGN-002]] §4.5 · [[RFC-009-testing-quality-gates]] 결정 1 · [[RFC-031]]).
+`reservation → restaurant` 직접 import 금지. 서브모듈로는 못 막으므로(같은 서브모듈 내 패키지) **Konsist**로 강제, 위반 시 빌드 실패([[DESIGN-002]] §4.5 · [[RFC-009-testing-quality-gates]] 결정 1 · [[RFC-031]] R3).
+
+> **규칙 설계(2026-07-20 갱신)**: `reservation`↔`restaurant` 같은 쌍을 도메인 개수만큼 일일이 열거하지 않는다. `command.core` 직계 자식 패키지 중 `support`(공유 베이스 클래스, 예외)를 제외한 목록을 "도메인 목록"으로 동적으로 잡고, 그 목록 안에서 서로 다른 두 도메인 간 상호 import를 금지하는 **일반 규칙 하나**로 강제한다([[RFC-031-architecture-fitness-functions-archunit]] R3). 신규 도메인이 패키지로 추가되면 이 목록에 자동 편입되므로, 도메인이 늘어날 때마다 규칙을 수동으로 갱신해야 하는 문제가 설계상 발생하지 않는다.
 
 ## 6. 할 일
 
@@ -82,7 +84,7 @@ class Reservation private constructor(/* immutable state */) {
 - [ ] 레퍼런스: `TimeTable` 애그리거트 ES 전환 (가장 단순한 ES 대상)
 - [ ] 레퍼런스: `Reservation` 애그리거트 ES 전환 (사가 포함)
 - [ ] 순수 Kotlin 검증 전략 확정 (jakarta.validation 대체 — 미결 M-4)
-- [ ] Konsist 컨텍스트 간 참조 금지 규칙
+- [ ] Konsist 컨텍스트 간 참조 금지 규칙 — `support` 제외 도메인 목록을 동적으로 순회하는 일반 규칙으로 구현(쌍 열거 금지, §5.2 · [[RFC-031]] R3)
 - [ ] 단위 테스트 (Kotest — 상태 전이 검증)
 
 ## 7. 미결 / 반박 대응
