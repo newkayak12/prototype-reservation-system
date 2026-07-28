@@ -230,3 +230,4 @@ cycles/
 .claude/v1/harness/
 .claude/settings.json
 .claude/worktrees
+.claude/.harness-markers/
