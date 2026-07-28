@@ -103,6 +103,6 @@ V1은 한 앱 안에서 호출 순서대로 트랜잭션을 탔다. 확정 다�
 
 ## 추가 정보 (More Information)
 
-- **미결정 (→ 구현 사이클)**: outbox↔event_store 동일 datasource 전제(단일 트랜잭션 발행 원자성의 근거) 확인, 꼬리 격리 park 저장소의 구체 스키마, relay 처리량이 실제로 병목이 될 때의 파티션드 relay/CDC 전환 임계, ShedLock 리더 장애·재선출 소요 시간.
+- **미결정 (→ 구현 사이클)**: 꼬리 격리 park 저장소의 구체 스키마, relay 처리량이 실제로 병목이 될 때의 파티션드 relay/CDC 전환 임계, ShedLock 리더 장애·재선출 소요 시간. (outbox↔event_store 동일 datasource 전제는 [[ADR-027-event-store-outbox-atomicity]]로 확정 — 불변식 I-OUTBOX-1 + CDC 졸업 경로.)
 - 관련: [[RFC-003-messaging-delivery]] · [[RFC-025-ordering-relay-dlq-reconciliation]] · [[DESIGN-008-messaging-topology]] · [[DESIGN-020-ordering-and-failure-handling]] · [[RFC-021-event-identity-and-global-ordering]] · [[RFC-011-projection-rebuild-catchup]] · [[DESIGN-010-deployment-runtime]] · [[ADR-005-event-store-mysql-table]] · [[ADR-022-event-identity]] · [[ADR-016-aggregate-concurrency-pessimistic-lock]] · [[ADR-008-saga-orchestration-vs-choreography]] · [[ADR-018-event-store-recovery-semantics]]
 - 계승: `09.event-ordering-and-delivery-guarantee.md`(v2 초기 스케치) — 파티션 키=`aggregate_id`·effectively-once 골격은 유지하되, relay 단일성(SKIP LOCKED→단일 순차 relay)과 DLQ 처리(수동 재생→재구축)는 [[RFC-025-ordering-relay-dlq-reconciliation]] 합의로 이 ADR이 대체한다.

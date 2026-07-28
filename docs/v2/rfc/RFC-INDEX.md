@@ -1,7 +1,7 @@
 # RFC-INDEX — V2 결정 RFC 인덱스
 
 - **성격**: 인덱스 (결정 없음, 추적 전용)
-- **업데이트**: 2026-06-25
+- **업데이트**: 2026-07-19
 
 > RFC-001이 큰 그림을 잡았고, 이후 RFC들이 주제별 결정을 닫는다.
 > 정독 순서는 아래 "열려있는 RFC" 섹션의 우선순위를 따른다.
@@ -42,14 +42,17 @@
 | 21 | [[RFC-021-event-identity-and-global-ordering]] | 이벤트 정체성·전역 순서 (`event_id`만 채택, `global_seq` 불채택) | 🔒 닫힘 (2026-06-30) | [[22.event-identity-and-global-ordering]] |
 | 22 | [[RFC-022-event-schema-evolution]] | 이벤트 스키마 진화 (업캐스팅·타입 레지스트리·스키마 포맷) | ✅ 종결 (2026-06-30) | [[08-event-store-lifecycle]]·[[10.event-schema-evolution]] |
 | 23 | [[RFC-023-event-schema-contract-management]] | 이벤트 스키마 관리: 생산자·소비자 계약 (공유 통합-이벤트 모듈·계약 테스트) | ✅ 종결 (2026-06-30) | [[11-environments-and-testing]]·[[14.testing-strategy]] |
+| 31 | [[RFC-031-architecture-fitness-functions-archunit]] | 아키텍처 적합성 함수 (ArchUnit) — V2 모듈 경계·순수성·컨텍스트 격리 자동 강제 | 🌱 초안 | [[00-module-index]]·[[03-command-core]] + 규칙 design_doc |
+| 32 | [[RFC-032-non-es-state-copy-reordering]] | 비-ES 상태 사본 재정렬 — 단일 순차 relay가 봉합, 별도 순서 토큰 불요 | 🏷 합의 (2026-07-22) | ADR 불요(RFC-025로 귀속) |
 
 > ※ RFC 번호와 ADR 번호는 1:1이 아니다 — 이벤트 정체성·전역 순서는 RFC-021이 소유하지만 대응 ADR은 [[22.event-identity-and-global-ordering]](22번)다. (이전 RFC-022 결번은 RFC-023→022·RFC-024→023 당김으로 메워졌다.)
 
 ## 열려있는 RFC (우선순위 순)
 
-열린 RFC 없음 — 전 RFC 닫힘 (2026-06-30). 후속은 design_doc 보강 + 신규/개정 ADR로 이어진다.
+- [[RFC-031-architecture-fitness-functions-archunit]] 🌱 초안 — V2 모듈 구조([[00-module-index]] §2)의 경계·순수성·컨텍스트 격리를 ArchUnit fitness function으로 자동 강제. 강제 시점은 Phase 7.
 
 > ✅ RFC-021(닫힘)·RFC-011 합의 완료 (2026-06-25) · RFC-022 종결 (2026-06-30) — 게이트·정합 확인 후 닫음.
+> 🌱 RFC-031 신규 오픈 (WIP=1) — 이전 전 RFC 닫힘 이후 첫 후속 결정.
 
 ## 진행 규칙
 

@@ -4,7 +4,7 @@
 - **작성자**: Team
 - **작성일**: 2026-07-04
 - **최종 수정일**: 2026-07-04
-- **관련 RFC**: [[RFC-025-ordering-relay-dlq-reconciliation]]
+- **관련 RFC**: [[RFC-025-ordering-relay-dlq-reconciliation]] · [[RFC-032-non-es-state-copy-reordering]](비-ES 사본 — §4a)
 - **관련 ADR**: 신규 예정
 - **관련 Design Doc**: [[DESIGN-008-messaging-topology]] · [[DESIGN-007-consistency-and-sagas]] · [[DESIGN-006-aggregate-design]]
 
@@ -18,7 +18,7 @@
 
 ## 2. 발행 측 — 단일 순차 relay
 
-- **ShedLock 리더**가 outbox 폴링을 단독 수행. outbox를 `sequence_no` ASC로 읽어 순차 발행.
+- **ShedLock 리더**가 outbox 폴링을 단독 수행. outbox를 **삽입 순서(`id` ASC)**로 읽어 순차 발행(전역 단조 키 = PK `id` — `sequence_no`는 애그리거트별 순번이라 혼합 outbox의 전역 정렬 키가 될 수 없다).
 - **Kafka 프로듀서**: `enable.idempotence=true`(순서·중복 보장). 같은 `aggregate_id` → 같은 파티션 → 순차 도착.
 - SKIP LOCKED 경쟁 소비(D-008 §4.9)는 **폐기**. 처리량이 실증 문제가 되면 → 파티션드 relay(`aggregate_id` 해시로 분할, 각 relay가 자기 파티션 순서만 보장) 또는 CDC 졸업(트리아지 C47).
 
@@ -27,8 +27,8 @@ sequenceDiagram
     participant R as relay (ShedLock 리더, 단독)
     participant O as outbox
     participant K as Kafka (partition=aggId)
-    loop sequence_no ASC
-        R->>O: SELECT … ORDER BY sequence_no
+    loop id ASC (삽입 순서)
+        R->>O: SELECT … ORDER BY id
         R->>K: publish (idempotent producer)
         R->>O: mark published
     end
@@ -56,6 +56,16 @@ on event(aggregateId, seq, payload):
 - e2(seq 6) 먼저, e1(seq 5) 나중 → e2 적용(6), e1은 5 ≤ 6 → **drop**. 최종 상태 = 취소(정확).
 - **핵심**: "무시"는 무조건이 아니라 **더 새 이벤트가 이미 이겼을 때만**. 실패분이 아직 최신(seq > applied)이면 가드가 **적용**한다 → 유실 없음.
 - [[RFC-021-event-identity-and-global-ordering]] §63 "더 과거를 덮지 마라" 가드의 구체화.
+
+## 4a. 비-ES 상태 사본 — 별도 순서 토큰 불요 ([[RFC-032-non-es-state-copy-reordering]])
+
+§4 LWW 가드는 ES의 `sequence_no`(애그리거트별 단조)를 전제한다. 비-ES 컨텍스트(schedule·user·menu·category·company)에는 그 토큰이 없다([[RFC-021-event-identity-and-global-ordering]] §54). 그럼 비-ES 상태가 query DB 사본(`MenuView` 등, [[DESIGN-004-read-model]] §4.2)으로 복제될 때 순서를 무엇으로 지키나.
+
+**결론: 지키는 것은 사본별 토큰이 아니라 §2의 단일 순차 relay다.** produce 재정렬의 유일한 발생 지점은 `relay→produce`이고, 단일 순차 relay(삽입 순서 단독 드레인 + partition=`aggregate_id` + idempotent producer)가 그것을 이미 닫는다. ES/비-ES 공통이라 비-ES 사본에 추가 순서 토큰이 필요 없다.
+
+- **중복**(relay 페일오버 재발행 = at-least-once): relay 작업이 outbox 행 락에 묶여 두 인스턴스가 겹쳐도 순서를 뒤집지 못하고 재발행만 중복될 뿐 — `event_id` dedup(현 inbox)이 흡수.
+- **freshness**: 비-ES는 bounded staleness 유지([[RFC-030-read-freshness-command-response-contract]]) — 이 절은 사본의 *최종 정확성*만 다룬다.
+- **잔여** — dedup 보존창 밖 stale 재전달(inbox가 `event_id`를 GC한 뒤 아주 늦은 중복이 새 값을 덮음): 무트래픽 프로토타입 스코프 밖. 발생 시 재구축(§6·[[RFC-011-projection-rebuild-catchup]])으로 자가치유. 실측으로 문제화되면 그때 가드를 도입하되, 쓸 토큰은 비-ES 동시성이 `@Version` 낙관락을 택할 경우([[RFC-014-aggregate-concurrency-control]]) 그 컬럼의 부산물이다 — 이 설계가 지금 신설하지 않는다.
 
 ## 5. 꼬리 격리 (순서 결정적 컨슈머)
 
@@ -97,6 +107,6 @@ graph LR
 
 ## 10. 관련 문서
 
-- RFC: [[RFC-025-ordering-relay-dlq-reconciliation]]
-- 분석: [[06-design-weakness-triage]] (C09, 연계 C06·C46·C47)
+- RFC: [[RFC-025-ordering-relay-dlq-reconciliation]] · [[RFC-032-non-es-state-copy-reordering]]
+- 분석: [[06-design-weakness-triage]] (C09, 연계 C06·C46·C47) · [[12-non-es-outbox-ordering]] · [[11-data-schema-contract-conformance]] §1
 - 이웃: [[DESIGN-008-messaging-topology]] · [[DESIGN-007-consistency-and-sagas]] · [[RFC-011-projection-rebuild-catchup]] · [[RFC-021-event-identity-and-global-ordering]]

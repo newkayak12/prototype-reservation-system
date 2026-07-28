@@ -86,5 +86,21 @@ V1은 인증이 앱 안에 있었다 — `JwtFilter`가 매 요청 Bearer 토큰
 
 ## 추가 정보 (More Information)
 
-- **미결정 (→ 구현 사이클)**: 구체 프록시 제품(Envoy Gateway vs nginx ingress) 택일·배치, 라우트·필터 설정, 클레임 헤더 이름·형식, 신원 헤더 strip 규칙과 NetworkPolicy(또는 mTLS)의 구체 구현 — [[DESIGN-010-deployment-runtime]] 소관. 인증 서버 구현 설정(키 회전·OIDC 흡수, V1 `General`/`Seller` sign-in/refresh/signout 컨트롤러 이관 절차)은 cycle 소관.
+- **미결정 (→ 구현 사이클)**: 구체 프록시 제품 택일(→ 아래 2026-07-20 개정에서 **Envoy Gateway** 확정)·배치, 라우트·필터 설정, 클레임 헤더 이름·형식, 신원 헤더 strip 규칙과 NetworkPolicy(또는 mTLS)의 구체 구현 — [[DESIGN-010-deployment-runtime]] 소관. 인증 서버 구현 설정(키 회전·OIDC 흡수, V1 `General`/`Seller` sign-in/refresh/signout 컨트롤러 이관 절차)은 cycle 소관.
 - 관련: [[RFC-020-authentication-boundary-gateway]] · [[DESIGN-010-deployment-runtime]] · [[ADR-017-authorization-model]] · [[ADR-020-auth-token-transport]]
+
+---
+
+## 개정 (2026-07-20) — 엣지 프록시 제품 확정: Envoy Gateway (Gateway API)
+
+결정 4는 "② 기성 프록시 무상태 JWT 검증"까지만 정하고 **구체 제품 택일**은 [[DESIGN-010-deployment-runtime]]·구현 사이클로 미뤄 뒀다(위 "추가 정보"). [[07-k8s-edge-gateway-study]] 검토를 사용자가 수용해 그 미결정을 닫는다.
+
+**결정: 엣지 프록시 = Envoy Gateway(Gateway API 구현). ingress-nginx는 기각.**
+
+- **ingress-nginx 기각** — OSS엔 무상태 JWT 검증이 1급 기능이 아니다(NGINX Plus 상용). OSS에선 `auth_request`로 외부 검증 앱(oauth2-proxy 등)을 하나 더 세워야 하는데, 이는 결정 4가 피하려던 "인증 위해 앱 세우기"로 미끄러진다 — ②가 아니라 ③(ext_authz)로 넘어가 이 ADR 취지와 어긋난다.
+- **Envoy Gateway가 ②를 곧이곧대로 실현** — `SecurityPolicy`에 인증 서버 JWKS URL을 걸면 설정만으로 무상태 검증, `claimToHeaders`로 클레임→헤더 주입 내장. `SecurityPolicy`가 `HTTPRoute` 단위라 `/api/**`엔 JWT 정책, `/auth/**`엔 미부착 → 결정 1의 "게이트웨이는 거치되 인증만 bypass"가 앱 없이 선언으로 성립.
+- **승격 경로 유지** — 결정 2(헤더 strip·NetworkPolicy)·결정 5(ext_authz)·모델 B(mesh mTLS)가 모두 한 제품(내부 엔진 Envoy) 안에서 열려 있다. Gateway API는 표준이고 구세대 ingress controller 개념을 대체한다.
+
+이로써 [[DESIGN-010-deployment-runtime]]의 SCG(=기각된 ①)·ingress-nginx 서술도 Envoy Gateway로 정합화한다(해당 문서 2026-07-20 개정).
+
+**확인(이 선택 한정)**: 확정 근거는 로컬 실습으로 보강한다 — kind/k3d + Envoy Gateway로 경로별 JWT skip이 선언만으로 되는지, 검증 후 `X-User-*` 주입·클라 자칭 헤더 strip이 되는지 확인([[07-k8s-edge-gateway-study]] §5). 실습이 이 전제를 깨면 재검토.
