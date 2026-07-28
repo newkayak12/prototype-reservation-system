@@ -61,7 +61,7 @@ ADR-002에서 `reservation`·`timetable`·`restaurant` 셋을 진짜 ES로 정�
 
 - 이벤트 스토어 스키마·인덱스가 Flyway 마이그레이션으로 버전 관리되는지 코드 리뷰로 확인.
 - `(aggregate_id, sequence_no)` UNIQUE 제약과 append-only 규칙이 아키텍처 테스트로 강제되는지 확인.
-- 이벤트 저장과 Outbox 기록이 동일 트랜잭션 경계에 묶이는지 테스트로 검증.
+- 이벤트 저장과 Outbox 기록이 동일 트랜잭션 경계에 묶이는지 테스트로 검증(불변식 I-OUTBOX-1 · [[ADR-027-event-store-outbox-atomicity]]).
 
 ## 선택지 상세 (Pros and Cons of the Options)
 

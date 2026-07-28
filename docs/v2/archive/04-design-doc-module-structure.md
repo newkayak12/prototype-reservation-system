@@ -1,6 +1,11 @@
 # Design Doc: V2 모듈 구조
 
-> Cycle: `20260604-v2-event-sourcing-cqrs` | Phase: 4 — Design Docs
+> ⚠️ **DEPRECATED (2026-07-28)** — 구 사이클 `20260604-v2-event-sourcing-cqrs` Phase 4 초안.
+> 여기서 제안한 **`event-store-module` + `projection-module` 8모듈 토폴로지**(§2·§3)는 확정 구조로 **채택되지 않았다**.
+> 현행 확정 모듈 구조는 command-core/application/adapter/infrastructure + contract + query-projection-server/read-model-server + auth-server이며 [[DESIGN-002-module-structure]] · `modules/00~12`가 진실원이다.
+> 본문의 **`expectedVersion`·"낙관적 동시성"**(§4.2 등)도 [[ADR-016-optimistic-concurrency-control]]에서 비관 락으로 전환됐다. 이 문서는 초기 탐색 기록으로만 유효하다.
+
+> Cycle: `20260604-v2-event-sourcing-cqrs` (구) | Phase: 4 — Design Docs
 > 전제: V1 마이그레이션 없음. 0부터 새로 설계.
 
 ---

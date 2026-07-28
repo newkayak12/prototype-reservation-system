@@ -1,7 +1,8 @@
 # V1 Architecture Analysis
 
-> Cycle: `20260604-v2-event-sourcing-cqrs` | Phase: 1 — V1 구조 분석
+> Cycle: `20260604-v2-event-sourcing-cqrs` (구, 확정 사이클 `20260612-v2-cqrs-es-architecture`로 계승) | Phase: 1 — V1 구조 분석
 > 기준: 실제 코드 직접 독해 (core-module 216파일, adapter/application-module 전수 확인)
+> 참고: v1 코드에 대한 사실 분석이라 내용은 현행에서도 유효하다. V2 설계 결정은 [[index]] · `adr/`를 본다.
 
 ---
 

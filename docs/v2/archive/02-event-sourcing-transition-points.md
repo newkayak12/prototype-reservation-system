@@ -1,6 +1,11 @@
 # Event Sourcing 전환 포인트
 
-> Cycle: `20260604-v2-event-sourcing-cqrs` | Phase: 2 - 전환 포인트 도출
+> ⚠️ **DEPRECATED (2026-07-28)** — 구 사이클 `20260604-v2-event-sourcing-cqrs` Phase 2 초안.
+> 아래의 **낙관적 동시성**(§2·§판단기준)은 [[ADR-016-optimistic-concurrency-control]]에서 **비관 락으로 전환**됐고,
+> **미결 상태의 Event Store 옵션·`domain_events` 스키마**(§4)는 [[ADR-005-event-store-mysql-table]]·[[ADR-022-event-identity]]로 확정됐다.
+> §6 미결 사항도 전부 확정됨. 현행 진실원: [[index]] · `adr/` · `design_doc/`. 이 문서는 전환 판정의 **역사적 근거**로만 유효하다.
+
+> Cycle: `20260604-v2-event-sourcing-cqrs` (구) | Phase: 2 - 전환 포인트 도출
 > 선행 문서: [01-v1-architecture-analysis.md](./01-v1-architecture-analysis.md)
 
 ## 1. 전환 전략: 전부가 아니라 선별

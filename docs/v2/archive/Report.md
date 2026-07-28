@@ -1,6 +1,8 @@
 # V2 전환 현실 진단 리포트
 
-> Reservation 시스템 V2 Event Sourcing + CQRS 전환을 위한 현실 분석 및 로드맵
+> ⚠️ **DEPRECATED (2026-07-28)** — 구 사이클 초기 진단 리포트.
+> 본문의 **`reservation_event` 스키마**(§3)는 [[ADR-005-event-store-mysql-table]]로, **낙관적 동시성·`expectedVersion`**(§Phase 1)은 [[ADR-016-optimistic-concurrency-control]] 비관 락으로, **§5 옛 ADR 6개 추천 목록**은 실제 ADR-001~027로 대체됐다.
+> 진단(빈약 도메인·도메인 우선 확장)의 **문제 인식**은 여전히 유효하나, 해법·스키마·ADR 번호는 확정본을 따른다. 현행 진실원: [[index]].
 >
 > 대상 레포: [prototype-reservation-system](https://github.com/newkayak12/prototype-reservation-system)
 

@@ -1,6 +1,7 @@
 # Event Sourcing 학습 정리
 
-> Reservation 시스템 V2 전환 POC를 위한 Event Sourcing / CQRS / DDD 개념 정리
+> 📚 **역사적 학습 노트 (구 사이클)** — ES/CQRS/DDD 개념 정리 문서. 특정 설계 결정의 진실원이 아니다.
+> 확정 설계·결정은 [[index]] · `adr/` · `design_doc/`를 본다. 개념 이해용으로만 참고.
 >
 > 대상 레포: [prototype-reservation-system](https://github.com/newkayak12/prototype-reservation-system)
 

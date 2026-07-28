@@ -1,6 +1,6 @@
 # 12 · Implementation Plan (Phase 7 세부 순서 · 미결)
 
-> 허브: [[00-module-index]] | 근거: [[DESIGN-005]] (마이그레이션) · [[00-roadmap]] (Phase 7) · [[ADR-006]] (Strangler)
+> 허브: [[00-module-index]] | 근거: [[DESIGN-005]] (마이그레이션) · [[00-status-and-plan]] (Phase 7) · [[ADR-006]] (Strangler)
 
 원칙: **Strangler Fig** — 한 번에 하나의 레퍼런스 컨텍스트를 전환하며 패턴 검증.
 레퍼런스 컨텍스트: `timetable`(가장 단순한 ES 대상) → `reservation`(사가 포함).
@@ -61,11 +61,13 @@ Parallel Consumer 설정 · TimeTableAvailability/ReservationList/RestaurantSear
 
 ## 3. 설계 반박 → 구현 시 확정 항목 (Devil's Advocate 트리아지)
 
-**2026-07-22 갱신**: C-3·C-4·C-5·C-7은 RFC 합의·모듈 반영으로 **해소**. **C-6은 배치가 [[ADR-026]]로 확정**되어 실측(k6 [[08-k6-load-test-strategy]] Item B)으로 쓰기 상한 수치만 남았다. C-2 순서 갈래는 [[RFC-032]](합의 2026-07-22)로 **닫힘** — 단일 순차 relay가 ES/비-ES 재정렬을 공통 봉합, 별도 순서 토큰 불요([[DESIGN-020]] 반영). 원자성(부분 갱신 수용 여부)만 미결. **C-1만 정면으로 다룬 문서 없이 그대로 미결** — 실측 또는 명시적 설계 결정이 필요하며, 문서 동기화로는 안 닫힌다.
+**2026-07-22 갱신**: C-3·C-4·C-5·C-7은 RFC 합의·모듈 반영으로 **해소**. **C-6은 배치가 [[ADR-026]]로 확정**되어 실측(k6 [[08-k6-load-test-strategy]] Item B)으로 쓰기 상한 수치만 남았다. C-2 순서 갈래는 [[RFC-032]](합의 2026-07-22)로 **닫힘** — 단일 순차 relay가 ES/비-ES 재정렬을 공통 봉합, 별도 순서 토큰 불요([[DESIGN-020]] 반영). 원자성(부분 갱신 수용 여부)만 미결.
+
+**2026-07-28 갱신**: **C-1 닫힘** — [[ADR-027]]로 확정. A안(동일 datasource 트랜잭셔널 아웃박스)을 명명 불변식(I-OUTBOX-1)으로 못박고, one-way door 우려는 **CDC(Debezium binlog 테일링) 졸업 경로**를 공식 exit ramp로 지정해 해소. 결정은 A now / CDC later. 남는 건 졸업 트리거 수치(k6 Item B)뿐. 이로써 트리아지 C-1~C-7 전부 종결.
 
 | # | 항목 | 귀속 | 상태 |
 |---|------|------|------|
-| C-1 | event_store + outbox **동일 트랜잭션·datasource** 명문화 | [[06-command-infrastructure]] · [[DESIGN-003]] | 미결 — RFC-025가 Non-goal로 명시 유예("구현 시 확인"), 저장소 분리 시 one-way door |
+| C-1 | ~~event_store + outbox **동일 트랜잭션·datasource** 명문화~~ | [[06-command-infrastructure]] · [[DESIGN-003]] · [[ADR-027]] | **해소** — [[ADR-027]] 확정: A(동일 datasource 트랜잭셔널 아웃박스, 불변식 I-OUTBOX-1) + CDC 졸업 경로. one-way door → 탈출 가능한 문으로 전환 |
 | C-2 | 다중 소스 프로젝션 원자성·순서 | [[07-query-projection-server]] §6 · [[09-event-delivery-and-offsets]] §5 · [[12-non-es-outbox-ordering]] · [[RFC-032]] · [[DESIGN-020]] | 순서 갈래 **해소** — [[RFC-032]](합의) 단일 순차 relay가 봉합, 별도 토큰 불요. 원자성=부분 갱신을 정상 동작으로 받아들일지만 첫 레퍼런스에서 확정 필요 |
 | C-3 | ~~Zero Payload 재처리 time-travel 오염~~ | [[02-contract-module]] · [[RFC-029]] | **해소** — event-carried 일원화 확정(합의 2026-07-05), §5.2 갱신 완료 |
 | C-4 | ~~DLQ 재생·relay 병렬성 순서 보존~~ | [[RFC-025]] | **해소** — ShedLock 단일 relay + LWW seq 가드 + DLQ=알림/재구축, 06·07 갱신 완료 |
@@ -75,7 +77,7 @@ Parallel Consumer 설정 · TimeTableAvailability/ReservationList/RestaurantSear
 
 ## 4. 관련 문서
 
-- 마이그레이션: [[DESIGN-005]] · Strangler: [[ADR-006]] · 로드맵: [[00-roadmap]]
+- 마이그레이션: [[DESIGN-005]] · Strangler: [[ADR-006]] · 로드맵: [[00-status-and-plan]]
 - 런타임 배치: [[ADR-026]] · [[11-runtime-topology]] · [[DESIGN-010]] · 부하 측정: [[08-k6-load-test-strategy]]
 - 이벤트 전달/순서: [[09-event-delivery-and-offsets]] · [[12-non-es-outbox-ordering]] · [[RFC-032]] · 데이터 사전: [[00-data-index]]
 - 모듈 허브: [[00-module-index]]

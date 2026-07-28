@@ -1,7 +1,7 @@
 # V2 Module Index
 
-> Cycle: `20260604-v2-event-sourcing-cqrs` | Phase 7 준비 문서 (모듈 허브)
-> 근거: [[DESIGN-002]] (모듈 구조) · [[DESIGN-001]] (목표 아키텍처) · [[DESIGN-010]] (런타임 뷰) · [[00-roadmap]] (Phase 7)
+> Cycle: `20260612-v2-cqrs-es-architecture` | Phase 7 준비 문서 (모듈 허브)
+> 근거: [[DESIGN-002]] (모듈 구조) · [[DESIGN-001]] (목표 아키텍처) · [[DESIGN-010]] (런타임 뷰) · [[00-status-and-plan]] (Phase 7)
 
 이 문서는 **허브**다. 각 모듈의 상세(책임·의존·사용 라이브러리·패키지·할 일)는 아래 개별 문서로 분리했다. 여기서는 전체 맵·전환 대응표·의존성 그래프·문서 색인만 둔다.
 
@@ -170,4 +170,4 @@ include(
 - 쓰기 모델: [[DESIGN-003]] · 읽기 모델: [[DESIGN-004]] · 메시징: [[DESIGN-008]]
 - 재구축·catch-up: [[RFC-011]] · 이벤트 스토어 수명주기: [[DESIGN-009]]
 - 런타임 뷰: [[DESIGN-010]] · 인증 토큰: [[DESIGN-017]] · 인증 경계: [[ADR-024]] · 인가: [[DESIGN-014]]
-- 로드맵: [[00-roadmap]]
+- 로드맵: [[00-status-and-plan]]

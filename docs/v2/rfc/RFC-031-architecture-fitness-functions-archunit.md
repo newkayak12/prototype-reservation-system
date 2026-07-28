@@ -1,7 +1,7 @@
 # RFC-031: 아키텍처 적합성 함수 — Konsist
 
 - **상태**: 🌱 초안
-- **사이클**: `20260604-v2-event-sourcing-cqrs`
+- **사이클**: `20260612-v2-cqrs-es-architecture`
 - **범위**: v2 모듈 구조의 아키텍처 규칙을 사람 리뷰가 아닌 실행 가능한 테스트(fitness function)로 못 박는다. 도구는 [[RFC-009-testing-quality-gates]]가 이미 Konsist로 결정했다 — 이 RFC는 그 도구의 역할·규칙 카탈로그·강제 시점을 결정한다.
 - **선행 분석**: [[RFC-009-testing-quality-gates]](🏷 합의 2026-06-23 — 도구=Konsist 결정 1 계승) · [[ADR-014-testing-strategy]] · [[00-module-index]] §2 (의존성 매트릭스) · [[03-command-core]] §5.2 · [[DESIGN-002]] §4.4·§4.5 · [[DESIGN-019]]
 - **계승**: V1엔 해당 없음 — 경계 검증이 부재했던 것이 이 RFC가 여는 문제다.
@@ -220,7 +220,7 @@ graph LR
 - V2 greenfield 모듈에 Phase 7부터 strict(예외·baseline 없이) 적용, CI가 실질 게이트.
 - **미해결 한계**: 데이터 값 기반 타입 판별자 우회 분기(예: `eventType` 문자열 매칭)는 정적 import 분석(Gradle·Konsist 둘 다)으로 잡히지 않는다 — 코드 리뷰 컨벤션으로 보완 필요(논점 2).
 
-상세 모듈 트리·의존성 매트릭스는 [[00-module-index]], 강제 시점 순서는 [[00-roadmap]] Phase 7 참조.
+상세 모듈 트리·의존성 매트릭스는 [[00-module-index]], 강제 시점 순서는 [[00-status-and-plan]] Phase 7 참조.
 
 ---
 

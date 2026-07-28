@@ -1,23 +1,28 @@
 # V2 Event Sourcing + CQRS 전환 로드맵
 
-> Cycle: `20260604-v2-event-sourcing-cqrs` | Type: Exploration | Budget: 3개월
-> 이 문서는 사이클 전체 진행 상태의 SSOT(Single Source of Truth)이다.
+> ⚠️ **DEPRECATED (2026-07-28)** — 구 사이클 `20260604-v2-event-sourcing-cqrs`의 Phase 1~4 초안 로드맵.
+> **이 문서는 더 이상 진행 상태 SSOT가 아니다.** 현행 진실원: [[index]] · `adr/` · `design_doc/` · `modules/`.
+> Phase 구조·시간 배분은 초기 계획으로 참고만 하고, 실제 상태는 아래 정정된 표 또는 `index.md`를 본다.
 
-## 현재 상태
+> Cycle: `20260604-v2-event-sourcing-cqrs` (구) → 확정 사이클 `20260612-v2-cqrs-es-architecture` | Type: Exploration | Budget: 3개월
 
-| Phase | 상태 | 산출물 |
+## 현재 상태 (2026-07-28 정정)
+
+> 원래 이 표는 Phase 3~10을 "미시작"으로 적어 SSOT를 자처했으나, 확정 사이클이 대부분을 이미 완료했다. 아래는 실제 상태다.
+
+| Phase | 상태 | 현행 위치 |
 |---|---|---|
-| 0. 로드맵 | **진행 중** | 이 문서 |
-| 1. V1 구조 분석 | **완료 (재작성)** | [01-v1-architecture-analysis.md](./01-v1-architecture-analysis.md) |
-| 2. 전환 포인트 도출 | Draft (리뷰 필요) | [02-event-sourcing-transition-points.md](./02-event-sourcing-transition-points.md) |
-| 3. 도메인 확장 + 이벤트 스토밍 | 미시작 | — |
-| 4. Design Docs | 미시작 | — |
-| 5. ADR | 미시작 (Design Doc 확정 후) | — |
-| 6. 플래닝 | 미시작 | — |
-| 7. 모듈 구조 변경 + 구현 | 미시작 | — |
-| 8. Kafka 심화 | 미시작 | — |
-| 9. 성능 테스트 (k6) | 미시작 | — |
-| 10. 인프라 (k3s + AWS) | 미시작 | — |
+| 0. 로드맵 | 동결 (본 문서 deprecated) | `index.md`가 대체 |
+| 1. V1 구조 분석 | 완료 | [01-v1-architecture-analysis.md](./01-v1-architecture-analysis.md) |
+| 2. 전환 포인트 도출 | 완료 (확정본이 대체) | `design_doc/` · `adr/` (02 문서는 deprecated) |
+| 3. 도메인 확장 + 이벤트 스토밍 | 부분 — 도메인 설계 진행, 이벤트 카탈로그 재실시 TBD | `domain/` · `index.md` §선행 작업 |
+| 4. Design Docs | 완료 (DESIGN-001~020) | `design_doc/` |
+| 5. ADR | 완료 (ADR-001~027, 상태 Proposed) | `adr/` |
+| 6. 플래닝 | 완료 | `modules/12-implementation-plan.md` |
+| 7. 모듈 구조 변경 + 구현 | 미착수 (별도 구현 사이클) | `modules/` (설계만 존재) |
+| 8. Kafka 심화 | 설계 완료 · 구현 미착수 | `analysis/09` · `analysis/12` |
+| 9. 성능 테스트 (k6) | 전략 수립 · 실행 미착수 | `analysis/08` |
+| 10. 인프라 (k3s + AWS) | 설계 완료 · 구현 미착수 | `analysis/07` · `analysis/10` · `design_doc/10` |
 
 ---
 
