@@ -67,6 +67,7 @@ design_doc가 확정한 결정들을 ADR로 옮기는 작업 계획이다. 무�
 | ADR-017 | 인가 모델 (역할=엣지, 소유권=앱) | DESIGN-014 | ✅ |
 | ADR-020 | 인증 토큰 transport (무상태 refresh) | DESIGN-017 | ✅ |
 | ADR-024 | 인증 경계 (모델 A: 엣지 검증 + 헤더 전파) | DESIGN-010 | ✅ |
+| ADR-026 | 앱 워크로드 런타임 배치 (워크로드별 별도 배포 + 노드 분리, 단일 평탄 NS) | DESIGN-010 | ✅ |
 | ADR-015 | 결제 연동 경계 = ACL | DESIGN-015 | ✅ |
 | ADR-014 | V2 테스트 전략 (아키텍처를 테스트로 강제) | DESIGN-012 | ✅ |
 | ADR-025 | 읽기 신선도 예외 정책 | DESIGN-004 | ◽ |
@@ -91,7 +92,7 @@ design_doc가 확정한 결정들을 ADR로 옮기는 작업 계획이다. 무�
 한 design_doc이 여러 ADR을 낳고, 한 ADR이 여러 design_doc에서 근거를 끌어온다. 상세는 [[DESIGN_DOC-INDEX]] 참조.
 
 - **DESIGN-009**(최대 합류점) → ADR-005 · 010 · 018 · 022
-- **DESIGN-010** → ADR-012 · 013 · 024
+- **DESIGN-010** → ADR-012 · 013 · 024 · 026
 - **DESIGN-002** → ADR-001 · 003 · 007
 - **DESIGN-008** → ADR-009 · 021
 - 나머지는 대체로 1 design_doc : 1 ADR

@@ -43,6 +43,7 @@
 | 22 | [[RFC-022-event-schema-evolution]] | 이벤트 스키마 진화 (업캐스팅·타입 레지스트리·스키마 포맷) | ✅ 종결 (2026-06-30) | [[08-event-store-lifecycle]]·[[10.event-schema-evolution]] |
 | 23 | [[RFC-023-event-schema-contract-management]] | 이벤트 스키마 관리: 생산자·소비자 계약 (공유 통합-이벤트 모듈·계약 테스트) | ✅ 종결 (2026-06-30) | [[11-environments-and-testing]]·[[14.testing-strategy]] |
 | 31 | [[RFC-031-architecture-fitness-functions-archunit]] | 아키텍처 적합성 함수 (ArchUnit) — V2 모듈 경계·순수성·컨텍스트 격리 자동 강제 | 🌱 초안 | [[00-module-index]]·[[03-command-core]] + 규칙 design_doc |
+| 32 | [[RFC-032-non-es-state-copy-reordering]] | 비-ES 상태 사본 재정렬 — 단일 순차 relay가 봉합, 별도 순서 토큰 불요 | 🏷 합의 (2026-07-22) | ADR 불요(RFC-025로 귀속) |
 
 > ※ RFC 번호와 ADR 번호는 1:1이 아니다 — 이벤트 정체성·전역 순서는 RFC-021이 소유하지만 대응 ADR은 [[22.event-identity-and-global-ordering]](22번)다. (이전 RFC-022 결번은 RFC-023→022·RFC-024→023 당김으로 메워졌다.)
 
