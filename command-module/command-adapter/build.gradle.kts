@@ -3,8 +3,10 @@ import io.gitlab.arturbosch.detekt.Detekt
 // command-adapter: 인바운드(REST) · 아웃바운드 어댑터. 부팅 가능한 실행 모듈.
 // 허용 의존 = command-application, command-infrastructure, contract, shared. query 금지.
 // (00-module-index §2)
-tasks.named("bootJar") { enabled = true }
-tasks.named("jar") { enabled = false }
+// 부팅 가능한 실행 모듈이지만 @SpringBootApplication 진입점이 아직 없다.
+// 진입점 구현 시 bootJar=true / jar=false 로 되돌린다.
+tasks.named("bootJar") { enabled = false }
+tasks.named("jar") { enabled = true }
 
 tasks.named<Detekt>("detekt") {
     reports {
