@@ -23,6 +23,7 @@
 | 10 | [[10-test-module]] | test-module | 테스트 유틸 | Phase 7-2~ |
 | 11 | [[11-runtime-topology]] | 워크로드↔모듈 배치 | 런타임 뷰 | 참조 |
 | 12 | [[12-implementation-plan]] | Phase 7 세부 순서·미결 | 실행 계획 | 참조 |
+| 13 | [[13-phase7-checklist]] | Phase 7 진행 체크리스트 | 실시간 트래킹 | 진행중 |
 
 > **query-module을 두 문서로 나눈 이유**: query 측은 하나의 코드 모듈이지만 런타임에는 성격이 전혀 다른 두 워크로드로 뜬다 — 이벤트를 소비해 read model을 **쓰는** projection 서버(07)와, read model을 **읽어** 조회 API를 서빙하는 read model 서버(08). 둘은 동시성·스케일·장애 격리 특성이 달라([[DESIGN-010]] §4.1) 별도 문서로 상세화한다.
 
