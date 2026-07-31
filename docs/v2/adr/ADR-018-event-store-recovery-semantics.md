@@ -3,7 +3,7 @@
 - **상태**: Proposed
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-017-disaster-recovery-event-store]] · **설계**: [[DESIGN-009-event-store-lifecycle]]
-- **연관 ADR**: [[ADR-005-event-store-mysql-table]] · [[ADR-004-read-model-projection-and-replica]] · [[ADR-010-event-schema-evolution]] · [[11.es-pii-crypto-shredding]] · [[13.db-hosting-and-read-write-topology]]
+- **연관 ADR**: [[ADR-005-event-store-mysql-table]] · [[ADR-004-read-model-projection-and-replica]] · [[ADR-010-event-schema-evolution]] · [[ADR-011-es-pii-crypto-shredding]] · [[ADR-013-db-hosting-and-read-write-topology]]
 
 ---
 
@@ -56,7 +56,7 @@ append-only는 "복원"의 의미도 비튼다. 전통적 PITR은 "시점 T로 �
 | 3 | 셰딩 정합 | 이벤트 스토어 백업은 **암호문만** 담고 키를 포함하지 않는다. 키 저장소 백업은 셰딩 의미론을 깨지 않는다 — 셰딩된 키는 키 백업에서도 무효화되거나 애초에 백업 대상에서 빠진다. **복원은 이벤트의 시계를 되돌리지만 키의 시계는 되돌리지 않는다** — 이 비대칭이 크립토 셰딩을 복원에도 견디게 한다. |
 | 4 | 복구 순서 | read model 재구축 경로 자체는 [[RFC-011-projection-rebuild-catchup]]에 위임하되, 순서 불변식만 여기서 고정한다 — **① 이벤트 스토어 복원·검증 → ② read model 재구축 트리거 → ③ readiness 회복.** 진실 원천이 일관된 시점으로 복원되기 전에 재구축을 시작하면, 사라질 운명인 꼬리 이벤트를 투영하거나 빈 스토어 위에서 헛돌게 된다. |
 
-이벤트 스토어가 append-only라는 사실이 보호를 오히려 쉽게 만든다 — 변형(update/delete)이 없고 끝에 붙기만 하니, 마지막 백업 이후 *추가된* 이벤트만 따라잡으면 된다. [[13.db-hosting-and-read-write-topology]]가 HA용으로 이미 켜둔 binlog가 그대로 연속 복제·PITR의 재료가 된다 — 새 인프라를 들이는 것이 아니라 이미 있는 binlog의 용도를 복구로 확장하는 것이다.
+이벤트 스토어가 append-only라는 사실이 보호를 오히려 쉽게 만든다 — 변형(update/delete)이 없고 끝에 붙기만 하니, 마지막 백업 이후 *추가된* 이벤트만 따라잡으면 된다. [[ADR-013-db-hosting-and-read-write-topology]]가 HA용으로 이미 켜둔 binlog가 그대로 연속 복제·PITR의 재료가 된다 — 새 인프라를 들이는 것이 아니라 이미 있는 binlog의 용도를 복구로 확장하는 것이다.
 
 이벤트 페이로드의 스키마 진화·업캐스팅·직렬화 포맷·스냅샷 재생성 방식은 이 ADR의 결정 범위가 아니다 — 그 결정은 [[ADR-010-event-schema-evolution]]이 다루며, 여기서는 복구가 그 스냅샷/이벤트 포맷을 전제로 진실 원천을 재구성한다는 사실만 참조한다.
 
@@ -103,4 +103,4 @@ append-only는 "복원"의 의미도 비튼다. 전통적 PITR은 "시점 T로 �
 ## 추가 정보 (More Information)
 
 - **미결정 (→ 구현 사이클)**: "아무도 보지 못한 꼬리"의 경계를 Kafka 발행 오프셋·아웃박스 커밋 위치 중 무엇으로 판정할지([[RFC-003-messaging-delivery]]와 연동). 키 저장소 자체가 물리 장애로 유실됐을 때 키 백업의 무결성과 셰딩 정합성을 동시에 만족시키는 복원 경로([[RFC-005-pii-security]]와 연동). read model 백업이 이벤트 스토어 백업보다 최신이라 시점이 어긋나는 경우의 처리(재구축으로 통일할지 여부, [[RFC-011-projection-rebuild-catchup]]). RTO/RPO 목표·백업 보존 주기·복구 런북·복구 리허설 절차는 실트래픽·운영 부하를 봐야 의미가 있어 운영 백로그(T-18)로 미룬다.
-- 관련: [[RFC-017-disaster-recovery-event-store]] · [[DESIGN-009-event-store-lifecycle]] · [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-011-projection-rebuild-catchup]] · [[RFC-005-pii-security]] · [[RFC-003-messaging-delivery]] · [[RFC-006-saga-process-manager]] · [[ADR-005-event-store-mysql-table]] · [[ADR-010-event-schema-evolution]] · [[11.es-pii-crypto-shredding]] · [[13.db-hosting-and-read-write-topology]] · [[ADR-004-read-model-projection-and-replica]]
+- 관련: [[RFC-017-disaster-recovery-event-store]] · [[DESIGN-009-event-store-lifecycle]] · [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-011-projection-rebuild-catchup]] · [[RFC-005-pii-security]] · [[RFC-003-messaging-delivery]] · [[RFC-006-saga-process-manager]] · [[ADR-005-event-store-mysql-table]] · [[ADR-010-event-schema-evolution]] · [[ADR-011-es-pii-crypto-shredding]] · [[ADR-013-db-hosting-and-read-write-topology]] · [[ADR-004-read-model-projection-and-replica]]

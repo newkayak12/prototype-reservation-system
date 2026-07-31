@@ -53,7 +53,7 @@ controller(standalone) 슬라이스에 역할 기반 인가 시나리오를 얹�
 |---|---|
 | 멱등성·재전달 | CI 필수 |
 | 재생·스냅샷 등가 | CI 필수 |
-| 동시성·낙관적/비관 락([[ADR-016-aggregate-concurrency-pessimistic-lock]]) | CI 필수 |
+| 동시성·비관 락([[ADR-016-aggregate-concurrency-pessimistic-lock]]) | CI 필수 |
 | 재구축·catch-up | 정기/통합 |
 | 사가 보상·타임아웃([[ADR-008-saga-orchestration-vs-choreography]]) | 정기/통합 |
 | 종단 비동기 라운드트립 | 정기/통합 |

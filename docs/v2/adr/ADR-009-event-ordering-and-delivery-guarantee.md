@@ -33,7 +33,7 @@ V1은 한 앱 안에서 호출 순서대로 트랜잭션을 탔다. 확정 다�
 **발행 측 — relay 단일성**
 - **A. `SELECT … FOR UPDATE SKIP LOCKED` 경쟁 소비 (원안)** — 여러 relay 인스턴스가 잠기지 않은 outbox 행만 집어가며 병렬 발행한다.
 - **B. leader election(외부 코디네이터)** — 주키퍼/etcd류 코디네이터로 리더 하나만 뽑는다.
-- **C. 단일 순차 relay(ShedLock 리더)** — 분산 락으로 뽑힌 리더 인스턴스 하나만 outbox를 `sequence_no` ASC로 순차 폴링·발행한다.
+- **C. 단일 순차 relay(ShedLock 리더)** — 분산 락으로 뽑힌 리더 인스턴스 하나만 outbox를 삽입 순서로 순차 폴링·발행한다.
 
 **소비 측 — 실패·DLQ 처리**
 - **D. DLQ 수동 재생 (원안)** — 실패 이벤트를 사람이 판단해 라이브 스트림으로 다시 밀어 넣는다.
@@ -47,19 +47,20 @@ V1은 한 앱 안에서 호출 순서대로 트랜잭션을 탔다. 확정 다�
 
 | 구간 | 보장 | 메커니즘 |
 |---|---|---|
-| **발행**(command→Kafka) | 애그리거트별 순차 발행 | **단일 순차 relay(ShedLock 리더)**가 outbox를 `sequence_no` ASC로 순차 발행. Kafka 프로듀서 idempotent. 경쟁 소비(A)는 폐기 |
+| **발행**(command→Kafka) | 애그리거트별 순차 발행 | **단일 순차 relay(ShedLock 리더)**가 outbox를 **삽입 순서(PK `id` ASC)** 로 순차 발행. Kafka 프로듀서 idempotent. 경쟁 소비(A)는 폐기 |
 | **전달**(Kafka) | 파티션 내 순서, at-least-once | 파티션 키=`aggregate_id`, 토픽=컨텍스트/aggregate-type 단위, 파티션 수 고정 지향(증설=신규 토픽 마이그레이션) |
 | **소비-정상** | effectively-once | 처리 후 수동 커밋 + inbox(`event_id`) 멱등, 프로젝터별 독립 컨슈머 그룹으로 fan-out, 그룹 내 리밸런싱은 cooperative-sticky |
-| **소비-실패(프로젝션·state-snapshot)** | 재정렬 자가치유 | **LWW seq 가드** — 들어온 aggregate seq ≤ 이미 적용한 seq면 무시, 크면 적용 |
+| **소비-실패(프로젝션·state-snapshot, ES 이벤트)** | 재정렬 자가치유 | **LWW seq 가드** — 들어온 aggregate seq ≤ 이미 적용한 seq면 무시, 크면 적용 |
+| **소비-실패(프로젝션·state-snapshot, 비-ES 이벤트)** | 재정렬 발생 지점 자체를 제거 | 비교할 `sequence_no`가 없어 LWW 가드를 못 쓴다. 대신 단일 순차 relay(삽입 순서 드레인) + 파티션 키 고정 + 순차 apply가 produce 재정렬의 유일한 발생 지점을 이미 닫는다 — 사본별 순서 토큰을 따로 두지 않는다([[RFC-032-non-es-state-copy-reordering]]) |
 | **소비-실패(프로젝션·commutative)** | 순서 무관 | `event_id` dedup(현행 inbox)만으로 충분 |
 | **소비-실패(순서 결정적: 사가·부수효과·비가환)** | 앞 순서 미적용 원천 차단 | 바운드 재시도(transient) → 실패 지속 시 해당 aggregate의 꼬리를 seq 순서로 park(무관 aggregate는 계속 처리) → 원인 해소 후 seq 순서로 드레인 |
-| **복구** | 순서 보장된 회복 | DLQ는 라이브 스트림에 되쏘지 않는다. 격리된 이벤트는 event_store에 그대로 남아 유실이 아니며, DLQ의 역할은 알림·감사 로그로 좁아진다. 회복은 사람이 개별 이벤트를 재주입하는 것이 아니라, event_store를 seq 순서로 재적용해 프로젝션을 원본과 다시 맞추는 **재구축**이다([[RFC-011-projection-rebuild-catchup]]) |
+| **복구** | 순서 보장된 회복 | DLQ는 라이브 스트림에 되쏘지 않는다 — DLQ의 역할은 알림·감사 로그로 좁아진다. 회복은 사람이 개별 이벤트를 재주입하는 것이 아니라 **재구축**이다. 재구축 원천은 컨텍스트 종류에 따라 갈린다: **ES 컨텍스트**는 event_store를 seq 순서로 재적용하고(격리된 이벤트가 event_store에 그대로 남아 유실이 아니다), **비-ES·lookup 컨텍스트**는 event_store가 없어 원본 상태 테이블에서 read model을 재빌드한다([[RFC-011-projection-rebuild-catchup]] 결정 1) |
 
 부속 규칙:
 
-- **relay는 outbox를 순차 읽는다.** `sequence_no` ASC로 발행하고 발행 완료를 표시한다. 처리량이 실증적으로 문제가 되면 `aggregate_id` 해시로 나눠 각 relay가 자기 파티션 순서만 보장하는 파티션드 relay, 또는 CDC로 졸업하는 경로가 있으나 지금은 채택하지 않는다.
-- **inbox를 확장한다.** 현재의 `event_id` dedup(전 컨텍스트 공통 정체성, [[ADR-022-event-identity]])에 **aggregate별 last-applied `sequence_no`**를 더한다. LWW 가드와 꼬리 격리 판정의 공통 토대다.
-- **LWW 가드가 흡수하는 것과 흡수하지 못하는 것을 가른다.** state-snapshot 프로젝션은 최신 seq만 남으면 정확하므로 재정렬을 가드가 자가치유한다. 사가·부수효과처럼 외부에 이미 발생한 효과(예: 결제 호출)는 되돌릴 수 없어 LWW로 못 덮는다 — 그래서 별도로 꼬리 격리를 둔다.
+- **relay는 outbox를 삽입 순서로 순차 읽는다.** 정렬 키는 outbox PK `id`(전역 단조)이고, `sequence_no`가 아니다. `sequence_no`는 애그리거트별 순번이라 혼합 outbox의 전역 정렬 키가 될 수 없고, 비-ES·lookup 컨텍스트의 outbox 행에는 애초에 존재하지 않는다([[ADR-022-event-identity]]). 같은 애그리거트의 두 이벤트는 삽입 순서가 곧 `sequence_no` 순서라, 삽입 순서 드레인이 애그리거트별 순서를 그대로 보존한다([[DESIGN-020-ordering-and-failure-handling]] §2 · [[RFC-032-non-es-state-copy-reordering]] 결정 2). 발행 완료는 행에 표시한다. 처리량이 실증적으로 문제가 되면 `aggregate_id` 해시로 나눠 각 relay가 자기 파티션 순서만 보장하는 파티션드 relay, 또는 CDC로 졸업하는 경로가 있으나 지금은 채택하지 않는다.
+- **inbox를 확장한다.** 현재의 `event_id` dedup(전 컨텍스트 공통 정체성, [[ADR-022-event-identity]])에 **aggregate별 last-applied `sequence_no`**를 더한다. LWW 가드와 꼬리 격리 판정의 공통 토대다. 단 `sequence_no`를 가진 ES 이벤트에만 채워진다 — 비-ES 이벤트는 `event_id` dedup만 받는다.
+- **LWW 가드가 흡수하는 것과 흡수하지 못하는 것을 가른다.** ES state-snapshot 프로젝션은 최신 seq만 남으면 정확하므로 재정렬을 가드가 자가치유한다. 사가·부수효과처럼 외부에 이미 발생한 효과(예: 결제 호출)는 되돌릴 수 없어 LWW로 못 덮는다 — 그래서 별도로 꼬리 격리를 둔다. 비-ES 이벤트는 비교 토큰이 없어 두 장치 어느 쪽도 태울 수 없고, 순서 보존은 relay 단일 직렬화에만 기댄다.
 - **leader election과의 관계.** ShedLock 리더 방식도 형태상 leader election의 일종이다. RFC-003/[[DESIGN-008-messaging-topology]]가 기각한 leader election은 주키퍼·etcd류 **외부 코디네이터**를 새로 들이는 무거운 방식이었고, 그 기각은 유지된다. ShedLock은 새 코디네이터 프로세스 없이 기존 분산 락 인프라로 리더를 뽑는 경량 방식이라 별개다. [[DESIGN-010-deployment-runtime]]도 relay 워크로드를 "leader 단일성 필요"·`replicas: 1(+standby)`로 배치하고 구체 구현(leader election vs SKIP LOCKED)은 구현 사이클로 열어 뒀을 뿐, 특정 코디네이터를 강제하지 않는다 — 이번 결정은 그 배치 전제 안에서 순차성의 구체 방식을 ShedLock으로 확정하는 것이지, 배치 결정을 뒤집는 것이 아니다.
 
 ### 결과 (Consequences)
@@ -67,19 +68,21 @@ V1은 한 앱 안에서 호출 순서대로 트랜잭션을 탔다. 확정 다�
 - 좋은 점: relay가 순차적이라 애그리거트별 발행 순서가 항상 보존된다 — LWW 가드가 다뤄야 할 재정렬 폭이 relay 경쟁이 아니라 리밸런싱·재시도 같은 국소 지점으로 줄어든다.
 - 좋은 점: DLQ가 라이브 스트림 재주입을 하지 않으므로, 실패 이벤트의 뒤늦은 재생이 순서를 깨는 경로 자체가 사라진다.
 - 좋은 점: 새 코디네이터 없이 기존 분산 락 인프라로 relay 단일성을 얻는다.
-- 좋은 점: 프로젝션 대다수(state-snapshot)는 LWW 가드로 거의 공짜로 재정렬을 자가치유하고, 되돌릴 수 없는 순서 결정적 소수(사가·부수효과)만 꼬리 격리를 문다.
+- 좋은 점: ES 프로젝션 대다수(state-snapshot)는 LWW 가드로 거의 공짜로 재정렬을 자가치유하고, 되돌릴 수 없는 순서 결정적 소수(사가·부수효과)만 꼬리 격리를 문다. 비-ES state-snapshot 사본은 비교할 `sequence_no`가 없어 이 가드를 태우지 못한다([[DESIGN-020-ordering-and-failure-handling]] §4a) — 아래 트레이드오프에서 다룬다.
 - 트레이드오프: 단일 순차 relay는 병렬 발행을 포기한다. 무트래픽 학습 규모에선 수용하나, **재검토 트리거**: relay 처리량이 실증적으로 병목이 되면 파티션드 relay 또는 CDC로 이전한다.
 - 트레이드오프: 꼬리 격리는 별도 park 저장소·드레인 로직을 요구해 구현 표면이 늘어난다(구체 스키마는 구현 사이클).
 - 트레이드오프: DLQ가 복구 경로에서 빠지면서 실패 원인 수정 후 재구축이 유일한 회복 통로가 된다 — 프로젝션 규모가 커지면 재구축 비용도 함께 커진다([[RFC-011-projection-rebuild-catchup]] 전략에 의존).
 - 트레이드오프: ShedLock 리더가 죽으면 재선출까지 발행이 멈춘다(단일성의 가용성 공백). 재선출·standby 전환 시간은 구현/운영 사이클에서 다룬다.
+- 트레이드오프: 비-ES·lookup 컨텍스트에는 LWW 가드도 꼬리 격리도 태울 토큰이 없어, 순서 보존이 relay 단일 직렬화 하나에만 걸린다. 재구축도 event_store가 아니라 원본 테이블 재빌드라 **현재 상태만** 회복하고 개별 이벤트를 되살리지 못한다 — state-snapshot 프로젝션에는 동등하지만, 비-ES 이벤트를 듣는 순서 결정적 소비자(사가·부수효과)에는 등가가 아니다.
 
 ### 확인 (Confirmation)
 
-- relay가 항상 단일 인스턴스(ShedLock 리더)에서만 활성인지, outbox를 `sequence_no` ASC로 순차 발행하는지 통합 테스트로 검증한다.
-- 같은 aggregate에 대해 순서가 뒤바뀐 이벤트를 주입했을 때 LWW 가드가 오래된 이벤트를 drop하고 최신만 적용하는지 테스트한다.
+- relay가 항상 단일 인스턴스(ShedLock 리더)에서만 활성인지, outbox를 삽입 순서(PK `id` ASC)로 순차 발행하는지 통합 테스트로 검증한다. 정렬 키가 `sequence_no`가 아님을 함께 확인한다 — 비-ES 행에는 그 값이 없다.
+- 같은 aggregate에 대해 순서가 뒤바뀐 ES 이벤트를 주입했을 때 LWW 가드가 오래된 이벤트를 drop하고 최신만 적용하는지 테스트한다 — **ES 이벤트 한정**이다. 가드는 aggregate별 last-applied `sequence_no`를 전제하므로, 그 값이 없는 비-ES 이벤트에는 적용할 수 없다([[DESIGN-020-ordering-and-failure-handling]] §4a).
 - DLQ로 격리된 이벤트가 라이브 토픽으로 재주입되는 코드 경로(수동 재생 API·스크립트)가 존재하지 않는지 코드 리뷰로 확인한다.
-- 순서 결정적 컨슈머(사가)가 실패 시 해당 aggregate의 후속 이벤트를 park하고 무관 aggregate는 계속 처리하는지 통합 테스트로 재현한다.
-- 프로젝션 재구축이 event_store를 seq 순서로 재적용하는지는 [[RFC-011-projection-rebuild-catchup]] 재구축 경로의 확인 항목과 공유한다.
+- 순서 결정적 컨슈머(사가)가 실패 시 해당 aggregate의 후속 ES 이벤트를 park하고 무관 aggregate는 계속 처리하는지 통합 테스트로 재현한다 — **ES 이벤트 한정**이다. park·드레인 판정도 같은 `sequence_no`를 전제한다([[DESIGN-020-ordering-and-failure-handling]] §5).
+- 비-ES·lookup 컨텍스트는 LWW 가드·꼬리 격리 어느 쪽도 태울 순서 토큰이 없다 — 대신 단일 순차 relay(삽입 순서 드레인) + 파티션 키(`aggregate_id`) 고정 + 컨슈머 순차 apply만으로 순서가 보존되는지 확인한다([[RFC-032-non-es-state-copy-reordering]] · [[DESIGN-020-ordering-and-failure-handling]] §2).
+- 프로젝션 재구축 확인은 컨텍스트에 따라 갈린다: **ES 컨텍스트**는 프로젝션 재구축이 event_store를 seq 순서로 재적용하는지, **비-ES·lookup 컨텍스트**는 event_store가 없어 원본 상태 테이블에서 read model을 재빌드하는지를 검증한다 — [[RFC-011-projection-rebuild-catchup]] 재구축 경로의 확인 항목과 공유한다.
 
 ## 선택지 상세 (Pros and Cons of the Options)
 
@@ -103,6 +106,7 @@ V1은 한 앱 안에서 호출 순서대로 트랜잭션을 탔다. 확정 다�
 
 ## 추가 정보 (More Information)
 
-- **미결정 (→ 구현 사이클)**: 꼬리 격리 park 저장소의 구체 스키마, relay 처리량이 실제로 병목이 될 때의 파티션드 relay/CDC 전환 임계, ShedLock 리더 장애·재선출 소요 시간. (outbox↔event_store 동일 datasource 전제는 [[ADR-027-event-store-outbox-atomicity]]로 확정 — 불변식 I-OUTBOX-1 + CDC 졸업 경로.)
-- 관련: [[RFC-003-messaging-delivery]] · [[RFC-025-ordering-relay-dlq-reconciliation]] · [[DESIGN-008-messaging-topology]] · [[DESIGN-020-ordering-and-failure-handling]] · [[RFC-021-event-identity-and-global-ordering]] · [[RFC-011-projection-rebuild-catchup]] · [[DESIGN-010-deployment-runtime]] · [[ADR-005-event-store-mysql-table]] · [[ADR-022-event-identity]] · [[ADR-016-aggregate-concurrency-pessimistic-lock]] · [[ADR-008-saga-orchestration-vs-choreography]] · [[ADR-018-event-store-recovery-semantics]]
+- **미결정 (→ 구현 사이클)**: 꼬리 격리 park 저장소의 구체 스키마, relay 처리량이 실제로 병목이 될 때의 파티션드 relay/CDC 전환 임계, ShedLock 리더 장애·재선출 소요 시간. (outbox↔event_store 동일 datasource 전제는 [[ADR-027-event-store-outbox-atomicity]]로 확정 — 불변식 I-OUTBOX-1 + CDC 졸업 경로.) 비-ES 컨텍스트(`payment`, [[ADR-015-payment-acl-boundary]])의 이벤트를 순서 결정적 소비자(`reservation` 사가, [[ADR-008-saga-orchestration-vs-choreography]])가 이미 구독하는 흐름에는 꼬리 격리·LWW 등가물이 없다 — [[DESIGN-003-write-model]]이 혼합 사가 실측·payment ES 승격을 미결로 둔 상태와 정합하는 미결.
+- 관련: [[RFC-003-messaging-delivery]] · [[RFC-025-ordering-relay-dlq-reconciliation]] · [[RFC-032-non-es-state-copy-reordering]] · [[DESIGN-008-messaging-topology]] · [[DESIGN-020-ordering-and-failure-handling]] · [[RFC-021-event-identity-and-global-ordering]] · [[RFC-011-projection-rebuild-catchup]] · [[DESIGN-010-deployment-runtime]] · [[ADR-005-event-store-mysql-table]] · [[ADR-022-event-identity]] · [[ADR-016-aggregate-concurrency-pessimistic-lock]] · [[ADR-008-saga-orchestration-vs-choreography]] · [[ADR-018-event-store-recovery-semantics]]
 - 계승: `09.event-ordering-and-delivery-guarantee.md`(v2 초기 스케치) — 파티션 키=`aggregate_id`·effectively-once 골격은 유지하되, relay 단일성(SKIP LOCKED→단일 순차 relay)과 DLQ 처리(수동 재생→재구축)는 [[RFC-025-ordering-relay-dlq-reconciliation]] 합의로 이 ADR이 대체한다.
+- 정정 (2026-07-30): relay 발행 정렬 키를 `sequence_no` ASC → 삽입 순서(outbox PK `id` ASC)로 고친다. `sequence_no`는 애그리거트별 순번이라 혼합 outbox의 전역 정렬 키가 못 되고 비-ES 행에는 존재하지 않는다 — [[DESIGN-020-ordering-and-failure-handling]] §2·[[RFC-032-non-es-state-copy-reordering]] 결정 2가 이미 확정한 값을 이 ADR이 옛 값으로 들고 있었다. 같은 정정으로 LWW 가드·꼬리 격리·재구축 원천을 ES/비-ES로 분기했다.

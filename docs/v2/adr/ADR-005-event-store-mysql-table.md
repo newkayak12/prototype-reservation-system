@@ -38,7 +38,7 @@ ADR-002에서 `reservation`·`timetable`·`restaurant` 셋을 진짜 ES로 정�
 핵심 구조는 다음과 같다. 상세 메커니즘은 [[DESIGN-009-event-store-lifecycle]]로 위임한다.
 
 - **저장 모델**: `event_store` 테이블에 `(aggregate_type, aggregate_id, sequence_no, event_type, event_version, payload, occurred_at)`를 append-only로 쌓는다.
-- **동시성 백스톱**: `(aggregate_id, sequence_no)`에 UNIQUE 제약을 둬 같은 스트림의 이중 append를 최종 거절한다(정확성 = safety). 동시 쓰기를 직렬화하는 동시성 제어 전략(비관 락 등)은 [[ADR-016-optimistic-concurrency-control]]에서 다룬다.
+- **동시성 백스톱**: `(aggregate_id, sequence_no)`에 UNIQUE 제약을 둬 같은 스트림의 이중 append를 최종 거절한다(정확성 = safety). 동시 쓰기를 직렬화하는 동시성 제어 전략(비관 락 등)은 [[ADR-016-aggregate-concurrency-pessimistic-lock]]에서 다룬다.
 - **스냅샷 최적화**: V1의 기존 `*Snapshot` 패턴을 ES 스냅샷 최적화로 재활용한다.
 - **Outbox 연계**: 이벤트 저장과 통합 이벤트 발행을 한 트랜잭션으로 묶어 V1의 Outbox 운영을 계승한다.
 
