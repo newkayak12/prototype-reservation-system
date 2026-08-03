@@ -64,7 +64,7 @@
 
 - [ ] Flyway: `event_store` / `outbox` / `snapshot` DDL (append + `UNIQUE(aggregate_id, sequence_no)`) **[G1][G2]**
 - [ ] `EventStoreEngine` (append/load bytes, replay 지원, snapshot)
-- [ ] Outbox relay (폴링 + ShedLock 단일 리더) + 재시도 스케줄러 **[G3]**
+- [ ] Outbox relay (폴링 + Quartz 클러스터 단일 리더 · 삽입 순서 id ASC 통짜 드레인) + 재시도 스케줄러 **[G3]**
 - [ ] Kafka producer 설정 (파티션 키 = `aggregate_id`, 토픽 `<context>.<aggregate>` — [[DESIGN-008]])
 - [ ] Redisson 락(L1) 설정 + DB `FOR UPDATE` 폴백(L1')
 - [ ] UUIDv7 ID 생성기
@@ -89,7 +89,7 @@
 - [ ] 레퍼런스: `TimeTableAvailabilityProjector`
 - [ ] 레퍼런스: `ReservationListProjector` (+ 식당명 비정규화 다중 소스)
 - [ ] 레퍼런스: `RestaurantSearchProjector`
-- [ ] inbox 테이블 (`event_id` dedup + aggregate별 last-applied `sequence_no`) + 멱등·LWW 가드 기록/GC ([[RFC-025]] 결정 5) **[G4]**
+- [ ] inbox 테이블 (`event_id` dedup만) + 멱등 기록/GC ([[ADR-009-event-ordering-and-delivery-guarantee]] — 구 LWW `last-applied sequence_no` 폐기, 순서는 offset 순서가 보존) **[G4]**
 - [ ] read model row `appliedSequenceNo` 컬럼 (read-after-write 신선도용)
 - [ ] Flyway: read model + inbox 스키마 (도메인별 분리)
 - [ ] 재구축·catch-up·blue-green 오케스트레이션 ([[RFC-011]])
@@ -129,8 +129,8 @@
 
 - [ ] **G1** 원자성: `event_store` append + `outbox` insert 동일 트랜잭션/datasource (I-OUTBOX-1 — [[ADR-027]])
 - [ ] **G2** `L0` `UNIQUE(aggregate_id, sequence_no)` 백스톱 ([[ADR-016]])
-- [ ] **G3** 발행 순서: 단일 리더 순차 relay ([[RFC-025]])
-- [ ] **G4** 멱등: inbox 중복 차단 + LWW seq 가드 ([[ADR-009]]·[[RFC-025]])
+- [ ] **G3** 발행 순서: Quartz 클러스터 단일 리더 순차 relay, 삽입 순서 통짜 드레인 ([[ADR-009-event-ordering-and-delivery-guarantee]]·[[RFC-025]])
+- [ ] **G4** 멱등·순서: inbox `event_id` 중복 차단 + 파티션 offset 순서 apply(단일 스레드, I-CONSUME-ORDER) ([[ADR-009-event-ordering-and-delivery-guarantee]]·[[RFC-025]])
 - [ ] **G5** 모듈 경계: Gradle 그래프 + Konsist ([[RFC-031]])
 - [ ] **G6** 타입 소유: core 이벤트 타입은 command-application만 인지 ([[DESIGN-019]])
 - [ ] **G7** replay 결정성 ([[RFC-011]])

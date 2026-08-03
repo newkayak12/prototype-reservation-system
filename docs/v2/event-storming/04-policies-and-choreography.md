@@ -37,8 +37,8 @@
 | P4 | `ReservationConfirmed`(reservation) | 예약 확정 시 좌석 확정 | `ConfirmSeat`(timetable) | `SeatConfirmed` | `V2 도메인 문서 근거` | `Accepted`([[DESIGN-007-consistency-and-sagas]]) | DESIGN-007 §4.4 확정 · domain/02 §2 |
 | P5 | `PaymentFailed`(payment, **외부 자극**) | 결제 실패 시 예약 실패 전이 | `FailReservation`(reservation) | `ReservationFailed` | `V2 설계/ADR 근거(도메인 문서 없음)`(트리거) | `Accepted`([[DESIGN-007-consistency-and-sagas]]) · `Proposed`([[ADR-015-payment-acl-boundary]]) | DESIGN-007 §4.4 결제 실패 · [[ADR-015-payment-acl-boundary]] |
 | P6 | `ReservationFailed`(reservation) | 예약 실패 시 좌석 해제 보상 | `ReleaseSeat`(timetable) | `SeatReleased` | `V2 도메인 문서 근거` | `Accepted`([[DESIGN-007-consistency-and-sagas]]) | DESIGN-007 §4.4 결제 실패 · domain/02 §2 |
-| P7 | TTL 경과(스케줄러 폴링, timetable 자치 — 이벤트 아님) | TTL 만료 점유 자동 해제 | `ExpireSeat`(timetable) | `SeatReleased`(TTL 유래) | `V2 도메인 문서 근거` | `Accepted`([[DESIGN-007-consistency-and-sagas]]) · `Proposed`([[ADR-008-saga-orchestration-vs-choreography]]) | DESIGN-007 §4.7(가) · [[ADR-008-saga-orchestration-vs-choreography]]("스케줄러가 주기적으로 깨어 TTL 지난 SeatHeld를 찾아 SeatReleased 보상을 발행") · [[02-design-timetable]] §2 5b행 |
-| P8 | `SeatReleased`(timetable, TTL 유래) | 좌석 해제(TTL) 시 예약 만료 전이 | `ExpireReservation`(reservation) | `ReservationExpired` | `V2 도메인 문서 근거` | `Accepted`([[DESIGN-007-consistency-and-sagas]]) | DESIGN-007 §4.4 타임아웃 · domain/01 §2 |
+| P7 | (reservation 스케줄러, 결제 대기 만료 탐색 — 이벤트 아님) | 결제 대기 타임아웃 시 예약 만료 전이 | `ExpireReservation`(reservation) | `ReservationExpired` | `V2 도메인 문서 근거` | `Accepted`([[DESIGN-007-consistency-and-sagas]]) · `Proposed`([[ADR-008-saga-orchestration-vs-choreography]]) | DESIGN-007 §4.4 타임아웃(개정) · [[ADR-008-saga-orchestration-vs-choreography]]("타임아웃 = reservation 소유") · domain/01 §2 |
+| P8 | `ReservationExpired`(reservation) | 예약 만료 시 좌석 해제 보상(취소·실패·노쇼와 동일 경로) | `ReleaseSeat`(timetable) | `SeatReleased` | `V2 도메인 문서 근거` | `Accepted`([[DESIGN-007-consistency-and-sagas]]) | DESIGN-007 §4.4 타임아웃(개정) · [[02-design-timetable]] §2 · domain/02 §2 |
 | P9 | `ReservationCancelled`(reservation, 손님/점주 커맨드 결과) | 취소 시 결제 상태를 보고 환불 여부 판단(자기 상태 가드 — payment가 Confirmed가 아니면 무시) | *(payment 내부, 명명 없음)* | `PaymentRefunded`(payment, **외부 자극** — ADR-015 L46 노출 선언, 소비자 미확인) — **조건부**(§2.2 참조) | `V2 설계/ADR 근거(도메인 문서 없음)` | `Accepted`([[DESIGN-007-consistency-and-sagas]]) · `Proposed`([[ADR-015-payment-acl-boundary]]) | DESIGN-007 §4.4 예약 취소("payment가 Confirmed 상태가 아니면 환불 없이 무시") · [[ADR-015-payment-acl-boundary]] |
 | P10 | `ReservationCancelled`(reservation) | 취소 시 좌석 해제 보상 | `ReleaseSeat`(timetable) | `SeatReleased` | `V2 도메인 문서 근거` | `Accepted`([[DESIGN-007-consistency-and-sagas]]) | DESIGN-007 §4.4 예약 취소 · domain/02 §2 |
 | P11 | (reservation 스케줄러, 예약 시각 경과 후 미방문 탐색 — 이벤트 아님) | 노쇼 판정 | `JudgeNoShow`(reservation) | `ReservationNoShow` | `V2 도메인 문서 근거` | `Accepted`([[DESIGN-007-consistency-and-sagas]]) | DESIGN-007 §4.7(나) · domain/01 §2 |
@@ -87,7 +87,7 @@ graph LR
     reservation -->|ReservationConfirmed| timetable
     payment -.->|PaymentFailed 외부자극| reservation
     reservation -->|ReservationFailed| timetable
-    timetable -->|SeatReleased| reservation
+    reservation -->|ReservationExpired| timetable
     reservation -->|ReservationCancelled| timetable
     reservation -->|ReservationCancelled| payment
     reservation -->|ReservationNoShow| timetable
@@ -96,7 +96,7 @@ graph LR
     payment -.->|PaymentConfirmed 외부자극·paid-after-expiry| reservation
 ```
 
-- 실선(카탈로그 명명 확정, S4가 닫은 문자열과 일치): `ReservationCreated`·`SeatHeld`·`ReservationConfirmed`·`ReservationFailed`·`SeatReleased`·`ReservationCancelled`·`ReservationNoShow`·`RefundRequired`.
+- 실선(카탈로그 명명 확정, S4가 닫은 문자열과 일치): `ReservationCreated`·`SeatHeld`·`ReservationConfirmed`·`ReservationFailed`·`ReservationExpired`·`ReservationCancelled`·`ReservationNoShow`·`RefundRequired`. **`SeatReleased`는 타임아웃 소유권 이전([[ADR-008-saga-orchestration-vs-choreography]] 개정) 이후 항상 timetable 내부 이벤트**라 컨텍스트 횡단 엣지가 아니다 — 그래프에서 빼고, 그 자리를 `reservation → timetable`의 `ReservationExpired`가 대신한다([[06-internal-vs-integration]] §3).
 - 점선(`payment`발 외부 자극, 이 카탈로그가 닫지 않은 이름): `PaymentConfirmed`·`PaymentFailed`. `PaymentRefunded`도 외부 자극이다 — ADR-015 L46이 `payment`가 노출하는 3개 이벤트 중 하나로 선언한다. 다만 §2.2가 밝힌 대로 DESIGN-007 §4.4 6개 시퀀스 어디에도 `PaymentRefunded`가 다른 컨텍스트로 향하는 참여자 간 화살표로 그려진 곳이 없어 소비자가 확인되지 않으므로, 이 그래프에는 엣지로 넣지 않고 범례에서만 외부 자극으로 표시한다. `NoShowFeeCharged`는 ADR-015의 3개 목록에 없어 외부 자극 여부 자체가 §2.3 기준으로도 불명하며, 범례·그래프 어디에도 넣지 않았다.
 
 ---

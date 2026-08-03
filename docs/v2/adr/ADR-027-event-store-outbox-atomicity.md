@@ -1,6 +1,6 @@
 # ADR-027: event_store·outbox 원자성 — 동일 datasource 트랜잭셔널 아웃박스, CDC로 졸업
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-025-ordering-relay-dlq-reconciliation]] · **설계**: [[DESIGN-003-write-model]] · [[DESIGN-019-event-execution-layering]]
 - **연관 ADR**: [[ADR-005-event-store-mysql-table]] · [[ADR-023-event-execution-layering]] · [[ADR-009-event-ordering-and-delivery-guarantee]]

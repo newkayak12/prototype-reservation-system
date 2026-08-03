@@ -13,19 +13,19 @@
 
 ## 1. 공용 인프라 테이블
 
-### 1.1 `inbox` — 멱등 dedup + LWW 순서 가드 (프로젝터마다 인스턴스, 소속 도메인 스키마에 위치)
+### 1.1 `inbox` — 멱등 dedup (`event_id`) (프로젝터마다 인스턴스, 소속 도메인 스키마에 위치)
 
-확정 — [[RFC-025-ordering-relay-dlq-reconciliation]] 결정 5 · [[07-query-projection-server]] §5.2
+확정 — [[ADR-009-event-ordering-and-delivery-guarantee]] · [[RFC-025-ordering-relay-dlq-reconciliation]] 결정 2·5(**2026-08-03 개정: LWW 순서 가드·`last_applied_sequence_no` 폐기**) · [[07-query-projection-server]] §5.2
+
+> **개정 (2026-08-03).** 구안은 inbox에 `aggregate_id` + `last_applied_sequence_no`를 두어 **LWW 순서 가드**를 세웠으나, [[ADR-009-event-ordering-and-delivery-guarantee]] 개정으로 순서 보존이 **Kafka offset 순서 + 단일 순차 relay**로 옮겨지면서 이 두 컬럼은 폐기됐다. inbox는 `event_id` dedup만 담당한다. (순서 토큰이 잉여였고, delta 이벤트에서 낮은-seq drop이 필드를 유실시키는 결함이었다.)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
 | `event_id` | `BINARY(16)` | **PK** | dedup 대상(이미 처리했나?) |
-| `aggregate_id` | `VARCHAR(128)` | NOT NULL, INDEX | LWW 가드 조회 키 |
-| `last_applied_sequence_no` | `BIGINT` | NOT NULL | 이 aggregate에 마지막으로 적용한 sequence_no — 갱신 시 e2(seq6)가 e1(seq5)보다 먼저 와도 e2가 이기고 뒤늦은 e1은 가드가 떨어뜨린다(재정렬 자가치유) |
 | `processed_at` | `DATETIME(6)` | NOT NULL | |
 
-- **GC 정책**: 무한 축적 금지 — 재처리 윈도를 덮을 만큼만 보존 + 주기적 GC. 단 **aggregate별 `last_applied_sequence_no`는 GC 대상에서 제외**(LWW 가드의 영구 토대) — `event_id` dedup 로그와 aggregate별 최신 커서는 보존 수명이 다르다는 뜻이므로, 실제 구현에서 한 테이블로 둘지 `event_id` 로그/`aggregate` 커서 두 테이블로 분리할지는 **미확정**([[07-query-projection-server]] §5.2, 구현 시 확정).
-- **inbox 생략 자격**: "순서 역전 없음 + 자연 멱등 upsert"를 동시에 만족하는 컨슈머만 `event_id`-only로 축소 가능(commutative 집계 등). 대부분의 프로젝션은 위 전체 스키마를 유지한다([[RFC-025]] 논점 2).
+- **GC 정책**: 무한 축적 금지 — 재처리 윈도를 덮을 만큼만 보존 + 주기적 GC. (구안의 `last_applied_sequence_no` GC 제외 예외는 폐기 — 이제 커서를 보존할 이유가 없다.)
+- **순서 보존은 inbox가 아니라 배송 계약이 진다**: 파티션 offset 순서 apply(파티션당 단일 스레드, I-CONSUME-ORDER) + 단일 순차 relay(삽입 순서 통짜 드레인, I-RELAY-ORDER)가 순서를 지키고, inbox는 중복만 흡수한다. 모든 프로젝션이 `event_id`-only inbox로 선다([[ADR-009-event-ordering-and-delivery-guarantee]]).
 
 ### 1.2 read model 공통 컬럼 관례 — `appliedSequenceNo`
 

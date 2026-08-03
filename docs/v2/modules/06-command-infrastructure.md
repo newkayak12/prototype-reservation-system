@@ -7,7 +7,7 @@
 도메인을 모르는 **횡단 기술 배관**. event_store 경로에서 타입-불가지 `StoredEvent`만 다룬다(core 이벤트 타입 절대 미소유 — [[DESIGN-019]] §3).
 
 - ES 엔진: append, replay 지원(bytes I/O), snapshot 저장/로드
-- **Outbox relay** (폴링 publisher, 단일 순차 실행 — ShedLock 리더, [[RFC-025]] 결정 1)
+- **Outbox relay** (폴링 publisher, 단일 순차 실행 — Quartz 클러스터 리더, [[ADR-009-event-ordering-and-delivery-guarantee]] · [[RFC-025]] 결정 1)
 - **Kafka producer** 설정
 - JPA/DB 설정, DataSource
 - ID 생성기 (UUIDv7)
@@ -31,7 +31,7 @@
 | `mysql-connector-j` | `8.0.33` | command MySQL 드라이버 |
 | `spring-kafka` | `3.3.1` | **Kafka producer** (Outbox relay → Kafka 발행) |
 | `redisson-spring-boot-starter` | `3.52.0` | 분산 락 L1(`aggregate_id` 단위 — [[DESIGN-003]] §4.1) |
-| `shedlock-spring` + `shedlock-provider-jdbc-template` | `5.16.0` | **단일 순차 relay 리더 선출** — outbox 폴링을 한 인스턴스만 실행([[RFC-025]] 결정 1, SKIP LOCKED 경쟁 소비 supersede) |
+| `spring-boot-starter-quartz` | (Boot 관리) | **단일 순차 relay 리더 선출** — Quartz 클러스터 모드(`isClustered=true` + `@DisallowConcurrentExecution`)로 outbox 폴링을 한 노드만 실행([[ADR-009-event-ordering-and-delivery-guarantee]] · [[RFC-025]] 결정 1, SKIP LOCKED 경쟁 소비 supersede). [[ADR-008]] 예약 타임아웃 스케줄러와 공유 인프라 |
 | `flyway-core` + `flyway-mysql` | `10.0.0` | event_store·outbox·snapshot DDL 마이그레이션 |
 | `spring-retry` | (Boot BOM) | relay 발행 재시도 |
 | `spring-tx` | `6.2.1` | Outbox AFTER_COMMIT / REQUIRES_NEW |
@@ -51,7 +51,7 @@ command-module/command-infrastructure
     │   ├── EventStoreEngine.kt        # append/load(StoredEvent), replay 지원
     │   └── snapshot/                  # N 이벤트마다 스냅샷 (DESIGN-009)
     ├── outbox/
-    │   ├── OutboxRelay.kt             # 폴링 publisher (@SchedulerLock — ShedLock 단일 리더, RFC-025)
+    │   ├── OutboxRelay.kt             # 폴링 publisher (Quartz job, @DisallowConcurrentExecution — 클러스터 단일 리더, ADR-009/RFC-025)
     │   └── OutboxScheduler.kt         # 미발행분 재시도
     ├── kafka/
     │   └── KafkaProducerConfig.kt     # 파티션 키 = aggregate_id (DESIGN-008 §4.3)
@@ -66,24 +66,28 @@ command-module/command-infrastructure
 
 ## 5. 핵심 설계
 
-### 5.1 Outbox relay — 단일 순차 리더 + 폴링 ([[RFC-025]] 결정 1, SKIP LOCKED 경쟁 소비 supersede)
+### 5.1 Outbox relay — 단일 순차 리더 + 폴링 ([[ADR-009-event-ordering-and-delivery-guarantee]] · [[RFC-025]] 결정 1, SKIP LOCKED 경쟁 소비 supersede)
 
 ```kotlin
-// 단일 순차 relay — ShedLock이 한 인스턴스만 스케줄을 실행하도록 리더를 선출한다.
-// 나머지 인스턴스는 대기만 하므로 aggregate별 발행 순서(sequence_no ASC)가 직렬화된다.
-@Scheduled(fixedDelayString = "\${outbox.poll-interval}")
-@SchedulerLock(name = "outbox-relay", lockAtMostFor = "PT30S", lockAtLeastFor = "PT1S")
-fun relay() {
-    val batch = outboxRepo.pollUnpublishedOrderBySequenceNo(limit)   // sequence_no ASC
-    batch.forEach { row ->
-        kafkaTemplate.send(topicOf(row), row.aggregateId /* 파티션 키 */, row.payload)
-            .whenComplete { _, ex -> if (ex == null) row.succeeded() else row.failed() }
+// 단일 순차 relay — Quartz 클러스터 모드가 트리거를 한 노드에서만 발화시키고,
+// @DisallowConcurrentExecution이 클러스터 전역 동시 실행을 막는다.
+// 나머지 노드는 대기하므로 aggregate별 발행 순서(삽입 순서 id ASC)가 직렬화된다.
+@DisallowConcurrentExecution
+class OutboxRelayJob(...) : Job {
+    override fun execute(ctx: JobExecutionContext) {
+        // 삽입 순서 통짜 드레인 (I-RELAY-ORDER) — 경쟁 드레인 금지.
+        // 전역 정렬 키는 PK id다. sequence_no는 애그리거트별 순번이라 혼합 outbox의 전역 키가 못 된다.
+        val batch = outboxRepo.pollUnpublishedOrderById(limit)   // id ASC (삽입 순서)
+        batch.forEach { row ->
+            kafkaTemplate.send(topicOf(row), row.aggregateId /* 파티션 키 */, row.payload)
+                .whenComplete { _, ex -> if (ex == null) row.succeeded() else row.failed() }
+        }
     }
 }
 ```
 
 - 발행 방식: **폴링으로 시작**. CDC(Debezium)는 명시적 트리거 충족 시 전환([[DESIGN-008]] §4.9).
-- **확정**([[RFC-025]] 🏷 합의 2026-07-04, 결정 1): relay는 **단일 순차(ShedLock 리더)** — `SKIP LOCKED` 경쟁 소비는 aggregate별 발행 순서를 직렬화하지 않아 supersede됐다. 처리량이 실제 병목이 되면 파티션드 relay·CDC로 졸업(RFC-025 논점 1).
+- **확정**([[ADR-009-event-ordering-and-delivery-guarantee]] 2026-08-03 · [[RFC-025]] 결정 1): relay는 **단일 순차(Quartz 클러스터 리더)** — `SKIP LOCKED` 경쟁 소비는 aggregate별 발행 순서를 직렬화하지 않아 supersede됐다. ShedLock 대신 Quartz를 쓰는 이유는 [[ADR-008]] 예약 타임아웃 스케줄러로 어차피 도입하는 인프라라서다. 처리량이 실제 병목이 되면 파티션드 relay·CDC로 졸업(RFC-025 논점 1), 그때 producer 펜싱 검토.
 
 ### 5.2 Kafka 토픽·파티션 ([[DESIGN-008]])
 
@@ -103,7 +107,7 @@ fun relay() {
 
 - [ ] Flyway: event_store / outbox / snapshot 테이블 DDL
 - [ ] `EventStoreEngine` (append/load bytes, replay 지원, snapshot)
-- [ ] Outbox relay (폴링 + ShedLock 단일 리더) + 재시도 스케줄러
+- [ ] Outbox relay (폴링 + Quartz 클러스터 단일 리더, `@DisallowConcurrentExecution`, 삽입 순서 id ASC 드레인) + 재시도 스케줄러
 - [ ] Kafka producer 설정 (파티션 키 = aggregate_id)
 - [ ] Redisson 락 설정 + DB FOR UPDATE 폴백
 - [ ] UUIDv7 ID 생성기
@@ -120,18 +124,18 @@ fun relay() {
 
 > 이 문서 설계에 대한 가장 강한 반론 (구현 전 스트레스 테스트용).
 
-**Position**: 인프라는 도메인을 모르는 배관으로 두고, 순서·원자성·단일성을 전부 DB 원시연산(`SKIP LOCKED`·`UNIQUE`·동일 datasource)과 Redisson 상시 락에 위임한다.
+**Position**: 인프라는 도메인을 모르는 배관으로 두고, 순서(단일 순차 relay=**Quartz 클러스터**)·원자성(`UNIQUE`·동일 datasource)·단일성을 기존 인프라에 위임하고, aggregate 락은 Redisson 상시 락(+DB 폴백)에 둔다.
 **Steel-man**: 별도 코디네이터·2PC·전용 ES 제품 없이 이미 붙어 있는 DB/Redis만으로 원자성과 relay 단일성을 싸게 얻고, event_store를 계약 버저닝의 인질에서 분리한다.
 
 ### 숨은 가정
 
-1. ~~파티션 키만으로 aggregate별 발행 순서가 지켜진다~~ — **해소됨.** relay가 ShedLock 단일 리더로 순차 실행되므로(§5.1), 이제 파티션 키만이 아니라 relay 자체의 직렬화가 순서를 보장한다.
+1. ~~파티션 키만으로 aggregate별 발행 순서가 지켜진다~~ — **해소됨.** relay가 Quartz 클러스터 단일 리더로 삽입 순서 통짜 드레인하므로(§5.1, I-RELAY-ORDER), 이제 파티션 키만이 아니라 relay 자체의 직렬화가 순서를 보장한다.
 2. **event_store와 outbox는 영원히 동일 datasource에 함께 산다** — 성장·스케일아웃 이후에도 둘을 분리하지 않는다(§7 반박).
 3. **모든 ES 쓰기에 Redis 왕복을 태워도 된다** — 락프리 낙관 append는 "나중 결정"으로 미뤄도 크리티컬 패스 비용이 수용 가능하다(§5.3).
 
 ### 반론
 
-1. `[분산시스템]` · **심각도: 높음 — 해소됨(2026-07-19 동기화)** · 선례: [[DESIGN-008]] 자기리뷰 §264에 자인 — 이 반론은 §5.1이 여전히 `SKIP LOCKED` 경쟁 소비를 규범으로 적고 있을 때 성립했다. [[RFC-025]](🏷 합의 2026-07-04) 결정 1에 맞춰 §5.1을 **ShedLock 단일 순차 리더**로 갱신했으므로, "경쟁 소비"와 "파티션별 순서 보장"이 동시에 참일 수 없던 모순은 더 이상 존재하지 않는다. 남은 리스크는 처리량이 실제로 병목이 될 때 파티션드 relay/CDC로 졸업하는 전환 트리거를 아직 정하지 않았다는 점뿐이다(RFC-025 논점 1, 트리아지 C47).
+1. `[분산시스템]` · **심각도: 높음 — 해소됨(2026-07-19 동기화)** · 선례: [[DESIGN-008]] 자기리뷰 §264에 자인 — 이 반론은 §5.1이 여전히 `SKIP LOCKED` 경쟁 소비를 규범으로 적고 있을 때 성립했다. [[RFC-025]](🏷 합의 2026-07-04) 결정 1 · [[ADR-009-event-ordering-and-delivery-guarantee]](2026-08-03)에 맞춰 §5.1을 **Quartz 클러스터 단일 순차 리더**로 갱신했으므로, "경쟁 소비"와 "파티션별 순서 보장"이 동시에 참일 수 없던 모순은 더 이상 존재하지 않는다. 남은 리스크는 처리량이 실제로 병목이 될 때 파티션드 relay/CDC로 졸업하는 전환 트리거를 아직 정하지 않았다는 점뿐이다(RFC-025 논점 1, 트리아지 C47).
 
 2. `[아키텍처/일관성]` · **심각도: 중상** · 선례: [[DESIGN-003]] 자기리뷰 §196에 채택 — **동일 datasource 전제는 확장의 one-way door다.** 2PC 회피를 위해 event_store append + outbox insert를 동일 트랜잭션·동일 커넥션에 묶는 순간, event_store는 outbox와 같은 MySQL 인스턴스에서 절대 떨어질 수 없다. §5.4는 파티셔닝을 YAGNI로 미루지만, append-only event_store가 성장해 outbox 폴링(핫 경로)과 I/O를 다투기 시작하면 "저장소 분리"라는 정상 해법이 원자성 상실 없이는 불가능하다. 전제를 "명문화 필요"로만 남긴 것은, 뒤집기 비싼 결정을 미결 상태로 구현에 태우는 것이다.
 

@@ -1,6 +1,6 @@
 # ADR-010: 이벤트 스키마 진화 — 명시 등록 업캐스터·타입 매핑, JSON 유지
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-022-event-schema-evolution]] · **설계**: [[DESIGN-009-event-store-lifecycle]]
 - **연관 ADR**: [[ADR-005-event-store-mysql-table]] · [[ADR-002-selective-event-sourcing-scope]] · [[ADR-018-event-store-recovery-semantics]] · [[ADR-022-event-identity]]

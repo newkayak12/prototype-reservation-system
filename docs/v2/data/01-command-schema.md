@@ -74,7 +74,7 @@ command MySQL 인스턴스 하나에 **쓰기 모델 성격이 다른 3그룹**�
 | `updated_at` | `DATETIME(6)` | NOT NULL | V1 계승 |
 
 - **동일 트랜잭션 전제**: event_store(또는 상태 테이블) append + outbox insert는 **같은 트랜잭션·같은 datasource**([[DESIGN-003-write-model]] §4.4 자기리뷰 채택) — 2PC 회피의 근거이자 저장소 분리 one-way door([[06-command-infrastructure]] 핵심취약점, 미해소).
-- **인덱스**: `status`(폴링 대상 조회). relay는 outbox를 **삽입 순서(`id` ASC)**로 단독 드레인해 순차 발행([[RFC-025]] 결정 1 — ShedLock 단일 리더가 `SKIP LOCKED` 경쟁 소비를 supersede). 전역 드레인 키는 PK `id`다 — `sequence_no`는 애그리거트별 순번이라 혼합 outbox의 전역 정렬 키가 될 수 없다.
+- **인덱스**: `status`(폴링 대상 조회). relay는 outbox를 **삽입 순서(`id` ASC)로 통짜 드레인**해 순차 발행([[RFC-025]] 결정 1 · [[ADR-009-event-ordering-and-delivery-guarantee]] — **Quartz 클러스터 단일 리더**가 `SKIP LOCKED` 경쟁 소비를 supersede, 경쟁 드레인 금지 I-RELAY-ORDER). 전역 드레인 키는 PK `id`다 — `sequence_no`는 애그리거트별 순번이라 혼합 outbox의 전역 정렬 키가 될 수 없다.
 
 ### 1.4 `aggregate_lock` — DB 폴백 락 (L1′, Redis 장애 시)
 

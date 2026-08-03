@@ -35,7 +35,7 @@ domain/02 §2 상태머신 mermaid 화살표를 그대로 7개 센다(02-design-
 | 2 | `AVAILABLE → HELD`: HoldSeat | 대응 이벤트 있음 | `SeatHeld` | [[02-design-timetable]] §3 | `V2 도메인 문서 근거` |
 | 3 | `AVAILABLE → BLOCKED`: BlockSlot | 대응 이벤트 있음 | `SlotBlocked` | [[02-design-timetable]] §3 | `V2 도메인 문서 근거` |
 | 4 | `HELD → CONFIRMED`: ConfirmSeat | 대응 이벤트 있음 | `SeatConfirmed` | [[02-design-timetable]] §3 | `V2 도메인 문서 근거` |
-| 5 | `HELD → AVAILABLE`: ReleaseSeat / ExpireSeat (TTL) | 대응 이벤트 있음 | `SeatReleased`(두 원인 모두 동일 이름 — [[02-design-timetable]] §4가 이 지점을 페이로드 축 미결로 남김) | [[02-design-timetable]] §3·§4 | `V2 도메인 문서 근거` |
+| 5 | `HELD → AVAILABLE`: ReleaseSeat (실패·취소·노쇼·만료 모든 경로 수렴) | 대응 이벤트 있음 | `SeatReleased`(단일 내부 이벤트 — 타임아웃 소유권 이전으로 `ExpireSeat`·5b 소멸, [[02-design-timetable]] §4) | [[02-design-timetable]] §3·§4 | `V2 도메인 문서 근거` |
 | 6 | `CONFIRMED → AVAILABLE`: ReleaseSeat (취소/노쇼) | 대응 이벤트 있음 | `SeatReleased` | [[02-design-timetable]] §3 | `V2 도메인 문서 근거` |
 | 7 | `BLOCKED → AVAILABLE`: UnblockSlot | 대응 이벤트 있음 | `SlotUnblocked` | [[02-design-timetable]] §3 | `V2 도메인 문서 근거` |
 
@@ -68,7 +68,7 @@ domain/01 §2 상태머신의 실전이 9개(터미널 `--> [*]` 5개 제외, [[
 | 1 | `[*] → PENDING`: CreateReservation | 대응 이벤트 있음 | `ReservationCreated` | [[03-design-reservation]] §3 | `V2 도메인 문서 근거` |
 | 2 | `PENDING → CONFIRMED`: PaymentConfirmed | 대응 이벤트 있음 | `ReservationConfirmed` | [[03-design-reservation]] §3 | `V2 도메인 문서 근거` |
 | 3 | `PENDING → FAILED`: PaymentFailed | 대응 이벤트 있음 | `ReservationFailed` | [[03-design-reservation]] §3 | `V2 도메인 문서 근거` |
-| 4 | `PENDING → EXPIRED`: SeatReleased (TTL 만료) | 대응 이벤트 있음 | `ReservationExpired` | [[03-design-reservation]] §3 | `V2 도메인 문서 근거` |
+| 4 | `PENDING → EXPIRED`: ExpireReservation (결제 대기 만료, reservation 스케줄러 — [[ADR-008-saga-orchestration-vs-choreography]] 개정) | 대응 이벤트 있음 | `ReservationExpired` | [[03-design-reservation]] §3 | `V2 도메인 문서 근거` |
 | 5 | `PENDING → CANCELLED`: CancelReservation | 대응 이벤트 있음 | `ReservationCancelled`(손님) | [[03-design-reservation]] §3 | `V2 도메인 문서 근거` |
 | 6 | `CONFIRMED → CANCELLED`: CancelReservation (방문 3일 전까지) | 대응 이벤트 있음 | `ReservationCancelled`(손님/점주) | [[03-design-reservation]] §3 | `V2 도메인 문서 근거` |
 | 7 | `CONFIRMED → NO_SHOW`: JudgeNoShow | 대응 이벤트 있음 | `ReservationNoShow` | [[03-design-reservation]] §3 | `V2 도메인 문서 근거` |
@@ -85,15 +85,15 @@ domain/01 §2 상태머신의 실전이 9개(터미널 `--> [*]` 5개 제외, [[
 
 | 상태 필드 | 값을 바꾸는 이벤트 | 복원 판정 | 근거 | 태그 |
 |---|---|---|---|---|
-| `status`(최초값 `AVAILABLE`) | 없음 — §1.1의 배치 INSERT | **갭 있음** | §1.1 직접 재확인 | `V1 코드에서 확인` — `batch-module/src/main/kotlin/com/reservation/batch/timetable/step/processor/TimeTableItemProcessor.kt` · `batch-module/src/main/kotlin/com/reservation/batch/timetable/job/TimeTableJobConfig.kt` |
+| `status`(최초값 `AVAILABLE`) | `SlotProvisioned`(배치 발행 — 07 Q3 채택) | 복원 가능 | [[07-hotspots-and-open-questions]] Q3·H6(2026-07-31) | `V2 도메인 문서 근거`([[07-hotspots-and-open-questions]] Q3·H6, 2026-07-31 채택) |
 | `status`(이후 전이: `HELD`/`BLOCKED`/`CONFIRMED`/`AVAILABLE` 복귀) | `SeatHeld`/`SlotBlocked`/`SeatConfirmed`/`SeatReleased`/`SlotUnblocked` | 복원 가능 | §1 표 | `V2 도메인 문서 근거`([[02-design-timetable]] §3) |
 | 현재 점유 참조(`reservationId`, 있으면) | `SeatHeld`(설정) → `SeatReleased`(해제 함의) | 복원 가능 | [[02-design-timetable]] §3 페이로드 | `V2 도메인 문서 근거` |
 | `heldAt`/`holdExpiresAt` | `SeatHeld` | 복원 가능 | [[02-design-timetable]] §3 페이로드 | `V2 도메인 문서 근거` |
 | `blockedBy`/`blockedAt` | `SlotBlocked` → `SlotUnblocked`(해제 함의) | 복원 가능 | [[02-design-timetable]] §3 페이로드 | `V2 도메인 문서 근거` |
 
-**전체 판정 — 갭 있음(부분적).** `HELD` 이후의 모든 전이는 이벤트로부터 완전히 재구성된다. 그러나 애그리거트의 **최초 상태**(`status = AVAILABLE`)는 어떤 이벤트에서도 나오지 않는다 — `TimeTableItemProcessor`가 만든 배치 산출물(JPA 엔티티 행)이 최초 값의 유일한 출처다.
+**전체 판정 — 복원 가능.** `HELD` 이후의 모든 전이는 물론, 애그리거트의 **최초 상태**(`status = AVAILABLE`)도 이벤트로부터 재구성된다. 07 Q3(2026-07-31) 채택으로 배치가 슬롯을 DB에 INSERT하는 대신 `SlotProvisioned`를 발행하고, 이 생성 이벤트를 재생하면 최초 존재까지 복원되기 때문이다.
 
-이것이 fold 복원에 갖는 구조적 함의: [[ADR-002-selective-event-sourcing-scope]](`Proposed`)는 `timetable`을 "append-only 이벤트 스토어 + 리플레이로 상태 도출"하는 진짜 ES 컨텍스트로 분류한다. 순수 ES 전제라면 애그리거트의 전체 생애 — 생성을 포함해 — 가 이벤트 스트림의 리플레이만으로 재구성돼야 한다. 그런데 슬롯의 최초 존재 자체가 이벤트가 아니라 배치 INSERT로 생기므로, 이 최초 상태를 이벤트 스토어의 append-only 스트림만으로 재구성할 방법이 현재 문서·코드 어디에도 없다. 이 문서는 이 함의가 실제 결함인지, 아니면 "생성은 배치가 하고 그 이후만 ES로 다룬다"는 의도된 설계인지 판단하지 않는다 — 이 자체가 조사 결과이고, 판단은 사용자 몫이다(→ 07 후보).
+이 최초 상태 갭은 07 H6으로 안건화됐고, 사용자가 2026-07-31에 종결했다. [[ADR-002-selective-event-sourcing-scope]](`Proposed`)가 `timetable`을 "append-only 이벤트 스토어 + 리플레이로 상태 도출"하는 진짜 ES 컨텍스트로 분류한 전제와, 슬롯 생성을 `SlotProvisioned` 이벤트로 발행하는 07 Q3 채택이 정합한다 — 생성부터 이벤트 스트림에 실리므로 애그리거트 전 생애가 리플레이만으로 재구성된다. 배치는 사라지지 않고 INSERT 대신 이벤트를 발행하는 발행자로 바뀐다. 이벤트 볼륨(레스토랑×날짜×시간×테이블 조합만큼의 생성 이벤트)은 스냅샷/아카이빙([[DESIGN-009-event-store-lifecycle]])으로 관리하는 별개 이슈다.
 
 ### 3.2 reservation (Reservation 애그리거트)
 

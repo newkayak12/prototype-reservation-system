@@ -1,6 +1,6 @@
 # ADR-022: 이벤트 정체성은 `event_id`(UUIDv7) 단일 키로 두고 전역 순번은 두지 않는다
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-021-event-identity-and-global-ordering]] · **설계**: [[DESIGN-009-event-store-lifecycle]]
 - **연관 ADR**: [[ADR-002-selective-event-sourcing-scope]]

@@ -1,6 +1,6 @@
 # ADR-008: 사가 조율 — 코레오그래피 기본, PM 인프라 불필요
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-01)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-006-saga-process-manager]] · [[RFC-016-payment-integration-boundary]] · **설계**: [[DESIGN-007-consistency-and-sagas]]
 - **연관 ADR**: [[ADR-016-aggregate-concurrency-pessimistic-lock]] · [[ADR-009-event-ordering-and-delivery-guarantee]] · [[ADR-005-event-store-mysql-table]]
@@ -37,11 +37,11 @@ V2는 컨텍스트를 쪼갠다. "예약하기"가 이제 여러 컨텍스트에
 
 구조·규칙:
 
-- **타임아웃 = `timetable` TTL 자치.** 임시 점유는 TTL을 가지며, "내 점유가 언제 죽는가"는 `timetable` 애그리거트의 불변식이다. 스케줄러가 주기적으로 깨어 TTL 지난 `SeatHeld`를 찾아 `SeatReleased` 보상을 발행한다 — V1 스케줄러 패턴 재사용. `reservation`은 `SeatReleased`를 구독해 상태를 EXPIRED로 전이한다. 폴링 주기 ≤ TTL 관계는 구현 사이클에서 수치로 검증한다.
+- **타임아웃 = `reservation` 소유.** "결제가 제때 안 왔다"는 판정은 예약 생명주기의 사건이므로 `reservation` 애그리거트가 자기 스케줄러로 감시한다. 스케줄러가 주기적으로 깨어 결제 대기 한도(TTL)를 넘긴 `PENDING` 예약을 찾아 `ExpireReservation`으로 `PENDING → EXPIRED` 전이 후 `ReservationExpired`를 발행한다 — V1 스케줄러 패턴 재사용. `timetable`은 `ReservationExpired`를 구독해 자기 좌석을 해제한다(취소·결제실패·노쇼와 동일한 **reservation-선행** 패턴). 폴링 주기 ≤ TTL 관계는 구현 사이클에서 수치로 검증한다. **순서 근거**: 취소·결제실패·노쇼 3개 해제 경로가 이미 reservation-선행(reservation이 자기 상태를 먼저 전이하고 `timetable`이 뒤따라 해제)인데, 타임아웃만 `timetable`-선행이면 "좌석은 풀렸는데 예약은 아직 `PENDING`"인 창이 생기고, 그 창에서 지연 `PaymentConfirmed`가 아직 `PENDING`인 만료 예약을 확정시킬 수 있다(가드는 `EXPIRED` 이후에만 작동). 타임아웃을 `reservation` 소유로 두면 이 비대칭과 창이 사라진다.
 - **보상 = 각 컨텍스트 자기 책임.** 중앙에서 보상 순서를 제어하지 않는다. `payment`는 자기가 `Confirmed` 상태인지 보고 환불을 결정하고, `timetable`은 자기가 `SeatHeld` 상태인지 보고 해제를 결정한다. 보상은 삭제가 아니라 새 이벤트다 — append-only 불변식 유지([[ADR-005-event-store-mysql-table]]). 보상은 멱등이어야 한다 — 같은 보상 이벤트를 두 번 받아도 한 번 적용한 것과 같아야 하며, 판단은 자기 aggregate 상태 + `sequence_no` 가드로 한다.
 - **실패 처리 = V1 PoisonMessage 운영 흐름 계승.** 사가 스텝 실패만을 위한 별도 파이프라인을 세우지 않는다 — 메시지가 반복 실패하면 기존 저장·추적·수동 재처리·알림 경로에 그대로 태운다. 부분 보상 잔류(예: 좌석은 풀렸는데 환불이 실패한 상태)의 구체 격리 방식은 [[ADR-009-event-ordering-and-delivery-guarantee]]의 꼬리 격리 메커니즘으로 흡수한다 — 여기서는 "별도 운영 표면을 새로 세우지 않는다"는 원칙만 확정한다.
 - **결제 사가 표면 = 3 이벤트 동결.** 코레오그래피에서 `payment`가 다른 컨텍스트에 노출하는 이벤트는 `PaymentConfirmed`/`PaymentFailed`/`PaymentRefunded` 3개로 동결한다([[RFC-016-payment-integration-boundary]]). PG 벤더가 바뀌어도 이 표면은 불변이다 — `payment` 내부의 ACL·웹훅 검증·대사 상세는 이 ADR의 범위 밖이며 해당 결정(15.payment-acl-boundary)으로 위임한다.
-- **교차 애그리거트 불변식은 락이 아니라 사가가 흡수한다.** [[ADR-016-aggregate-concurrency-pessimistic-lock]]의 락 범위는 단일 `aggregate_id`로 한정되고 전역 락은 금지된다 — 즉시 일관성(한 애그리거트)은 락, 최종 일관성(여러 애그리거트)은 이 ADR의 코레오그래피 사가가 맡는다. 경합(paid-after-expiry: TTL 만료와 결제 완료가 엇갈리는 레이스)도 별도 락이 아니라 aggregate 상태 가드로 방어한다 — `reservation`이 EXPIRED 상태에서 `PaymentConfirmed`를 받으면 확정을 거부하고 `RefundRequired`를 발행해 `payment`가 환불을 처리한다.
+- **교차 애그리거트 불변식은 락이 아니라 사가가 흡수한다.** [[ADR-016-aggregate-concurrency-pessimistic-lock]]의 락 범위는 단일 `aggregate_id`로 한정되고 전역 락은 금지된다 — 즉시 일관성(한 애그리거트)은 락, 최종 일관성(여러 애그리거트)은 이 ADR의 코레오그래피 사가가 맡는다. 경합(paid-after-expiry: 결제 대기 타임아웃과 결제 완료가 엇갈리는 레이스)도 별도 락이 아니라 aggregate 상태 가드로 방어한다 — `reservation`이 자기 스케줄러로 먼저 `EXPIRED`로 전이하므로 뒤늦은 `PaymentConfirmed`는 항상 이미 `EXPIRED`인 `reservation`이 받아 확정을 거부하고 `RefundRequired`를 발행해 `payment`가 환불을 처리한다. 만료 판정과 지연 결제 처리가 같은 애그리거트 안에 있어 가드가 국소적으로 신뢰 가능하다(교차 컨텍스트 도착 순서에 의존하지 않는다).
 
 > 결정의 한 줄: "2~3스텝 선형 흐름에 PM 상태 머신은 과투자다. 각 컨텍스트가 자기 aggregate 상태를 보고 자기 보상을 책임지면 충분하고, 애그리거트를 넘는 일관성은 락이 아니라 사가가 흡수한다."
 
@@ -59,7 +59,7 @@ V2는 컨텍스트를 쪼갠다. "예약하기"가 이제 여러 컨텍스트에
 - 각 컨텍스트의 상태 가드가 서로 맞물리는지(예: EXPIRED 상태에서 확정 거부가 실제로 동작하는지) 계약 테스트로 검증한다([[RFC-009-testing-quality-gates]]).
 - `payment`가 노출하는 이벤트가 `PaymentConfirmed`/`PaymentFailed`/`PaymentRefunded` 3종으로 고정되는지 코드 리뷰 또는 계약 테스트로 확인한다.
 - 사가 스텝 실패가 별도 파이프라인이 아니라 기존 PoisonMessage 저장·추적·알림 경로를 타는지 통합 테스트로 재현한다.
-- paid-after-expiry 레이스 시나리오(TTL 만료 후 결제 완료 도착)에서 확정 거부 + `RefundRequired` 발행이 재현되는지 통합 테스트로 검증한다.
+- paid-after-expiry 레이스 시나리오(`reservation` 타임아웃 만료 후 결제 완료 도착)에서 확정 거부 + `RefundRequired` 발행이 재현되는지 통합 테스트로 검증한다.
 
 ## 선택지 상세 (Pros and Cons of the Options)
 

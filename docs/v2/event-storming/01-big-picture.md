@@ -39,7 +39,7 @@
 | 손님 | `CreateReservation` | Reservation | 사용자 커맨드 | `ReservationCreated` | V1 이벤트 없음 — `CreateReservationDomainService`가 검증+생성만 수행, event 패키지 자체가 없음 | `V1 코드에서 확인` | `core-module/src/main/kotlin/com/reservation/reservation/`(하위에 `event/` 없음) |
 | — (이벤트 `PaymentConfirmed`) | `ConfirmReservation` | Reservation | 이벤트 구독(사가) | `ReservationConfirmed` | V1 대응 없음 — payment 컨텍스트 자체가 V1에 없는 순수 신설 | `V2 도메인 문서 근거` | `docs/v2/domain/01-reservation.md` §2 |
 | — (이벤트 `PaymentFailed`) | `FailReservation` | Reservation | 이벤트 구독(사가) | `ReservationFailed` | 위와 동일(신설) | `V2 도메인 문서 근거` | `docs/v2/domain/01-reservation.md` §2 |
-| — (이벤트 `SeatReleased`) | `ExpireReservation` | Reservation | 이벤트 구독(사가) | `ReservationExpired` | 위와 동일(신설) | `V2 도메인 문서 근거` | `docs/v2/domain/01-reservation.md` §2 |
+| 스케줄러 (결제 대기 만료) | `ExpireReservation` | Reservation | 스케줄러 | `ReservationExpired` | 위와 동일(신설) — 타임아웃 소유권 이전([[ADR-008-saga-orchestration-vs-choreography]] 개정)으로 reservation 자체 스케줄러가 만료를 판정 | `V2 도메인 문서 근거` | `docs/v2/domain/01-reservation.md` §2 · [[ADR-008-saga-orchestration-vs-choreography]] |
 | 손님 | `CancelReservation` | Reservation | 사용자 커맨드 | `ReservationCancelled` | V1 이벤트 없음 | `V1 코드에서 확인` | `core-module/src/main/kotlin/com/reservation/reservation/`(하위에 `event/` 없음) |
 | 매장 점주 | `CancelReservation` | Reservation | 사용자 커맨드 | `ReservationCancelled` | V1 이벤트 없음 | `V1 코드에서 확인` | `core-module/src/main/kotlin/com/reservation/reservation/`(하위에 `event/` 없음) |
 | 스케줄러 | `JudgeNoShow` | Reservation | 스케줄러 | `ReservationNoShow` | V1 이벤트 없음 | `V2 도메인 문서 근거` | `docs/v2/domain/01-reservation.md` §2 |
@@ -63,12 +63,11 @@ V1 `TimeTable`은 행 단위(날짜×시간×테이블 1행 = 1슬롯) 애그리
 | — (슬롯 생성, schedule 유래) | *(미명명)* | Slot | 미상 | *(미명명)* | V1 대응 없음 — 슬롯 자체가 행 생성으로 이미 존재, "생성 이벤트"라는 개념이 없음 | `V2 도메인 문서 근거` | `docs/v2/domain/02-timetable.md` §2 상태 다이어그램(`[*] --> AVAILABLE`) |
 | — (이벤트 `ReservationCreated`) | `HoldSeat` | Slot | 이벤트 구독(사가) | `SeatHeld` | V1: `TimeTableOccupiedDomainEvent(timeTableId, timeTableOccupancyId)` — hold/confirm 구분 없이 점유 하나로 뭉쳐 있음 | `V1 코드에서 확인` | `core-module/src/main/kotlin/com/reservation/timetable/event/TimeTableOccupiedDomainEvent.kt` |
 | — (이벤트 `ReservationConfirmed`) | `ConfirmSeat` | Slot | 이벤트 구독(사가) | `SeatConfirmed` | 위 행과 동일한 V1 이벤트 — V1엔 임시/확정 구분이 없다 | `V1 코드에서 확인` | `core-module/src/main/kotlin/com/reservation/timetable/event/TimeTableOccupiedDomainEvent.kt` |
-| — (이벤트 `ReservationFailed`/`ReservationCancelled`/`ReservationNoShow`) | `ReleaseSeat` | Slot | 이벤트 구독(사가) | `SeatReleased` | V1 이벤트 없음 — `detachOccupied()`만 존재, 해제 이벤트 자체가 없음 | `V2 도메인 문서 근거` | `docs/v2/domain/02-timetable.md` §2 |
-| 스케줄러 | `ExpireSeat`(TTL 만료) | Slot | 스케줄러 | `SeatReleased` | 위와 동일 — V1엔 TTL 개념 자체가 없음 | `V2 도메인 문서 근거` | `docs/v2/domain/02-timetable.md` §2 |
+| — (이벤트 `ReservationFailed`/`ReservationCancelled`/`ReservationNoShow`/`ReservationExpired`) | `ReleaseSeat` | Slot | 이벤트 구독(사가) | `SeatReleased` | V1 이벤트 없음 — `detachOccupied()`만 존재, 해제 이벤트 자체가 없음. 타임아웃 포함 모든 해제가 reservation 이벤트 구독으로 수렴(timetable 자체 `ExpireSeat`·TTL 소멸, [[ADR-008-saga-orchestration-vs-choreography]] 개정) | `V2 도메인 문서 근거` | `docs/v2/domain/02-timetable.md` §2 · [[ADR-008-saga-orchestration-vs-choreography]] |
 | 매장 점주 | `BlockSlot` | Slot | 사용자 커맨드 | `SlotBlocked` | V1 이벤트 없음 — 수동 차단 개념 자체가 V1에 없음 | `V2 도메인 문서 근거` | `docs/v2/domain/02-timetable.md` §2 |
 | 매장 점주 | `UnblockSlot` | Slot | 사용자 커맨드 | `SlotUnblocked` | 위와 동일 | `V2 도메인 문서 근거` | `docs/v2/domain/02-timetable.md` §2 |
 
-> **미결(→ 07)**: 슬롯 생성(`[*] → AVAILABLE`) 트리거명 자체가 `docs/v2/domain/02-timetable.md`에 없다([[00-index]] §3 "상태 전이 트리거 미명명"). `docs/v2/modules/02-contract-module.md` §4 구조 예시엔 `TimeTableCreated`가 통합 이벤트 패키지 주석으로 등장하는데, 도메인 문서와 이름이 일치하는지 대조가 안 돼 있다 — 문서 간 표류 후보. `ReleaseSeat`(보상)와 `ExpireSeat`(TTL)가 원인이 다른데도 동일한 `SeatReleased` 하나로 합쳐지는 점도 `docs/v2/domain/02-timetable.md` §2가 자체적으로 미결로 남겨 둔 지점이다.
+> **미결(→ 07)**: 슬롯 생성(`[*] → AVAILABLE`) 트리거명 자체가 `docs/v2/domain/02-timetable.md`에 없다([[00-index]] §3 "상태 전이 트리거 미명명"). `docs/v2/modules/02-contract-module.md` §4 구조 예시엔 `TimeTableCreated`가 통합 이벤트 패키지 주석으로 등장하는데, 도메인 문서와 이름이 일치하는지 대조가 안 돼 있다 — 문서 간 표류 후보. ~~`ReleaseSeat`(보상)와 `ExpireSeat`(TTL)가 동일한 `SeatReleased`로 합쳐지는 점~~은 타임아웃 소유권 이전([[ADR-008-saga-orchestration-vs-choreography]] 개정 · [[07-hotspots-and-open-questions]] H1)으로 **해소**됐다 — timetable 자체 `ExpireSeat`이 사라지고 `SeatReleased`가 단일 내부 이벤트로 수렴한다.
 
 ---
 

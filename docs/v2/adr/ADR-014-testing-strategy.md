@@ -1,6 +1,6 @@
 # ADR-014: V2 테스트 전략 — 정적 구조 강제(Konsist) + 3슬라이스 행위 명세 + 동적 분산 6범주 게이트
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-009-testing-quality-gates]] · [[RFC-023-event-schema-contract-management]] · **설계**: [[DESIGN-012-environments-and-testing]]
 - **연관 ADR**: [[ADR-011-es-pii-crypto-shredding]] · [[ADR-021-integrated-event-contract-module]] · [[ADR-010-event-schema-evolution]] · [[ADR-016-aggregate-concurrency-pessimistic-lock]] · [[ADR-008-saga-orchestration-vs-choreography]] · [[ADR-017-authorization-model]]

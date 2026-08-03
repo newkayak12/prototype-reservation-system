@@ -1,6 +1,6 @@
 # ADR-012: Kafka 호스팅 — self-managed Strimzi 잠금 + 메타데이터 KRaft, k3s~EKS 패리티는 속성별 분리
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-007-deployment-infra-ops]] · **설계**: [[DESIGN-010-deployment-runtime]]
 - **연관 ADR**: [[ADR-013-db-hosting-and-read-write-topology]] · [[ADR-005-event-store-mysql-table]]
@@ -11,9 +11,9 @@
 
 V1은 단일 앱 안에서 트랜잭션이 끝났다. V2는 command가 만든 사실을 Kafka를 통해 query 측 projector에 비동기로 전달하고, 이 Outbox→Kafka→projector 경로가 읽기 모델 전체의 생명선이 된다 — Kafka는 1급 인프라다. 손님의 `ReserveTable` 커맨드가 EKS 위 command 파드에 쓰기+Outbox로 커밋되고, self-managed Strimzi가 command와 query를 잇는 다리를 서면, query 파드의 projector가 이를 구독해 read model을 갱신한다.
 
-런타임 방향(EKS) 자체는 이미 잠겼고, DB/Redis 같은 다른 데이터 면 구성요소는 호스팅 형태(관리형 vs 자가 관리)를 투명 원칙으로 배포 사이클에 위임했다. 그러나 Kafka는 이 일반 원칙의 예외다 — command↔query 유일 접점이라는 무게 때문에 런타임 자체는 self-managed Strimzi로 이미 잠겼고, 남은 것은 메타데이터 관리 방식과 로컬(k3s)~프로덕션(EKS) 환경 패리티를 어디까지 맞출 것인가다.
+워크로드 런타임 방향(EKS)은 [[ADR-026-workload-runtime-placement]]에서 이미 잠겼고, DB/Redis 같은 다른 데이터 면 구성요소는 호스팅 형태(관리형 vs 자가 관리)를 투명 원칙으로 배포 사이클에 위임했다. 그러나 Kafka는 이 투명 원칙의 예외다 — command↔query 유일 접점이라는 무게 때문에 호스팅 형태를 배포 사이클에 넘기지 않고 이 ADR에서 직접 결정한다. 결정 대상은 세 축이다: 런타임 호스팅(관리형 MSK vs self-managed), 메타데이터 관리 방식, 로컬(k3s)~프로덕션(EKS) 환경 패리티를 어디까지 맞출 것인가.
 
-**Kafka 런타임이 self-managed Strimzi로 잠긴 전제 위에서, 메타데이터를 무엇으로 관리하고 k3s~EKS 패리티를 어디까지 맞춰야 하는가.**
+**Kafka를 관리형(MSK)에 위임할 것인가 self-managed로 직접 운영할 것인가, 메타데이터는 무엇으로 관리하며, k3s~EKS 패리티를 어디까지 맞춰야 하는가.**
 
 ## 결정 동인 (Decision Drivers)
 
@@ -38,11 +38,11 @@ V1은 단일 앱 안에서 트랜잭션이 끝났다. V2는 command가 만든 �
 
 ## 결정 (Decision Outcome)
 
-**채택: self-managed Strimzi(런타임 잠금) + KRaft(메타데이터) + 속성별 분리 패리티.** MSK는 비용·운영 오버헤드와 k3s~EKS 패리티 훼손을 이유로 기각한다. ZooKeeper는 별도 앙상블 운영 부담을 새로 지울 이유가 없어 기각한다. 전 속성 패리티는 로컬 자원 부담이 과해 기각하고, 속성별로 갈라 필요한 것만 맞춘다.
+**채택: self-managed Strimzi(런타임) + KRaft(메타데이터) + 속성별 분리 패리티.** MSK는 비용·운영 오버헤드와 k3s~EKS 패리티 훼손을 이유로 기각한다. ZooKeeper는 별도 앙상블 운영 부담을 새로 지울 이유가 없어 기각한다. 전 속성 패리티는 로컬 자원 부담이 과해 기각하고, 속성별로 갈라 필요한 것만 맞춘다.
 
 | 축 | 결정 |
 |---|------|
-| **런타임** | self-managed Strimzi(EKS/k3s 위) — 호스팅 형태 투명 원칙(DB/Redis에 적용)의 예외로 이미 잠김. MSK는 채택하지 않는다. |
+| **런타임** | self-managed Strimzi(EKS/k3s 위) — 호스팅 형태 투명 원칙(DB/Redis에 적용)의 예외로 이 ADR에서 직접 결정. MSK는 채택하지 않는다. |
 | **메타데이터** | KRaft. ZooKeeper는 기각 |
 | **k3s~EKS 패리티 — 동작 정합성 속성** | 리스너·인증·토픽 토폴로지는 패리티 유지 (로컬에서 동작 정합을 검증) |
 | **k3s~EKS 패리티 — 규모 속성** | 브로커 수·스토리지는 로컬 축소 허용 |

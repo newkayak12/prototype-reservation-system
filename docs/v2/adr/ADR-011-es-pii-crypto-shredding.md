@@ -1,6 +1,6 @@
 # ADR-011: 이벤트 스토어 PII — 크립토 셰딩(전용 키 테이블 + 빌드타임 분류 강제)
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-005-pii-security]] · **설계**: [[DESIGN-016-pii-security]]
 - **연관 ADR**: [[ADR-014-testing-strategy]]

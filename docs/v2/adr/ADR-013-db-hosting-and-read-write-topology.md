@@ -1,6 +1,6 @@
 # ADR-013: 읽기/쓰기 DB 토폴로지 — command/query 물리 분리 + Kafka 다리, binlog=HA
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-007-deployment-infra-ops]] · **설계**: [[DESIGN-010-deployment-runtime]]
 - **연관 ADR**: [[ADR-005-event-store-mysql-table]] · [[ADR-004-read-model-projection-and-replica]] · [[ADR-009-event-ordering-and-delivery-guarantee]] · [[ADR-012-kafka-hosting-msk-vs-self-managed]] · [[ADR-019-caching-redis-role]]

@@ -11,7 +11,7 @@
 | **command 서비스** | 명령 수신·검증·쓰기(event_store/state+Outbox) | `command-module` | stateless(DB가 상태) | [[05-command-adapter]] |
 | **query 서비스** (read model 서버) | 조회 — read model → DTO | `query-module` (web/service/repository) | stateless | [[08-query-read-model-server]] |
 | **projector** (projection 서버) | Kafka 구독 → read model 갱신 | `query-module` (projection) | stateless, 컨슈머 그룹 상태는 Kafka | [[07-query-projection-server]] |
-| **outbox relay** | Outbox → Kafka 발행 | `command-infrastructure` | stateless, 단일성(SKIP LOCKED) | [[06-command-infrastructure]] |
+| **outbox relay** | Outbox → Kafka 발행 | `command-infrastructure` | 단일성(Quartz 클러스터 리더), N 대칭 배치 | [[06-command-infrastructure]] · [[ADR-009-event-ordering-and-delivery-guarantee]] |
 | **Envoy Gateway** (엣지) | 엣지 단일 홉 — TLS 종단·무상태 JWT 검증(JWKS)·클레임 헤더 주입·rate limit | 별도(Envoy Gateway · Gateway API) | stateless | [[ADR-024-authentication-boundary]] |
 | **인증 서버** | 토큰 발급·refresh rotation·JWKS | `auth-server-module` | stateless | [[09-auth-server-module]] |
 | **(데이터 면)** | Kafka(Strimzi)·command/query 분리 MySQL(binlog HA)·Redis(master/replica) | 호스팅 투명 | stateful | — |
@@ -21,7 +21,7 @@
 - **command/query를 포함한 각 앱 워크로드는 처음부터 별도 배포 + 노드 분리.** 코드(모듈) 분리에 더해 런타임도 워크로드별 별도 Deployment(파드당 컨테이너 1개)로 뜨고 각자 다른 노드에 놓인다. 격리는 네임스페이스가 아니라 **노드 분리**에서 온다([[ADR-026-workload-runtime-placement]] — RFC-001 L90 비목표를 대체). "부하가 요구할 때 물리 분리"라는 유예 트리거는 폐기
 - **projector와 outbox relay는 처음부터 별 워크로드로 분리.** 요청-응답 수명주기와 다른 동시성·스케일·장애 격리 특성 때문
   - projector: 컨슈머 루프, 스케일 축 = 컨슈머 수(상한 = 파티션 수), lag이 쌓여도 조회는 무중단
-  - relay: 폴링 + 단일성(leader/SKIP LOCKED), 발행 실패가 조회/명령과 격리
+  - relay: 폴링 + 단일성(Quartz 클러스터 리더), 발행 실패가 조회/명령과 격리
 
 ## 3. 목표 클러스터 토폴로지 ([[DESIGN-010]] §4.2)
 
@@ -63,7 +63,7 @@ graph TB
 | command 서비스 | replica 증설 | DB 커넥션 |
 | query 서비스 | replica 증설 + query DB **HA 레플리카** | 캐시 아님, 인스턴스 분할 아님 |
 | projector | 같은 컨슈머 그룹에 인스턴스 추가(competing consumers) | **파티션 수** |
-| outbox relay | 소수 유지(SKIP LOCKED 경쟁 소비) | 단일성 우선 |
+| outbox relay | N 대칭 replica + Quartz 중재(한 트리거=한 노드) | 단일성 우선 |
 
 ## 5. 관련 문서
 

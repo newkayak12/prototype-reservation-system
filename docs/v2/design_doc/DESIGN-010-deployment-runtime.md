@@ -32,7 +32,7 @@ V2의 목표 런타임 토폴로지를 확정한다:
 
 - GitOps 도구 선정 및 파이프라인 설계 (별도 todo)
 - HPA 수치·복제 지연 허용치 등 구체 임계 숫자 (운영 측정 후 확정)
-- outbox relay 단일성의 구체 구현(leader election vs SKIP LOCKED) (구현 사이클)
+- ~~outbox relay 단일성의 구체 구현(leader election vs SKIP LOCKED)~~ — **확정: Quartz 클러스터**([[ADR-009-event-ordering-and-delivery-guarantee]]). 남은 건 트리거 주기·`clusterCheckinInterval` 수치(구현 사이클)
 - command/query 서비스의 물리적 분리 시점 결정 (읽기 스케일 요구가 증명될 때)
 - 폴링 relay → CDC(Debezium) 전환 결정 (트래픽·운영 성숙도 의존)
 
@@ -156,9 +156,9 @@ sequenceDiagram
 #### outbox relay — 왜 단일성(leader)이 필요한가
 
 - Outbox 테이블을 폴링해 미발행분을 Kafka로 흘린다(DESIGN-003 발행 경로). v1의 `AFTER_COMMIT REQUIRES_NEW` + 스케줄러 재처리를 워크로드로 격상한 것.
-- 여러 replica가 같은 Outbox 행을 동시에 집으면 **중복 발행** 위험 → leader election(또는 `SELECT ... FOR UPDATE SKIP LOCKED` 기반 경합 회피, 구현 사이클 결정)으로 단일 처리자를 보장한다.
-- Kafka는 어차피 **at-least-once**이므로 중복 발행 자체는 컨슈머 멱등(Zero Payload)으로 흡수되지만, relay는 불필요한 중복을 줄이는 게 책임이다.
-- 따라서 relay는 `replicas: 1`(+ 무중단 위해 standby) 또는 분산 락 기반 소수 replica로 둔다. HPA 대상이 아니다.
+- 여러 replica가 같은 Outbox 행을 동시에 집으면 **순서 역전**(경쟁 드레인) 위험 → **Quartz 클러스터 리더**(JDBC JobStore `isClustered=true` + `@DisallowConcurrentExecution`)로 단일 처리자를 보장한다([[ADR-009-event-ordering-and-delivery-guarantee]], `SKIP LOCKED` 경쟁 소비 supersede). Quartz는 [[ADR-008-saga-orchestration-vs-choreography]]의 예약 타임아웃 스케줄러로 어차피 도입하는 인프라라 새 코디네이터가 아니다.
+- Kafka는 어차피 **at-least-once**이므로 리더 교체 창의 중복 발행 자체는 컨슈머 멱등(`event_id` dedup)으로 흡수되고, 삽입 순서 통짜 드레인이라 겹쳐도 순서를 뒤집지 못한다(중복이지 역전 아님). relay는 불필요한 중복을 줄이는 게 책임이다.
+- 따라서 relay는 **N개 대칭 replica + Quartz 중재**(한 트리거는 한 노드만 발화)로 둔다. 구안의 `replicas: 1(+standby)` 수동 대기 형태를 대체한다 — standby 수동 관리가 사라지고, 리더가 죽으면 다음 fire에서 다른 노드가 승계한다. HPA 대상이 아니다(발행 순차성 때문).
 
 > **대안 — 폴링 relay 대신 CDC(Debezium).** Outbox 테이블 변경을 CDC로 Kafka에 직결하면 relay 워크로드를 없앨 수 있다. ADR-008(reservation)의 CDC 후속 계획·ADR-005(event-store-mysql-table)의 "CDC로의 전환 기준"과 정합한다. 다만 Kafka Connect/Debezium이라는 새 운영 표면이 생긴다 → **초기엔 폴링 relay, CDC는 트래픽·운영 성숙도가 정당화할 때**(YAGNI). TBD.
 
@@ -199,7 +199,7 @@ sequenceDiagram
 
 > 방향·정책 형태는 위에서 고정했고, 다음 값들은 운영 측정·구현에서 확정한다(RFC-007-deployment-infra-ops "Design으로 넘기는 것").
 
-- outbox relay의 단일성 구현(leader election vs `SKIP LOCKED`) — 구현 사이클.
+- outbox relay 단일성 구현 — **Quartz 클러스터로 확정**([[ADR-009-event-ordering-and-delivery-guarantee]]); 트리거 주기·재선출 소요만 구현 사이클.
 - 폴링 relay → CDC(Debezium) 전환 기준 — ADR-005(event-store-mysql-table)·ADR-008(reservation)와 정합, 트래픽 의존.
 - command/query 서비스(앱) 물리 분리 시점 — 읽기 스케일 요구가 증명되거나 장애 격리가 필요할 때(DESIGN-002). (DB 토폴로지는 query 1 인스턴스+HA 레플리카로 고정·read model 도메인 스키마 분리로 확정 — ADR-013.)
 - standby 복제 지연 허용치의 절대 숫자, 자동 페일오버 도입 여부 — 운영 측정.
@@ -285,7 +285,7 @@ sequenceDiagram
 ## Weakness (Devil's Advocate 반박 포인트)
 
 - **self-managed Strimzi를 솔로가 운영** — KRaft·PDB·스토리지클래스·리밸런스·브로커 디스크 압박·버전 업그레이드는 오퍼레이터가 대신 눌러주는 게 아니라 사람이 값을 정해야 하는 표면이다. §4.5는 "규격은 측정 후 확정"으로 미루지만, 미확정 규격으로 뜬 브로커가 디스크 풀·리밸런스 폭주를 일으키면 그건 학습이 아니라 사고 대응이다. MSK 회피의 명분이 "k3s~EKS 패리티"인데, 정작 패리티가 필요한 건 앱 리스너 동작이지 브로커 운영 자체가 아니다 — 운영 부담이 학습을 압도할 위험을 문서가 저울질하지 않는다.
-- **outbox relay `replicas:1`의 가용성 공백** — §4.4는 leader 단일성을 강조하면서 "+ standby"를 괄호로만 언급한다. 단일 relay 파드가 죽고 리더 재선출/standby 승격 사이의 공백 동안 Outbox 발행이 멈추면, command는 계속 커밋되어 미발행 행이 쌓이고 read model 신선도가 그 공백만큼 통째로 뒤처진다. HPA 대상이 아니라고 못박은 이 워크로드의 **failover 시간이 곧 프로젝션 지연의 하한**인데, 그 SLI(§4.6 "페일오버 소요 시간")를 relay에는 적용하지 않았다.
+- **outbox relay 리더 교체의 가용성 공백** — (부분 완화 2026-08-03: `replicas:1(+standby)` → **Quartz 클러스터 N 대칭**으로 전환해 standby 수동 승격은 사라졌다. 다만 리더가 죽고 다음 트리거 fire까지 발행이 멈추는 공백은 남는다.) 그 공백 동안 command는 계속 커밋되어 미발행 행이 쌓이고 read model 신선도가 그만큼 뒤처진다. HPA 대상이 아니라고 못박은 이 워크로드의 **재발화 소요(트리거 주기·`clusterCheckinInterval`)가 곧 프로젝션 지연의 하한**인데, 그 SLI(§4.6 "페일오버 소요 시간")를 relay에 적용하는 것은 여전히 미정이다([[ADR-009-event-ordering-and-delivery-guarantee]] 트레이드오프).
 - **검증 모델 A = 네트워크 신뢰의 단일 실패점** — "SCG만 command/query에 도달"을 NetworkPolicy로 강제한다지만, 앱이 헤더를 무조건 신뢰하는 이상 NetworkPolicy 오적용·CNI 미지원·디버그용 임시 노출 한 번이면 신원 위조가 그대로 관통한다. 모델 B(재검증)로의 승격을 "분산 신뢰가 빡빡해질 때"로 미뤘는데, 그 시점을 감지할 신호(우회 시도 탐지·게이트 바이패스 알람)가 정의돼 있지 않아 뚫린 뒤에야 알게 된다.
 - ~~**command/query 배포 합침과 HPA 축 충돌**~~ → **[해소 · [[ADR-026-workload-runtime-placement]]]** command/query가 처음부터 별도 배포라 독립 스케일이 성립한다. "합친 상태" 전제가 사라져 이 충돌은 발생하지 않는다. (원 지적: 한 파드에 합치면 읽기 폭증이 쓰기 경로까지 끌고 스케일시켜 분리 판단 지표가 오염된다.)
 - **단일 평탄 namespace + data 면 동거의 폭발 반경** — §4.2 주석은 기본값을 평탄 namespace로 두고 Strimzi/MySQL 같은 stateful을 같은 평면에 놓는다. 리소스 쿼터·PDB 경계 없이 앱 파드의 폭주(메모리·파일디스크립터)가 같은 노드의 브로커/DB를 압박하면 데이터 면 장애로 번진다. → **[부분 완화 · [[ADR-026-workload-runtime-placement]]]** 각 앱 워크로드가 데이터 면과 **다른 노드**에 놓여 노드 단위 자원 경합은 끊긴다(namespace는 여전히 단일이나, 격리는 노드에서 옴). 다만 노드 분리 방식·규격은 08-k6 측정 후 확정할 학습 변수이므로, 그 전까지 requests/limits 없는 상태에서의 노드 내 경합은 잔존 위험으로 남는다.
