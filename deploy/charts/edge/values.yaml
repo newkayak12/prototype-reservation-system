@@ -1,0 +1,10 @@
+# 엣지 설정. 라우트(HTTPRoute)는 Phase 7 앱과 함께 추가.
+gatewayClassName: envoy
+
+gateway:
+  name: reservation-edge
+  # HTTP :80 리스너. k3d 가 호스트 8080 -> 노드 80 으로 포워드(cluster.yaml).
+  # TLS 종단·JWT 검증(SecurityPolicy)은 인증 서버(Phase 7) 붙은 뒤.
+  listenerPort: 80
+  # 같은 네임스페이스(reservation)의 HTTPRoute 만 이 Gateway 에 붙을 수 있게.
+  allowedRoutesFrom: Same

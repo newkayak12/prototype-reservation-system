@@ -1,0 +1,87 @@
+{{- /* command/query MySQL — 물리 분리(ADR-013). instances 값을 순회해 각각 PVC+Deployment+Service 생성. */ -}}
+{{- range .Values.mysql.instances }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-{{ .name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "data-plane.labels" $ | nindent 4 }}
+    app: mysql-{{ .name }}
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ $.Values.mysql.storage }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-{{ .name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "data-plane.labels" $ | nindent 4 }}
+    app: mysql-{{ .name }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mysql-{{ .name }}
+  template:
+    metadata:
+      labels:
+        {{- include "data-plane.labels" $ | nindent 8 }}
+        app: mysql-{{ .name }}
+    spec:
+      containers:
+        - name: mysql
+          image: {{ $.Values.mysql.image }}
+          args: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: {{ $.Values.mysql.rootPassword | quote }}
+            - name: MYSQL_DATABASE
+              value: {{ .database | quote }}
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          readinessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p{{ $.Values.mysql.rootPassword }}"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p{{ $.Values.mysql.rootPassword }}"]
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mysql-{{ .name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-{{ .name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "data-plane.labels" $ | nindent 4 }}
+    app: mysql-{{ .name }}
+spec:
+  type: ClusterIP
+  selector:
+    app: mysql-{{ .name }}
+  ports:
+    - port: 3306
+      targetPort: 3306
+      name: mysql
+{{- end }}

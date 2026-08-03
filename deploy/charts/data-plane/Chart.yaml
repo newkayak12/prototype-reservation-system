@@ -1,0 +1,8 @@
+apiVersion: v2
+name: data-plane
+description: >-
+  로컬 k3s(패리티) 데이터 면 — command/query MySQL, Redis, localstack, Strimzi Kafka CR.
+  운영 데이터 면(DESIGN-010 §4.5)을 용량만 축소해 미러링한다.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

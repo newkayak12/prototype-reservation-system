@@ -1,0 +1,13 @@
+{{- /*
+  GatewayClass — "엣지를 무엇으로 구현하나"의 선언(클러스터 스코프).
+  controllerName 이 Envoy Gateway operator 를 가리킨다.
+*/ -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: {{ .Values.gatewayClassName }}
+  labels:
+    app.kubernetes.io/part-of: reservation-edge
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
