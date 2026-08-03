@@ -1,0 +1,22 @@
+{{- /*
+  Gateway — 실제 입구. Envoy Gateway operator 가 이걸 보고
+  envoy-gateway-system 에 Envoy 프록시 Deployment + LoadBalancer Service 를 자동 생성한다.
+  아직 HTTPRoute 가 없어 라우팅 규칙은 비어 있다(요청 시 404) — 엣지가 살아 있음을 증명하는 상태.
+*/ -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ .Values.gateway.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/part-of: reservation-edge
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  gatewayClassName: {{ .Values.gatewayClassName }}
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: {{ .Values.gateway.listenerPort }}
+      allowedRoutes:
+        namespaces:
+          from: {{ .Values.gateway.allowedRoutesFrom }}

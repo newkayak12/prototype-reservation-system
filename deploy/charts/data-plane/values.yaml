@@ -1,0 +1,28 @@
+# 로컬 데이터 면 값. 운영 대비 "용량만" 축소하고 토폴로지(command/query 분리)는 유지한다.
+namespace: reservation
+
+mysql:
+  image: mysql:8.4
+  rootPassword: verysecret
+  storage: 2Gi
+  # command/query 물리 분리(ADR-013). 로컬은 인스턴스 2개 · HA standby 생략.
+  instances:
+    - name: command # event_store / state / outbox — 쓰기 모델
+      database: reservation_command
+    - name: query # 프로젝션 read model — 읽기 모델
+      database: reservation_query
+
+redis:
+  image: redis:7.4
+  storage: 1Gi
+
+localstack:
+  image: localstack/localstack:3.8
+  # "AWS-고유 서비스만" 위임 (DESIGN-012 §3). MySQL/Kafka/Redis 는 실물 컨테이너.
+  services: "s3,secretsmanager,ssm"
+
+kafka:
+  clusterName: reservation
+  version: "3.9.0"
+  metadataVersion: "3.9-IV0"
+  storage: 5Gi
