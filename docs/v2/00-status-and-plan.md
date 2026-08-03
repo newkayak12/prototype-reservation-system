@@ -107,7 +107,7 @@ CQRS로 command / query를 모듈 분리하고, **선택적 이벤트 소싱**�
 - **DoD**: **core 이벤트 타입을 아는 유일한 계층이 application임**([[DESIGN-019]] 핵심 불변식) — infra/query는 타입-불가지 `StoredEvent`만 · UseCase가 `lock→load→handle→append(+outbox)`를 한 트랜잭션 경계로 조립 · 포트만 의존(어댑터 미구현 상태로 mock 그린).
 
 #### 7-4 · command-adapter + infrastructure + auth-server (Day 15-22) → [[05-command-adapter]] · [[06-command-infrastructure]] · [[09-auth-server-module]]
-- **산출물**: Flyway DDL(`event_store`·`outbox`·`snapshot`) · `EventStoreEngine`(append/load bytes, replay, snapshot) · **Outbox relay**(ShedLock 단일 리더 폴링, [[RFC-025]]) + 재시도 스케줄러 · Kafka producer(파티션 키=`aggregate_id`) · Redisson 락 + DB `FOR UPDATE` 폴백 · UUIDv7 생성기 · Command Controller · 인증 서버(Spring Authorization Server — [[RFC-020]]·[[ADR-024]], 별도 앱 [[ADR-026]]).
+- **산출물**: Flyway DDL(`event_store`·`outbox`·`snapshot`) · `EventStoreEngine`(append/load bytes, replay, snapshot) · **Outbox relay**(Quartz 클러스터 단일 리더 폴링·삽입 순서 통짜 드레인, [[ADR-009-event-ordering-and-delivery-guarantee]]·[[RFC-025]]) + 재시도 스케줄러 · Kafka producer(파티션 키=`aggregate_id`) · Redisson 락 + DB `FOR UPDATE` 폴백 · UUIDv7 생성기 · Command Controller · 인증 서버(Spring Authorization Server — [[RFC-020]]·[[ADR-024]], 별도 앱 [[ADR-026]]).
 - **DoD**: **`I-OUTBOX-1` 강제** — `event_store` append와 `outbox` insert가 동일 datasource·동일 트랜잭션([[ADR-027]]), 한쪽만 커밋되는 케이스가 통합 테스트로 재현 불가 · **`L0` UNIQUE(`aggregate_id`, `sequence_no`) 백스톱** 존재 및 동시 append 충돌 시 `AggregateConflictException` 번역 · relay가 단일 리더로 `sequence_no ASC` 순차 발행(경쟁 소비 아님) · Testcontainers(MySQL+Kafka) 통합 테스트 그린 · infra가 `command-core`를 import하지 않음.
 
 #### 7-5 · query — projection + read model 서버 (Day 23-28) → [[07-query-projection-server]] · [[08-query-read-model-server]]

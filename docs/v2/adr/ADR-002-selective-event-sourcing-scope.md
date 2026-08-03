@@ -73,4 +73,4 @@ ES냐 비-ES냐의 차이는 command 쪽 쓰기 저장 한 곳뿐이다. 이벤�
 ## 추가 정보 (More Information)
 
 - **미결정 (→ 구현 사이클)**: 컨텍스트별 ES 착수 순서와 병행 방식. Strangler 점진 전환에서 확정하며 `timetable`을 선행 템플릿으로 삼는다 (RFC-001 결정 #7).
-- 관련: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[DESIGN-001-design-overview]] · [[DESIGN-003-write-model]] · [[02-domain-limitations]] · [[ADR-001-cqrs-command-query-module-split]]
+- 관련: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[DESIGN-001-design-overview]] · [[DESIGN-003-write-model]] · [[ADR-001-cqrs-command-query-module-split]]

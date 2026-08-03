@@ -1,6 +1,6 @@
 # ADR-019: 캐싱·Redis의 V2 역할 — 읽기 캐시 아님, 분산 조정·휘발성 상태 전용(단일 durability)
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-018-caching-redis-role]] · **설계**: [[DESIGN-018-caching]]
 - **연관 ADR**: [[ADR-016-aggregate-concurrency-pessimistic-lock]] · [[ADR-004-read-model-projection-and-replica]] · [[ADR-020-auth-token-transport]] · [[ADR-013-db-hosting-and-read-write-topology]]

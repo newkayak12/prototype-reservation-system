@@ -3,7 +3,7 @@
 - **상태**: Accepted
 - **작성자**: Team
 - **작성일**: 2026-06-30
-- **최종 수정일**: 2026-06-30
+- **최종 수정일**: 2026-07-31 (타임아웃 소유권을 `timetable` TTL 자치 → `reservation` 소유로 변경, ADR-008 반영 — §4.4 타임아웃·paid-after-expiry 시퀀스를 reservation-선행으로 통일)
 - **관련 RFC**: RFC-006-saga-process-manager · RFC-016-payment-integration-boundary
 - **관련 ADR**: 08.saga-orchestration-vs-choreography · 09.event-ordering-and-delivery-guarantee · 05.event-store-mysql-table · 02.selective-event-sourcing-scope
 - **관련 Design Doc**: DESIGN-001-overview · DESIGN-003-write-model · DESIGN-004-read-model · DESIGN-008-messaging-topology · DESIGN-015-payment-integration
@@ -75,7 +75,7 @@ graph LR
 
 1. 예약 흐름(확정·취소·노쇼)이 전부 **2~3스텝 선형**이다 — PM 상태 머신 인프라 비용을 정당화하지 못한다.
 2. PM의 두 논거(타임아웃 감시, 되감기 주인)가 코레오그래피로 해결 가능하다:
-   - **타임아웃**: `timetable`이 자기 점유 TTL을 자기가 관리(데이터 소유자 자치).
+   - **타임아웃**: `reservation`이 결제 대기 만료를 자기 스케줄러로 관리(2026-07-31 개정, 구 `timetable` TTL 자치).
    - **되감기**: 각 aggregate가 자기 상태를 보고 자기 보상을 판단(중앙 위치 불필요).
 3. PM은 관리 포인트를 줄이지 않고 1+N으로 늘린다. 복잡도를 줄이지 않고 위치만 옮긴다.
 
@@ -112,25 +112,26 @@ sequenceDiagram
 - 각 컨텍스트는 이벤트를 듣고 자기 aggregate에 커맨드를 실행.
 - 흐름의 "주인"은 없다 — 각 컨텍스트가 자기 구간만 책임진다.
 
-#### 타임아웃 — 결제 미도착 (TTL 만료)
+#### 타임아웃 — 결제 미도착 (결제 대기 만료)
 
 ```mermaid
 sequenceDiagram
-    participant SCH as timetable 스케줄러
-    participant TT as timetable (ES)
+    participant SCH as reservation 스케줄러
     participant RES as reservation (ES)
+    participant TT as timetable (ES)
 
-    Note over SCH: TTL 지난 SeatHeld 탐색 (폴링)
-    SCH->>TT: ExpireSeat
-    TT-->>RES: SeatReleased
-
+    Note over SCH: 결제 대기 한도(TTL) 지난 PENDING 예약 탐색 (폴링)
+    SCH->>RES: ExpireReservation
     RES->>RES: 상태 가드: PENDING → EXPIRED
-    Note over RES: ReservationExpired
+    RES-->>TT: ReservationExpired
+
+    TT->>TT: 상태 가드: HELD → ReleaseSeat
+    Note over TT: SeatReleased
 ```
 
-- `timetable`이 자기 점유의 TTL을 자기가 관리 — **데이터 소유자 자치**.
+- `reservation`이 결제 대기 타임아웃을 자기가 관리 — **예약 생명주기 소유자 자치**.
 - V1 스케줄러 패턴 재사용.
-- `reservation`은 `SeatReleased`를 듣고 자기 상태를 EXPIRED로 전이.
+- `timetable`은 `ReservationExpired`를 듣고 자기 좌석을 해제 — 취소·실패·노쇼와 동일한 reservation-선행 패턴.
 
 #### 결제 실패
 
@@ -197,17 +198,20 @@ sequenceDiagram
 
 #### paid-after-expiry 레이스
 
-점유 만료 후 결제가 뒤늦게 도착하는 레이스 — aggregate 상태 가드로 방어.
+결제 대기 만료 후 결제가 뒤늦게 도착하는 레이스 — aggregate 상태 가드로 방어.
 
 ```mermaid
 sequenceDiagram
-    participant TT as timetable (ES)
+    participant SCH as reservation 스케줄러
     participant RES as reservation (ES)
+    participant TT as timetable (ES)
     participant PAY as payment
 
-    Note over TT: TTL 만료
-    TT-->>RES: SeatReleased
+    Note over SCH: 결제 대기 만료
+    SCH->>RES: ExpireReservation
     RES->>RES: PENDING → EXPIRED
+    RES-->>TT: ReservationExpired
+    TT->>TT: HELD → ReleaseSeat
 
     Note over PAY: 외부 PG에서 결제 완료 (이미 일어남)
     PAY-->>RES: PaymentConfirmed
@@ -219,7 +223,7 @@ sequenceDiagram
     Note over PAY: PaymentRefunded
 ```
 
-- `reservation` aggregate가 EXPIRED 상태에서 `PaymentConfirmed`를 받으면 **확정 거부 + 환불 트리거**.
+- `reservation`이 자기 스케줄러로 **먼저** `EXPIRED`로 전이하므로, 뒤늦은 `PaymentConfirmed`는 항상 이미 `EXPIRED`인 aggregate가 받아 **확정 거부 + 환불 트리거**. 만료와 결제 처리가 같은 애그리거트 안에 있어 교차 컨텍스트 도착 순서에 의존하지 않는다.
 - PM 없이 aggregate 상태 가드만으로 레이스를 방어한다.
 
 ### 4.5 보상 트랜잭션
@@ -247,13 +251,13 @@ sequenceDiagram
 
 사가는 영원히 열려 있으면 안 된다. 코레오그래피에서 타임아웃은 **데이터 소유자가 자치적으로 관리**한다.
 
-**(가) 임시 점유 만료 — timetable 자치**
+**(가) 결제 대기 만료 — reservation 자치** (2026-07-31 개정, ADR-008 반영)
 
-`timetable`의 임시 점유(hold)는 **TTL**을 갖는다. 사용자가 N분 안에 결제하지 않으면 점유는 자동 만료되어 슬롯이 풀린다.
+예약의 임시 점유(hold)는 결제 대기 한도(**TTL**)를 갖는다. 사용자가 N분 안에 결제하지 않으면 예약이 만료되고 슬롯이 풀린다.
 
-- 만료의 권위는 **`timetable` 애그리거트**에 둔다 — "내 점유가 언제 죽는가"는 timetable의 불변식이다.
-- 만료 트리거: 스케줄러가 주기적으로 깨어 "`SeatHeld`인 채 TTL이 지난" 점유를 찾아 `SeatReleased` 보상을 발행한다. v1의 Outbox 재처리와 같은 스케줄러 인프라 결을 따른다.
-- `SeatReleased`를 `reservation`이 구독해 상태를 EXPIRED로 전이 — 사가가 닫힌다.
+- 만료의 권위는 **`reservation` 애그리거트**에 둔다 — "결제가 제때 안 왔다"는 예약 생명주기의 판정이다(과거 `timetable` TTL 자치에서 이전).
+- 만료 트리거: `reservation` 스케줄러가 주기적으로 깨어 "결제 대기 한도를 넘긴 `PENDING`" 예약을 찾아 `ExpireReservation`으로 `EXPIRED` 전이 후 `ReservationExpired`를 발행한다. v1의 Outbox 재처리와 같은 스케줄러 인프라 결을 따른다.
+- `ReservationExpired`를 `timetable`이 구독해 `ReleaseSeat → SeatReleased`로 좌석을 해제 — 취소·실패·노쇼와 동일한 reservation-선행 경로로 사가가 닫힌다.
 
 **(나) 노쇼 판정 — reservation 자치**
 
@@ -265,7 +269,7 @@ sequenceDiagram
 
 **(라) 두 시계가 충돌할 때 — paid-after-expiry 레이스**
 
-`timetable` TTL 만료와 외부 PG 결제 완료가 엇갈리는 레이스가 구조적으로 존재한다. 이 레이스를 **aggregate 상태 가드**로 방어한다(§4.4 paid-after-expiry 레이스 시퀀스 참조).
+`reservation` 결제 대기 만료와 외부 PG 결제 완료가 엇갈리는 레이스가 구조적으로 존재한다. 이 레이스를 **aggregate 상태 가드**로 방어한다 — reservation이 자기 스케줄러로 먼저 `EXPIRED`로 전이하므로 지연 결제는 항상 `EXPIRED` 상태에서 거부된다(§4.4 paid-after-expiry 레이스 시퀀스 참조).
 
 - **만료된 점유에는 확정을 거부한다 — 오버부킹 방지.** `reservation`이 EXPIRED 상태에서 `PaymentConfirmed`를 받으면 확정 거부.
 - **환불 트리거.** 확정 거부 시 `RefundRequired` 이벤트를 발행해 `payment`가 환불을 처리한다.
@@ -307,7 +311,7 @@ graph LR
 - 애그리거트 안 = 강한 일관성, 애그리거트 밖 = 이벤트 기반 최종 일관성.
 - 컨텍스트 횡단 트랜잭션(예약 확정·취소·노쇼)은 **사가**. **코레오그래피 기본** — 각 컨텍스트가 이벤트를 듣고 자기 aggregate 상태를 보고 자기 보상을 책임진다(ADR-08.saga-orchestration-vs-choreography).
 - 실패는 롤백이 아니라 **보상 이벤트**(append-only·멱등).
-- 타임아웃은 **데이터 소유자 자치** — `timetable`이 자기 점유 TTL을, `reservation` 스케줄러가 노쇼 판정을 관리. 둘 다 V1 스케줄러 패턴 재사용(YAGNI).
+- 타임아웃은 **데이터 소유자 자치** — `reservation` 스케줄러가 결제 대기 만료(2026-07-31 개정, 구 `timetable` TTL 자치)와 노쇼 판정을 관리. V1 스케줄러 패턴 재사용(YAGNI).
 - 경합(paid-after-expiry)은 **aggregate 상태 가드**로 방어.
 - 구체 이벤트 카탈로그·TTL 값은 이벤트 스토밍 후 TBD.
 

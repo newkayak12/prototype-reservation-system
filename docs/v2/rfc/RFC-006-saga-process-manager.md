@@ -52,7 +52,7 @@ PM을 정당화하던 두 논거를 검증했다.
 
 **논거 1: "타임아웃은 이벤트의 부재 — 시계를 볼 주인이 필요하다"**
 
-반론: `timetable`이 자기 점유의 TTL을 자기가 관리하면 된다. "내 점유가 언제 죽는가"는 timetable의 불변식이다. V1 스케줄러가 TTL 지난 `SeatHeld`를 찾아 `SeatReleased`를 발행하면 PM이 시계 역할을 할 필요가 없다. **데이터 소유자가 자기 생명주기를 책임지는 것이 DDD적으로 더 자연스럽다.**
+반론 (당시 논거 — 아래 **결론**이 2026-07-31 개정으로 `reservation` 소유로 대체됨): `timetable`이 자기 점유의 TTL을 자기가 관리하면 된다. "내 점유가 언제 죽는가"는 timetable의 불변식이다. V1 스케줄러가 TTL 지난 `SeatHeld`를 찾아 `SeatReleased`를 발행하면 PM이 시계 역할을 할 필요가 없다. **데이터 소유자가 자기 생명주기를 책임지는 것이 DDD적으로 더 자연스럽다.**
 
 **논거 2: "되감기는 어디까지 왔는지를 알아야 — 전체 위치를 아는 주인이 필요하다"**
 
@@ -103,7 +103,7 @@ PM을 정당화하던 두 논거를 검증했다.
 
 **쟁점:** PM 없이 타임아웃을 누가 관리하는가?
 
-**결론:** **`timetable`이 자기 점유의 TTL을 자기가 관리한다.** 스케줄러가 주기적으로 깨어 TTL 지난 `SeatHeld`를 찾아 `SeatReleased`를 발행. V1 스케줄러 패턴 재사용. "내 점유가 언제 죽는가"는 timetable의 도메인 불변식이다.
+**결론 (⚠️ 2026-07-31 개정으로 대체 — [[08.saga-orchestration-vs-choreography]] · [[DESIGN-007-consistency-and-sagas]] §4.4):** 원안은 ~~`timetable`이 자기 점유의 TTL을 자기가 관리~~였으나, 취소·실패·노쇼가 이미 reservation-선행인데 타임아웃만 timetable-선행이면 "좌석은 풀렸는데 예약은 아직 PENDING"인 레이스 창(지연 결제가 만료 예약을 확정)이 생겨 폐기됐다. **개정: `reservation`이 결제 대기 만료를 자기 스케줄러로 관리해 `ReservationExpired`를 발행하고, `timetable`이 이를 구독해(취소·실패·노쇼와 동일 경로) 좌석을 해제한다.** V1 스케줄러 패턴 재사용은 유지.
 
 - 구체 TTL 값·폴링 주기는 화면/UX 요구에 묶이므로 구현 사이클에서 확정(TBD).
 - 폴링 주기 ≤ TTL 관계는 수치로 검증할 제약([[06-consistency-and-sagas]]).
@@ -141,7 +141,7 @@ PM을 정당화하던 두 논거를 검증했다.
 | # | 결정 | ADR |
 |---|------|-----|
 | 1 | **코레오그래피 기본** — 각 컨텍스트가 이벤트 반응 + 자기 aggregate 상태로 보상 판단. PM 불필요. | [[08.saga-orchestration-vs-choreography]] |
-| 2 | 타임아웃 = **`timetable` TTL 자치**(스케줄러 폴링, V1 재사용). 데이터 소유자가 자기 생명주기 관리. | [[08.saga-orchestration-vs-choreography]] |
+| 2 | 타임아웃 = **`reservation` 소유**(스케줄러 폴링, V1 재사용) — 2026-07-31 개정(구 `timetable` TTL 자치). 예약 생명주기 소유자가 결제 대기 만료를 판정해 `ReservationExpired`를 발행하고 timetable이 구독해 좌석 해제. | [[08.saga-orchestration-vs-choreography]] |
 | 3 | 보상 = **각 컨텍스트 자기 책임**. 자기 aggregate 상태 기준 판단. 멱등·append-only. | [[08.saga-orchestration-vs-choreography]] |
 | 4 | 사가 스텝 실패 = **V1 PoisonMessage 운영 흐름 계승**(같은 저장·추적·재처리·알림). | [[07.reservation]] |
 | 5 | 취소·노쇼·환불 = **전부 코레오그래피**(2~3스텝 선형). | [[08.saga-orchestration-vs-choreography]] |
@@ -178,7 +178,7 @@ graph LR
 ```
 
 - 모든 흐름이 이벤트 반응의 연쇄 — PM 인프라 불필요.
-- 타임아웃은 `timetable` TTL 스케줄러가 자치적으로 관리.
+- 타임아웃은 `reservation` 스케줄러가 자치적으로 관리(2026-07-31 개정, 구 `timetable` TTL 스케줄러).
 - 보상은 각 컨텍스트가 자기 aggregate 상태를 보고 판단.
 - 실패는 V1 PoisonMessage 운영 흐름으로 흘러 같은 저장·추적·재처리·알림.
 

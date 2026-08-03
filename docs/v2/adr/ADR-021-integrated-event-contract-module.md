@@ -1,6 +1,6 @@
-# ADR-021: 통합 이벤트 계약 — 얇은 공유 계약 모듈(컴파일 보장) + 직렬화 골든 테스트, 스키마 레지스트리/SCC/Pact는 보류
+# ADR-021: 통합 이벤트 계약 — 공유 모듈과 직렬화 테스트로 이벤트 모양 어긋남을 빌드에서 잡고, 무거운 계약 도구는 나중에
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-023-event-schema-contract-management]] · **설계**: [[DESIGN-008-messaging-topology]]
 - **연관 ADR**: [[ADR-010-event-schema-evolution]] · [[ADR-009-event-ordering-and-delivery-guarantee]] · [[ADR-022-event-identity]]

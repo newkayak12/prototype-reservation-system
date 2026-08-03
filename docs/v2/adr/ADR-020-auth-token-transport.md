@@ -1,6 +1,6 @@
 # ADR-020: 인증 토큰 transport·무상태성 — refresh 쿠키/access 헤더 계승, 서명검증 무상태화, 즉시 폐기 기본 포기
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-019-auth-token-transport]] · **설계**: [[DESIGN-017-auth-token]]
 - **연관 ADR**: [[ADR-017-authorization-model]] · [[ADR-024-authentication-boundary]] · [[ADR-019-caching-redis-role]]

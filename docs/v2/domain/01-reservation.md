@@ -73,7 +73,7 @@ Reservation
 | 손님 | `CreateReservation` | Reservation | `ReservationCreated` | → timetable 구독 (`HoldSeat`) |
 | — (이벤트) | `ConfirmReservation` ← `PaymentConfirmed` | Reservation | `ReservationConfirmed` | → timetable 구독 (`ConfirmSeat`) |
 | — (이벤트) | `FailReservation` ← `PaymentFailed` | Reservation | `ReservationFailed` | → timetable 구독 (`ReleaseSeat`) |
-| — (이벤트) | `ExpireReservation` ← `SeatReleased` | Reservation | `ReservationExpired` | 사가 종료 |
+| 스케줄러 (결제 대기 만료) | `ExpireReservation` | Reservation | `ReservationExpired` | 사가 종료 — 만료 판정을 reservation이 소유(ADR-008 개정), timetable이 `ReservationExpired`를 구독해 좌석 해제 |
 | 손님 | `CancelReservation` | Reservation | `ReservationCancelled` | → payment 환불, timetable 좌석 해제 |
 | 매장 점주 | `CancelReservation` | Reservation | `ReservationCancelled` | 사유 필수 (30~200자) |
 | 스케줄러 | `JudgeNoShow` | Reservation | `ReservationNoShow` | → payment 수수료, timetable 좌석 해제 |
@@ -87,7 +87,7 @@ stateDiagram-v2
     [*] --> PENDING: CreateReservation
     PENDING --> CONFIRMED: PaymentConfirmed
     PENDING --> FAILED: PaymentFailed
-    PENDING --> EXPIRED: SeatReleased (TTL 만료)
+    PENDING --> EXPIRED: ExpireReservation (결제 대기 만료)
     PENDING --> CANCELLED: CancelReservation
 
     CONFIRMED --> CANCELLED: CancelReservation (방문 3일 전까지)
@@ -133,7 +133,7 @@ stateDiagram-v2
 | 12 | 방문 확정은 **예약 시각 이후**에만 가능 | `handle(ConfirmVisit)` — 요구사항 "예약 시간 이후에 방문을 확정" |
 | 13 | 7일 미확정 시 자동 확정 | 스케줄러 → `AutoConfirmVisit` |
 
-> **미결**: #11의 "환불 트리거"를 나타내는 도메인 이벤트가 액터→커맨드→이벤트 표에 없다. Reservation이 별도 이벤트(예: `LateConfirmationRejected`)를 발행하는지, payment ACL이 상태 조회로 직접 처리하는지 미정.
+> **해소 (2026-08-01, [[07-hotspots-and-open-questions]] H2)**: #11의 "환불 트리거"는 `RefundRequired`로 채택한다([[ADR-008-saga-orchestration-vs-choreography]] §44·§62). paid-after-expiry 레이스에서 `reservation`이 자기 스케줄러로 먼저 `EXPIRED`로 전이하므로, 뒤늦은 `PaymentConfirmed`는 이미 `EXPIRED`인 `reservation`이 받아 `handle(ConfirmReservation)` 가드에서 확정을 거부하고 **`reservation`이 `RefundRequired`를 발행**해 `payment`가 환불을 처리한다(H1 타임아웃 소유권 이전과 동일 메커니즘 — 만료 판정과 지연 결제 처리가 같은 애그리거트 안에 있어 가드가 국소적으로 신뢰 가능). 정확한 페이로드 필드는 reservation 구현 모델링에서 확정한다.
 
 #### 노쇼 시
 

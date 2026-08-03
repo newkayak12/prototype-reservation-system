@@ -1,6 +1,6 @@
 # ADR-017: V2 인가 모델 — 소유권은 command 애그리거트 불변식·query WHERE 스코프로 이분
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-015-authorization-model]] · **설계**: [[DESIGN-014-authorization]]
 - **연관 ADR**: [[ADR-024-authentication-boundary]]

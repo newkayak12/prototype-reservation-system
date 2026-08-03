@@ -1,6 +1,6 @@
 # ADR-024: 인증 경계 — 엣지 1회 검증(모델 A) + 기성 프록시 무상태 구현 + Spring Authorization Server 직접 구축
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-020-authentication-boundary-gateway]] · **설계**: [[DESIGN-010-deployment-runtime]]
 - **연관 ADR**: [[ADR-017-authorization-model]] · [[ADR-020-auth-token-transport]]

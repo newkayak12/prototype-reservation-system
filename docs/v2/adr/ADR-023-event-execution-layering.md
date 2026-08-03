@@ -1,6 +1,6 @@
 # ADR-023: 이벤트 실행 레이어링 — 타입 소유는 core, 번역·apply 조립은 application, infra는 bytes-only
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-024-domain-event-type-and-replay-layering]] · **설계**: [[DESIGN-019-event-execution-layering]]
 

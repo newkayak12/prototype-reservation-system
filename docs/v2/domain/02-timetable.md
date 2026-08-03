@@ -1,6 +1,6 @@
 # timetable 컨텍스트
 
-> 쓰기 모델: **Event Sourcing** · 좌석 점유/해제의 소유자 · TTL 자치
+> 쓰기 모델: **Event Sourcing** · 좌석 점유/해제의 소유자 (결제 대기 타임아웃은 reservation 소유 — ADR-008 개정 2026-07-31)
 
 ---
 
@@ -56,8 +56,7 @@ V2에서 timetable의 애그리거트는 **슬롯**(날짜×시간대×테이블
 |------|--------|-----------|-------------|-------------|
 | — (이벤트) | `HoldSeat` ← `ReservationCreated` | Slot | `SeatHeld` | → payment 구독 (결제 요청) |
 | — (이벤트) | `ConfirmSeat` ← `ReservationConfirmed` | Slot | `SeatConfirmed` | 임시→확정 |
-| — (이벤트) | `ReleaseSeat` ← `ReservationFailed` / `ReservationCancelled` / `ReservationNoShow` | Slot | `SeatReleased` | 좌석 해제 (보상) |
-| 스케줄러 | `ExpireSeat` (TTL 만료) | Slot | `SeatReleased` | → reservation 구독 (EXPIRED) |
+| — (이벤트) | `ReleaseSeat` ← `ReservationFailed` / `ReservationCancelled` / `ReservationNoShow` / `ReservationExpired` | Slot | `SeatReleased` | 좌석 해제 (보상) — 만료 포함 모든 해제가 reservation 이벤트 구독으로 수렴 (ADR-008 개정, timetable 자체 `ExpireSeat`·TTL 소멸) |
 | 매장 점주 | `BlockSlot` | Slot | `SlotBlocked` | 수동 차단 |
 | 매장 점주 | `UnblockSlot` | Slot | `SlotUnblocked` | 차단 해제 |
 
@@ -70,7 +69,7 @@ stateDiagram-v2
     AVAILABLE --> BLOCKED: BlockSlot
 
     HELD --> CONFIRMED: ConfirmSeat
-    HELD --> AVAILABLE: ReleaseSeat / ExpireSeat (TTL)
+    HELD --> AVAILABLE: ReleaseSeat (실패·취소·노쇼·만료)
 
     CONFIRMED --> AVAILABLE: ReleaseSeat (취소/노쇼)
 
@@ -82,11 +81,11 @@ stateDiagram-v2
 | # | 불변식 | 검증 위치 |
 |---|--------|-----------|
 | 1 | AVAILABLE 상태에서만 점유 가능 (이중 점유 방지) | `handle(HoldSeat)` 상태 가드 |
-| 2 | 임시 점유(HELD)는 TTL을 가진다 — TTL 내 결제 미도착 시 자동 만료 | 스케줄러 폴링 |
+| 2 | 결제 대기 타임아웃은 reservation이 소유 — reservation 스케줄러가 만료를 판정하고 timetable은 `ReservationExpired`를 구독해 좌석 해제 (ADR-008 개정) | reservation 스케줄러 폴링 |
 | 3 | 해제/만료된 슬롯에 뒤늦은 확정 거부 | `handle(ConfirmSeat)` 상태 가드 |
 | 4 | BLOCKED 슬롯은 점유 불가 | `handle(HoldSeat)` 상태 가드 |
 
-> **미결**: `ReleaseSeat`(보상: Failed/Cancelled/NoShow가 원인)와 `ExpireSeat`(TTL 만료가 원인) 모두 동일한 `SeatReleased` 이벤트를 발행한다. reservation 쪽에서 `ExpireReservation`을 TTL 유래 해제로만 트리거하려면, 이벤트 payload에 원인(cause)을 싣거나 TTL 전용 이벤트로 분리하는 것을 검토해야 한다. 현재는 reservation의 상태 가드(불변식 #15)가 방어하고 있어 기능상 사고는 없지만, 모델링상 두 원인이 구분되지 않는다.
+> **~~미결~~ 해소 (2026-07-31, ADR-008 개정 · 이벤트 스토밍 07-H1)**: `ReleaseSeat`(실패·취소·노쇼)와 `ExpireSeat`(TTL)가 동일 `SeatReleased`로 합쳐지던 문제는 **타임아웃 소유권을 reservation으로 옮겨 해소**됐다 — timetable 자체 `ExpireSeat`이 사라지고, 만료도 `ReservationExpired → ReleaseSeat → SeatReleased`로 취소·실패·노쇼와 동일 경로가 된다. `SeatReleased`는 이제 단일 내부 이벤트이며 `cause` 필드도 TTL 전용 이벤트도 불필요하다.
 
 ### 읽기 모델
 

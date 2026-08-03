@@ -1,6 +1,6 @@
 # ADR-026: 앱 워크로드 런타임 배치 — 워크로드별 별도 배포 + 노드 분리, 단일 평탄 NS
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-007-deployment-infra-ops]] · **설계**: [[DESIGN-010-deployment-runtime]]
 - **연관 ADR**: [[ADR-024-authentication-boundary]] · [[ADR-012-kafka-hosting-msk-vs-self-managed]] · [[ADR-013-db-hosting-and-read-write-topology]]

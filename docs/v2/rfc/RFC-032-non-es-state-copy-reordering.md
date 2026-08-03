@@ -4,7 +4,7 @@
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **범위**: schedule·user·menu·category·company(비-ES) 상태가 query DB 사본으로 흘러갈 때, 장애 창의 이벤트 재정렬을 어떻게 흡수하는지 결정한다.
 - **선행 분석**: [[12-non-es-outbox-ordering]] · [[11-data-schema-contract-conformance]] §1
-- **선행 RFC**: [[RFC-025-ordering-relay-dlq-reconciliation]](단일 순차 relay · ES 재정렬=LWW seq 가드) · [[RFC-021-event-identity-and-global-ordering]](비-ES는 event_id만, seq 없음) · [[RFC-030-read-freshness-command-response-contract]](비-ES=bounded staleness) · [[RFC-014-aggregate-concurrency-control]](동시성 — 비관 락/DB 행 락)
+- **선행 RFC**: [[RFC-025-ordering-relay-dlq-reconciliation]](단일 순차 relay · ES·비-ES 공통 재정렬 봉합 = Kafka offset 순서 — 2026-08-03 개정으로 구 LWW seq 가드 폐기) · [[RFC-021-event-identity-and-global-ordering]](비-ES는 event_id만, seq 없음) · [[RFC-030-read-freshness-command-response-contract]](비-ES=bounded staleness) · [[RFC-014-aggregate-concurrency-control]](동시성 — 비관 락/DB 행 락) · [[ADR-009-event-ordering-and-delivery-guarantee]]
 - **닫으면**: [[01-command-schema]] §1.3 정정(비-ES `sequence_no` 기정사실화 철회) + [[11-data-schema-contract-conformance]] §1 종결
 
 ---
@@ -19,7 +19,7 @@
 2. relay가 Kafka로 발행한다. 파티션 키 = `aggregate_id`([[RFC-021-event-identity-and-global-ordering]]).
 3. query 컨슈머가 받아 `MenuView`를 upsert한다.
 
-정상 흐름에선 Kafka가 같은 파티션에서 순서를 지킨다. 걱정거리는 "장애 창에서 C가 먼저 적용되고 늦은 B가 덮으면 사본이 틀린 값 B를 계속 든다"는 재정렬이다. 비-ES에는 ES의 `sequence_no` 같은 애그리거트별 순서 토큰이 없어([[RFC-021-event-identity-and-global-ordering]] §54) LWW 가드가 비교할 값이 없다 — 이게 원래 걸렸던 지점이다.
+정상 흐름에선 Kafka가 같은 파티션에서 순서를 지킨다. 걱정거리는 "장애 창에서 C가 먼저 적용되고 늦은 B가 덮으면 사본이 틀린 값 B를 계속 든다"는 재정렬이다. 비-ES에는 ES의 `sequence_no` 같은 애그리거트별 순서 토큰이 없어([[RFC-021-event-identity-and-global-ordering]] §54) 소비 측에서 비교할 값이 없다 — 이게 원래 걸렸던 지점이다. (구안은 ES를 LWW seq 가드로 처리하고 비-ES만 이 봉합에 기댔으나, [[ADR-009-event-ordering-and-delivery-guarantee]] 2026-08-03 개정으로 **ES도 LWW를 버리고 offset 순서로** 서게 되어, ES·비-ES가 애초에 같은 봉합에 기대는 대칭이 됐다 — 아래 결론이 두 컨텍스트에 그대로 통한다.)
 
 ## 재정렬이 실제로 어디서 나나 (봉합 지점)
 

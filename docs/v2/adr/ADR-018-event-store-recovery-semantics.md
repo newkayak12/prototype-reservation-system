@@ -1,9 +1,9 @@
 # ADR-018: 이벤트 스토어 복구 의미론 — 진실 원천 단일 보호, 절단 아닌 정정, 키/이벤트 시계 분리
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-017-disaster-recovery-event-store]] · **설계**: [[DESIGN-009-event-store-lifecycle]]
-- **연관 ADR**: [[ADR-005-event-store-mysql-table]] · [[ADR-004-read-model-projection-and-replica]] · [[ADR-010-event-schema-evolution]] · [[11.es-pii-crypto-shredding]] · [[13.db-hosting-and-read-write-topology]]
+- **연관 ADR**: [[ADR-005-event-store-mysql-table]] · [[ADR-004-read-model-projection-and-replica]] · [[ADR-010-event-schema-evolution]] · [[ADR-011-es-pii-crypto-shredding]] · [[ADR-013-db-hosting-and-read-write-topology]]
 
 ---
 
@@ -35,7 +35,7 @@ append-only는 "복원"의 의미도 비튼다. 전통적 PITR은 "시점 T로 �
 
 **복원 의미론**
 - **P-1. 물리 장애=최근 일관 시점 복원 + 논리 사고=보상 이벤트, 절단은 미발행 꼬리로만** — 장애 유형을 구분해 append-only를 지키며 대응한다.
-- **P-2. 절단형 PITR** — 논리 사고(잘못된 이벤트 주입·실수 truncate) 발생 시에도 DB를 과거 시점으로 되감아 T 이후 이벤트를 절단한다.
+- **P-2. 발행분 포함 절단형 PITR** — 논리 사고(잘못된 이벤트 주입·실수 truncate) 발생 시에도 DB를 과거 시점으로 되감아, 이미 발행돼 다운스트림이 봤을 수 있는 T 이후 이벤트까지 절단한다.
 
 **셰딩 정합**
 - **Q-1. 암호문/키 분리 백업** — 이벤트 스토어 백업은 암호문만 담아 키를 포함하지 않고, 셰딩된 키는 키 백업에서도 무효화·제외한다.
@@ -47,16 +47,16 @@ append-only는 "복원"의 의미도 비튼다. 전통적 PITR은 "시점 T로 �
 
 ## 결정 (Decision Outcome)
 
-**채택: O-1 + P-1 + Q-1 + R-1.** 균등 보호(O-2)·절단형 PITR(P-2)·통합 백업(Q-2)·재구축 선행(R-2)은 모두 append-only 불변식·다운스트림 일관성·GDPR 삭제권 중 하나 이상을 정면으로 깨거나, 파생물에 진실 원천 수준의 보호 비용을 지운다. 진실 원천 하나만 지키고 나머지는 그 위에서 재구성한다는 원칙이 네 결정을 관통한다.
+**채택: O-1 + P-1 + Q-1 + R-1.** 균등 보호(O-2)·발행분 포함 절단(P-2)·통합 백업(Q-2)·재구축 선행(R-2)은 모두 append-only 불변식·다운스트림 일관성·GDPR 삭제권 중 하나 이상을 정면으로 깨거나, 파생물에 진실 원천 수준의 보호 비용을 지운다. 진실 원천 하나만 지키고 나머지는 그 위에서 재구성한다는 원칙이 네 결정을 관통한다.
 
 | # | 영역 | 결정 |
 |---|------|------|
 | 1 | 보호 대상 | 백업·복구의 1급 대상은 **이벤트 스토어(command DB) 단일**. query DB·Redis는 재구축으로 복원되는 파생물이라 best-effort 백업(재구축 시간 단축용 캐시)으로 충분하다. |
-| 2 | 복원 의미론 | "복원"은 임의 시점 되감기가 아니다. **물리 장애**(디스크 고장·리전 다운)는 가장 최근 일관된 시점까지 복원하는 것이 목표다. **논리 사고**(실수 truncate·잘못된 대량 이벤트 주입)의 정정은 PITR이 아니라 **보상 이벤트**로 한다 — 과거를 지우지 않고 "이를 무효화한다"는 새 이벤트를 앞으로 append한다. 절단형 PITR은 **아무도 아직 보지 못한 꼬리**(복원 직후·발행 전)로만 좁게 허용한다. |
+| 2 | 복원 의미론 | "복원"은 임의 시점 되감기가 아니다. **물리 장애**(디스크 고장·리전 다운)는 가장 최근 일관된 시점까지 복원하는 것이 목표다. **논리 사고**(실수 truncate·잘못된 대량 이벤트 주입)의 정정은 PITR이 아니라 **보상 이벤트**로 한다 — 과거를 지우지 않고 "이를 무효화한다"는 새 이벤트를 앞으로 append한다. 절단은 **아무도 아직 보지 못한 미발행 꼬리**(복원 직후·발행 전)로만 좁게 허용하며, 이미 발행된 이벤트는 절단하지 않는다(발행분 포함 절단 P-2 기각). |
 | 3 | 셰딩 정합 | 이벤트 스토어 백업은 **암호문만** 담고 키를 포함하지 않는다. 키 저장소 백업은 셰딩 의미론을 깨지 않는다 — 셰딩된 키는 키 백업에서도 무효화되거나 애초에 백업 대상에서 빠진다. **복원은 이벤트의 시계를 되돌리지만 키의 시계는 되돌리지 않는다** — 이 비대칭이 크립토 셰딩을 복원에도 견디게 한다. |
 | 4 | 복구 순서 | read model 재구축 경로 자체는 [[RFC-011-projection-rebuild-catchup]]에 위임하되, 순서 불변식만 여기서 고정한다 — **① 이벤트 스토어 복원·검증 → ② read model 재구축 트리거 → ③ readiness 회복.** 진실 원천이 일관된 시점으로 복원되기 전에 재구축을 시작하면, 사라질 운명인 꼬리 이벤트를 투영하거나 빈 스토어 위에서 헛돌게 된다. |
 
-이벤트 스토어가 append-only라는 사실이 보호를 오히려 쉽게 만든다 — 변형(update/delete)이 없고 끝에 붙기만 하니, 마지막 백업 이후 *추가된* 이벤트만 따라잡으면 된다. [[13.db-hosting-and-read-write-topology]]가 HA용으로 이미 켜둔 binlog가 그대로 연속 복제·PITR의 재료가 된다 — 새 인프라를 들이는 것이 아니라 이미 있는 binlog의 용도를 복구로 확장하는 것이다.
+이벤트 스토어가 append-only라는 사실이 보호를 오히려 쉽게 만든다 — 변형(update/delete)이 없고 끝에 붙기만 하니, 마지막 백업 이후 *추가된* 이벤트만 따라잡으면 된다. [[ADR-013-db-hosting-and-read-write-topology]]가 HA용으로 이미 켜둔 binlog가 그대로 연속 복제·PITR의 재료가 된다 — 새 인프라를 들이는 것이 아니라 이미 있는 binlog의 용도를 복구로 확장하는 것이다.
 
 이벤트 페이로드의 스키마 진화·업캐스팅·직렬화 포맷·스냅샷 재생성 방식은 이 ADR의 결정 범위가 아니다 — 그 결정은 [[ADR-010-event-schema-evolution]]이 다루며, 여기서는 복구가 그 스냅샷/이벤트 포맷을 전제로 진실 원천을 재구성한다는 사실만 참조한다.
 
@@ -67,7 +67,7 @@ append-only는 "복원"의 의미도 비튼다. 전통적 PITR은 "시점 T로 �
 - 좋은 점: 크립토 셰딩이 복원을 견딘다 — 옛 백업을 복원해도 이미 셰딩된 주체의 PII는 복호 불가 상태로 남아 GDPR 삭제권을 유지한다.
 - 좋은 점: 복구 순서 불변식이 명확해 read model 재구축 팀이 "언제 시작해도 되는가"를 별도로 판단할 필요가 없다.
 - 트레이드오프: 논리 사고의 정정(보상 이벤트)은 즉각적인 "원상복구"가 아니다 — 정정이 반영되기까지 오염된 상태를 읽는 구간이 존재할 수 있다.
-- 트레이드오프: "아무도 아직 보지 못한 꼬리"의 경계 판정(Kafka 발행 오프셋·아웃박스 커밋 위치)이 정의되지 않으면 절단형 PITR의 좁은 허용 범위가 모호해진다. **재검토 트리거**: 절단 허용 범위의 경계 기준이 구현 사이클에서 확정되지 않은 채 실제 논리 사고가 발생하면 즉시 재검토한다.
+- 트레이드오프: "아무도 아직 보지 못한 미발행 꼬리"의 경계 판정(Kafka 발행 오프셋·아웃박스 커밋 위치)이 정의되지 않으면 미발행 꼬리 절단의 좁은 허용 범위가 모호해진다. **재검토 트리거**: 절단 허용 범위의 경계 기준이 구현 사이클에서 확정되지 않은 채 실제 논리 사고가 발생하면 즉시 재검토한다.
 - 트레이드오프: 활성 유저인데 재해로 키 저장소까지 함께 유실되면, 그 유저의 PII는 암호문만 남아 영구 복호 불가가 될 위험이 있다 — 키 저장소 자체의 백업 전략이 이 ADR의 불변식과 별도로 성립해야 한다.
 
 ### 확인 (Confirmation)
@@ -85,7 +85,7 @@ append-only는 "복원"의 의미도 비튼다. 전통적 PITR은 "시점 T로 �
 - 단점: query DB·Redis는 이벤트로부터 재구축 가능한 손실성 파생물인데도 이벤트 스토어와 동일한 손실 없는 보호 비용을 지게 된다.
 - 기각 사유: 파생물은 [[RFC-011-projection-rebuild-catchup]]로 재구축되므로 백업이 없어도 잃는 것은 시간뿐이다. 균등 보호는 불필요한 비용이다.
 
-### P-2. 절단형 PITR (기각)
+### P-2. 발행분 포함 절단형 PITR (기각)
 - 장점: 직관적인 되감기 복구 — "T 시점으로 되돌린다"는 개념이 단순하다.
 - 단점: T 이후 append된 이벤트는 append-only 정의상 지울 수 없고, 이미 발행되어 다운스트림(Kafka 컨슈머·사가)이 봤을 수 있다. 진실 원천만 되감아도 그걸 본 세상은 되감기지 않는다.
 - 기각 사유: 깨끗한 되감기는 없다. 보상 이벤트로 논리적으로 정정하는 것이 append-only·다운스트림 일관성을 동시에 지키는 유일한 경로다.
@@ -103,4 +103,4 @@ append-only는 "복원"의 의미도 비튼다. 전통적 PITR은 "시점 T로 �
 ## 추가 정보 (More Information)
 
 - **미결정 (→ 구현 사이클)**: "아무도 보지 못한 꼬리"의 경계를 Kafka 발행 오프셋·아웃박스 커밋 위치 중 무엇으로 판정할지([[RFC-003-messaging-delivery]]와 연동). 키 저장소 자체가 물리 장애로 유실됐을 때 키 백업의 무결성과 셰딩 정합성을 동시에 만족시키는 복원 경로([[RFC-005-pii-security]]와 연동). read model 백업이 이벤트 스토어 백업보다 최신이라 시점이 어긋나는 경우의 처리(재구축으로 통일할지 여부, [[RFC-011-projection-rebuild-catchup]]). RTO/RPO 목표·백업 보존 주기·복구 런북·복구 리허설 절차는 실트래픽·운영 부하를 봐야 의미가 있어 운영 백로그(T-18)로 미룬다.
-- 관련: [[RFC-017-disaster-recovery-event-store]] · [[DESIGN-009-event-store-lifecycle]] · [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-011-projection-rebuild-catchup]] · [[RFC-005-pii-security]] · [[RFC-003-messaging-delivery]] · [[RFC-006-saga-process-manager]] · [[ADR-005-event-store-mysql-table]] · [[ADR-010-event-schema-evolution]] · [[11.es-pii-crypto-shredding]] · [[13.db-hosting-and-read-write-topology]] · [[ADR-004-read-model-projection-and-replica]]
+- 관련: [[RFC-017-disaster-recovery-event-store]] · [[DESIGN-009-event-store-lifecycle]] · [[RFC-001-v2-cqrs-and-event-sourcing]] · [[RFC-011-projection-rebuild-catchup]] · [[RFC-005-pii-security]] · [[RFC-003-messaging-delivery]] · [[RFC-006-saga-process-manager]] · [[ADR-005-event-store-mysql-table]] · [[ADR-010-event-schema-evolution]] · [[ADR-011-es-pii-crypto-shredding]] · [[ADR-013-db-hosting-and-read-write-topology]] · [[ADR-004-read-model-projection-and-replica]]

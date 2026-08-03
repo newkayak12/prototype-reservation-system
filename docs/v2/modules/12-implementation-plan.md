@@ -29,7 +29,7 @@ EventStore/Outbox/StateStore/AggregateLock 포트 · EventSerializer(eventType �
 
 ### 7-4: command-adapter + infrastructure + auth-server (Day 15-22) → [[05-command-adapter]] · [[06-command-infrastructure]] · [[09-auth-server-module]]
 
-Flyway(event_store/outbox) · EventStoreJpaAdapter(예외 번역: `AggregateConflictException`) · Outbox relay(ShedLock 단일 리더 — [[RFC-025]]) · Kafka producer · Command Controller · 인증 서버(Spring Authorization Server — [[RFC-020]]·[[ADR-024]]) · Testcontainers.
+Flyway(event_store/outbox) · EventStoreJpaAdapter(예외 번역: `AggregateConflictException`) · Outbox relay(Quartz 클러스터 단일 리더 — [[ADR-009-event-ordering-and-delivery-guarantee]]·[[RFC-025]]) · Kafka producer · Command Controller · 인증 서버(Spring Authorization Server — [[RFC-020]]·[[ADR-024]]) · Testcontainers.
 
 ### 7-5: query — projection + read model 서버 (Day 23-28) → [[07-query-projection-server]] · [[08-query-read-model-server]]
 
@@ -70,7 +70,7 @@ Parallel Consumer 설정 · TimeTableAvailability/ReservationList/RestaurantSear
 | C-1 | ~~event_store + outbox **동일 트랜잭션·datasource** 명문화~~ | [[06-command-infrastructure]] · [[DESIGN-003]] · [[ADR-027]] | **해소** — [[ADR-027]] 확정: A(동일 datasource 트랜잭셔널 아웃박스, 불변식 I-OUTBOX-1) + CDC 졸업 경로. one-way door → 탈출 가능한 문으로 전환 |
 | C-2 | 다중 소스 프로젝션 원자성·순서 | [[07-query-projection-server]] §6 · [[09-event-delivery-and-offsets]] §5 · [[12-non-es-outbox-ordering]] · [[RFC-032]] · [[DESIGN-020]] | 순서 갈래 **해소** — [[RFC-032]](합의) 단일 순차 relay가 봉합, 별도 토큰 불요. 원자성=부분 갱신을 정상 동작으로 받아들일지만 첫 레퍼런스에서 확정 필요 |
 | C-3 | ~~Zero Payload 재처리 time-travel 오염~~ | [[02-contract-module]] · [[RFC-029]] | **해소** — event-carried 일원화 확정(합의 2026-07-05), §5.2 갱신 완료 |
-| C-4 | ~~DLQ 재생·relay 병렬성 순서 보존~~ | [[RFC-025]] | **해소** — ShedLock 단일 relay + LWW seq 가드 + DLQ=알림/재구축, 06·07 갱신 완료 |
+| C-4 | ~~DLQ 재생·relay 병렬성 순서 보존~~ | [[ADR-009-event-ordering-and-delivery-guarantee]] · [[RFC-025]] | **해소** — Quartz 클러스터 단일 relay + offset 순서 apply·`event_id` dedup + DLQ=알림/재구축(2026-08-03 개정: LWW 폐기), 06·07 갱신 완료 |
 | C-5 | ~~read-your-writes(예약 확정 직후) 정책~~ | [[RFC-030]] · 신규 ADR | **해소** — `sequenceNo` 토큰 + `ReadFreshnessGate`, 08 갱신 완료 (대기 상한 수치는 구현 시 결정) |
 | C-6 | projector 쓰기 병목 스케일(HA 레플리카는 읽기만) | [[DESIGN-004]] · [[DESIGN-010]] · [[ADR-026]] · [[08-k6-load-test-strategy]] | 배치 확정 — projector = 독립 워크로드 + 노드 격리([[ADR-026]] 결정2·3). 쓰기 상한 수치만 미결 — k6 Item B(프로젝션 lag 발산 rate)로 측정, 레플리카로 못 가려짐 |
 | C-7 | ~~상시 Redis 락 vs 락프리 낙관 append~~ | [[04-command-application]] · [[DESIGN-003]] | **해소** — 비관 락(Redisson L1+DB 폴백 L1')+UNIQUE 백스톱 확정([[RFC-014]]·[[ADR-016]]), 04 갱신 완료 |
