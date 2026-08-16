@@ -42,8 +42,10 @@ contract-module
     ├── event/
     │   ├── AbstractEvent.kt          # 봉투: eventId, aggregateId, aggregateType,
     │   │                             #        eventType, occurredAt, version + 추적메타
-    │   ├── reservation/              # ReservationCreated, ReservationConfirmed, ReservationCancelled ...
-    │   ├── timetable/                # TimeTableCreated, SeatHeld, SeatReleased ...
+    │   ├── reservation/              # ReservationCreated, ReservationConfirmed, ReservationCancelled ... (미착수)
+    │   ├── timetable/                # SeatHeld — timetable의 유일한 통합 이벤트 (SlotProvisioned·SeatConfirmed·
+    │   │                             #   SeatReleased·SlotBlocked·SlotUnblocked는 내부 도메인 이벤트, contract 미포함 —
+    │   │                             #   [[02a-contract-module-phase7-1-event-catalog-decision]] §1-§2)
     │   └── restaurant/               # RestaurantRegistered, RestaurantRenamed ...
     ├── id/                           # 공유 ID 타입(있으면)
     └── meta/                         # correlationId/causationId/traceparent 봉투 타입
@@ -74,13 +76,23 @@ interface AbstractEvent {
 
 **확정**: 모든 내부 도메인 이벤트(ES·비-ES 구분 없이)는 **event-carried**로 통일한다 — 이벤트가 발생 시점의 값을 페이로드에 직접 싣는다. [[DESIGN-003]] 자기리뷰가 제안했던 "ES=event-carried / 비-ES=Zero Payload" 분기안은 RFC-029가 **supersede**했다 — 매 이벤트마다 "이게 ES 컨텍스트인가"를 판단해야 하는 인지 부담·오적용 위험을 없애기 위해 단일 규칙으로 통일됐다. Zero Payload("식별자만 싣고 소비 측이 최신 상태를 조회") 정책은 **폐기**됐다 — ES 재생(replay) 시 v3 이벤트에 조회 시점의 v5 값이 박히는 time-travel 오염(트리아지 C02)을 근본에서 차단한다. "현재 값"이 필요한 프로젝션은 해당 소스의 갱신 이벤트를 별도 구독·조인해 해결한다([[RFC-029]] — 페이로드 정책이 막지 않는다).
 
+event-carried와 얇은 통합 이벤트([[ADR-021]])는 상충하지 않는다 — **발생 시점 값을 싣되, 소비자가 계약상 실제로 쓰는 필드만 싣는다**(애그리거트 전체 덤프 금지). `SeatHeld`가 봉투 10필드 + `reservationId`/`userId`/`restaurantId` 3필드만 갖는 것이 이 규칙의 적용례다 — `slotId`는 봉투 `aggregateId`가 이미 나르고, `date`/`startTime`/`endTime`/`tableNumber`/`heldAt`/`holdExpiresAt`은 유일한 소비 컨텍스트(payment)가 쓰지 않아 제외([[02a-contract-module-phase7-1-event-catalog-decision]] §4-§5).
+
+### 5.3 직렬화 전략 ([[ADR-010]] 결정 #2)
+
+**확정**: JSON + `eventType` 문자열 태그, `jackson-module-kotlin`(+ `JavaTimeModule`, `WRITE_DATES_AS_TIMESTAMPS=false`로 `java.time` 값을 ISO-8601로 직렬화). `@JsonTypeInfo`/`@JsonSubTypes`/`@JsonTypeName` 등 애노테이션 기반 다형성은 쓰지 않는다 — ADR-010이 `@JsonTypeName` 스캔을 기각했다.
+
+`eventType` 태그 값은 클래스 FQCN이 아닌 논리 타입명 문자열(예: `"SeatHeld"`)이며, 클래스명 리팩터링과 분리된다 — 한번 발행되면 append-only 와이어 계약이라 되돌릴 수 없는 one-way door다.
+
+contract-module은 무상태 인코드/디코드 헬퍼(`EventJson`)만 소유한다. `eventType → 클래스` **복원 레지스트리는 두지 않는다** — 역직렬화 대상 타입은 항상 호출자가 명시하고, 태그 문자열로 클래스를 찾는 맵/when 분기·업캐스터는 만들지 않는다. 복원(레지스트리 소유)은 [[DESIGN-019]] §6에 따라 `command-application`의 몫이다.
+
 ## 6. 할 일
 
-- [ ] `AbstractEvent` 봉투 설계 (정체성 + 추적메타 — [[ADR-022]])
-- [ ] 레퍼런스 컨텍스트(`timetable`, `reservation`) 통합 이벤트 클래스 정의
-- [ ] 이벤트 버전/직렬화 전략 확정 (JSON + `eventType` 매핑 — [[ADR-010]], [[RFC-022]])
-- [ ] `eventType → 클래스` 복원 레지스트리의 **소유 위치** 확정 (application이 복원 소유 — [[DESIGN-019]] §6, 레지스트리 정의 자체는 여기/RFC-022 경계)
-- [ ] Gradle 모듈 생성 + build.gradle.kts (Spring/JPA 배제 확인)
+- [x] `AbstractEvent` 봉투 설계 (정체성 + 추적메타 — [[ADR-022]])
+- [~] 레퍼런스 컨텍스트(`timetable`, `reservation`) 통합 이벤트 클래스 정의 — `timetable`(`SeatHeld`) 완료, `reservation`(8종) 미착수
+- [x] 이벤트 버전/직렬화 전략 확정 (JSON + `eventType` 매핑 — [[ADR-010]], [[RFC-022]] → §5.3)
+- [x] `eventType → 클래스` 복원 레지스트리의 **소유 위치** 확정 (application이 복원 소유 — [[DESIGN-019]] §6, contract는 인코드/디코드 헬퍼만 소유 → §5.3)
+- [x] Gradle 모듈 생성 + build.gradle.kts (Spring/JPA 배제 확인, `jackson-module-kotlin`/`jackson-jsr310` 추가)
 
 ## 7. 미결
 

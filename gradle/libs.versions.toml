@@ -26,6 +26,7 @@ detekt = "1.23.7"
 spotless = "6.25.0"
 ktlint = "1.2.1"
 jacoco = "0.8.11"
+konsist = "0.17.3"
 
 # Documentation
 springdoc = "2.6.0"
@@ -52,6 +53,7 @@ parallelConsumer = "0.5.3.2"
 # Kotlin
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
+jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
 
 # Spring Boot Starters
 spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
@@ -98,6 +100,7 @@ testcontainers-junit = { module = "org.testcontainers:junit-jupiter" }
 testcontainers-kafka = {module = "org.testcontainers:kafka"}
 fixture-monkey-kotlin = { module = "com.navercorp.fixturemonkey:fixture-monkey-starter-kotlin", version.ref = "fixtureMonkey" }
 fixture-monkey-kotest = { module = "com.navercorp.fixturemonkey:fixture-monkey-kotest", version.ref = "fixtureMonkey" }
+konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
 
 # Security & Utilities
 jjwt = { module = "io.jsonwebtoken:jjwt", version.ref = "jjwt" }
@@ -151,6 +154,7 @@ testing-kotest = ["kotest-runner", "kotest-assertions", "kotest-framework", "kot
 testing-mock = ["mockk", "springmockk"]
 testing-containers = ["testcontainers-kafka","testcontainers-mysql", "testcontainers-junit", "spring-boot-testcontainers"]
 testing-fixtures = ["fixture-monkey-kotlin", "fixture-monkey-kotest"]
+testing-konsist = ["konsist"]
 security = ["jjwt", "spring-security-crypto"]
 validation = ["hibernate-validator", "jakarta-validation"]
 documentation = ["springdoc-openapi", "restdocs-mockmvc", "restdocs-asciidoctor", "restdocs-api-spec"]
