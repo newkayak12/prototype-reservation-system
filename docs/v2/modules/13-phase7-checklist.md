@@ -20,10 +20,10 @@
 
 ## 7-1 · contract-module (Day 3-5) → [[02-contract-module]] §6
 
-- [ ] `AbstractEvent` 봉투 설계 (정체성 `eventId`/`sequenceNo` + 추적메타 `correlation/causation/traceparent` — [[ADR-022]])
-- [ ] 레퍼런스 컨텍스트(`timetable`·`reservation`) 통합 이벤트 클래스 정의 (event-carried — [[RFC-029]])
-- [ ] 이벤트 버전/직렬화 전략 확정 (JSON + `eventType` 매핑 — [[ADR-010]]·[[RFC-022]])
-- [ ] `eventType → 클래스` 복원 레지스트리 **소유 위치** 확정 (복원은 application, 정의 경계는 여기 — [[DESIGN-019]] §6)
+- [x] `AbstractEvent` 봉투 설계 (정체성 `eventId`/`sequenceNo` + 추적메타 `correlation/causation/traceparent` — [[ADR-022]])
+- [~] 레퍼런스 컨텍스트(`timetable`·`reservation`) 통합 이벤트 클래스 정의 (event-carried — [[RFC-029]]) — `timetable`(`SeatHeld`) 완료, `reservation`(`ReservationCreated`·`ReservationConfirmed`·`ReservationFailed`·`ReservationExpired`·`ReservationCancelled`·`ReservationNoShow`·`RefundRequired`) 미착수
+- [x] 이벤트 버전/직렬화 전략 확정 (JSON + `eventType` 매핑 — [[ADR-010]]·[[RFC-022]]) — [[02-contract-module]] §5.3
+- [x] `eventType → 클래스` 복원 레지스트리 **소유 위치** 확정 (복원은 application, 정의 경계는 여기 — [[DESIGN-019]] §6) — [[02-contract-module]] §5.3
 - [x] `build.gradle.kts` Spring/JPA 배제 확인 (7-0-③에서 완료)
 
 ## 7-2 · command-core (Day 6-10) → [[03-command-core]] §6

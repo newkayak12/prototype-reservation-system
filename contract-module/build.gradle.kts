@@ -22,6 +22,8 @@ configurations.all {
 
 dependencies {
     implementation(project(":shared-module"))
+    implementation(libs.jackson.kotlin)
+    implementation(libs.jackson.jsr310)
 
     testImplementation(project(":test-module"))
     testImplementation(libs.bundles.testing.kotest)
