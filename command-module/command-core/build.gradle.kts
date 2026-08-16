@@ -27,4 +27,6 @@ dependencies {
     testImplementation(libs.bundles.testing.kotest)
     testImplementation(libs.bundles.testing.mock)
     testImplementation(libs.bundles.testing.fixtures)
+    testImplementation(libs.bundles.testing.konsist)
+    testImplementation(libs.kotest.property)
 }
