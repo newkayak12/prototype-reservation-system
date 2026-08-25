@@ -90,6 +90,7 @@ class UserEntity(
 
     @Column(name = "user_status", columnDefinition = "ENUM ('ACTIVATED', 'DEACTIVATED')")
     @Comment("역할 (ROOT, SELLER, USER)")
+    @Enumerated(value = EnumType.STRING)
     var userStatus: UserStatus = UserStatus.ACTIVATED
         protected set
 
@@ -103,7 +104,7 @@ class UserEntity(
         userStatus: UserStatus,
     ) {
         this.failCount = failCount
-        this.lockedDatetime = lockedDateTime ?: LocalDateTime.now()
+        this.lockedDatetime = lockedDateTime
         this.userStatus = userStatus
     }
 

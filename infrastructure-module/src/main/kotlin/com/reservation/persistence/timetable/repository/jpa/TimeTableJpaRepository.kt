@@ -9,17 +9,7 @@ import java.time.LocalTime
 interface TimeTableJpaRepository : CrudRepository<TimeTableEntity, String> {
     companion object {
         private const val FIND_BOOKABLE_TIME_STAMP_SQL = """
-        SELECT
-        timetable.identifier,
-        timetable.restaurantId,
-        timetable.date,
-        timetable.day,
-        timetable.startTime,
-        timetable.endTime,
-        timetable.tableNumber,
-        timetable.tableSize,
-        timetable.tableStatus,
-        timetable.timeTableConfirmStatus
+        SELECT timetable
         FROM TimeTableEntity timetable
         WHERE timetable.restaurantId = :restaurantId
         AND timetable.date = :date

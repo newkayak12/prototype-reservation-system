@@ -97,10 +97,14 @@ class CreateTimeTableOccupancyService(
     ) {
         val semaphoreSettings =
             SemaphoreSettings(
+                size,
+                Duration.ofMinutes(SEMAPHORE_DURATION),
+            )
+        val semaphoreInquiry =
+            SemaphoreInquiry(
                 SEMAPHORE_ACQUIRE_SIZE,
                 Duration.ofMinutes(SEMAPHORE_MAXIMUM_WAIT_TIME),
             )
-        val semaphoreInquiry = SemaphoreInquiry(size, Duration.ofMinutes(SEMAPHORE_DURATION))
         val isAcquired =
             acquireTimeTableSemaphore.tryAcquire(
                 key,

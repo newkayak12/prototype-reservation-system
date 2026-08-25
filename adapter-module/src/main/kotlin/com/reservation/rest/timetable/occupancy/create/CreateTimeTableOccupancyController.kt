@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -19,7 +20,7 @@ class CreateTimeTableOccupancyController(
 ) {
     @PostMapping(TimeTableOccupyUrl.BOOKING)
     fun createTimeTableOccupancy(
-        header: HttpHeaders,
+        @RequestHeader header: HttpHeaders,
         @PathVariable("restaurantId") restaurantId: String,
         @RequestBody request: CreateTimeTableOccupancyRequest,
     ): BooleanResponse {
