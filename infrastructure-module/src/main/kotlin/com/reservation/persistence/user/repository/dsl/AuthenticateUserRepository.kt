@@ -67,6 +67,7 @@ class AuthenticateUserRepository(
                 userEntity.failCount,
                 userEntity.userStatus,
                 userEntity.lockedDatetime,
+                userEntity.role,
             ),
         )
             .from(userEntity)

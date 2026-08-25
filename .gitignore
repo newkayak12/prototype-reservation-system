@@ -223,3 +223,10 @@ redis/sentinel-3/
 .claude/settings.json
 .kotlin
 
+
+# k6 perf test generated artifacts
+perf/k6/results/
+perf/k6/lib/env.json
+perf/k6/lib/users.json
+perf/k6/lib/users.ndjson
+perf/k6/lib/seed.generated.sql

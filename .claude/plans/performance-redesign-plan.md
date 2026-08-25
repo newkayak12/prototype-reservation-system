@@ -41,6 +41,119 @@ Redisson **RSemaphore**로 좌석 수만큼 permit을 발급한 뒤 JPA로 `Time
   구독 — 실제로는 안 맞는 상태. 새 파이프라인 만들 때 이름 규칙을 통일한다.
 - DB에는 현재 `timetable.version`(낙관적 락) 외에 비관적 락/유니크 제약이 전혀 없다 — 이중예약을 막는
   DB 차원 안전장치가 없는 게 실제 갭이며, ④ 단계가 이걸 메운다.
+- **발견 후 수정한 버그**: `IsReservationExists` 출력 포트(`application-module`)를 구현하는 어댑터가
+  `infrastructure-module`에 아예 없었다 — 테스트는 MockK로 우회하므로 지금까지 드러나지 않았지만, 실제
+  `bootRun`으로 전체 스프링 컨텍스트를 띄우면 `timeTableOccupancyKafkaListener` 빈 생성 시점에 즉시
+  실패해 앱이 아예 기동조차 되지 않는 상태였다. Phase 0 k6 부하테스트를 실행하려면 앱이 떠 있어야 하므로
+  `infrastructure-module/.../reservation/repository/jpa/ReservationJpaRepository.kt`에
+  `existsReservation(timeTableId, timeTableOccupancyId)` JPQL 쿼리를 추가하고,
+  `IsReservationExistsAdapter`(기존 `CreateReservationAdapter`와 동일 패턴)를 새로 만들어 채웠다. 이건
+  이번 재설계 스코프와 무관한, 이미 존재하던 결함을 고친 것.
+- **발견 후 수정한 버그 (2)**: `SecurityConfig`의 `JwtWhitelist`(`security.jwt.allowed.path`)에
+  `/api/v1/user/sign-up`, `/api/v1/user/sign-in` 등이 등록되어 있어 `JwtFilter`는 이 경로들에서 스킵되지만,
+  `authorizeHttpRequests`의 `USER_PATHS` 규칙이 `/api/v1/user/**` 전체에 `hasRole(ROLE_USER)`를 걸어버려
+  익명 요청이 전부 403으로 막혔다 — 화이트리스트의 존재 의도(비로그인 상태에서 회원가입/로그인 허용)가
+  실제로는 관철되지 않던 상태. `filterChain()`의 `authorizeHttpRequests`에 `jwtWhitelistPaths()`(=
+  `jwtPath.path`) permitAll 규칙을 `USER_PATHS` 규칙보다 앞에 추가해 화이트리스트가 실제로 동작하게 했다.
+  이것도 재설계 스코프와 무관, k6가 실제 회원가입/로그인 API를 타려면 필요했던 사전 수정. (부가 발견:
+  화이트리스트 항목 중 `/api/**/internal/**`는 `**`가 두 번 나와 Spring MVC `PathPattern` 파서가 파싱을
+  거부한다 — 기존엔 `JwtFilter.shouldNotFilter()`에서 단순 문자열 `contains` 비교로만 쓰여서 문제가 안
+  됐지만, `requestMatchers()`에 그대로 넘기면 500이 난다. `jwtWhitelistPaths()`에서 `**`가 2번 이상 나오는
+  패턴은 걸러내는 방식으로 회피했다 — 그 패턴 자체의 의도를 바꾸지 않기 위해.)
+- **발견 후 수정한 버그 (4)**: `UserEntity.userStatus`(`infrastructure-module/.../user/entity/UserEntity.kt`)
+  필드에 `@Enumerated(EnumType.STRING)`이 빠져 있었다 — 같은 클래스의 `role` 필드는 제대로 붙어 있는데
+  `userStatus`만 누락. JPA 기본값은 ORDINAL이라 회원가입 INSERT 시 `user_status` 컬럼(MySQL
+  `ENUM('ACTIVATED','DEACTIVATED')`)에 문자열 대신 서수 정수(0)를 보내서
+  `Data truncated for column 'user_status'` SQL 에러로 회원가입 자체가 500으로 실패했다. `role` 필드와
+  동일하게 `@Enumerated(value = EnumType.STRING)`을 추가해 해결. 이것도 재설계 스코프와 무관한 사전 수정.
+- **발견 후 수정한 버그 (5)**: `AuthenticateUserRepository.queryToDatabase()`(로그인 조회 쿼리)의
+  QueryDSL `Projections.constructor(Result::class.java, ...)` 호출이 인자 6개만 넘기는데, `Result` data
+  class는 필드 7개(`id, loginId, password, failCount, userStatus, lockedDatetime, role`)라서
+  `role`에 대응하는 생성자를 못 찾아 `ExpressionException: No constructor found`로 로그인이 항상 500으로
+  터졌다. `userEntity.role`을 프로젝션 인자에 추가해 해결. 이것도 재설계 스코프와 무관한 사전 수정.
+- **발견 후 수정한 버그 (6)**: `GeneralUserSignInController`/`SellerUserSignInController`/
+  `RefreshGeneralUserController`가 리프레시 토큰을 `Cookie`에 담을 때 `JWTProvider.tokenize()`가 반환하는
+  `"Bearer <jwt>"` 형태(공백 포함)를 그대로 넣어서 `IllegalArgumentException: An invalid character [32]
+  was present in the Cookie value`로 로그인 자체가 500으로 죽었다. 세 곳 모두 쿠키에 넣기 직전에
+  `.removePrefix("Bearer ")`를 적용해 해결 (액세스 토큰은 Authorization 헤더 값이라 "Bearer " 접두어가
+  맞지만, 쿠키 값에는 애초에 그 접두어가 들어가면 안 됨). `RefreshGeneralUserController`가 쿠키에서 다시
+  읽어 `JWTProvider`에 넘기는 경로는 `removeBearer()`가 접두어 유무와 무관하게 안전하게 동작해서 영향
+  없음.
+- **발견 후 수정한 버그 (7, 가장 심각)**: `UserEntity.updateAuthenticateResult()`가
+  `this.lockedDatetime = lockedDateTime ?: LocalDateTime.now()`로 되어 있어서, 로그인 **성공** 시에도
+  (도메인 로직 `LockState.activate()`는 `lockedDateTime=null`을 반환 — "잠금 없음"을 의미) null을 그냥
+  두지 않고 항상 현재시각으로 덮어써버렸다. 그 결과 `isLockdownTimeOver()`가 다음 로그인 때
+  `lockedDatetime + 30분 > now`로 계산돼 "아직 잠금 시간 안 지남"으로 판정 — **모든 사용자가 로그인에 한
+  번 성공하면 그 다음부터 30분간 재로그인이 전부 실패하는 상태**였다. k6가 매 실행마다 300명을 다시
+  로그인시키는 구조라 이 버그를 못 고쳤으면 2회차부터 토큰 발급이 전부 막혔을 것 — 발견 즉시 가장 심각한
+  버그. `this.lockedDatetime = lockedDateTime`로 단순화해 해결 (null이면 null 그대로 저장).
+- **발견 후 수정한 버그 (8)**: `CreateTimeTableOccupancyController`/`CreateRestaurantController`/
+  `ChangeRestaurantController` 세 곳 모두 `header: HttpHeaders` 파라미터에 `@RequestHeader` 애노테이션이
+  빠져 있었다. Spring MVC는 애노테이션 없는 `HttpHeaders` 파라미터를 실제 요청 헤더로 채워주는 리졸버가
+  없어서 빈 `HttpHeaders()`로 폴백되고, 그 결과 `header.getFirst(AUTHORIZATION)`이 항상 null이 되어
+  (Spring Security의 `JwtFilter`는 인증에 성공했는데도) 컨트롤러 안에서
+  `ExtractIdentifierFromHeaderUseCase`가 `UnauthorizedException`을 던져 예약/매장 생성·수정이 전부
+  401로 막혔다. 세 곳 모두 `@RequestHeader header: HttpHeaders`로 수정.
+- **발견 후 수정한 버그 (9)**: `TimeTableJpaRepository.findBookableTimeTable`의 JPQL이 개별 컬럼 10개를
+  `SELECT`하면서 반환 타입은 `List<TimeTableEntity>`였다 — `TimeTableEntity`의 실제 생성자는 8개 파라미터
+  (`identifier`, `timeTableConfirmStatus`는 생성자에 없음)라 이 프로젝션은 애초에 성립할 수 없는 구조라
+  `ConverterNotFoundException`으로 예약 조회 자체가 500이었다. `SELECT timetable FROM TimeTableEntity
+  timetable ...`로 엔티티 자체를 선택하도록 단순화해 해결.
+- **발견 후 수정한 버그 (10, 가장 치명적)**: `CreateTimeTableOccupancyService.acquireSemaphore()`에서
+  `SemaphoreSettings`(세마포어 총 용량)와 `SemaphoreInquiry`(이번 요청이 요구하는 permit 수)의 값이
+  서로 뒤바뀌어 있었다 — 세마포어 총 용량을 상수 `SEMAPHORE_ACQUIRE_SIZE`(1)로 설정하고, 정작 이번 요청은
+  좌석 수(`size`, 예: 30)만큼의 permit을 한 번에 요구하는 구조였다. 총 용량 1인 풀에서 30개를 요구하면
+  **영원히 충족 불가능** — 모든 예약 요청이 `tryAcquire`의 최대 대기시간(5분)만큼 그냥 멈춰있다가 실패하는
+  상태였다(실제로 curl이 120초 타임아웃에 걸려서 발견함). 상수 이름(`SEMAPHORE_DURATION`,
+  `SEMAPHORE_MAXIMUM_WAIT_TIME`)이 원래 의도를 보여줘서, `SemaphoreSettings(size, SEMAPHORE_DURATION)` +
+  `SemaphoreInquiry(SEMAPHORE_ACQUIRE_SIZE, SEMAPHORE_MAXIMUM_WAIT_TIME)`로 값을 맞바꿔 해결.
+- **발견 후 수정한 버그 (11)**: `OutBox`(`infrastructure-module/.../outbox/entity/OutBox.kt`)의 `@Table`에
+  다른 모든 엔티티(`RestaurantEntity`, `TimeTableEntity`, `UserEntity` 등)와 달리 `catalog =
+  "prototype_reservation"`이 빠져 있었다. 커넥션 풀의 특정 커넥션이 "현재 스키마"를 잃어버린 상태가 되면
+  (부트런 로그에 `Unable to restore connection to having no default schema` 경고가 실제로 찍혔음 —
+  Flyway가 자기 커넥션의 스키마를 원복하는 과정에서 발생한 것으로 보임) 스키마 미지정 쿼리는 `No database
+  selected`로 실패한다 — outbox INSERT(예약 성공 후 도메인 이벤트 발행 단계)가 여기 해당돼 예약 자체는
+  성공해도 이후 처리가 500으로 죽었다. 다른 엔티티와 동일하게 `catalog = "prototype_reservation"`을
+  추가해 해결.
+- **발견 후 수정한 버그 (12)**: 4개 프로필(`local`/`temporary`/`stage`/`production`) 전부 Kafka producer
+  설정이 `delivery.timeout.ms: 30000`, `request.timeout.ms: 30000`, `linger.ms: 5`였는데, Kafka 클라이언트
+  라이브러리는 `delivery.timeout.ms >= linger.ms + request.timeout.ms`를 강제한다 (30000 < 30005) —
+  `ConfigException`으로 KafkaProducer 생성 자체가 실패해서, 예약 저장은 성공해도 그 직후
+  outbox→Kafka 발행(`TimeTableOccupiedDomainEventListener.publishKafkaEvent`, `@TransactionalEventListener`
+  AFTER_COMMIT)이 전부 조용히 실패하고 있었다 — HTTP 응답은 201로 성공해서 눈치채기 어려운 종류의 버그.
+  4개 yaml 파일 모두 `delivery.timeout.ms`를 35000으로 올려 해결.
+- **발견 후 수정한 버그 (13)**: `KafkaConfig.createProducerConfig()`(`adapter-module/.../kafka/config/
+  KafkaConfig.kt`)가 `kafkaProperties.producer.bootstrapServers`만 읽어서 `ProducerConfig
+  .BOOTSTRAP_SERVERS_CONFIG`를 채우는데, 4개 프로필 yaml 전부 `spring.kafka.bootstrap-servers`(최상위)만
+  설정하고 `spring.kafka.producer.bootstrap-servers`(producer 하위)는 별도로 설정하지 않았다. Spring Boot의
+  오토컨피그(`KafkaProperties.buildProducerProperties()`)는 producer 하위 값이 비어 있으면 최상위 값으로
+  폴백하지만, 이 프로젝트는 `ProducerFactory`/`KafkaTemplate` 빈을 수동으로 직접 구성하고 있어서 그 폴백
+  로직을 타지 않는다 — 결과적으로 `bootstrap.servers`가 빈 채로 `KafkaProducer`가 생성되어
+  `ConfigException: No resolvable bootstrap urls given in bootstrap.servers`가 첫 `send()` 호출 시점(=
+  `TimeTableOccupiedDomainEventListener.publishKafkaEvent`, outbox AFTER_COMMIT 단계)에 터졌다. 버그
+  (12)와 마찬가지로 예약 저장/HTTP 응답(201)은 정상이라 겉으로는 티가 안 나는 종류. `producerConfig
+  .bootstrapServers ?: kafkaProperties.bootstrapServers`로 최상위 값 폴백을 직접 추가해 해결. (consumer
+  쪽은 4개 yaml 전부 `spring.kafka.consumer.bootstrap-servers`를 명시적으로 갖고 있어서 이 문제가 없었음
+  — 그래서 컨슈머는 처음부터 정상 기동했던 것.)
+  → 이 수정 이후 outbox 상태가 `PUBLISHED`(발행 대기)에서 `PROCESSED`(발행 성공)로 정상 전이됨을 확인.
+  다만 `reservation` 테이블 카운트는 여전히 0인데, 이는 새 버그가 아니라 위 Context 섹션에 이미 기록된
+  기존 결함(프로듀서는 `createdEvent.eventType.name = "TIME_TABLE_OCCUPIED"` 토픽으로 발행하는데 컨슈머
+  `TimeTableOccupancyKafkaListener`는 하드코딩된 `"time-table-occupancy"` 토픽을 구독 — 실제 Kafka
+  토픽 목록에 두 이름이 별도로 존재함을 직접 확인) 때문이며, 이 토픽명 통일은 계획대로 Phase 3에서
+  다룬다. Phase 0의 정합성 검증 대상은 `timetable_occupancy`(좌석 점유)이지 `reservation`(하류 감사
+  레코드)이 아니므로, `reservation_count=0`은 Phase 0 기준 정상/기지 한계로 취급하고 베이스라인 측정을
+  진행한다.
+  → 여기까지 총 13개의 사전 결함을 고쳐야 실제 회원가입→로그인→예약(비동기 outbox 발행 포함) 흐름을
+  k6로 반복 측정할 수 있는 상태가 됨. 전부 기존 테스트가 실제 시큐리티 설정/전체 스프링 컨텍스트를 타지
+  않고 mock/slice로 우회해서 지금까지 발견되지 않고 있던 결함들. (Enum 매핑 누락은 이 두 건이 전부인지
+  별도 서브에이전트로 전수조사 완료 — 나머지 엔티티는 전부 정상.)
+- **발견 후 수정한 버그 (3)**: `SecurityConfig.filterChain()`에 `.csrf { it.disable() }` 호출이 아예
+  없었다 — Stateless JWT REST API인데 CSRF 보호가 기본값(ON)으로 걸려 있어서 POST/PUT 등 모든 상태 변경
+  요청이 CSRF 토큰 없이는 403으로 막힌다. 기존 컨트롤러 테스트들은 전부
+  `adapter-module/src/test/kotlin/.../TestSecurity.kt`(테스트 전용 시큐리티 빈, `.csrf { it.disable() }`
+  포함)로 실제 `SecurityConfig`를 대체해서 돌기 때문에 지금까지 드러난 적이 없었다 — 즉 이 앱은 지금까지
+  한 번도 실제 시큐리티 설정으로 end-to-end 기동+호출된 적이 없었다는 뜻. `filterChain()`에도 동일하게
+  `.csrf { it.disable() }`를 추가해 해결. 이것도 재설계 스코프와 무관한 사전 수정.
 - 테스트 패턴: `adapter-module/src/test/kotlin/.../TimeTableOccupiedDomainEventListenerTest.kt`가
   MySQL+Redis+Kafka Testcontainers 통합 테스트 템플릿, `AcquireRateLimiterRedisAdapterTest.kt`가
   Redis 단독 Testcontainers 템플릿 — 새 컴포넌트 테스트에 그대로 따른다.
@@ -66,24 +179,46 @@ Redisson **RSemaphore**로 좌석 수만큼 permit을 발급한 뒤 JPA로 `Time
 ### Phase 0 — k6 베이스라인 측정 도구 + 현재 구조 10회 측정 (지금 실행)
 
 새 최상위 디렉터리 `perf/k6/` 신설 (그레이들 모듈과 무관, 신규):
-- `perf/k6/lib/auth.js` — `PUT /api/v1/{...}/sign-in` 호출해 VU별 JWT 캐시 (setup 단계에서 1회 로그인
-  후 재사용, 기존 `GeneralUserSignInController`/`GeneralUserUrl.USER_SIGN_IN` 사용).
-- `perf/k6/lib/seed.js` (또는 `seed.sql`, docker-entrypoint-initdb.d 옆에 별도 파일로) — 부하테스트 전용
-  레스토랑 1개 + 좌석 수가 제한된 timetable N개(예: 30개) + 사용자 M명(예: VU 최대치만큼)을 시드. 좌석
-  수를 의도적으로 작게 잡아 "티켓팅"처럼 대부분 요청이 경합하도록 구성 — mnet 사례와 동일한 부하 패턴.
+- **인증은 우회하지 않는다**: k6 `setup()` 단계에서 실제 `POST /api/v1/user/sign-up`
+  (`GeneralUserUrl.USER_SIGN_UP`)으로 부하테스트 전용 사용자 M명을 실제로 회원가입시키고, 실제
+  `PUT /api/v1/user/sign-in`으로 로그인해 진짜 JWT(`accessToken`, 이미 `"Bearer "` 접두어 포함)를 받는다.
+  DB에 비밀번호 해시를 직접 꽂아넣는 방식(사전 계산한 BCrypt 해시)은 Spring Security의 BCrypt 버전
+  호환성 리스크가 있어 배제 — 반드시 실제 서비스 코드 경로(회원가입→로그인)를 그대로 통과시켜 토큰을
+  받는다. 이 토큰들은 setup 단계에서 한 번만 발급해 VU 전체가 재사용 (매 반복마다 로그인하지 않음 —
+  이건 "인증 우회"가 아니라 "부하테스트 대상은 로그인이 아니라 예약 엔드포인트"라는 표준 k6 관례).
+  레스토랑(`restaurant`)·타임테이블(`timetable`) 시드는 raw SQL로 직접 삽입 (FK 제약 없음, 승인 상태
+  게이트가 조회 경로를 막지 않음을 확인함 — `findBookableTimeTable` 쿼리는 `table_status='EMPTY'`,
+  `time_table_confirm_status='NOT_CONFIRMED'`, 미점유 조건만 봄). 단, `restaurantId`는 URL 경로 정규식
+  `[0-9a-fA-F\-]{36}`(표준 UUID 형식)을 만족해야 하므로 MySQL `UUID()`로 생성.
+- `perf/k6/lib/auth.js` — setup 단계 회원가입+로그인 헬퍼.
+- `perf/k6/lib/seed.sql` — 레스토랑 1개 + 좌석 수가 제한된 timetable N개(예: 30개, 각기 다른
+  `table_number`로 동일 슬롯에 30석)를 시드. 좌석 수를 의도적으로 작게 잡아 "티켓팅"처럼 대부분 요청이
+  경합하도록 구성.
 - `perf/k6/scenarios/booking.js` — 대상: `POST /api/v1/time-table/booking/{restaurantId}`
   (`TimeTableOccupyUrl.BOOKING`), body `{date, startTime}`. 시나리오는 env 변수로 라벨만 바꿔가며
-  baseline/redesigned 양쪽에 재사용. ramping-vus 스테이지: 100 → (200/500/1000 등 점증) — "VU 100~
-  쭉쭉"에 맞춰 여러 단계로 계단식 램프. 각 반복은 성공/실패(품절/중복/락타임아웃) 여부와 상태코드를
-  구분해 커스텀 메트릭으로 기록.
+  baseline/redesigned 양쪽에 재사용. 각 반복은 성공/실패(품절/중복/락타임아웃) 여부와 상태코드를 구분해
+  커스텀 메트릭으로 기록.
+  - **ramping-vus 스테이지 설계 (포화점/최대 처리량 탐색)**: "한 번에 받을 수 있는 양"을 알아내는 게
+    목적이므로 단순 상승이 아니라 100 → 300 → 600 → 1000 → 1500 → 2000 식으로 계단마다 일정 시간
+    유지하며 에러율·p95가 임계치를 넘는 지점을 찾는다. 각 스테이지는 k6 태그로 구분해 요약에서 "몇 VU
+    부터 무너지기 시작했는지"를 바로 읽을 수 있게 한다.
+  - **"프로세스 완료 시각" (정착 시간) 측정**: 현재 구조는 `execute()` 안에서 DB 저장까지 동기로
+    끝나므로 HTTP 응답 완료 = 예약 확정이지만, 개선 후(Phase 1~4)는 Kafka 비동기 파이프라인을 거쳐
+    실제 DB 커밋까지 지연이 생긴다. 그래서 Phase 0/5 공통으로 "체감 응답속도"(p50/p95/p99, HTTP 레벨)와
+    "정착 시간"(마지막 요청 전송 시각부터, `timetable_occupancy`/`reservation` 테이블의 카운트가 더 이상
+    변하지 않게 될 때까지의 wall-clock)을 **둘 다** 따로 리포트한다. 정착 시간 측정은 `run.sh`가 k6
+    종료 직후 DB를 짧은 간격으로 폴링하는 별도 쉘 루프로 처리 (`perf/k6/lib/wait-settle.sh`).
 - `perf/k6/run.sh SCENARIO_NAME` — 동일 설정으로 10회 반복 실행, 매 회
-  `--summary-export=perf/k6/results/<scenario>-<n>.json` 저장. (`perf/k6/results/`는 gitignore.)
+  `--summary-export=perf/k6/results/<scenario>-<n>.json` 저장하고 직후 `wait-settle.sh`로 정착 시간을
+  같은 파일명 접미사로 기록. (`perf/k6/results/`는 gitignore.)
 - 측정 후 DB에서 실제 성공 예약 수 vs 좌석 수(오버부킹 여부)를 확인하는 검증 쿼리/스크립트도 같이 둔다 —
   포트폴리오에서 "빨라졌는데 정합성도 지켰다"를 증명하는 핵심 근거.
-- 산출물: `docs/perf/baseline-report.md` — 10회 실행의 p50/p95/p99, 에러율, 처리량, 오버부킹 여부 요약.
+- 산출물: `docs/perf/baseline-report.md` — 10회 실행의 p50/p95/p99, 에러율, 스테이지별 처리량(포화점),
+  정착 시간, 오버부킹 여부 요약.
 
 이 Phase는 애플리케이션 코드를 건드리지 않는다 (k6 스크립트 + 시드 데이터 + 로컬 docker-compose 실행
-뿐). `docker-compose up -d`로 기존 redis/kafka(3-broker)/mysql을 그대로 사용.
+뿐). `docker-compose up -d`로 기존 redis/kafka(3-broker)/mysql을 그대로 사용, `./gradlew
+:adapter-module:bootRun`으로 앱을 별도 기동해 k6가 실제 HTTP로 때린다.
 
 ### Phase 1 — 대기열: Kafka Offset이 권위, Redis는 캐시 (① 세마포어 역할)
 

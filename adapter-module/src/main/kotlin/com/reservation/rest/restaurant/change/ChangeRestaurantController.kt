@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -21,7 +22,7 @@ class ChangeRestaurantController(
 ) {
     @PutMapping(RestaurantUrl.CHANGE_RESTAURANT, consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun changeRestaurant(
-        header: HttpHeaders,
+        @RequestHeader header: HttpHeaders,
         @PathVariable id: String,
         @RequestPart(name = "request") @Valid request: ChangeRestaurantRequest,
         @RequestPart(name = "photos") photos: List<MultipartFile> = listOf(),
