@@ -9,10 +9,23 @@ Redisson **RSemaphore**로 좌석 수만큼 permit을 발급한 뒤 JPA로 `Time
 하며, 그 안에 DB 왕복까지 포함되어 있어 동시성이 몰리면 락 대기열이 그대로 커넥션/스레드 점유로 번진다.
 이게 바로 mnet 투표 사례가 지적하는 "여기가 병목입니다" 지점과 동일한 패턴이다.
 
-목표: 첨부 이미지의 4단계 아이디어(① Redis 대기열 + fallback DB, ② Redis 원자적 처리/중복 방지,
-③ Kafka 파티셔닝 순서보장, ④ DB row lock 최종 방어선)를 이 코드베이스에 이식하고, k6로 **개선 전/후**를
-동일 시나리오·동일 VU 램프로 10회씩 측정해 포트폴리오용 비교 자료를 만든다. 사용자가 확정한 대로
-① 대기열은 "예약 페이지 진입 전" 세마포어 역할 + 순번 폴링 방식으로 만든다.
+목표: Redis 대기열 → Redis 원자적 처리/중복 방지 → Kafka 파티셔닝 순서보장 → DB row lock 최종 방어선,
+4단계 아이디어를 이 코드베이스에 이식하고, k6로 **개선 전/후**를 동일 시나리오·동일 VU 램프로 10회씩
+측정해 포트폴리오용 비교 자료를 만든다. 사용자가 확정한 대로 ① 대기열은 "예약 페이지 진입 전" 세마포어
+역할 + 순번 폴링 방식으로 만든다.
+
+**참고 사례 정정**: 처음엔 mnet 투표 사례(집계 시스템)를 참고했는데, 사용자가 제시한 두 번째 사례
+(한정 굿즈 구매 — 재고 1000개, 동시접속 30만, 1인 1개, 가결제 후 5분 내 미결제 시 자동 취소, 초과판매
+없음)가 좌석 예약 도메인과 훨씬 더 가깝다 (좌석=한정 재고, 1인 1슬롯=1인 1개 구매, "잠깐 자리를 잡아두고
+확정 못 하면 풀리는" 흐름이 실제 예약 UX와 자연스럽게 대응됨). 이 문서의 Phase 1/4는 이 두 번째 사례의
+설계를 따른다:
+- 대기열 순번의 권위(authority)는 **Kafka Offset**이다 — Redis는 그 순서를 빠르게 조회하기 위한 캐시일
+  뿐이며, Redis가 죽으면 Kafka를 다시 읽어 순번을 복구한다 (별도 DB 폴백 테이블을 만드는 대신 Kafka
+  자체가 진실의 원천).
+- 재고 방어는 이중 체크: (1) 대기열 통과 직후 Redis 원자적 연산(세마포어/카운터+중복키)으로 1차 방어,
+  Fail-Fast. (2) Kafka 컨슈머의 DB row-lock 단계에서 UQ(유니크 제약, NULL 허용 트릭)로 2차 방어.
+- "가결제 → 5분 내 확정 없으면 자동 취소 + 재고/세마포어 전부 복원"에 대응하는 예약 도메인 개념
+  (예: "임시 홀드 상태로 좌석을 잡아두고, N분 내 확정하지 않으면 자동 해제") 도입 여부는 아래 확인 필요.
 
 기존 코드 재사용 포인트 (탐색 완료):
 - 분산락/세마포어: `AcquireTimeTableSemaphore`/`ReleaseSemaphore` 포트 + Redisson 어댑터
@@ -72,21 +85,26 @@ Redisson **RSemaphore**로 좌석 수만큼 permit을 발급한 뒤 JPA로 `Time
 이 Phase는 애플리케이션 코드를 건드리지 않는다 (k6 스크립트 + 시드 데이터 + 로컬 docker-compose 실행
 뿐). `docker-compose up -d`로 기존 redis/kafka(3-broker)/mysql을 그대로 사용.
 
-### Phase 1 — Redis 대기열 (① 세마포어 역할 + fallback DB)
+### Phase 1 — 대기열: Kafka Offset이 권위, Redis는 캐시 (① 세마포어 역할)
 
 새 바운디드 컨텍스트 (예: `com.reservation.queue`, core/application/infrastructure/adapter 4개 모듈에
 기존 패키지 구조 그대로 미러링):
-- `POST /api/v1/time-table/booking/{restaurantId}/queue` — 대기열 진입, `{ticketId, position}` 반환.
-- `GET /api/v1/time-table/booking/{restaurantId}/queue/{ticketId}` — 순번/상태 폴링
-  (`WAITING`/`ADMITTED`/`EXPIRED`).
-- Redis 자료구조: ZSET `WAITING_QUEUE:{restaurantId}:{date}:{startTime}` (member=ticketId, score=Redis
-  `INCR` 시퀀스 — 시계 스큐 방지). 입장 허용은 기존 `AcquireTimeTableSemaphore`/`ReleaseSemaphore`
-  포트를 새 "동시 입장 허용치" 세마포어로 재사용 (좌석 세마포어와는 별도 키, 시스템 동시처리 capacity
-  기준). 허용된 ticket은 TTL 달린 `ADMITTED:{key}` SET으로 이동.
-- Redis 장애 시 폴백: `DistributedLockAspect`의 `RedisException → NamedLockCoordinator` 패턴을 그대로
-  본떠서, DB 테이블(`waiting_queue`, 신규 Flyway 마이그레이션, auto-increment id로 순번 대체)로 전환.
-- 테스트: `AcquireRateLimiterRedisAdapterTest.kt` 스타일 Redis Testcontainers 통합 테스트 + 폴백 경로용
-  DistributedLockAspectTest 스타일 mock 테스트.
+- `POST /api/v1/time-table/booking/{restaurantId}/queue` — 대기열 진입. 요청을 새 토픽
+  `QUEUE_ENTRY_REQUESTED`(파티션 키 = `restaurantId:date:startTime`)에 즉시 발행하고, 클라이언트에는
+  `ticketId`(=사용자 고유값 기반)만 우선 반환.
+- 이 토픽을 구독하는 전용 컨슈머("RedisNode" 역할)가 Kafka가 부여한 순서대로 하나씩 처리하며 Redis에
+  `WAITING_QUEUE:{key}`(ZSET, score=consumer가 처리한 순서/offset 기반 시퀀스)를 채운다 — 순번의 진실은
+  Kafka offset이고, Redis는 이걸 빠르게 조회하기 위한 투영(projection)일 뿐이다.
+- `GET /api/v1/time-table/booking/{restaurantId}/queue/{ticketId}` — Redis ZRANK로 순번/상태 폴링
+  (`WAITING`/`ADMITTED`/`EXPIRED`). 입장 허용(ADMITTED)은 기존 `AcquireTimeTableSemaphore`/
+  `ReleaseSemaphore` 포트를 "동시 입장 허용치" 세마포어로 재사용(좌석 세마포어와는 별도 키).
+- **Redis 장애 시 폴백**: 별도 DB 대기열 테이블을 만드는 대신, 해당 파티션의 컨슈머 그룹 offset을
+  처음부터(또는 마지막 커밋 지점부터) 재생(replay)해서 Redis 상태를 재구성한다 — Kafka가 이미 순서의
+  원장이므로 DB는 필요 없음. 컨슈머 재시작 시 이 재생 로직이 자동으로 타야 한다.
+- 조회 부하 분산: 순번 조회 응답에 짧은 TTL(1~2초) 캐싱을 둬서 폴링 폭주가 Redis/DB로 그대로 전달되지
+  않게 한다 (CDN 캐싱까지는 이번 스코프에서 생략, 애플리케이션 레벨 TTL 캐시로 대체).
+- 테스트: `AcquireRateLimiterRedisAdapterTest.kt` 스타일 Redis Testcontainers 통합 테스트 + Kafka
+  Testcontainers로 컨슈머 재시작 시 offset 재생 검증.
 
 ### Phase 2 — Redis 원자적 처리 (② 중복/재고 원자 처리)
 
@@ -108,17 +126,32 @@ Redisson **RSemaphore**로 좌석 수만큼 permit을 발급한 뒤 JPA로 `Time
 지점이므로). 기존 `KafkaConfig`의 Confluent Parallel Consumer(`ProcessingOrder.KEY`) 설정을 그대로
 재사용해 같은 슬롯의 이벤트가 파티션과 무관하게 키 단위로 순서 보장되도록 컨슈머를 구성.
 
-### Phase 4 — DB row lock 최종 방어선 (④)
+### Phase 4 — DB row lock 최종 방어선 (④) + 임시 홀드 만료 스케줄러
 
 새 파라렐 컨슈머 리스너(기존 `TimeTableOccupancyKafkaListener`의 subscribe/retry/DLT 구조를 그대로
 따름)가 Phase 3 토픽을 구독. `@Transactional` 안에서 `TimeTableEntity`를
 `@Lock(LockModeType.PESSIMISTIC_WRITE)`로 조회(신규 리포지토리 메서드, `SELECT ... FOR UPDATE`)해 최종
-가용성 재검증 후 `TimeTableOccupancyEntity` 저장 + `tableStatus` 갱신. 신규 Flyway 마이그레이션으로
-`timetable_occupancy`에 유니크 제약(같은 timetable_id에 대해 OCCUPIED 상태 1건만 허용)을 추가해 DB
-레벨에서 이중예약을 원천 차단 — 현재 존재하지 않는 안전장치. 처리 결과(성공/실패)는 Phase 1 폴링
-엔드포인트가 읽을 수 있도록 `RESULT:{ticketId}` 같은 짧은 TTL 키에 기록. 성공 시 하류의 기존
-`TimeTableOccupiedDomainEvent → outbox → TimeTableOccupancyKafkaListener → CreateReservationUseCase`
-흐름은 그대로 재사용 (변경 없음).
+가용성 재검증 후 `TimeTableOccupancyEntity`를 **임시 홀드 상태(PENDING)** 로 저장 + `tableStatus` 갱신.
+
+- **UQ(null 활용) 중복 방지**: 신규 Flyway 마이그레이션으로 `timetable_occupancy`에
+  `released_at DATETIME NULL` 컬럼을 추가하고 `UNIQUE(timetable_id, released_at)`을 건다. MySQL은
+  UNIQUE 인덱스에서 NULL을 서로 다른 값으로 취급하므로, "활성 occupancy"는 `released_at IS NULL` 상태
+  1건만 허용되고, 취소/만료된 occupancy는 `released_at`에 실제 시각을 채워 유니크 제약을 우회하며
+  이력으로 남는다 — 이미지에 나온 "UQ(null 활용)" 트릭 그대로.
+- **5분 홀드 만료 스케줄러**: `batch-module`에 새 스케줄 작업(Spring `@Scheduled` 또는 기존 배치 스텝
+  패턴)을 추가해, `released_at IS NULL AND occupied_status = 'PENDING' AND occupied_datetime < now-5m`
+  인 row를 주기적으로 스캔 → 각 row를 `PESSIMISTIC_WRITE`로 잠그고 `released_at` 채움(취소) +
+  `tableStatus`를 다시 `EMPTY`로 복원 + Redis 좌석 카운터/세마포어도 함께 복원(`INCR`로 되돌림) — 이미지의
+  "결제 이벤트가 안쌓이면 스케쥴링 작업으로 취소 처리 + 모두 복원"에 대응.
+- 처리 결과(성공/실패/만료)는 Phase 1 폴링 엔드포인트가 읽을 수 있도록 `RESULT:{ticketId}` 같은 짧은
+  TTL 키에 기록.
+- 하류의 기존 `TimeTableOccupiedDomainEvent → outbox → TimeTableOccupancyKafkaListener →
+  CreateReservationUseCase` 흐름은 PENDING→홀드 확정 시점에 그대로 재사용 (변경 없음).
+
+**확인 필요 (사용자 답변 대기)**: 이 시스템은 결제가 없는 레스토랑 예약이라 "가결제"에 대응하는 개념이
+없다. Phase 4에 "5분 내 확정하지 않으면 자동 해제되는 임시 홀드"를 실제 사용자 흐름(예: 좌석을 임시로
+잡아두고 N분 안에 별도 확정 액션이 없으면 자동 취소)으로 넣을지, 아니면 순수 내부 구현(사용자에게는 즉시
+확정된 것처럼 보이되 내부적으로만 PENDING→CONFIRMED 전환이 짧게 존재)으로 둘지 결정 필요.
 
 ### Phase 5 — 재측정 + 비교 리포트
 
