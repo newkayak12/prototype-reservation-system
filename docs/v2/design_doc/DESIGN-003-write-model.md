@@ -58,20 +58,14 @@ class Reservation private constructor(/* state */) {
 event_store(
   event_id     BINARY(16),                      -- UUIDv7. 전역 유일 정체성 + 재구축 keyset 커서: inbox/dedup·causation 앵커·Kafka messageId
   aggregate_type, aggregate_id, sequence_no,    -- (aggregate_id, sequence_no) UNIQUE
-  event_type, event_version, payload(JSON),      -- payload = 도메인 데이터만(업캐스팅 대상)
+  event_type, event_version, payload(JSON),
   occurred_at,
-  correlation_id BINARY(16), causation_id BINARY(16),   -- 봉투 추적메타: 타입 컬럼(계보 조회 키). traceparent는 비보존(Kafka 헤더 전용)
-  PRIMARY KEY (event_id), UNIQUE (aggregate_id, sequence_no),  -- UUIDv7 PK: 삽입 지역성 양호, 재구축 keyset = PK 스캔
-  INDEX (correlation_id), INDEX (causation_id)
+  -- 봉투 추적메타: correlation_id, causation_id, traceparent (§공통)
+  PRIMARY KEY (event_id), UNIQUE (aggregate_id, sequence_no)   -- UUIDv7 PK: 삽입 지역성 양호, 재구축 keyset = PK 스캔
 )
 ```
 
 - **정체성·열거**: `event_id`(UUIDv7, 전 컨텍스트 공통 dedup/causation 앵커 + 재구축 *keyset* 열거 커서 겸용 — 순서 정확성 아님)는 [[22.event-identity-and-global-ordering]]에서 확정. 비-ES Outbox 이벤트도 `event_id` 보유. (전용 `global_seq`는 [[RFC-021-event-identity-and-global-ordering]] 닫힘으로 불채택 — UUIDv7이 커서를 겸한다.)
-
-- **봉투 추적메타 배치**(트리아지 C32 스키마 축 종결): 추적 메타 셋의 성격이 갈린다.
-  - `correlation_id`·`causation_id` = 도메인 **계보**(어느 트랜잭션 묶음 / 직전 원인). event_store에 **영구 보존**하되 JSON 블롭이 아니라 **`BINARY(16)` 타입 컬럼 + 인덱스**로 둔다 — "이 correlation 묶음 이벤트 전부", "X가 일으킨 것들"처럼 **조회·계보 traverse 키**라 인덱싱이 필요하고 모양이 고정이라서다(`event_id`와 같은 가족). JSON에 묻으면 MySQL에서 인덱싱 손해.
-  - `traceparent` = **휘발성 관측 전송**(W3C Trace Context; Tempo 보존기간 지나면 가리키는 trace 소멸). **event_store에 저장하지 않고 Kafka 메시지 헤더로만** 실어 보낸다([[DESIGN-011]] §4.3). 이로써 "`traceparent`를 봉투 헤더/페이로드 어디 둘지" 미결이 영구 스키마 인질이 되던 문제([[DESIGN-011]] Weakness)가 애초에 사라진다 — 영구 스키마에서 뺐으니 나중에 위치를 바꿔도 저장된 과거 이벤트 재직렬화가 없다.
-  - `payload`는 도메인 데이터만 담고 진화(업캐스팅) 대상이며, 개방형 가변 횡단 필드용 `metadata JSON` 칸은 필요가 생길 때 추가한다(현재 미도입 — YAGNI).
 
 #### 동시성 제어
 
@@ -127,10 +121,10 @@ sequenceDiagram
     K-->>OB: 성공 → succeeded() / 실패 → failed() (스케줄러 재처리)
 ```
 
-- **event-carried 페이로드**([[RFC-029-event-carried-payload-uniform]], 트리아지 C02): 모든 내부 도메인 이벤트는 **자기 시점의 사실(값 또는 불변 참조)을 페이로드에 싣는다.** V1 계승 Zero Payload(소비 측 최신 조회)는 폐기 — 조회가 재생(replay) 시 미래 값을 박는 time-travel 오염을 낳기 때문. 이벤트는 append-only·불변이라 실어도 stale이 되지 않는다. 규칙: *소비 측은 가변 최신 상태를 조회해 재생 이벤트를 채우지 않는다*(큰 blob은 불변 ID 참조 허용 — time-travel 없음). [[RFC-021-event-identity-and-global-ordering]] #4 생산-시점 박제의 전 이벤트 일반화. — **이 규칙이 곧 페이로드 리치니스 정책의 착지점**(트리아지 C01): [[RFC-003-messaging-delivery]]가 "thin/fat·ES/비-ES 분기는 별도 RFC로 미룸"이라 남긴 숙제를, 별도 RFC 없이 여기서 확정한다. 판단 기준은 단순하다 — *그 시점 사실은 전량 fat 탑재, 큰 blob만 불변 ID 참조*. "얼마나 담을까"를 이벤트마다 재지 않는다.
+- **Zero Payload** 원칙 계승([[07.reservation]]): 메시지는 식별자 중심, 컨슈머가 최신 상태/이벤트 조회. 스키마 진화·DLQ 재처리 안전.
 - **eventVersion** 보유(`AbstractEvent`)로 이벤트 진화 대응. 호환성 규칙·읽기 시 업캐스팅 전략은 [[10.event-schema-evolution]].
 - **재처리**: 스케줄러 기반 미발행 Outbox 재시도, Consumer 실패는 PoisonMessage 별도 관리([[07.reservation]] 계승).
-- **추적 메타 공통 충전**: `AbstractEvent`의 추적 메타(`correlationId`·`causationId`·`traceparent` — [[DESIGN-011]], [[RFC-008-observability]])는 바로 이 공통 발행 경로에서 채운다. `correlationId`는 사슬 루트를 묶어 무변경 전파하고(필수), `causationId`는 **직전 원인 메시지의 `event_id`**(원인이 커맨드면 `commandId`)를 가리키며([[22.event-identity-and-global-ordering]]), `traceparent`는 W3C Trace Context로 OTel 추적을 **Kafka 메시지 헤더**에 직렬화한다(event_store 비보존 — §이벤트 스토어 봉투 추적메타 배치). 발행 경로가 ES·비-ES 무관하게 동일하므로, 추적 메타도 발행자가 일일이 신경 쓰지 않고 이 한 경로에서 일관 충전된다 — 채움 시점은 **Outbox 기록(트랜잭션 내)**이라 발행 단계에서 뒤늦게 채우는 유실을 피한다.
+- **추적 메타 공통 충전**: `AbstractEvent`의 추적 메타(`correlationId`·`causationId`·`traceparent` — [[DESIGN-011]], [[RFC-008-observability]])는 바로 이 공통 발행 경로에서 채운다. `correlationId`는 사슬 루트를 묶어 무변경 전파하고(필수), `causationId`는 **직전 원인 메시지의 `event_id`**(원인이 커맨드면 `commandId`)를 가리키며([[22.event-identity-and-global-ordering]]), `traceparent`는 W3C Trace Context로 OTel 추적을 봉투에 직렬화한다. 발행 경로가 ES·비-ES 무관하게 동일하므로, 추적 메타도 발행자가 일일이 신경 쓰지 않고 이 한 경로에서 일관 충전된다 — 채움 시점은 **Outbox 기록(트랜잭션 내)**이라 발행 단계에서 뒤늦게 채우는 유실을 피한다.
 
 ## 5. Alternatives Considered
 
@@ -164,7 +158,7 @@ sequenceDiagram
 |------|------|
 | event store | append-only 이벤트 기록 테이블. ES 컨텍스트의 진실의 원천 |
 | Outbox | 트랜잭션 내 이벤트 기록 → 커밋 후 Kafka 발행. 최소 1회 보장 |
-| event-carried | 이벤트가 자기 시점의 값(또는 불변 참조)을 페이로드에 실음 — 불변이라 stale 없음. Zero Payload 대체([[RFC-029-event-carried-payload-uniform]]) |
+| Zero Payload | 메시지 본문은 식별자만. 컨슈머가 최신 상태를 직접 조회 |
 | UUIDv7 | 시간 기반 정렬 가능 UUID. keyset 커서·causation 앵커 겸용 |
 | correlationId | 이벤트 사슬의 루트를 묶는 추적 ID (무변경 전파) |
 | causationId | 직전 원인 메시지의 event_id (또는 commandId) |
@@ -175,15 +169,13 @@ sequenceDiagram
 - 개요: [[DESIGN-001]]
 - 관련 Design Doc: [[DESIGN-002]] · [[DESIGN-004]] · [[DESIGN-005]] · [[DESIGN-007]] · [[DESIGN-009]] · [[DESIGN-011]]
 - ADR: [[02.selective-event-sourcing-scope]] · [[05.event-store-mysql-table]] · [[07.command-domain-jpa-separation]] · [[16.optimistic-concurrency-control]] · [[19.caching-redis-role]] · [[22.event-identity-and-global-ordering]] · [[10.event-schema-evolution]]
-- 계승: [[07.reservation]] (Outbox·PoisonMessage) — Zero Payload는 [[RFC-029-event-carried-payload-uniform]]로 폐기, event-carried로 대체
+- 계승: [[07.reservation]] (Outbox·Zero Payload·PoisonMessage)
 - RFC: [[RFC-021-event-identity-and-global-ordering]] · [[RFC-008-observability]]
 
 ## Changelog
 
 | 날짜 | 내용 |
 |------|------|
-| 2026-07-05 | line 124 리치니스 정책 착지 명시 — [[RFC-003-messaging-delivery]]가 "별도 RFC로" 미룬 thin/fat·ES/비-ES 분기 숙제를 새 RFC 없이 event-carried 규칙으로 확정(트리아지 C01 종결). 기준: 그 시점 사실 전량 fat, 큰 blob만 불변 참조. |
-| 2026-07-05 | §4.4 페이로드 정책 정정 — Zero Payload 폐기, **event-carried 일원화**([[RFC-029-event-carried-payload-uniform]], 트리아지 C02). 본문 line 124·용어집·계승 참조 갱신, Weakness §4.4 항목 종결. time-travel 오염 원천 봉쇄. |
 | 2026-06-30 | DESIGN-003 템플릿으로 재작성 (원본: `02-write-model.md`) |
 
 ---
@@ -199,7 +191,6 @@ sequenceDiagram
 - **§4.4 Zero Payload + Kafka 컨슈머 조회 — ES 컨텍스트에서 컨슈머가 "최신 상태"를 조회하려면 다시 리플레이** — Zero Payload는 "컨슈머가 최신 상태/이벤트를 직접 조회"를 전제한다. 비-ES는 상태 테이블을 읽으면 되지만, ES 컨텍스트는 진실의 원천이 이벤트 스트림이라 "최신 상태 조회" = 리플레이(또는 스냅샷+델타)다. 즉 발행 경로를 "ES·비-ES 동일"이라 선언했지만 컨슈머 측 조회 비용이 근본적으로 다르며, ES 이벤트가 폭주할 때 조회 리플레이가 컨슈머 병목이 된다.
   - ZeroPayload 포기하는 것이 합리적, EVENT APPEN_ONLY라 수정 가능성이 없음 ES 폭주 시 리플레이는 SnapShot 주기를 조정해야 할 것으로 보임
     - **검토**: "포기"보다 **ES=이벤트-carried(내용 실음) / 비-ES=Zero Payload 분기**가 더 정확. Zero Payload의 목적은 stale 방지인데 ES 이벤트는 불변이라 실어도 안 stale → 오히려 컨슈머 리플레이/조회를 제거. 비-ES(가변 상태)는 Zero Payload 유지가 맞음. 스냅샷 주기는 command 측 로드 최적화라 *컨슈머* 조회 병목과는 다른 축 — 컨슈머 병목은 페이로드 정책으로 직접 해결. → §4.4에 페이로드 정책 ES/비-ES 분기 명시 필요.
-    - **결정 (2026-07-05, [[RFC-029-event-carried-payload-uniform]])**: 분기 대신 **event-carried 일원화**로 확정 — 매 이벤트마다 "ES냐"를 판단하는 부담·오적용 위험을 없애고 time-travel 버그 클래스를 원천 봉쇄. 무트래픽이라 이벤트 크기 비용도 실질 0. Zero Payload 폐기, §4.4 본문·용어집·계승 정정 완료. 이 항목 **종결**.
 - **§4.2 비-ES `BEFORE_COMMIT` Outbox 기록 + §4.4 `AFTER_COMMIT` 발행 — event store와 Outbox가 별 테이블이면 "원자적" 주장에 조건이 붙는다** — 다이어그램 Note는 "상태(or 이벤트스토어) + Outbox 원자적"이라 하지만, 이는 event_store와 outbox가 *같은 트랜잭션·같은 DB 커넥션*에 있을 때만 성립한다. ES 엔진이 command-infrastructure에서 독립 트랜잭션으로 append하면 원자성이 깨진다(이벤트는 저장됐는데 Outbox 기록 실패 = 발행 유실). 이 트랜잭션 경계 공유 요구가 명시되지 않았다.
   - 당연히 Outbox는 ES의 행위와 같은 TRX에 있어야 함. 이를 누락한 것으로 보이며, 추가 필요
     - **검토**: 동의 — 확정 사항이니 명문화. event_store append + outbox insert = **동일 트랜잭션·동일 datasource**(2PC 회피). 이는 event store를 별도 저장소/제품으로 분리하지 못한다는 제약과 직결되며, [[05.event-store-mysql-table]](MySQL 직접구현) 선택의 또 다른 근거. §4.4 다이어그램 Note를 "동일 커넥션 전제"로 못박고, §7 Risk에 "ES/Outbox 저장소 분리 시 원자성 상실" 행 추가.

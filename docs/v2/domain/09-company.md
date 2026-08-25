@@ -15,13 +15,13 @@ Company
 ├── business: Business(businessNumber, corporateRegistrationNumber)  — 불변
 ├── companyContact: CompanyContact(phone, email, url)
 ├── companyAddress: CompanyAddress(zipCode, address, detail)
-└── representative: Representative(name, mobile)
+└── representative: Representative(representativeName, representativeMobile)
 ```
 
 - **행위**: `changeBrand()` — 브랜드 변경 뿐
 - **도메인 서비스**: 없음
 - **이벤트**: 없음
-- **특징**: `Business` VO가 불변(사업자번호·법인등록번호는 변경 불가)
+- **특징**: `Business` VO는 변경 메서드가 없어 구조적으로 불변(사업자번호·법인등록번호는 변경 불가)이지만, 값 자체에 대한 포맷/길이 검증은 없다 (모든 VO에 `require`/정책 클래스 없음)
 
 ---
 

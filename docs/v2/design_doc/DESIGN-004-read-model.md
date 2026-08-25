@@ -65,6 +65,7 @@ graph LR
 - 둘 다 **async-fed 로컬 카피**다 — 읽기 지연이 당연한 것도 (가)와 같은 이유. **조회 시점에 원본을 동기 호출(cross-context fetch)하는 것은 금지** — 읽기 경로에 런타임 결합을 다시 들여 CQRS를 깬다([[RFC-002-read-model-consistency]]). published는 구독해 로컬에 적재하는 비동기 카피이지 동기 조회가 아니다.
 - **seed는 수단이 아니다.** "static해서 seed"는 분해하면 사라진다 — 진짜 불변이면 *코드 상수*라 읽기 테이블이 없고, 가끔이라도 바뀌면 소유자가 있어 published-subscription이며, 테이블형이지만 배포로만 바뀌면 flyway로 초기 적재한 로컬 테이블일 뿐(적재는 초기화 디테일이지 읽기 전략이 아니다).
 - 어느 수단이든 **command 테이블 직접 조회는 금지** — query DB는 command DB와 물리 분리라([[DESIGN-014-db-hosting-and-read-write-topology]]) 이 경계가 *물리적으로* 성립한다. (이전 "read replica 경유" 안은 query가 쓰기 스키마에 결합해 폐기.)
+- **순서·최종 정확성**: 이 async-fed 로컬 카피는 장애 창의 이벤트 재정렬에도 최종적으로 수렴해야 한다. 그 보장은 **사본별 순서 토큰이 아니라 단일 순차 relay**가 준다([[DESIGN-020-ordering-and-failure-handling]] §4a · [[RFC-032-non-es-state-copy-reordering]]) — 비-ES 사본에 별도 `version`/`sequence_no` 순서 토큰을 두지 않는다. 읽기 지연(freshness)은 bounded staleness 유지([[RFC-030-read-freshness-command-response-contract]]).
 - 항목별 projection/published 귀속 표의 확정은 company·menu의 실제 소유권이 드러나는 구현 사이클에서. 여기서는 *원칙*만 못 박는다.
 
 #### (다) 비-ES 컨텍스트는 기존 QueryDSL 조회를 유지

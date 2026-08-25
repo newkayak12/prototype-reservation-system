@@ -40,7 +40,7 @@
 - ADR: [[16.optimistic-concurrency-control]] (비관 락으로 재작성)
 
 ### [[DESIGN-007]] ← RFC-006 · RFC-021 · RFC-014 · RFC-002 · RFC-016
-- **RFC-006**: 코레오그래피 기본(PM 인프라 불필요); 타임아웃 = timetable TTL 자치; 보상 = 각 컨텍스트 자기 책임(멱등·append-only); 실패 = V1 PoisonMessage 계승; 취소·노쇼·환불 전부 코레오그래피.
+- **RFC-006**: 코레오그래피 기본(PM 인프라 불필요); 타임아웃 = reservation 소유(2026-07-31 개정, 구 timetable TTL 자치); 보상 = 각 컨텍스트 자기 책임(멱등·append-only); 실패 = V1 PoisonMessage 계승; 취소·노쇼·환불 전부 코레오그래피.
 - **RFC-021**: 교차-애그리거트 전순서는 정확성 요구 아님; point-in-time 교차 사실은 생산 시점 페이로드 박제; 진짜 교차 불변식은 사가.
 - **RFC-014**: 교차 불변식은 락이 아니라 사가가 흡수(락↔사가 경계만 추가, 사가 본체는 RFC-006 소유).
 - **RFC-002**: read-your-writes = 기본 최종 일관, 예외는 증명된 화면만.

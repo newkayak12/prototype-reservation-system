@@ -87,7 +87,7 @@ V1은 헥사고날 아키텍처와 DDD로 시작했고, **좋은 토대를 이�
 **Non-goal (이번 V2에서 하지 않음)**
 - 9개 전 컨텍스트 전면 이벤트 소싱.
 - 전용 이벤트 스토어 제품(EventStoreDB/Axon 등) 도입.
-- command/query의 물리적 서비스 분리(별도 배포).
+- ~~command/query의 물리적 서비스 분리(별도 배포).~~ → **[[ADR-026-workload-runtime-placement]]로 대체(2026-07-20)**: 물리 분리(워크로드별 별도 배포 + 노드 분리)를 채택. 이 항목은 CQRS/ES RFC 범위 밖으로 잘못 적힌 비목표였고, 실제 배치 결정은 ADR-026·[[DESIGN-010-deployment-runtime]]이 관할한다.
 - 빅뱅 전환.
 
 ---

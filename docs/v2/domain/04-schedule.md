@@ -30,8 +30,10 @@ Schedule
 | 한계 | 설명 |
 |------|------|
 | 슬롯 생성 로직 불명확 | "해당 달 마지막에 기본값으로 생성" 요구사항이 있으나, timeSpan→timetable 슬롯 변환 로직이 분리되지 않음 |
-| 테이블 관리 빈약 | `Table` 엔티티가 있으나 CRUD 외 행위 없음 |
+| 테이블 관리 빈약 | `Table` 엔티티가 있으나 CRUD 외 행위 없음. **생성 검증 자체가 없다** — `CreateTableDomainService`/policy가 존재하지 않아 테이블 번호 유일성 등 어떤 규칙도 코드로 강제되지 않는다. |
 | 이벤트 없음 | 운영시간·휴일 변경 시 timetable 슬롯에 반영하는 이벤트 경로 없음 |
+| 휴일 중복 방지가 저장 후 깨짐 | `Holiday.equals()`가 `id`를 포함해서 비교한다 (`TimeSpan.equals()`는 `id` 제외). `addHoliday()`의 중복 체크는 양쪽 다 `id=null`인 저장 전에만 유효하고, 영속화 후 재구성된 객체끼리는 같은 날짜라도 중복으로 잡히지 않는다. |
+| TimeSpan 중복 방지가 "정확히 일치"만 차단 | `addTimeSpan()`의 중복 체크는 day+startTime+endTime이 완전히 같을 때만 걸린다. 겹치는 시간대(예: 09:00~12:00과 10:00~14:00)는 막지 않는다. |
 
 ---
 
@@ -52,15 +54,28 @@ schedule은 매장의 **운영 설정**(언제 열고, 언제 쉬고, 테이블�
 | 매장 점주 | `ActivateSchedule` | Schedule | `ScheduleActivated` | 설정 완료 후 활성화 |
 | 시스템 (월말) | `GenerateMonthlySlots` | — | — | schedule 설정 기반 timetable 슬롯 일괄 생성 |
 
+> **미결**: `GenerateMonthlySlots`가 timetable에 슬롯 생성을 알리는 경로가 이벤트인지 직접 커맨드 호출인지 명시되지 않았다. `02-timetable.md`의 "슬롯 생성 (schedule에서)" 전이와 연결점을 확정해야 한다.
+
+### 상태 머신
+
+```mermaid
+stateDiagram-v2
+    [*] --> INITIALIZED: RestaurantRegistered (InitSchedule)
+    INITIALIZED --> ACTIVE: ActivateSchedule
+    ACTIVE --> ACTIVE: SetTimeSpans / SetHolidays / SetTables
+```
+
+> **미결**: 비활성화 경로(`DeactivateSchedule`)가 없다. `03-restaurant.md`의 `RestaurantDeactivated`를 schedule이 구독해야 하는지 확인 필요 — 현재는 매장이 비활성화돼도 schedule/timetable에 전파되지 않는다.
+
 ### 불변식
 
 | # | 불변식 |
 |---|--------|
-| 1 | 같은 요일·시간대의 중복 TimeSpan 금지 |
+| 1 | 같은 요일·시간대의 중복 TimeSpan 금지 (현재는 완전 일치만 차단, 겹치는 시간대는 별도 검토 필요) |
 | 2 | 같은 날짜의 중복 Holiday 금지 |
 | 3 | TimeSpan의 startTime < endTime |
-| 4 | Holiday는 과거 날짜 불가 |
-| 5 | 테이블 번호 유일성 (같은 restaurant 내) |
+| 4 | Holiday는 오늘을 포함해 과거 날짜 불가 (당일 등록도 거부) |
+| 5 | 테이블 번호 유일성 (같은 restaurant 내) — V1엔 대응 코드가 전혀 없는 신규 V2 요구사항 |
 
 ---
 

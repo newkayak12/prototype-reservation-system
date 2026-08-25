@@ -41,6 +41,7 @@ graph LR
     RES -->|ReservationConfirmed| TT
 
     %% 참조 관계
+    AUTH -.->|loginId| USR
     RES -.->|restaurantId| RST
     RES -.->|userId| USR
     TT -.->|restaurantId| RST

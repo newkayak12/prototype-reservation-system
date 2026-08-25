@@ -2,6 +2,7 @@
 
 > V1 → V2 전환(CQRS 모듈 분리 + 선택적 이벤트 소싱 + 이벤트 드리븐)의 문서 허브.
 > 사이클: `20260612-v2-cqrs-es-architecture` (exploration). 톤·결정은 v1 ADR을 계승.
+> **진행 상태 · 플랜은 [[00-status-and-plan]]** (현행 SSOT).
 
 ## 읽는 순서
 
@@ -43,8 +44,8 @@
 17. [[RFC-018-caching-redis-role]] — 캐싱·Redis의 V2 역할
 18. [[RFC-019-auth-token-transport]] — 인증 토큰 transport·무상태성·폐기 포기
 19. [[RFC-020-authentication-boundary-gateway]] — 인증 경계: API 게이트웨이 + 인증 서버 (k3s 인클러스터)
-20. [[RFC-021-event-identity-and-global-ordering]] — 이벤트 정체성(`event_id`, UUIDv7) (감사 ① 마감 · `global_seq`는 불채택·🔒닫힘) · 동시성 비관 전환은 [[RFC-014-aggregate-concurrency-control]] §재개
-21. [[RFC-022-event-schema-evolution]] — 이벤트 스키마 진화: 업캐스터·eventType 매핑·Avro/Protobuf ([[RFC-004-event-store-schema-evolution]]에서 분리)
+20. [[RFC-021-event-identity-and-global-ordering]] — 이벤트 정체성(`event_id`)·전역 열거 커서(`global_seq`) (감사 ① 마감) · 동시성 비관 전환은 [[RFC-014-aggregate-concurrency-control]] §재개
+21. [[RFC-023-event-schema-evolution]] — 이벤트 스키마 진화: 업캐스터·eventType 매핑·Avro/Protobuf ([[RFC-004-event-store-schema-evolution]]에서 분리)
 
 ## ADR (adr/) — V2 트랙, 01부터
 - [[01.cqrs-command-query-module-split]] — command/query 모듈 분리
@@ -67,7 +68,8 @@
 - [[18.event-store-recovery-semantics]] — 복구 의미론: 이벤트 스토어 1급 보호·되감기 없음(보상 이벤트)·셰딩 복원 견딤
 - [[19.caching-redis-role]] — Redis=읽기 캐시 아님, 분산 조정·휘발성 상태 전용(단일 durability)
 - [[20.auth-token-transport]] — 인증 토큰: transport V1 계승+SameSite·무상태 refresh·즉시 폐기 포기
-- [[22.event-identity-and-global-ordering]] — 이벤트 정체성: `event_id`(UUIDv7 공통 dedup/causation 앵커 + 재구축 keyset 커서 겸용, 전순서 아님)·adr/05 스키마 보강 (`global_seq` 불채택)
+- [[22.event-identity-and-global-ordering]] — 이벤트 정체성·전역 순서: `event_id`(공통 dedup/causation 앵커)+`global_seq`(재구축 열거 커서, 전순서 아님)·adr/05 스키마 보강
+- [[ADR-027-event-store-outbox-atomicity]] — **event_store·outbox 원자성(2026-07-28)**: 동일 datasource 트랜잭셔널 아웃박스(불변식 I-OUTBOX-1)로 dual-write 차단·A now / CDC(Debezium binlog) later 졸업 경로로 one-way door 해소
 
 ## 설계 (design_doc/)
 - [[00-design-overview]] — 목표 아키텍처 개요
@@ -98,3 +100,12 @@
 - **이벤트 스토밍 재실시** — 기존 보드(`eventstoming.excalidraw`)는 입문기 산출물, 참고용. 도메인 이벤트 카탈로그 확정의 선행.
 - 컨텍스트별 도메인 이벤트 카탈로그 (TBD).
 - 단계별 구현은 [[06.strangler-migration]] 순서대로 **별도 사이클**.
+
+## archive/ (역사적 산출물, 진실원 아님)
+구 사이클 `20260604-v2-event-sourcing-cqrs`의 Phase 1~4 초안. 낙관적 동시성·구 모듈 토폴로지 등은 확정본으로 대체됐다. 참고용으로만 보관.
+- `archive/00-roadmap.md` — 구 로드맵 (→ [[00-status-and-plan]]이 대체)
+- `archive/01-v1-architecture-analysis.md` — V1 구조 분석 (내용은 유효)
+- `archive/02-event-sourcing-transition-points.md` — 전환 포인트 초안
+- `archive/04-design-doc-module-structure.md` — 구 모듈 구조 초안
+- `archive/Report.md` — 초기 진단 리포트
+- `archive/Prepare.md` — ES/CQRS 학습 노트

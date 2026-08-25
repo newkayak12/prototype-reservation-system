@@ -1,6 +1,6 @@
-# ADR-016: 애그리거트 동시성 제어 — 비관 락(Redisson + DB 폴백) + UNIQUE 백스톱
+# ADR-016: 애그리거트 동시성 제어 — 비관적 동시성 제어(분산 락 Redisson + DB 행 락 폴백) + UNIQUE 백스톱
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-014-aggregate-concurrency-control]] · **설계**: [[DESIGN-006-aggregate-design]]
 - **연관 ADR**: [[ADR-005-event-store-mysql-table]] · [[ADR-009-event-ordering-and-delivery-guarantee]] · [[ADR-008-saga-orchestration-vs-choreography]] · [[ADR-019-caching-redis-role]]
@@ -36,7 +36,7 @@ V1에서 예약 한 건은 사실상 DB 트랜잭션 하나였다. 행 잠금과
 
 **락 제공자가 죽으면 (Redis 가용성)**
 - **A-1 낙관으로 폴백** — Redis 불가 시 낙관 재시도.
-- **A-2 DB 비관 락으로 폴백** — Redis 불가 시 command DB lock-row `FOR UPDATE`.
+- **A-2 DB 행 락으로 폴백** — Redis 불가 시 command DB lock-row `FOR UPDATE`(비관 의미론 유지).
 - **A-3 락 필수(폴백 없음)** — Redis 다운 = 쓰기 중단.
 
 ## 결정 (Decision Outcome)
@@ -49,7 +49,7 @@ V1에서 예약 한 건은 사실상 DB 트랜잭션 하나였다. 행 잠금과
 |---|------|---------|
 | **L0 — 안전 불변식(항상)** | 정확성 최종 심판 | `(aggregate_id, sequence_no)` UNIQUE. append-only 스토어의 진짜 단일-라이터 보장. 어떤 락을 얹어도 제거하지 않는다. 락 유실 edge에서 이중 append를 최종 거절하는 백스톱 |
 | **L1 — 경합 직렬화(1차)** | 라이터를 큐로 세움 | 단일 `aggregate_id`에 대한 Redisson 분산 락. `lock(aggregate_id) → load(replay)=N → handle → append(N+1) → release` |
-| **L1′ — 경합 직렬화(폴백)** | Redis 다운 시 비관 의미론 유지 | Redis 불가 시 DB 비관 락(per-aggregate lock-row `SELECT … FOR UPDATE`, 트랜잭션 스코프). 낙관으로 회귀하지 않는다 — 락 제공자만 Redis→DB로 강등 |
+| **L1′ — 경합 직렬화(폴백)** | Redis 다운 시 비관 의미론 유지 | Redis 불가 시 DB 행 락(per-aggregate lock-row `SELECT … FOR UPDATE`, 트랜잭션 스코프) — 비관 의미론 그대로. 낙관으로 회귀하지 않는다 — 락 제공자만 Redis→DB로 강등 |
 
 부속 규칙:
 
@@ -68,7 +68,7 @@ V1에서 예약 한 건은 사실상 DB 트랜잭션 하나였다. 행 잠금과
 
 - 핫 스트림이 큐가 된다 — 동시 리플레이→충돌→재시도 낭비가 직렬 진행으로, 둘째 이후는 재시도 없이 확정 거절.
 - 정확성은 락과 무관 — L0 UNIQUE가 락 유실·split-brain·폴백 전환 모두에서 이중 점유를 구조적으로 막는다.
-- 가용성 유지 — Redis 다운에도 DB 비관 락으로 비관 의미론 보존, 새 하드 의존 0.
+- 가용성 유지 — Redis 다운에도 DB 행 락으로 비관 의미론 보존, 새 하드 의존 0.
 - 인프라 추가 0 — Redisson은 [[ADR-019-caching-redis-role]]가 이미 provision.
 - 경계 일관 — 순서(파티션 키)·동시성(락 범위)·교차 일관성(사가)이 모두 애그리거트 경계에서 풀린다.
 

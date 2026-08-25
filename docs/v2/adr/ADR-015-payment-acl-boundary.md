@@ -1,6 +1,6 @@
 # ADR-015: 결제 연동 경계 = ACL — PG 어휘를 3 이벤트로 번역, 내부는 상태+Outbox
 
-- **상태**: Proposed
+- **상태**: Accepted (2026-08-03)
 - **사이클**: `20260612-v2-cqrs-es-architecture`
 - **상위 RFC**: [[RFC-016-payment-integration-boundary]] · **설계**: [[DESIGN-015-payment-integration]]
 - **연관 ADR**: [[ADR-008-saga-orchestration-vs-choreography]]

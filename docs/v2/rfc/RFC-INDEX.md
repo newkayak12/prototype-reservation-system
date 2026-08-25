@@ -1,7 +1,7 @@
 # RFC-INDEX — V2 결정 RFC 인덱스
 
 - **성격**: 인덱스 (결정 없음, 추적 전용)
-- **업데이트**: 2026-07-04
+- **업데이트**: 2026-07-19
 
 > RFC-001이 큰 그림을 잡았고, 이후 RFC들이 주제별 결정을 닫는다.
 > 정독 순서는 아래 "열려있는 RFC" 섹션의 우선순위를 따른다.
@@ -14,7 +14,6 @@
 | 🏷 | 합의 | 결정 합의 완료 · ADR 비준 대기 |
 | ✅ | 종결 | 합의 + ADR 비준/닫힘까지 완료 |
 | 🔒 | 닫힘 | 결정 일부만 채택하고 닫음(나머지 불채택·이력 보존) |
-| 📎 | 안 제시(미채택) | 안만 기록, 결정 아님 · 구현 비참조 (실제 수행 대상 아님) |
 
 ## RFC 전체 목록
 
@@ -43,31 +42,17 @@
 | 21 | [[RFC-021-event-identity-and-global-ordering]] | 이벤트 정체성·전역 순서 (`event_id`만 채택, `global_seq` 불채택) | 🔒 닫힘 (2026-06-30) | [[22.event-identity-and-global-ordering]] |
 | 22 | [[RFC-022-event-schema-evolution]] | 이벤트 스키마 진화 (업캐스팅·타입 레지스트리·스키마 포맷) | ✅ 종결 (2026-06-30) | [[08-event-store-lifecycle]]·[[10.event-schema-evolution]] |
 | 23 | [[RFC-023-event-schema-contract-management]] | 이벤트 스키마 관리: 생산자·소비자 계약 (공유 통합-이벤트 모듈·계약 테스트) | ✅ 종결 (2026-06-30) | [[11-environments-and-testing]]·[[14.testing-strategy]] |
-| 24 | [[RFC-024-domain-event-type-and-replay-layering]] | 도메인 이벤트 타입 소유·contract 매핑·리플레이 실행의 계층 분업 (트리아지 C03) | 🏷 합의 (2026-07-04) | [[DESIGN-019-event-execution-layering]]·[[DESIGN-002-module-structure]] |
-| 25 | [[RFC-025-ordering-relay-dlq-reconciliation]] | aggregate 순서 계약 × relay 병렬성·DLQ 상호작용 봉합 (트리아지 C09) | 🏷 합의 (2026-07-04) | [[DESIGN-020-ordering-and-failure-handling]]·[[DESIGN-008-messaging-topology]] |
-| 26 | [[RFC-026-migration-seam-rollback-proposal]] | V1→V2 마이그레이션 접합·롤백·성공기준·전환순서 (트리아지 C16·C45) | 📎 안 제시·미채택 (2026-07-05) | 없음 — 구현 비참조, DESIGN/ADR 없음 |
-| 27 | [[RFC-027-payment-external-boundary-proposal]] | 결제 외부 경계(PG) 확정경로·멱등·공격면 (트리아지 C34·C35) | 📎 안 제시·미채택 (2026-07-05) | 우리 쪽 멱등만 [[DESIGN-015-payment-integration]] §6.6 실결정 · 외부축 구현 비참조 |
-| 28 | [[RFC-028-redis-fault-fallback-semantics]] | Redis 장애 폴백 시맨틱·단일 인스턴스 순서 정합 (트리아지 C40) | 🏷 합의 (2026-07-05) | [[DESIGN-018-caching]] §6.1·§7·§8 |
-| 29 | [[RFC-029-event-carried-payload-uniform]] | 이벤트 페이로드 = event-carried 일원화, Zero Payload 폐기 (트리아지 C02) | 🏷 합의 (2026-07-05) | [[DESIGN-003-write-model]] §4.4·용어집 |
-| 30 | [[RFC-030-read-freshness-command-response-contract]] | 읽기 신선도 계약: 동기 권위 응답 기본(RFC-012 "202 기본" 부분 supersede) + `sequence_no` read-after-write 토큰 (트리아지 C14) | 🏷 합의 (2026-07-05) | [[DESIGN-013-api-contract]]·[[DESIGN-004-read-model]] (반영 대기) |
+| 31 | [[RFC-031-architecture-fitness-functions-archunit]] | 아키텍처 적합성 함수 (ArchUnit) — V2 모듈 경계·순수성·컨텍스트 격리 자동 강제 | 🌱 초안 | [[00-module-index]]·[[03-command-core]] + 규칙 design_doc |
+| 32 | [[RFC-032-non-es-state-copy-reordering]] | 비-ES 상태 사본 재정렬 — 단일 순차 relay가 봉합, 별도 순서 토큰 불요 | 🏷 합의 (2026-07-22) | ADR 불요(RFC-025로 귀속) |
 
 > ※ RFC 번호와 ADR 번호는 1:1이 아니다 — 이벤트 정체성·전역 순서는 RFC-021이 소유하지만 대응 ADR은 [[22.event-identity-and-global-ordering]](22번)다. (이전 RFC-022 결번은 RFC-023→022·RFC-024→023 당김으로 메워졌다.)
 
 ## 열려있는 RFC (우선순위 순)
 
-열린 RFC 없음. 아래 🏷 합의 — Design 완료, ADR 비준 대기:
-- [[RFC-024-domain-event-type-and-replay-layering]] (2026-07-04) — [[DESIGN-019-event-execution-layering]]
-- [[RFC-025-ordering-relay-dlq-reconciliation]] (2026-07-04) — [[DESIGN-020-ordering-and-failure-handling]]
-- [[RFC-028-redis-fault-fallback-semantics]] (2026-07-05) — [[DESIGN-018-caching]] §6.1·§7·§8
-
-🏷 합의 — **Design 반영 대기**(design doc 정정 후 ADR 비준):
-- [[RFC-030-read-freshness-command-response-contract]] (2026-07-05) — [[DESIGN-013-api-contract]](202→동기 권위 응답)·[[DESIGN-004-read-model]](신선도 등급·토큰). RFC-012 "202 기본" 부분 supersede.
-- [[RFC-029-event-carried-payload-uniform]] (2026-07-05) — [[DESIGN-003-write-model]] §4.4·용어집
-
-> 📎 [[RFC-026-migration-seam-rollback-proposal]] (C16) 는 결정 트랙이 아니다 — 실제 이행 대상이 없어 **안만 제시·미채택**. DESIGN/ADR 없음, 구현 비참조.
-> 📎 [[RFC-027-payment-external-boundary-proposal]] (C34·C35) 외부-PG 축은 log 대체·내부-only 전제라 **안만 제시·미채택**. 단 "우리 쪽 outbox 멱등"은 미룸 아님 — [[DESIGN-015-payment-integration]] §6.6 실결정으로 닫힘.
+- [[RFC-031-architecture-fitness-functions-archunit]] 🌱 초안 — V2 모듈 구조([[00-module-index]] §2)의 경계·순수성·컨텍스트 격리를 ArchUnit fitness function으로 자동 강제. 강제 시점은 Phase 7.
 
 > ✅ RFC-021(닫힘)·RFC-011 합의 완료 (2026-06-25) · RFC-022 종결 (2026-06-30) — 게이트·정합 확인 후 닫음.
+> 🌱 RFC-031 신규 오픈 (WIP=1) — 이전 전 RFC 닫힘 이후 첫 후속 결정.
 
 ## 진행 규칙
 

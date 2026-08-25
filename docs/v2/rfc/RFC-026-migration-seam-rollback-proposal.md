@@ -4,7 +4,7 @@
 
 - **상태**: 📎 안 제시 · 미채택 (구현 비참조) — 2026-07-04
 - **사이클**: `20260612-v2-cqrs-es-architecture`
-- **선행**: [[RFC-013-data-migration-genesis-events]](이행 원안·클린 슬레이트) · [[RFC-021-event-identity-and-global-ordering]](`event_id`) · [[RFC-025-ordering-relay-dlq-reconciliation]](LWW·재구축) · [[RFC-011-projection-rebuild-catchup]](재구축) · 인덱스 [[RFC-INDEX]]
+- **선행**: [[RFC-013-data-migration-genesis-events]](이행 원안·클린 슬레이트) · [[RFC-021-event-identity-and-global-ordering]](`event_id`) · [[RFC-025-ordering-relay-dlq-reconciliation]](offset 순서·`event_id` dedup·재구축 — 2026-08-03 개정으로 구 LWW 폐기) · [[RFC-011-projection-rebuild-catchup]](재구축) · 인덱스 [[RFC-INDEX]]
 - **분석 출처**: [[06-design-weakness-triage]] C16 (D-005 Weakness §4.3·§4.6·§4.7, 라인 173·174·176·179) · **C45** (전환 순서 규칙 정합 — 안 ③′로 흡수)
 - **왜 결정으로 안 가나**: 실제 이행 대상이 없어 검증할 수 없다. 안을 확정하면 검증 안 된 인프라 가정을 기정사실로 박게 된다 → 미채택으로 남긴다.
 
@@ -40,7 +40,7 @@
 D-005가 세 축을 스스로 미해결로 적어뒀고(§4.3 접합점 "경계가 없다", §4.7 롤백 유실, §4.6 성공 게이트 "약하다"), RFC-013은 이 셋을 "Design에서 검증"으로 이월하고 클린 슬레이트라며 하류 산출물 없이 종결했다. 대응 ADR도 없다.
 
 - **자산 — `event_id` 정체성이 있다.** [[RFC-021-event-identity-and-global-ordering]]. → genesis·동기 이벤트에 결정적 `event_id`를 부여하면 중복을 dedup으로 흡수할 수 있다.
-- **자산 — LWW·재구축이 있다.** [[RFC-025-ordering-relay-dlq-reconciliation]]·[[RFC-011-projection-rebuild-catchup]]. → 접합·복구 안이 새 machinery 없이 기존 자산 위에 선다.
+- **자산 — `event_id` dedup·offset 순서·재구축이 있다.** [[RFC-025-ordering-relay-dlq-reconciliation]](2026-08-03 개정: 구 LWW→offset 순서)·[[RFC-011-projection-rebuild-catchup]]. → 접합·복구 안이 새 machinery 없이 기존 자산 위에 선다.
 - **한계 — 검증 불가.** 실제 이행 대상이 없다. → 확정하면 검증 안 된 가정을 박게 된다. 그래서 안까지만.
 
 핵심 긴장 — **세 축(접합·롤백·성공기준)의 "좋은 안"을 기존 V2 자산 위에서 제시하되, 검증 못 하므로 결정으로 승격하지 않는다.**
@@ -55,7 +55,7 @@ D-005가 세 축을 스스로 미해결로 적어뒀고(§4.3 접합점 "경계�
 
 **안.**
 1. **일관 스냅샷 + 같은 LSN에서 동기 시작.** genesis 스냅샷을 트랜잭션 일관 지점(binlog 위치 `P`)에서 뜨고, 단방향 동기(CDC)를 **정확히 `P`부터** 시작한다. `≤P`는 genesis, `>P`는 동기 — 겹침도 빈틈도 원리상 없다. (Debezium `initial` 스냅샷 → 같은 오프셋에서 stream 이어받기의 표준형.)
-2. **결정적 `event_id` + inbox dedup을 안전망으로.** genesis·동기 이벤트의 `event_id`를 `V1 PK + 버전`에서 결정적으로 파생하고, V2 inbox가 dedup([[RFC-021-event-identity-and-global-ordering]]·[[RFC-025-ordering-relay-dlq-reconciliation]] LWW). → 접합이 흐려도 **겹침은 무해**해진다.
+2. **결정적 `event_id` + inbox dedup을 안전망으로.** genesis·동기 이벤트의 `event_id`를 `V1 PK + 버전`에서 결정적으로 파생하고, V2 inbox가 dedup([[RFC-021-event-identity-and-global-ordering]]·[[RFC-025-ordering-relay-dlq-reconciliation]] — `event_id` dedup). → 접합이 흐려도 **겹침은 무해**해진다.
 
 **설계 원칙**: *빈틈 없이 맞추려 애쓰기*보다 **겹치게 만들고 dedup으로 흡수**. 유실(빈틈)이 유일한 진짜 적이므로, 이음매를 의도적으로 overlap 쪽으로 편향시킨다.
 

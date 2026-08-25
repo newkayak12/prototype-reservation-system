@@ -32,11 +32,14 @@ V2의 목표 런타임 토폴로지를 확정한다:
 
 - GitOps 도구 선정 및 파이프라인 설계 (별도 todo)
 - HPA 수치·복제 지연 허용치 등 구체 임계 숫자 (운영 측정 후 확정)
-- outbox relay 단일성의 구체 구현(leader election vs SKIP LOCKED) (구현 사이클)
+- ~~outbox relay 단일성의 구체 구현(leader election vs SKIP LOCKED)~~ — **확정: Quartz 클러스터**([[ADR-009-event-ordering-and-delivery-guarantee]]). 남은 건 트리거 주기·`clusterCheckinInterval` 수치(구현 사이클)
 - command/query 서비스의 물리적 분리 시점 결정 (읽기 스케일 요구가 증명될 때)
 - 폴링 relay → CDC(Debezium) 전환 결정 (트래픽·운영 성숙도 의존)
 
 ## 4. Proposed Solution
+
+> **[2026-07-20 개정]** 아래 §4의 엣지 서술은 **Ingress(ingress-nginx, TLS) + Spring Cloud Gateway** 두 홉으로 쓰였으나, ADR-024(authentication-boundary) 결정 4와 정합화해 **Envoy Gateway(Gateway API) 단일 홉**으로 대체됐다(SCG는 ADR-024가 기각한 ①). 원 서술은 이력으로 남기며, 확정 내용은 하단 "## 개정 (2026-07-20) — 엣지" 참조.
+> **[2026-07-20 개정]** 아래 §4.1의 "command/query 초기 배포 합침"과 §4.2의 `app-ns`/`data-ns` 분리 서술은 [[ADR-026-workload-runtime-placement]]으로 대체됐다 — **각 앱 워크로드는 처음부터 별도 배포 + 노드 분리, namespace는 단일 평탄, 격리는 노드에서**. 원 서술은 이력으로 남기며, 확정 내용은 하단 "## 개정 (2026-07-20) — 워크로드 배치" 참조.
 
 ### 4.1 배치 단위 (logical workload)
 
@@ -52,7 +55,7 @@ V2의 런타임 구성요소는 일곱이다. 모듈과의 대응 관계를 먼�
 | **인증 서버** | 토큰 발급(sign-in)·refresh rotation·JWKS 노출 | `user`·`authenticate` 컨텍스트(Spring Authorization Server) | stateless (DB가 상태) |
 | **(데이터 면)** | Kafka(Strimzi) · command/query 분리 MySQL(각 binlog HA) · Redis(master/replica) | 호스팅 투명 | stateful |
 
-핵심 결정 — **command/query는 코드(모듈)로는 분리하되, 초기 배포는 같이 갈 수 있다.** RFC-001-v2-cqrs-and-event-sourcing의 비목표에 "command/query의 물리적 서비스 분리(별도 배포)"가 명시돼 있다. 즉 모듈 분리가 곧 별도 파드를 강제하지 않는다. 물리 분리는 읽기 부하가 그것을 요구할 때 떼면 된다(DESIGN-002 "향후 물리 분리 경로"). 단 **projector와 outbox relay는 처음부터 별 워크로드로 분리**한다 — 둘은 요청-응답 수명주기와 다른 동시성·스케일·장애 격리 특성을 갖기 때문이다(§4.4 배치 근거).
+핵심 결정 — ~~command/query는 코드(모듈)로는 분리하되, 초기 배포는 같이 갈 수 있다. …물리 분리는 읽기 부하가 그것을 요구할 때 떼면 된다.~~ → **[2026-07-20 개정 · [[ADR-026-workload-runtime-placement]]]** command/query를 포함한 **각 앱 워크로드는 처음부터 별도 배포(별 Deployment, 파드당 컨테이너 1개) + 노드 분리**한다. 원 서술은 RFC-001-v2의 비목표 "command/query의 물리적 서비스 분리(별도 배포)"에 기댔으나, 그 항목은 CQRS/ES RFC 범위 밖으로 잘못 적힌 비목표라 ADR-026이 supersede했다. **projector와 outbox relay가 처음부터 별 워크로드인 근거**(요청-응답과 다른 동시성·스케일·장애 특성, §4.4)는 그대로이며, ADR-026은 이 "처음부터 분리" 원칙을 모든 앱 워크로드로 확장한 것이다.
 
 ### 4.2 목표 클러스터 토폴로지
 
@@ -101,7 +104,7 @@ graph TB
 
 > Kafka=**self-managed Strimzi**(ADR-012), DB=**command/query 분리 MySQL**(각각 binlog HA, ADR-013). **command→query 다리는 Kafka/projector**(이벤트)이지 binlog가 아니다 — binlog는 각 DB의 이중화(HA)용. query DB엔 프로젝션만 있어 경계가 물리로 성립.
 
-> 위 그림은 `app`/`data` 두 namespace로 그렸지만, 이는 *분리가 정당화된 뒤*의 모습이다. 기본값은 **단일 평탄 namespace**다(RFC-007-deployment-infra-ops). namespace 분리를 정당화하는 건 셋뿐 — RBAC 경계, 리소스 쿼터, 배포 수명주기 독립. 셋 중 무엇도 압박이 아니면 분리는 순수 비용(매니페스트 중복·NetworkPolicy·디버깅 동선)이다. 그래서 트리거가 당겨지기 전까지 평탄화로 시작하고, 위 `app`/`data` 분할은 그 트리거(특히 data 면의 수명주기·쿼터 독립)가 실제로 당겨질 때 도입한다.
+> **[2026-07-20 개정 · [[ADR-026-workload-runtime-placement]]]** 위 그림은 `app`/`data` 두 namespace로 그렸지만, **트리거 개념은 폐기됐다 — namespace는 항상 단일 평탄**이다. 격리는 namespace가 아니라 **노드 분리**(각 앱 워크로드가 서로 다른 노드)에서 온다. namespace 분리(app/data)는 RBAC 경계·리소스 쿼터·배포 수명주기 독립 중 하나가 실제로 압박일 때만 도입하며(그전까진 순수 비용 — 매니페스트 중복·NetworkPolicy·디버깅 동선), 지금은 그 압박이 없어 도입하지 않는다(RFC-007-deployment-infra-ops). 위 다이어그램의 `app`/`data` subgraph는 이제 *예시*로만 읽는다.
 
 ### 4.3 이벤트·트래픽 흐름 (런타임)
 
@@ -153,9 +156,9 @@ sequenceDiagram
 #### outbox relay — 왜 단일성(leader)이 필요한가
 
 - Outbox 테이블을 폴링해 미발행분을 Kafka로 흘린다(DESIGN-003 발행 경로). v1의 `AFTER_COMMIT REQUIRES_NEW` + 스케줄러 재처리를 워크로드로 격상한 것.
-- 여러 replica가 같은 Outbox 행을 동시에 집으면 **중복 발행** 위험 → leader election(또는 `SELECT ... FOR UPDATE SKIP LOCKED` 기반 경합 회피, 구현 사이클 결정)으로 단일 처리자를 보장한다.
-- Kafka는 어차피 **at-least-once**이므로 중복 발행 자체는 컨슈머 멱등(Zero Payload)으로 흡수되지만, relay는 불필요한 중복을 줄이는 게 책임이다.
-- 따라서 relay는 `replicas: 1`(+ 무중단 위해 standby) 또는 분산 락 기반 소수 replica로 둔다. HPA 대상이 아니다.
+- 여러 replica가 같은 Outbox 행을 동시에 집으면 **순서 역전**(경쟁 드레인) 위험 → **Quartz 클러스터 리더**(JDBC JobStore `isClustered=true` + `@DisallowConcurrentExecution`)로 단일 처리자를 보장한다([[ADR-009-event-ordering-and-delivery-guarantee]], `SKIP LOCKED` 경쟁 소비 supersede). Quartz는 [[ADR-008-saga-orchestration-vs-choreography]]의 예약 타임아웃 스케줄러로 어차피 도입하는 인프라라 새 코디네이터가 아니다.
+- Kafka는 어차피 **at-least-once**이므로 리더 교체 창의 중복 발행 자체는 컨슈머 멱등(`event_id` dedup)으로 흡수되고, 삽입 순서 통짜 드레인이라 겹쳐도 순서를 뒤집지 못한다(중복이지 역전 아님). relay는 불필요한 중복을 줄이는 게 책임이다.
+- 따라서 relay는 **N개 대칭 replica + Quartz 중재**(한 트리거는 한 노드만 발화)로 둔다. 구안의 `replicas: 1(+standby)` 수동 대기 형태를 대체한다 — standby 수동 관리가 사라지고, 리더가 죽으면 다음 fire에서 다른 노드가 승계한다. HPA 대상이 아니다(발행 순차성 때문).
 
 > **대안 — 폴링 relay 대신 CDC(Debezium).** Outbox 테이블 변경을 CDC로 Kafka에 직결하면 relay 워크로드를 없앨 수 있다. ADR-008(reservation)의 CDC 후속 계획·ADR-005(event-store-mysql-table)의 "CDC로의 전환 기준"과 정합한다. 다만 Kafka Connect/Debezium이라는 새 운영 표면이 생긴다 → **초기엔 폴링 relay, CDC는 트래픽·운영 성숙도가 정당화할 때**(YAGNI). TBD.
 
@@ -196,7 +199,7 @@ sequenceDiagram
 
 > 방향·정책 형태는 위에서 고정했고, 다음 값들은 운영 측정·구현에서 확정한다(RFC-007-deployment-infra-ops "Design으로 넘기는 것").
 
-- outbox relay의 단일성 구현(leader election vs `SKIP LOCKED`) — 구현 사이클.
+- outbox relay 단일성 구현 — **Quartz 클러스터로 확정**([[ADR-009-event-ordering-and-delivery-guarantee]]); 트리거 주기·재선출 소요만 구현 사이클.
 - 폴링 relay → CDC(Debezium) 전환 기준 — ADR-005(event-store-mysql-table)·ADR-008(reservation)와 정합, 트래픽 의존.
 - command/query 서비스(앱) 물리 분리 시점 — 읽기 스케일 요구가 증명되거나 장애 격리가 필요할 때(DESIGN-002). (DB 토폴로지는 query 1 인스턴스+HA 레플리카로 고정·read model 도메인 스키마 분리로 확정 — ADR-013.)
 - standby 복제 지연 허용치의 절대 숫자, 자동 페일오버 도입 여부 — 운영 측정.
@@ -204,16 +207,6 @@ sequenceDiagram
 - k3s~EKS Strimzi 패리티로 묶을 속성(리스너·인증·토픽 토폴로지 동형) / 축소 허용 속성(브로커 수·스토리지 용량)의 정확한 목록 — DESIGN-012.
 - projector·outbox readiness 임계 숫자, 핵심 SLI 대시보드·알람 임계 — 운영 측정(DESIGN-011 연계).
 - GitOps 도구·파이프라인 — 별도 todo.
-
-#### 운영 수치 유예는 무트래픽 학습 스코프의 의식적 결정 (2026-07-06, 트리아지 C27)
-
-위 TBD와 §Weakness가 지목하는 **RPO 목표·failover SLI·PDB·리소스쿼터·브로커 규격**은 전부 *프로덕션 운영 수치*다. 이 시스템은 무트래픽 학습 프로토타입이라 지킬 실트래픽·실데이터·사용자가 없으므로, "사고를 막을 하한선(가드레일)이 없다"는 우려는 존재하지 않는 프로덕션 stakes를 가정한다. 따라서 이 값들을 사전에 RFC로 못 박지 않고 배포/측정 시점으로 미루는 것은 누락이 아니라 스코프에 맞춘 결정이다.
-
-- **브로커 규격·PDB·디스크·리소스쿼터** — Strimzi 매니페스트 작성 시 sane default(예: 학습용 RF·단일/소수 브로커)로 정할 config 값. 사전 형식화는 과설계.
-- **relay failover SLI** — SLI는 측정할 트래픽이 있어야 의미. 무트래픽에선 잴 대상이 없음. relay `replicas:1` 공백은 인지된 특성(§Weakness)으로 남기고, 다중화·SLI는 트래픽이 생기면 도입.
-- **event_store RPO** — 넷 중 유일한 ES 학습 지점. 다만 *deliberate하게 다루기* ≠ *RPO=0 동기복제*. 비동기 binlog 꼬리 유실을 **의식적으로 수용하고 그 트레이드오프를 기록**한 것(ADR-018)이 학습으로서 올바른 처리다. RPO=0 동기복제는 프로덕션 비용이지 학습 요구가 아니다. 트래픽·데이터 가치가 실재하게 되면 그때 RPO를 재결정.
-
-즉 C27의 네 항목은 **새 결정이 아니라 스코프 확인**으로 닫는다. 프로덕션 전환 시 이 절이 재검토 트리거가 된다.
 
 ## 7. Risks & Mitigations
 
@@ -245,22 +238,57 @@ sequenceDiagram
 - ADR: ADR-012(kafka-hosting-msk-vs-self-managed) · ADR-013(db-hosting-and-read-write-topology) · ADR-005(event-store-mysql-table)
 - 계승: ADR-008(reservation)
 
+## 개정 (2026-07-20) — 엣지: Ingress(ingress-nginx)+SCG → Envoy Gateway(Gateway API)
+
+§4.1·§4.2·§4.4·§5와 다이어그램은 엣지를 **Ingress(ingress-nginx, TLS) + API Gateway(Spring Cloud Gateway, 검증)** 두 홉으로 그렸다. 이 서술을 **Envoy Gateway(Gateway API) 단일 홉**으로 대체한다. 원문은 이력 보존을 위해 남긴다.
+
+**바뀐 것**
+- 엣지 = **Envoy Gateway** 하나. TLS 종단·경로 라우팅·무상태 JWT 검증(`SecurityPolicy`, JWKS 참조)·클레임 헤더 주입·rate limit을 한 제품이 진다. 별도 Ingress(ingress-nginx)와 SCG 앱은 두지 않는다.
+- 흐름: `Client → Envoy Gateway(TLS+JWT+strip+헤더+rate limit) → command/query`. `/auth/**`는 JWT 정책 미부착으로 통과 → 인증 서버.
+- 인증 서버(Spring Authorization Server)의 역할은 그대로 — 발급·refresh rotation·JWKS 노출. Envoy Gateway가 그 JWKS URL을 `SecurityPolicy`에 걸어 검증한다.
+
+**이유**
+- **SCG는 ADR-024 결정 4가 이미 기각한 ①(게이트웨이 앱 직접)이다.** 본 문서(2026-06-30)는 ADR-024 확정 전 서술이라 SCG를 그대로 뒀고, Accepted ADR와 충돌 상태였다 — 이 개정으로 정합화.
+- **ingress-nginx는 OSS에서 무상태 JWT 검증이 1급 기능이 아니다**(NGINX Plus 상용) → `auth_request`로 외부 검증 앱을 하나 더 세워야 함 = ADR-024가 피하려던 "인증 위해 앱 세우기". 기각.
+- **Envoy Gateway = Gateway API 표준 구현**(구세대 ingress controller 개념 대체), 내부 엔진 Envoy라 모델 B(mesh mTLS) 승격 경로도 이어짐.
+- 근거 상세·로컬 실습 확인 경로: 07-k8s-edge-gateway-study.
+
+§5의 "관리형(AWS API Gateway) 기각"(k3s~EKS 패리티) 논거는 유효하며, 인클러스터 엣지 = **Envoy Gateway**로 읽는다.
+
+## 개정 (2026-07-20) — 워크로드 배치: 별도 배포+노드 분리, NS 평탄 고정 (ADR-026)
+
+§4.1은 "command/query 초기 배포 합침(물리 분리는 부하가 요구할 때)"으로, §4.2 다이어그램·주석은 `app-ns`/`data-ns` namespace 분리(트리거 시 도입)로 그렸다. 이 서술을 [[ADR-026-workload-runtime-placement]]으로 대체한다. 원문은 이력 보존을 위해 남긴다.
+
+**바뀐 것**
+- **각 앱 워크로드는 처음부터 별도 배포 + 노드 분리.** 6개 앱 워크로드(Envoy Gateway·인증 서버·command·query·projector·outbox relay)가 각자 별도 Deployment(파드당 컨테이너 1개)로 뜨고, **서로 다른 노드**에 놓인다.
+- **namespace는 단일 평탄 고정.** app-ns/data-ns 분리는 하지 않는다. "부하가 요구할 때 물리 분리" / "트리거 당겨질 때 namespace 분리"라는 유예 트리거는 폐기.
+- **격리의 근거 = 노드 분리.** namespace는 장애 도메인이 아니므로 격리 수단으로 쓰지 않는다.
+- 데이터 면(Kafka/Strimzi·command/query MySQL·Redis)은 stateful 별 축으로 그대로(ADR-012·013).
+
+**이유**
+- RFC-001-v2 비목표 "command/query의 물리적 서비스 분리(별도 배포)"는 CQRS/ES RFC 범위 밖으로 잘못 적힌 항목이었고 실제 배치 의도(처음부터 별도 배포)와 반대였다 — ADR-026이 그 비목표를 supersede.
+- 모듈만 나누고 물리 배포를 합치면 모듈 분리 비용만 선불하고 런타임 격리 이득은 못 받는다. 처음부터 분리하면 그 구도가 없다.
+- namespace 분리는 매니페스트 중복·NetworkPolicy·디버깅 동선 비용만 더하고 장애 격리는 주지 않는다(K8s 공식 원칙). 격리는 노드에서.
+
+**미결(→ 08-k6 측정 후)**: 노드 분리 구현 방식(전용 node pool + taint/toleration vs anti-affinity)·node pool 수·규격. 작업가설로 taint/toleration 전용 배치를 두되 블로커로 세우지 않는다.
+
 ## Changelog
 
 | 날짜 | 변경 내용 |
 |------|-----------|
-| 2026-07-06 | §6에 **운영 수치 유예 = 무트래픽 학습 스코프의 의식적 결정** 명문화 (트리아지 **C27**). RPO 목표·failover SLI·PDB·리소스쿼터·브로커 규격은 프로덕션 운영 수치라 배포/측정 시점 위임, event_store 꼬리 유실은 ADR-018에서 이미 의식적 수용. 새 RFC 없이 스코프 확인으로 종결, 프로덕션 전환 시 재검토 트리거. |
 | 2026-06-30 | 초안 작성 — DESIGN-010 템플릿 적용, 09-deployment-runtime.md에서 변환 |
+| 2026-07-20 | 개정 — 엣지 프록시를 Ingress(ingress-nginx)+SCG에서 Envoy Gateway(Gateway API) 단일 홉으로 대체(ADR-024 결정 4와 정합, 07-k8s-edge-gateway-study 수용). 원 서술은 §개정 참조. |
+| 2026-07-20 | 개정 — 워크로드 배치를 "command/query 초기 합침 + namespace 분리 트리거"에서 "워크로드별 별도 배포 + 노드 분리, 단일 평탄 NS"로 대체(ADR-026). RFC-001-v2 L90 비목표 supersede. 원 서술은 §개정 참조. |
 
 ---
 
 ## Weakness (Devil's Advocate 반박 포인트)
 
 - **self-managed Strimzi를 솔로가 운영** — KRaft·PDB·스토리지클래스·리밸런스·브로커 디스크 압박·버전 업그레이드는 오퍼레이터가 대신 눌러주는 게 아니라 사람이 값을 정해야 하는 표면이다. §4.5는 "규격은 측정 후 확정"으로 미루지만, 미확정 규격으로 뜬 브로커가 디스크 풀·리밸런스 폭주를 일으키면 그건 학습이 아니라 사고 대응이다. MSK 회피의 명분이 "k3s~EKS 패리티"인데, 정작 패리티가 필요한 건 앱 리스너 동작이지 브로커 운영 자체가 아니다 — 운영 부담이 학습을 압도할 위험을 문서가 저울질하지 않는다.
-- **outbox relay `replicas:1`의 가용성 공백** — §4.4는 leader 단일성을 강조하면서 "+ standby"를 괄호로만 언급한다. 단일 relay 파드가 죽고 리더 재선출/standby 승격 사이의 공백 동안 Outbox 발행이 멈추면, command는 계속 커밋되어 미발행 행이 쌓이고 read model 신선도가 그 공백만큼 통째로 뒤처진다. HPA 대상이 아니라고 못박은 이 워크로드의 **failover 시간이 곧 프로젝션 지연의 하한**인데, 그 SLI(§4.6 "페일오버 소요 시간")를 relay에는 적용하지 않았다.
+- **outbox relay 리더 교체의 가용성 공백** — (부분 완화 2026-08-03: `replicas:1(+standby)` → **Quartz 클러스터 N 대칭**으로 전환해 standby 수동 승격은 사라졌다. 다만 리더가 죽고 다음 트리거 fire까지 발행이 멈추는 공백은 남는다.) 그 공백 동안 command는 계속 커밋되어 미발행 행이 쌓이고 read model 신선도가 그만큼 뒤처진다. HPA 대상이 아니라고 못박은 이 워크로드의 **재발화 소요(트리거 주기·`clusterCheckinInterval`)가 곧 프로젝션 지연의 하한**인데, 그 SLI(§4.6 "페일오버 소요 시간")를 relay에 적용하는 것은 여전히 미정이다([[ADR-009-event-ordering-and-delivery-guarantee]] 트레이드오프).
 - **검증 모델 A = 네트워크 신뢰의 단일 실패점** — "SCG만 command/query에 도달"을 NetworkPolicy로 강제한다지만, 앱이 헤더를 무조건 신뢰하는 이상 NetworkPolicy 오적용·CNI 미지원·디버그용 임시 노출 한 번이면 신원 위조가 그대로 관통한다. 모델 B(재검증)로의 승격을 "분산 신뢰가 빡빡해질 때"로 미뤘는데, 그 시점을 감지할 신호(우회 시도 탐지·게이트 바이패스 알람)가 정의돼 있지 않아 뚫린 뒤에야 알게 된다.
-- **command/query 배포 합침과 HPA 축 충돌** — §4.1/§4.4는 초기 한 배포 허용 + §4.6은 "query는 읽기 부하로, command는 쓰기 부하로 독립 스케일"을 동시에 주장한다. 한 파드에 합친 상태에서는 이 독립 스케일이 성립하지 않는다 — 읽기 폭증이 같은 파드의 쓰기 경로까지 끌고 스케일시키거나 그 반대가 된다. "값싸게 뗀다"고 하지만 분리 트리거(읽기 스케일 증명)를 관측할 지표가 합쳐진 배포에서는 오염돼 분리 판단 자체가 어렵다.
-- **단일 평탄 namespace + data 면 동거의 폭발 반경** — §4.2 주석은 기본값을 평탄 namespace로 두고 Strimzi/MySQL 같은 stateful을 같은 평면에 놓는다. 리소스 쿼터·PDB 경계 없이 앱 파드의 폭주(메모리·파일디스크립터)가 같은 노드의 브로커/DB를 압박하면 데이터 면 장애로 번진다. "트리거 당겨질 때 분리"라지만 그 트리거가 *바로 이 종류의 사고*라, 분리는 사고를 겪은 뒤에야 온다.
+- ~~**command/query 배포 합침과 HPA 축 충돌**~~ → **[해소 · [[ADR-026-workload-runtime-placement]]]** command/query가 처음부터 별도 배포라 독립 스케일이 성립한다. "합친 상태" 전제가 사라져 이 충돌은 발생하지 않는다. (원 지적: 한 파드에 합치면 읽기 폭증이 쓰기 경로까지 끌고 스케일시켜 분리 판단 지표가 오염된다.)
+- **단일 평탄 namespace + data 면 동거의 폭발 반경** — §4.2 주석은 기본값을 평탄 namespace로 두고 Strimzi/MySQL 같은 stateful을 같은 평면에 놓는다. 리소스 쿼터·PDB 경계 없이 앱 파드의 폭주(메모리·파일디스크립터)가 같은 노드의 브로커/DB를 압박하면 데이터 면 장애로 번진다. → **[부분 완화 · [[ADR-026-workload-runtime-placement]]]** 각 앱 워크로드가 데이터 면과 **다른 노드**에 놓여 노드 단위 자원 경합은 끊긴다(namespace는 여전히 단일이나, 격리는 노드에서 옴). 다만 노드 분리 방식·규격은 08-k6 측정 후 확정할 학습 변수이므로, 그 전까지 requests/limits 없는 상태에서의 노드 내 경합은 잔존 위험으로 남는다.
 - **binlog HA와 이벤트 스토어 내구성의 미스매치** — command MySQL은 event_store가 진실 원천(ADR-005)인데 HA를 **비동기** binlog standby로 둔다(§4.5, 용어집도 "비동기 복제"로 명시). primary 유실 시 아직 복제 안 된 tail 이벤트가 사라지면 그건 캐시 손실이 아니라 **진실 원천의 소실**이다 — projector가 이미 소비·프로젝션한 이벤트를 재구축 시 복원할 수 없는 상태가 될 수 있다. "복제 지연 허용치는 측정 후"라지만, 이벤트 스토어에 대해 허용 가능한 데이터 유실 지연이 0이 아닌 게 맞는지부터가 결정 사항이다.
 - **projector HPA 상한=파티션 수의 경직성** — §4.4는 컨슈머 그룹 스케일을 파티션 수로 캡한다. 그러면 프로젝션 적체를 스케일아웃으로 푸는 최대치가 토픽 생성 시 정한 파티션 수에 고정되고, Kafka 파티션은 사후 증설은 되지만 감축이 안 되며 키 파티셔닝·순서 보장을 재편한다. 적체가 파티션 상한에 부딪히는 순간 남는 레버는 "파티션 재설계"뿐인데, 그 운영 비용을 리스크 표가 다루지 않는다.
 

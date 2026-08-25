@@ -187,5 +187,18 @@
   },
   "enabledPlugins": {
     "planning@newkayak12-claude-skills": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Task|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/goal-gate.mjs\""
+          }
+        ]
+      }
+    ]
   }
 }

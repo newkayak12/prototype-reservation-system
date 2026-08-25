@@ -51,21 +51,36 @@ ServiceUser (interface)
 |------|--------|-----------|-------------|-------------|
 | 일반 사용자 | `RegisterUser` | User | `UserRegistered` | |
 | 관리자 | `RegisterSeller` | User | `SellerRegistered` | role=RESTAURANT_OWNER |
-| 사용자 | `ChangePassword` | User | `PasswordChanged` | 이전 비밀번호와 동일 불가 |
+| 사용자 | `ChangePassword` | User | `PasswordChanged` | 이전 비밀번호와 동일 불가 → authenticate 구독 필요 (동기화) |
 | 사용자 | `ChangeNickname` | User | `NicknameChanged` | |
 | 사용자 | `ChangePersonalInfo` | User | `PersonalInfoChanged` | email, mobile |
 | 사용자 | `ResignUser` | User | `UserResigned` | PII 암호화 후 보관 |
+
+> **미결**: `User.password`와 [[06-authenticate]]의 `Authenticate.password`가 별도 애그리거트에 중복 보관된다. `PasswordChanged`/`TemporaryPasswordIssued`가 서로를 구독해 동기화하는지, 아니면 password를 한쪽으로 일원화할지(예: authenticate만 보관, user는 참조) 경계를 확정해야 한다.
+
+### 상태 머신
+
+```mermaid
+stateDiagram-v2
+    [*] --> ACTIVE: RegisterUser / RegisterSeller
+    ACTIVE --> ACTIVE: ChangePassword / ChangeNickname / ChangePersonalInfo
+    ACTIVE --> RESIGNED: ResignUser
+    RESIGNED --> [*]
+```
 
 ### 불변식
 
 | # | 불변식 |
 |---|--------|
-| 1 | 아이디: 영문+숫자, 8~12자 |
-| 2 | 비밀번호: 영문+숫자+특수문자, 12~20자 |
+| 1 | 아이디: 영문+숫자, 4~20자 |
+| 2 | 비밀번호: 대문자+소문자+숫자+특수문자, 8~18자 (+ UTF-8 72바이트 이하 — bcrypt 입력 한도) |
 | 3 | 이메일: 필수, 유효 형식 |
-| 4 | 닉네임: 필수, 2~20자 |
-| 5 | 비밀번호 변경 시 이전과 동일 불가 |
-| 6 | 임시 비밀번호 로그인 시 변경 강제 |
+| 4 | 닉네임: 필수, 5~12자 |
+| 5 | 모바일: 형식 검증 (`01[016789]-?\d{3,4}-?\d{4}`) — 일반 사용자 가입 시에만 적용 |
+| 6 | 비밀번호 변경 시 이전과 동일 불가 |
+| 7 | 임시 비밀번호 로그인 시 변경 강제 (`isNeedToChangePassword` 플래그) — 강제 자체는 authenticate 로그인 경로에서 수행 |
+
+> **코드 대조 메모**: 위 1~4 수치는 V1 코드 실측값으로 정정함 (기존 문서엔 8~12자·12~20자·2~20자로 잘못 기재돼 있었음). `RegisterSeller`(`CreateSellerUserDomainService`)는 위 규칙을 **전혀 검증하지 않는다** — 일반 사용자 가입과 달리 검증 없이 바로 `RestaurantOwner`를 생성한다. V2에서 동일 규칙을 적용할지 결정 필요.
 
 ### 읽기 모델
 

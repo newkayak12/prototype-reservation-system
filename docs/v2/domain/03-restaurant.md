@@ -27,7 +27,21 @@ Restaurant
 - **행위**: `updateDescription`, `updateLocation`, `updateContact`, `manipulateRoutine/Photo/Tags/Nationalities/Cuisines`, `snapshot()`
 - **도메인 서비스**: `CreateRestaurantDomainService` (검증+생성), `ChangeRestaurantDomainService` (검증+수정) + 6개 위임 서비스 (`UpdateRoutine`, `UpdatePhoto`, `UpdateTag`, `UpdateNationalities`, `UpdateCuisines`, `ValidateXxx` 6개)
 - **이벤트**: `CreateScheduleEvent(restaurantId)` — 매장 생성 시 schedule 생성 트리거
-- **정책**: 이름·소개·전화·주소·우편번호·좌표 각각 검증 정책 (빈값·길이·포맷·경계)
+
+### V1 검증 규칙 (코드 실측)
+
+| 필드 | 규칙 | 근거 |
+|------|------|------|
+| 이름 | 1~64자 | `RestaurantNameLengthValidationPolicy` |
+| 소개 | 0~6000자 | `RestaurantIntroduceLengthPolicy` |
+| 전화 | 11~13자 + 휴대폰/지역번호 포맷 | `RestaurantPhoneLengthValidationPolicy`, `RestaurantPhoneFormatValidationPolicy` |
+| 주소 | 256자 미만 | `RestaurantAddressLengthValidationPolicy` |
+| 우편번호 | 정확히 5자리 숫자 | `RestaurantZipCodeLengthValidationPolicy`, `RestaurantZipCodeFormatValidationPolicy` |
+| 좌표 | 정수부 최대 3자리·소수부 최대 5자리, 위도 33.0~38.7 · 경도 124.0~131.2 (대한민국 bounding box) | `RestaurantCoordinateFormatValidationPolicy`, `RestaurantCoordinateBoundaryValidationPolicy` |
+| 태그/국적/요리 | 각각 최대 **10개** (동일 패턴, 0개 허용) | `RestaurantTags`/`Nationalities`/`Cuisines` (`MAX_*_SIZE = 10`) |
+| 사진 | 최대 10장 | `RestaurantPhotoBook` (`MAX_PHOTO_SIZE = 10`) |
+
+- 태그·국적·요리·사진·영업시간(routine) 모두 중복 추가 시 예외 없이 **조용히 무시**(no-op)된다. `RestaurantWorkingDay`의 중복 판정은 `day`만 기준 — 같은 요일에 시간이 다른 두 영업시간을 추가해도 첫 번째만 유지된다.
 
 ### V1 한계
 
@@ -37,6 +51,7 @@ Restaurant
 | 이벤트 1개 | `CreateScheduleEvent`만. 매장 수정·삭제 이벤트 없음. |
 | 가변 상태 | `var` 필드 + 외부 manipulator. 불변 전이 아님. |
 | 도메인 서비스 과다 | `CreateRestaurantDomainService`, `ChangeRestaurantDomainService` + Update/Validate 서비스 8개 |
+| 소유권 검증 없음 | `userId`는 생성 시 저장만 되고, 수정 서비스 어디에서도 비교·검증되지 않는다 (액터 파라미터 자체가 없음). |
 
 ---
 
@@ -54,6 +69,18 @@ Restaurant
 | 매장 점주 | `UpdateRestaurantCategories` | Restaurant | `RestaurantCategoriesUpdated` | 태그·국적·요리 |
 | 관리자 | `DeactivateRestaurant` | Restaurant | `RestaurantDeactivated` | 비활성화 |
 
+### 상태 머신
+
+```mermaid
+stateDiagram-v2
+    [*] --> ACTIVE: RegisterRestaurant
+    ACTIVE --> ACTIVE: UpdateRestaurant* (정보/위치/영업시간/사진/카테고리)
+    ACTIVE --> DEACTIVATED: DeactivateRestaurant
+    DEACTIVATED --> [*]
+```
+
+> **미결**: 재활성화(`ReactivateRestaurant`) 커맨드가 없다 — 비활성화가 되돌릴 수 없는 최종 상태인지, 재활성화 경로가 누락된 것인지 확인 필요.
+
 ### 불변식
 
 | # | 불변식 |
@@ -66,6 +93,13 @@ Restaurant
 | 6 | 카테고리(cuisine): 택 1 |
 | 7 | 영업시간: 월~일, 00:00~23:59 |
 | 8 | 소유자(userId)만 수정 가능 — 소유권 불변식 |
+
+> **코드 대조 메모** (V1 코드 실측 vs 위 V2 목표치 — 의도적 변경인지 확인 필요):
+> - #1 이름 1~20자 ↔ V1 코드는 1~64자
+> - #2 소개 0~2000자 ↔ V1 코드는 0~6000자
+> - #5 태그 3개 ↔ V1 코드는 태그·국적·요리 전부 10개로 동일 — "3개"의 근거(요구사항 문서)를 재확인
+> - #6 cuisine 택1 ↔ V1 코드는 태그와 동일하게 리스트(최대 10, 0개도 허용)로 구현되어 있어 "택 1" 제약이 코드 어디에도 없음
+> - #8 소유권 검증 ↔ V1 코드에는 애그리거트/서비스 레벨의 소유권 체크가 전혀 없음 (인가 레이어에서 처리한다면 [[ADR-017]]과 연결 지어 명시 필요)
 
 ### 읽기 모델
 
