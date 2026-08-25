@@ -145,13 +145,18 @@ Redisson **RSemaphore**로 좌석 수만큼 permit을 발급한 뒤 JPA로 `Time
   "결제 이벤트가 안쌓이면 스케쥴링 작업으로 취소 처리 + 모두 복원"에 대응.
 - 처리 결과(성공/실패/만료)는 Phase 1 폴링 엔드포인트가 읽을 수 있도록 `RESULT:{ticketId}` 같은 짧은
   TTL 키에 기록.
+- **확정 액션 (사용자 확인, 무료 "가결제")**: 이 시스템엔 실제 결제가 없으므로 "가결제"는 결제 게이트웨이
+  연동이 아니라 **무료 확정 액션**으로 구현한다. 새 엔드포인트
+  `POST /api/v1/time-table/booking/{restaurantId}/queue/{ticketId}/confirm` — PENDING 상태의 occupancy를
+  `PESSIMISTIC_WRITE`로 잠그고 `occupied_status`를 `CONFIRMED`로 전환 (결제 처리 없음, 단순 상태 전이).
+  클라이언트는 대기열 통과 후 좌석이 PENDING으로 잡히면 5분 안에 이 confirm을 호출해야 하고, 안 하면
+  아래 스케줄러가 자동 취소한다. 참고 이미지의 "가결제 → 5분 내 미결제 시 자동 취소" 흐름을 그대로
+  재현하되 결제 자체만 없는 버전 — 좌석 홀드를 실제 사용자가 체감하는 예약 흐름으로 만들어 포트폴리오
+  스토리(한정 재고 레이싱 + 자동 해제)를 완성한다.
 - 하류의 기존 `TimeTableOccupiedDomainEvent → outbox → TimeTableOccupancyKafkaListener →
-  CreateReservationUseCase` 흐름은 PENDING→홀드 확정 시점에 그대로 재사용 (변경 없음).
-
-**확인 필요 (사용자 답변 대기)**: 이 시스템은 결제가 없는 레스토랑 예약이라 "가결제"에 대응하는 개념이
-없다. Phase 4에 "5분 내 확정하지 않으면 자동 해제되는 임시 홀드"를 실제 사용자 흐름(예: 좌석을 임시로
-잡아두고 N분 안에 별도 확정 액션이 없으면 자동 취소)으로 넣을지, 아니면 순수 내부 구현(사용자에게는 즉시
-확정된 것처럼 보이되 내부적으로만 PENDING→CONFIRMED 전환이 짧게 존재)으로 둘지 결정 필요.
+  CreateReservationUseCase` 흐름은 confirm으로 CONFIRMED 전환된 시점에 트리거되도록 옮긴다 (PENDING
+  생성 시점이 아니라 confirm 시점에 도메인 이벤트 발행 — 그래야 만료된 PENDING이 하류에 잘못 전파되지
+  않음).
 
 ### Phase 5 — 재측정 + 비교 리포트
 
