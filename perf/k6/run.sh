@@ -5,12 +5,13 @@ set -euo pipefail
 
 SCENARIO="${1:-baseline}"
 RUNS="${RUNS:-10}"
+START="${START:-1}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results"
 mkdir -p "$RESULTS_DIR"
 
-for i in $(seq 1 "$RUNS"); do
+for i in $(seq "$START" "$RUNS"); do
   echo "=================================================="
   echo "==> [$SCENARIO] run $i/$RUNS - reseeding"
   echo "=================================================="
@@ -19,8 +20,14 @@ for i in $(seq 1 "$RUNS"); do
   echo "==> [$SCENARIO] run $i/$RUNS - k6"
   k6 run \
     --summary-export="$RESULTS_DIR/${SCENARIO}-${i}.json" \
+    --out "json=$RESULTS_DIR/${SCENARIO}-${i}-raw.json" \
     "$SCRIPT_DIR/scenarios/booking.js" \
     | tee "$RESULTS_DIR/${SCENARIO}-${i}.log"
+
+  echo "==> [$SCENARIO] run $i/$RUNS - VU-stage breakdown"
+  python3 "$SCRIPT_DIR/lib/analyze-vu-stages.py" "$RESULTS_DIR/${SCENARIO}-${i}-raw.json" \
+    | tee "$RESULTS_DIR/${SCENARIO}-${i}-vu-stages.txt"
+  rm -f "$RESULTS_DIR/${SCENARIO}-${i}-raw.json"
 
   echo "==> [$SCENARIO] run $i/$RUNS - waiting for settle"
   "$SCRIPT_DIR/lib/wait-settle.sh" | tee "$RESULTS_DIR/${SCENARIO}-${i}-settle.json"

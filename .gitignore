@@ -230,3 +230,4 @@ perf/k6/lib/env.json
 perf/k6/lib/users.json
 perf/k6/lib/users.ndjson
 perf/k6/lib/seed.generated.sql
+perf/k6/lib/__pycache__/

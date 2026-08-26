@@ -2,8 +2,19 @@ import http from 'k6/http';
 import { check } from 'k6';
 import { Counter, Trend } from 'k6/metrics';
 import { SharedArray } from 'k6/data';
+import exec from 'k6/execution';
 
 const env = JSON.parse(open('../lib/env.json'));
+
+// ramping-vus 스테이지의 target VU 목록. 요청 시점의 실제 활성 VU 수를 이 중 가장 가까운 값으로 스냅해
+// vus 태그로 남긴다 - 나중에 lib/analyze-vu-stages.py가 이 태그로 그룹핑해 VU 단계별 처리량/레이턴시를 뽑는다.
+const STAGE_VU_TARGETS = [100, 300, 600, 1000, 1500, 2000];
+
+function nearestStageTarget(activeVus) {
+  return STAGE_VU_TARGETS.reduce((closest, target) =>
+    Math.abs(target - activeVus) < Math.abs(closest - activeVus) ? target : closest,
+  );
+}
 
 const bookingSuccess = new Counter('booking_success');
 const bookingSoldOut = new Counter('booking_sold_out');
@@ -19,6 +30,7 @@ const users = new SharedArray('users', function () {
 // so JWTs issued once in setup() (5-minute expiry, see V1_1 user table / JWTProperties) stay valid
 // for the whole run.
 export const options = {
+  setupTimeout: '180s',
   scenarios: {
     booking_ramp: {
       executor: 'ramping-vus',
@@ -74,6 +86,7 @@ export function setup() {
 export default function (data) {
   const token = data.tokens[__VU % data.tokens.length];
   const payload = JSON.stringify({ date: data.date, startTime: data.startTime });
+  const vuStage = nearestStageTarget(exec.instance.vusActive);
   const res = http.post(
     `${env.baseUrl}/api/v1/time-table/booking/${data.restaurantId}`,
     payload,
@@ -82,7 +95,7 @@ export default function (data) {
         'Content-Type': 'application/json',
         Authorization: token,
       },
-      tags: { name: 'booking' },
+      tags: { name: 'booking', vu_stage: String(vuStage) },
     },
   );
 

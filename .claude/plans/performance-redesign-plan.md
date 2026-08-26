@@ -9,6 +9,19 @@ Redisson **RSemaphore**로 좌석 수만큼 permit을 발급한 뒤 JPA로 `Time
 하며, 그 안에 DB 왕복까지 포함되어 있어 동시성이 몰리면 락 대기열이 그대로 커넥션/스레드 점유로 번진다.
 이게 바로 mnet 투표 사례가 지적하는 "여기가 병목입니다" 지점과 동일한 패턴이다.
 
+**Phase 0 베이스라인 측정 중 발견한 락 이중화 이슈 (수정하지 않고 그대로 둠 — 재설계로 자연 해소)**:
+`DistributedLockAspect.executeDistributedLockAction()`은 Redis `FAIR_LOCK` 획득 시도 중
+`RedisException`이 나면(Redisson 자체 커넥션 풀 고갈 등) `executeNamedLock()`으로 폴백해 MySQL
+Named Lock(`GET_LOCK`)으로 같은 메서드를 재실행한다. 문제는 이 두 락이 서로 다른 백엔드라
+**상호 배제되지 않는다** — 어떤 요청은 Redis 락으로, 동시에 다른 요청은 DB 락으로 각자 "락을 잡았다"고
+믿은 채 `CreateTimeTableOccupancyService.execute()` 안쪽(특히 `acquireSemaphore()`가 읽는 "현재 예약
+가능한 좌석 수" 스냅샷)에 동시 진입할 수 있다. 실제로 베이스라인 10회 중 8회차에서 좌석 30개 중
+10개만 점유되고 나머지 20개가 끝까지 비어버리는 현상이 재현됐다(이중예약이 아니라 과소예약 —
+`docs/perf/baseline-report.md` 8회차 각주 참고). 부트런 로그에 해당 구간과 겹치는 시각대에
+"Unable to connect to Redis" 경고가 다수 확인되어 이 메커니즘으로 설명이 된다. Phase 0 스코프에서는
+고치지 않는다 — 애초에 이 세마포어+분산락 조합 자체를 Phase 1~4에서 Redis 원자적 Lua 연산 +
+Kafka 순서 보장 + DB row lock으로 통째로 교체하므로, 재설계가 이 문제를 구조적으로 없앤다.
+
 목표: Redis 대기열 → Redis 원자적 처리/중복 방지 → Kafka 파티셔닝 순서보장 → DB row lock 최종 방어선,
 4단계 아이디어를 이 코드베이스에 이식하고, k6로 **개선 전/후**를 동일 시나리오·동일 VU 램프로 10회씩
 측정해 포트폴리오용 비교 자료를 만든다. 사용자가 확정한 대로 ① 대기열은 "예약 페이지 진입 전" 세마포어
