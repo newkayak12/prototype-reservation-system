@@ -1,10 +1,8 @@
 package com.reservation.timetable.usecase
 
 import com.reservation.config.annotations.DistributedLock
-import com.reservation.config.annotations.RateLimiter
 import com.reservation.config.annotations.UseCase
 import com.reservation.enumeration.LockType
-import com.reservation.enumeration.RateLimitType
 import com.reservation.exceptions.ClientException
 import com.reservation.timetable.TimeTable
 import com.reservation.timetable.event.TimeTableOccupiedDomainEvent
@@ -48,21 +46,12 @@ class CreateTimeTableOccupancyService(
 ) : CreateTimeTableOccupancyUseCase {
     companion object {
         private const val FAIR_LOCK_MAXIMUM_WAIT_TIME = 2L
-        private const val RATE_LIMITER_CAPACITY = 1000L
-        private const val RATE_LIMITER_RATE_INTERVAL = 1L
-        private const val RATE_LIMITER_DURATION = 1L
-        private const val RATE_LIMIT_MAXIMUM_WAIT_TIME = 3L
         private const val SEMAPHORE_DURATION = 10L
         private const val SEMAPHORE_MAXIMUM_WAIT_TIME = 5L
         private const val SEMAPHORE_ACQUIRE_SIZE = 1
         private const val SEMAPHORE_NAME = "SEMAPHORE"
         private val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
         private val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
-        private const val RATE_LIMITER_SP_EL_KEY = """
-         'RATE_LIMITER:' + #command.restaurantId + ':' +
-          #command.date.format(T(java.time.format.DateTimeFormatter).ofPattern('yyyyMMdd')) + ':' +
-          #command.startTime.format(T(java.time.format.DateTimeFormatter).ofPattern('HHmm'))
-        """
         private const val DISTRIBUTED_LOCK_SP_EL_KEY = """
          'DISTRIBUTED_LOCK:' + #command.restaurantId + ':' +
           #command.date.format(T(java.time.format.DateTimeFormatter).ofPattern('yyyyMMdd')) + ':' +
@@ -142,14 +131,6 @@ class CreateTimeTableOccupancyService(
         return true
     }
 
-    @RateLimiter(
-        key = RATE_LIMITER_SP_EL_KEY,
-        type = RateLimitType.WHOLE,
-        rate = RATE_LIMITER_CAPACITY,
-        maximumWaitTime = RATE_LIMIT_MAXIMUM_WAIT_TIME,
-        rateIntervalTime = RATE_LIMITER_RATE_INTERVAL,
-        bucketLiveTime = RATE_LIMITER_DURATION,
-    )
     @DistributedLock(
         key = DISTRIBUTED_LOCK_SP_EL_KEY,
         lockType = LockType.FAIR_LOCK,
