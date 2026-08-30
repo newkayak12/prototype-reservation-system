@@ -26,7 +26,10 @@ class RefreshGeneralUserController(
         val renewedToken = refreshGeneralUserAccessTokenUseCase.refresh(refreshToken)
 
         val refreshTokenCookie =
-            Cookie(RefreshTokenDefinitions.REFRESH_TOKEN_KEY, renewedToken.refreshToken)
+            Cookie(
+                RefreshTokenDefinitions.REFRESH_TOKEN_KEY,
+                renewedToken.refreshToken.removePrefix("Bearer "),
+            )
         refreshTokenCookie.path = RefreshTokenDefinitions.REFRESH_TOKEN_PATH
         refreshTokenCookie.secure = RefreshTokenDefinitions.SECURE
         refreshTokenCookie.isHttpOnly = RefreshTokenDefinitions.HTTP_ONLY

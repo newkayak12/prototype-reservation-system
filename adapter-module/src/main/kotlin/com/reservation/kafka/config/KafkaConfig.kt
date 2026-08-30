@@ -36,6 +36,9 @@ class KafkaConfig(
         const val TEN_SECONDS = 10L
     }
 
+    private fun resolveProducerBootstrapServers(kafkaProperties: KafkaProperties): List<String>? =
+        kafkaProperties.producer.bootstrapServers ?: kafkaProperties.bootstrapServers
+
     private fun createProducerConfig(kafkaProperties: KafkaProperties): Map<String, Any> {
         val producerConfig = kafkaProperties.producer
         val properties = producerConfig.properties ?: emptyMap()
@@ -43,7 +46,7 @@ class KafkaConfig(
         val configMap = mutableMapOf<String, Any>()
 
         // 필수 설정들
-        producerConfig.bootstrapServers?.let {
+        resolveProducerBootstrapServers(kafkaProperties)?.let {
             configMap[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = it
         }
         producerConfig.keySerializer?.let {

@@ -15,7 +15,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.LocalDateTime
 
-@Table(name = "outbox")
+@Table(catalog = "prototype_reservation", name = "outbox")
 @Entity
 class OutBox(
     eventType: OutboxEventType,

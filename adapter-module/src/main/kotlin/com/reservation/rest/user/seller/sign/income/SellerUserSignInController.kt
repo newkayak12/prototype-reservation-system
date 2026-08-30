@@ -24,7 +24,10 @@ class SellerUserSignInController(
         val result = authenticateSellerUserUseCase.execute(request.toQuery())
 
         val refreshTokenCookie =
-            Cookie(RefreshTokenDefinitions.REFRESH_TOKEN_KEY, result.refreshToken)
+            Cookie(
+                RefreshTokenDefinitions.REFRESH_TOKEN_KEY,
+                result.refreshToken.removePrefix("Bearer "),
+            )
         refreshTokenCookie.path = RefreshTokenDefinitions.REFRESH_TOKEN_PATH
         refreshTokenCookie.secure = RefreshTokenDefinitions.SECURE
         refreshTokenCookie.isHttpOnly = RefreshTokenDefinitions.HTTP_ONLY

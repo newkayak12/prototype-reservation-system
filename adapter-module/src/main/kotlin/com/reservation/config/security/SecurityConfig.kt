@@ -59,6 +59,16 @@ class SecurityConfig(
                 .toTypedArray()
     }
 
+    private fun jwtWhitelistPaths(): Array<String> =
+        (jwtPath.path ?: emptyList())
+            .filter { isSingleWildcardPattern(it) }
+            .toTypedArray()
+
+    private fun isSingleWildcardPattern(pattern: String): Boolean {
+        val doubleWildcardCount = Regex("\\*\\*").findAll(pattern).count()
+        return doubleWildcardCount <= 1
+    }
+
     @Bean
     fun passwordEncoder(): PasswordEncoder = PasswordEncoderUtility.getInstance()
 
@@ -79,6 +89,7 @@ class SecurityConfig(
     fun filterChain(httpSecurity: HttpSecurity): SecurityFilterChain {
         return httpSecurity
             .cors { it.disable() }
+            .csrf { it.disable() }
             .exceptionHandling { it.disable() }
             .exceptionHandling {
                 it.authenticationEntryPoint(customAuthenticationEntryPoint)
@@ -88,6 +99,7 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .formLogin { it.disable() }
             .authorizeHttpRequests {
+                it.requestMatchers(*jwtWhitelistPaths()).permitAll()
                 it.requestMatchers(*ADMIN_PATHS).hasRole(SecurityRole.ROLE_ADMIN.extractRole())
                 it.requestMatchers(*SELLER_PATHS).hasRole(SecurityRole.ROLE_MANAGER.extractRole())
                 it.requestMatchers(*USER_PATHS).hasRole(SecurityRole.ROLE_USER.extractRole())
