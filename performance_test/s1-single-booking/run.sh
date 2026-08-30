@@ -29,6 +29,22 @@ BG_SEATS="${BG_SEATS:-100}"     # 예열 GET이 훑는 행 수. 조회 비용을
 TIMEOUT_SEC="${TIMEOUT_SEC:-60}"
 SETTLE_SEC="${SETTLE_SEC:-20}"
 
+# 대기열 단계. before에는 존재하지 않고 after에는 서버가 강제한다.
+# 시나리오 파일은 두 워크트리에서 같아야 공정한 비교가 되므로, 파일을 나누지 않고
+# 라벨로 단계를 켜고 끈다. 환경변수로 넘기면 그 값이 이긴다.
+case "$LABEL" in
+  before*) SKIP_QUEUE="${SKIP_QUEUE:-1}" ;;
+  *)       SKIP_QUEUE="${SKIP_QUEUE:-0}" ;;
+esac
+# 폴링 간격 = 실제 배포의 CDN TTL. 서버의 admission-capacity와 짝으로 움직인다
+# (ENVIRONMENT.md의 처리량 상한 식 참조). 한쪽만 바꾸면 그 불일치를 재게 된다.
+POLL_SEC="${POLL_SEC:-0.5}"
+# 런이 끝나지 않는 것을 막는 안전장치. 정상이면 포기 0이어야 한다.
+QUEUE_BUDGET_SEC="${QUEUE_BUDGET_SEC:-60}"
+# 발번 선행. admission-capacity를 연 예약 경로 정면 비교 전용 (scenario.js 주석 참조).
+# 평소 capacity(150) 측정에는 켜면 안 된다.
+QUEUE_PREPASS="${QUEUE_PREPASS:-0}"
+
 # 유저 풀은 최대 군중 이상이어야 한다. 모자라면 토큰이 돌려쓰기 되어
 # 같은 사람이 동시에 여러 번 예약하는 게 되고, "몇 명이 좌석을 받았나"가 흐려진다.
 POOL_SIZE="${POOL_SIZE:-$(echo "$CROWDS" | tr ' ' '\n' | sort -n | tail -1)}"
@@ -45,6 +61,11 @@ log " 동시 인원 : $CROWDS"
 log " 좌석      : ${SEATS}석 (고정)"
 log " 반복      : $REPEATS (+워밍업 $WARMUP)"
 log " 유저 풀   : $POOL_SIZE"
+if [ "$SKIP_QUEUE" = "1" ]; then
+  log " 대기열    : 없음 (예약 API 직접 호출)"
+else
+  log " 대기열    : 사용 — 폴링 ${POLL_SEC}s / 대기 예산 ${QUEUE_BUDGET_SEC}s$( [ "$QUEUE_PREPASS" = "1" ] && echo ' / 발번 선행(예열 창에서 입장까지)' )"
+fi
 log " 출력      : $OUT_ROOT"
 hr
 
@@ -79,6 +100,10 @@ for crowd in $CROWDS; do
       -e "SEATS=$SEATS" \
       -e "TIMEOUT_SEC=$TIMEOUT_SEC" \
       -e "SETTLE_SEC=$SETTLE_SEC" \
+      -e "SKIP_QUEUE=$SKIP_QUEUE" \
+      -e "POLL_SEC=$POLL_SEC" \
+      -e "QUEUE_BUDGET_SEC=$QUEUE_BUDGET_SEC" \
+      -e "QUEUE_PREPASS=$QUEUE_PREPASS" \
       -e "OUT=$prefix.json" \
       "$SCENARIO_DIR/scenario.js" 2>&1 | tee "$prefix.log"
     k6_status="${PIPESTATUS[0]}"

@@ -1,0 +1,31 @@
+{
+  "label": "before-rerun",
+  "levels": [
+    {
+      "crowd": 10000,
+      "runs": 3,
+      "discarded": 2,
+      "fireSkewMaxMs": 203,
+      "gotAll": 1,
+      "gotPartial": 61,
+      "gotNone": 9937,
+      "partialSeatsHeld": 84,
+      "reqSuccess": 90,
+      "reqSoldOut": 8896,
+      "reqNoAnswer": 0,
+      "reqDropped": 463,
+      "reqUnreachable": 20551,
+      "req5xx": 0,
+      "lastAnswerSec": 40.2,
+      "waitP50Ms": 23211.5,
+      "waitP95Ms": 32382,
+      "settleSec": 2.5,
+      "seeded": 90,
+      "sold": 90,
+      "overbookedSlots": 0,
+      "unsoldSlots": 0,
+      "dbSaturatedAny": false,
+      "portPressureAny": false
+    }
+  ]
+}

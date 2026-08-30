@@ -22,6 +22,15 @@ BG_SEATS="${BG_SEATS:-100}"
 TIMEOUT_SEC="${TIMEOUT_SEC:-60}"
 SETTLE_SEC="${SETTLE_SEC:-20}"
 
+# 대기열 단계. before에는 없고 after에는 서버가 강제한다. 시나리오 파일은 두 워크트리에서
+# 같아야 공정한 비교가 되므로 파일을 나누지 않고 라벨로 켜고 끈다. S1과 같은 규칙이다.
+case "$LABEL" in
+  before*) SKIP_QUEUE="${SKIP_QUEUE:-1}" ;;
+  *)       SKIP_QUEUE="${SKIP_QUEUE:-0}" ;;
+esac
+POLL_SEC="${POLL_SEC:-0.5}"
+QUEUE_BUDGET_SEC="${QUEUE_BUDGET_SEC:-60}"
+
 POOL_SIZE="${POOL_SIZE:-$(echo "$CROWDS" | tr ' ' '\n' | sort -n | tail -1)}"
 
 OUT_ROOT="$SCENARIO_DIR/$LABEL"
@@ -35,6 +44,11 @@ log " S2 다건 오픈런 — label=$LABEL"
 log " 동시 인원 : $CROWDS  (각자 ${SLOTS}슬롯 동시 요청)"
 log " 좌석      : ${SLOTS}슬롯 × ${SEATS}석 = $((SLOTS * SEATS))석"
 log " 반복      : $REPEATS (+워밍업 $WARMUP)"
+if [ "$SKIP_QUEUE" = "1" ]; then
+  log " 대기열    : 없음 (예약 API 직접 호출)"
+else
+  log " 대기열    : 사용 — 슬롯마다 줄 하나 / 폴링 ${POLL_SEC}s / 대기 예산 ${QUEUE_BUDGET_SEC}s"
+fi
 log " 출력      : $OUT_ROOT"
 hr
 
@@ -66,6 +80,9 @@ for crowd in $CROWDS; do
       -e "CROWD=$crowd" \
       -e "TIMEOUT_SEC=$TIMEOUT_SEC" \
       -e "SETTLE_SEC=$SETTLE_SEC" \
+      -e "SKIP_QUEUE=$SKIP_QUEUE" \
+      -e "POLL_SEC=$POLL_SEC" \
+      -e "QUEUE_BUDGET_SEC=$QUEUE_BUDGET_SEC" \
       -e "OUT=$prefix.json" \
       "$SCENARIO_DIR/scenario.js" 2>&1 | tee "$prefix.log"
     k6_status="${PIPESTATUS[0]}"
