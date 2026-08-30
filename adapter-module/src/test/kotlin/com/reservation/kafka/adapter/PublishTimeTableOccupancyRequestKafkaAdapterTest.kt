@@ -1,5 +1,6 @@
 package com.reservation.kafka.adapter
 
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.reservation.kafka.config.KafkaHeader.ORIGINAL_TOPIC_KEY
@@ -22,6 +23,8 @@ import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 /**
  * 발행 어댑터가 지키는 두 가지.
@@ -107,6 +110,57 @@ class PublishTimeTableOccupancyRequestKafkaAdapterTest : FunSpec(
             } throws KafkaException("producer is closed")
 
             adapter.publish(request) shouldBe false
+        }
+
+        test("응답 대기가 시간 초과되면 false를 돌려준다.") {
+            val timingOutFuture =
+                object : CompletableFuture<SendResult<String, String>>() {
+                    override fun get(
+                        timeout: Long,
+                        unit: TimeUnit,
+                    ): SendResult<String, String> {
+                        throw TimeoutException("broker did not respond in time")
+                    }
+                }
+            every {
+                kafkaTemplate.send(any<ProducerRecord<String, String>>())
+            } returns timingOutFuture
+
+            adapter.publish(request) shouldBe false
+        }
+
+        test("응답 대기 중 인터럽트되면 false를 돌려주고 인터럽트 플래그를 복원한다.") {
+            val interruptingFuture =
+                object : CompletableFuture<SendResult<String, String>>() {
+                    override fun get(
+                        timeout: Long,
+                        unit: TimeUnit,
+                    ): SendResult<String, String> {
+                        throw InterruptedException("interrupted while waiting")
+                    }
+                }
+            every {
+                kafkaTemplate.send(any<ProducerRecord<String, String>>())
+            } returns interruptingFuture
+
+            try {
+                adapter.publish(request) shouldBe false
+                // 인터럽트 플래그를 복원하지 않으면 상위(요청 스레드)가 중단 사실을 알 길이 없다.
+                Thread.currentThread().isInterrupted shouldBe true
+            } finally {
+                // 다음 테스트가 같은 Kotest 스레드를 재사용하므로 플래그를 반드시 비워둔다.
+                Thread.interrupted()
+            }
+        }
+
+        test("페이로드 직렬화에 실패하면 false를 돌려준다.") {
+            val failingObjectMapper = mockk<ObjectMapper>()
+            every { failingObjectMapper.writeValueAsString(any()) } throws
+                object : JsonProcessingException("serialization failed") {}
+            val failingAdapter =
+                PublishTimeTableOccupancyRequestKafkaAdapter(kafkaTemplate, failingObjectMapper)
+
+            failingAdapter.publish(request) shouldBe false
         }
     },
 )

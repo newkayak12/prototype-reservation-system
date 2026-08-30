@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.reservation.kafka.adapter.TimeTableOccupancyRequestKafkaListener
 import com.reservation.kafka.adapter.TimeTableOccupancyRequestKafkaListener.Companion.RETRY_ATTEMPTS
 import com.reservation.kafka.adapter.TimeTableOccupancyRequestKafkaListener.Companion.TOPIC
+import com.reservation.kafka.config.KafkaHeader.ORIGINAL_TOPIC_KEY
 import com.reservation.kafka.config.KafkaHeader.RETRY_COUNT_KEY
 import com.reservation.kafka.event.TimeTableOccupancyRequestedEvent
 import com.reservation.timetable.port.input.AbandonTimeTableOccupancyUseCase
@@ -23,6 +24,7 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.header.internals.RecordHeaders
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.kafka.support.SendResult
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.LocalTime
@@ -140,6 +142,90 @@ class TimeTableOccupancyRequestKafkaListenerTest : FunSpec(
                 abandonTimeTableOccupancyUseCase.execute(any())
             }
             verify(exactly = 1) { kafkaTemplate.send(any<ProducerRecord<String, String>>()) }
+        }
+
+        test("인터럽트된 상태에서 저장에 실패하면 재시도를 보내지 않고 인터럽트 플래그만 복원한다.") {
+            every {
+                occupyTimeTableUseCase.execute(any())
+            } throws DataIntegrityViolationException("deadlock")
+
+            // Thread.sleep이 즉시 InterruptedException을 던지도록 handle 호출 직전에 인터럽트한다.
+            Thread.currentThread().interrupt()
+            try {
+                listener.handle(key, headersWithRetryCount(0), payload())
+
+                // sleep이 즉시 실패하므로 retry()까지 도달하지 못한다 — 재시도 레코드 미발행.
+                verify(exactly = 0) { kafkaTemplate.send(any<ProducerRecord<String, String>>()) }
+                // 재시도 소진 판정이 아니므로 좌석 회수도 일어나지 않는다.
+                verify(exactly = 0) { abandonTimeTableOccupancyUseCase.execute(any()) }
+            } finally {
+                // SUT가 catch에서 인터럽트 플래그를 복원하므로 다음 테스트를 위해 걷어낸다.
+                Thread.interrupted()
+            }
+        }
+
+        test("DLT 전송이 실패해도 좌석 회수는 그대로 진행된다.") {
+            val abandoned = slot<OccupyTimeTableCommand>()
+            every {
+                abandonTimeTableOccupancyUseCase.execute(capture(abandoned))
+            } returns Unit
+            every {
+                kafkaTemplate.send(any<ProducerRecord<String, String>>())
+            } returns
+                CompletableFuture<SendResult<String, String>>().apply {
+                    completeExceptionally(RuntimeException("broker unavailable"))
+                }
+
+            // giveUp 경로: DLT 전송 자체가 실패해도 handle() 밖으로 예외가 새어나가면 안 된다.
+            listener.handle(key, headersWithRetryCount(RETRY_ATTEMPTS - 1), payload())
+
+            abandoned.captured.restaurantId shouldBe restaurantId
+            abandoned.captured.userId shouldBe userId
+            // DLT 실패가 좌석을 묶어두면 안 되므로 회수는 정확히 한 번 일어나야 한다.
+            verify(exactly = 1) { abandonTimeTableOccupancyUseCase.execute(any()) }
+        }
+
+        test(
+            "originalTopic 헤더가 있으면 그 값을 재시도 토픽 접두로 쓰고, " +
+                "retryCount 헤더가 없으면 0으로 폴백한다.",
+        ) {
+            val headerTopic = "custom-origin-topic"
+            val headers =
+                RecordHeaders().apply {
+                    add(ORIGINAL_TOPIC_KEY, headerTopic.toByteArray(StandardCharsets.UTF_8))
+                }
+            val record = slot<ProducerRecord<String, String>>()
+            every {
+                occupyTimeTableUseCase.execute(any())
+            } throws DataIntegrityViolationException("deadlock")
+            every { kafkaTemplate.send(capture(record)) } returns
+                CompletableFuture.completedFuture(mockk(relaxed = true))
+
+            listener.handle(key, headers, payload())
+
+            // 접두는 TOPIC 상수가 아니라 헤더에서 온 값이고, 접미는 부재 헤더가 0으로
+            // 폴백했음을 함께 증명한다.
+            record.captured.topic() shouldBe "$headerTopic-RETRY-1"
+        }
+
+        test("retryCount 헤더 값이 숫자가 아니면 0으로 취급해 재시도 카운트를 계산한다.") {
+            val headers =
+                RecordHeaders().apply {
+                    add(RETRY_COUNT_KEY, "abc".toByteArray(StandardCharsets.UTF_8))
+                }
+            val record = slot<ProducerRecord<String, String>>()
+            every {
+                occupyTimeTableUseCase.execute(any())
+            } throws DataIntegrityViolationException("deadlock")
+            every { kafkaTemplate.send(capture(record)) } returns
+                CompletableFuture.completedFuture(mockk(relaxed = true))
+
+            listener.handle(key, headers, payload())
+
+            // 0으로 취급되지 않았다면 접미와 헤더 값이 "2" 등으로 어긋났을 것이다.
+            record.captured.topic() shouldBe "$TOPIC-RETRY-1"
+            val retryCountHeader = record.captured.headers().lastHeader(RETRY_COUNT_KEY)
+            String(retryCountHeader!!.value(), StandardCharsets.UTF_8) shouldBe "1"
         }
     },
 )
