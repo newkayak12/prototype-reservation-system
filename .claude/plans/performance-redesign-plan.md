@@ -9,6 +9,19 @@ Redisson **RSemaphore**로 좌석 수만큼 permit을 발급한 뒤 JPA로 `Time
 하며, 그 안에 DB 왕복까지 포함되어 있어 동시성이 몰리면 락 대기열이 그대로 커넥션/스레드 점유로 번진다.
 이게 바로 mnet 투표 사례가 지적하는 "여기가 병목입니다" 지점과 동일한 패턴이다.
 
+**Phase 0 베이스라인 측정 중 발견한 락 이중화 이슈 (수정하지 않고 그대로 둠 — 재설계로 자연 해소)**:
+`DistributedLockAspect.executeDistributedLockAction()`은 Redis `FAIR_LOCK` 획득 시도 중
+`RedisException`이 나면(Redisson 자체 커넥션 풀 고갈 등) `executeNamedLock()`으로 폴백해 MySQL
+Named Lock(`GET_LOCK`)으로 같은 메서드를 재실행한다. 문제는 이 두 락이 서로 다른 백엔드라
+**상호 배제되지 않는다** — 어떤 요청은 Redis 락으로, 동시에 다른 요청은 DB 락으로 각자 "락을 잡았다"고
+믿은 채 `CreateTimeTableOccupancyService.execute()` 안쪽(특히 `acquireSemaphore()`가 읽는 "현재 예약
+가능한 좌석 수" 스냅샷)에 동시 진입할 수 있다. 실제로 베이스라인 10회 중 8회차에서 좌석 30개 중
+10개만 점유되고 나머지 20개가 끝까지 비어버리는 현상이 재현됐다(이중예약이 아니라 과소예약 —
+`docs/perf/baseline-report.md` 8회차 각주 참고). 부트런 로그에 해당 구간과 겹치는 시각대에
+"Unable to connect to Redis" 경고가 다수 확인되어 이 메커니즘으로 설명이 된다. Phase 0 스코프에서는
+고치지 않는다 — 애초에 이 세마포어+분산락 조합 자체를 Phase 1~4에서 Redis 원자적 Lua 연산 +
+Kafka 순서 보장 + DB row lock으로 통째로 교체하므로, 재설계가 이 문제를 구조적으로 없앤다.
+
 목표: Redis 대기열 → Redis 원자적 처리/중복 방지 → Kafka 파티셔닝 순서보장 → DB row lock 최종 방어선,
 4단계 아이디어를 이 코드베이스에 이식하고, k6로 **개선 전/후**를 동일 시나리오·동일 VU 램프로 10회씩
 측정해 포트폴리오용 비교 자료를 만든다. 사용자가 확정한 대로 ① 대기열은 "예약 페이지 진입 전" 세마포어
@@ -220,84 +233,252 @@ Redisson **RSemaphore**로 좌석 수만큼 permit을 발급한 뒤 JPA로 `Time
 뿐). `docker-compose up -d`로 기존 redis/kafka(3-broker)/mysql을 그대로 사용, `./gradlew
 :adapter-module:bootRun`으로 앱을 별도 기동해 k6가 실제 HTTP로 때린다.
 
-### Phase 1 — 대기열: Kafka Offset이 권위, Redis는 캐시 (① 세마포어 역할)
+### Phase 1 — 대기열: Redis ZSET 세마포어 게이트 (① 세마포어 역할)
 
 새 바운디드 컨텍스트 (예: `com.reservation.queue`, core/application/infrastructure/adapter 4개 모듈에
-기존 패키지 구조 그대로 미러링):
-- `POST /api/v1/time-table/booking/{restaurantId}/queue` — 대기열 진입. 요청을 새 토픽
-  `QUEUE_ENTRY_REQUESTED`(파티션 키 = `restaurantId:date:startTime`)에 즉시 발행하고, 클라이언트에는
-  `ticketId`(=사용자 고유값 기반)만 우선 반환.
-- 이 토픽을 구독하는 전용 컨슈머("RedisNode" 역할)가 Kafka가 부여한 순서대로 하나씩 처리하며 Redis에
-  `WAITING_QUEUE:{key}`(ZSET, score=consumer가 처리한 순서/offset 기반 시퀀스)를 채운다 — 순번의 진실은
-  Kafka offset이고, Redis는 이걸 빠르게 조회하기 위한 투영(projection)일 뿐이다.
-- `GET /api/v1/time-table/booking/{restaurantId}/queue/{ticketId}` — Redis ZRANK로 순번/상태 폴링
-  (`WAITING`/`ADMITTED`/`EXPIRED`). 입장 허용(ADMITTED)은 기존 `AcquireTimeTableSemaphore`/
-  `ReleaseSemaphore` 포트를 "동시 입장 허용치" 세마포어로 재사용(좌석 세마포어와는 별도 키).
-- **Redis 장애 시 폴백**: 별도 DB 대기열 테이블을 만드는 대신, 해당 파티션의 컨슈머 그룹 offset을
-  처음부터(또는 마지막 커밋 지점부터) 재생(replay)해서 Redis 상태를 재구성한다 — Kafka가 이미 순서의
-  원장이므로 DB는 필요 없음. 컨슈머 재시작 시 이 재생 로직이 자동으로 타야 한다.
-- 조회 부하 분산: 순번 조회 응답에 짧은 TTL(1~2초) 캐싱을 둬서 폴링 폭주가 Redis/DB로 그대로 전달되지
-  않게 한다 (CDN 캐싱까지는 이번 스코프에서 생략, 애플리케이션 레벨 TTL 캐시로 대체).
-- 테스트: `AcquireRateLimiterRedisAdapterTest.kt` 스타일 Redis Testcontainers 통합 테스트 + Kafka
-  Testcontainers로 컨슈머 재시작 시 offset 재생 검증.
+기존 패키지 구조 그대로 미러링). **사용자 확정(2026-08-26)**: 대기열 순번 관리에 Kafka를 별도로 두지
+않는다 — k6 부하테스트가 실제로 검증하는 건 "동시에 얼마나 많은 요청이 예약 쓰기 경로로 들어가는가"이고,
+그 결과(허용된 동시 입장 개수)는 순번을 Kafka offset으로 관리하든 Redis INCR로 관리하든 동일하다. Kafka
+offset 기반 설계(전용 컨슈머 2개 + replay 복구)는 구현 범위 대비 이번 스코프에서 얻는 이득이 적어 드롭.
+Kafka는 Phase 3(파티션 키 기반 순서 보장)에서만 쓴다.
+
+- `POST /api/v1/time-table/booking/{restaurantId}/queue` — 대기열 진입. Redis `INCR
+  SEQUENCE:{restaurantId}:{date}:{startTime}`로 시퀀스 번호를 뽑아 `ticketId`와 함께
+  `WAITING_QUEUE:{key}`(ZSET, member=ticketId, score=시퀀스 번호)에 추가. 응답은 `{ticketId, position}`.
+- **`ticketId`는 서버가 발급하는 nonce**(`SecureRandom` 16바이트 → 32자 hex)다. 사용자 식별자에서
+  유도하지 않으므로 티켓만 보고 누구 것인지 역산할 수 없고, 남의 티켓을 계산해 만들어낼 수도 없다.
+  - 대신 nonce는 재요청마다 값이 달라 **진입의 멱등성을 스스로 만들어내지 못한다.** (결정적 해시를 쓰던
+    초안에서는 "같은 입력 → 같은 티켓"이 이 성질을 공짜로 주고 있었다.) 그 역할은
+    `TICKET_OF:{key}:{userId}` 선점(`SET NX` + TTL)이 넘겨받는다 — 멱등의 기준이 티켓에서 **사용자**로
+    옮겨간다. 이게 없으면 사용자가 진입을 반복 호출하는 것만으로 대기열에 여러 자리를 잡고 입장 정원을
+    여러 번 소모한다.
+  - `SET NX`가 원자적이라 동시 진입 두 건 중 정확히 하나만 자기 nonce를 심고, 진 쪽은 이긴 값을 읽어
+    같은 티켓으로 수렴한다. **이 경로에 락이 필요 없는 이유가 이것이다.**
+  - DB 폴백에서 이 선점에 대응하는 것은 `waiting_queue`의
+    `unique_slot_user_id(restaurant_id, date, start_time, user_id)` 유니크 키다 (Flyway `V1_20`).
+- 입장 허용(ADMITTED)은 좌석 세마포어와 **별개 키**(`QUEUE_ADMISSION:{key}`)의 "동시 입장 허용치"
+  permit pool로 관리한다 — 별도 워커/스케줄러가 ZSET의 낮은 score(먼저 온 순서)부터 permit이 남아있는
+  만큼 `ADMITTED:{key}` SET(TTL 달림)으로 이동시킨다.
+  - 초안은 기존 `AcquireTimeTableSemaphore`/`ReleaseSemaphore` 포트 재사용이었으나 **철회했다.** 그
+    포트는 `RSemaphore.trySetPermits(capacity, ttl)`을 쓰는데, 이 호출은 키가 이미 있으면 아무 일도
+    하지 않아 TTL이 "키 생성 시각"에 고정된다. permit이 키 만료 때 한꺼번에 돌아오므로 capacity가
+    "동시 허용치"가 아니라 "TTL 주기마다 리셋되는 예산"이 되고, 경계에서 최대 2배 초과 입장이 난다.
+  - 대신 `RPermitExpirableSemaphore`로 **permit 하나하나에 lease**를 건다. lease를 `ADMITTED` 엔트리
+    TTL과 같은 값으로 맞춰 permit 수명과 입장 허용 수명을 일치시킨다.
+  - 또한 `AcquireSemaphoreTemplate`을 거치지 않고 `RedissonClient`를 직접 쓴다. 그 템플릿은
+    `runCatching{}.getOrElse{false}`로 예외를 삼켜 `RedisException`이 `false`로 둔갑하고, 그러면
+    정작 폴백이 가장 필요한 순간에 DB 폴백이 발동하지 않는다.
+- `GET /api/v1/time-table/booking/{restaurantId}/queue/{ticketId}` — Redis ZRANK로 순번/상태 폴링.
+  상태 enum은 `WAITING` / `ADMITTED` / `PENDING`(Phase 4 홀드 진행 중) / `CONFIRMED` / `CANCELLED` /
+  `EXPIRED`까지 확장 — ADMITTED 이후에는 Phase 4가 쓰는 `RESULT:{ticketId}` 키를 같이 조회해 최종
+  결과까지 이 엔드포인트 하나로 응답한다 (별도 결과 조회 엔드포인트를 만들지 않음).
+- **Redis 장애 시 폴백**: `DistributedLockAspect`의 `RedisException → NamedLockCoordinator` 패턴을 그대로
+  본떠서, DB 테이블(`waiting_queue`, 신규 Flyway 마이그레이션, auto-increment id로 시퀀스 대체)로 전환.
+- **예약 엔드포인트 강제 게이트 (사용자 확정)**: `POST /api/v1/time-table/booking/{restaurantId}`는
+  서비스 진입 시 입장 허용 여부를 먼저 확인하고, 아니면 즉시 거부(`QueueNotAdmittedException`, 4xx).
+  대기열을 우회해 booking을 직접 호출하는 경로를 원천 차단해야 k6 개선 전/후 비교가 "대기열이 실제로
+  병목을 줄였다"를 정확히 보여준다.
+  - **요청 바디의 `ticketId`는 받지 않는다.** 클라이언트가 보낸 티켓을 믿으면 티켓이 유출되거나
+    추측되는 순간 게이트가 무력화된다. 게이트는 인증에서 얻은 `userId`만 쓰고, 티켓을 되찾아오는 일은
+    `IsUserAdmitted` 포트가 `TICKET_OF:{key}:{userId}` → `ADMITTED:{key}` 2단 조회로 처리한다.
+  - 초안은 "서버가 `SHA-256(userId:slotKey)`로 ticketId를 재계산한다"였으나, nonce로 바뀌면서
+    재계산이 불가능해졌다 — **계산이 아니라 조회**가 됐다. 게이트가 묻는 질문도 "이 티켓이 허용됐나"에서
+    "이 사용자가 허용됐나"로 바뀐다(후자가 실제로 묻고 싶은 것이다).
+  - 티켓 상태 폴링 엔드포인트는 계속 `IsTicketAdmitted`(ticketId 기반)를 쓴다. 그쪽은 클라이언트가
+    자기 티켓의 상태를 확인하는 용도라 ticketId를 받는 것이 맞다.
+- 테스트: `AcquireRateLimiterRedisAdapterTest.kt` 스타일 Redis Testcontainers 통합 테스트 + 폴백 경로용
+  DistributedLockAspectTest 스타일 mock 테스트.
 
 ### Phase 2 — Redis 원자적 처리 (② 중복/재고 원자 처리)
 
 `CreateTimeTableOccupancyService.execute()`에서 `@DistributedLock(FAIR_LOCK)` 제거 (현재 병목의 핵심).
-대신 Lua 스크립트(Redisson `RScript` 또는 `RedisTemplate` + `DefaultRedisScript`, 이 레포 최초 도입)로
-한 번의 라운드트립에 원자적으로:
-1. `DEDUP:{restaurantId}:{date}:{startTime}:{userId}` — SETNX+TTL, 이미 있으면 중복 거부.
+
+> **락 제거는 반드시 아래 Lua 원자 차감과 같은 단계에서 함께 나가야 한다.** Phase 1만 끝난 시점에
+> 락을 먼저 빼면 안 된다 — 대기열은 슬롯당 `admissionCapacity`(기본 100)명까지 입장시키는데 좌석은
+> 30개뿐이라, 입장한 100명은 여전히 서로 경합한다. 지금 그 경합을 실제로 막고 있는 것이 이 락이고,
+> 그 자리를 대신할 물건이 아래 `SEATS` 차감이다. 순서를 어기면 k6에서 오버부킹이 그대로 재현된다.
+
+요청은 진입 시 강제 게이트(위 `IsUserAdmitted`)를 통과한 뒤 Lua 스크립트(Redisson `RScript` 또는
+`RedisTemplate` + `DefaultRedisScript`, 이 레포 최초 도입)로 한 번의 라운드트립에 원자적으로:
+1. `DEDUP:{restaurantId}:{date}:{startTime}:{userId}` — SETNX(TTL 없이, 또는 홀드 유효시간과 동일한
+   TTL), 이미 있으면 "이미 처리 중이거나 이미 예약함"으로 거부. 이 키는 Phase 4에서 confirm 성공 시
+   영구 마커로 남기고, 홀드가 만료되어 스케줄러가 취소하면 함께 삭제해 재시도를 허용한다 — 참고 이미지의
+   "사용자 구매 여부" 체크를 이번 예약 도메인에 맞게 "슬롯당 1인 1예약"으로 구체화한 것.
 2. `SEATS:{restaurantId}:{date}:{startTime}` — 좌석 카운터 DECR (없으면 `loadBookableTimeTables` 결과
    개수로 최초 시딩), 0 이하면 품절 거부.
-`@RateLimiter`는 그대로 유지(외곽 방어용, 이번 병목과 무관). `@Transactional` + JPA 저장은 이 단계에서
-제거하고 Phase 3의 Kafka 발행으로 대체 — 성공 시 즉시 "접수됨" 응답, DB 쓰기는 비동기로 넘어감.
+`@RateLimiter`는 그대로 유지(외곽 방어용, 이번 병목과 무관).
+
+**좌석 세마포어(`AcquireTimeTableSemaphore`)도 같이 걷어낸다.** 분산락만 빼고 세마포어를 남기면
+정합성의 근거가 두 군데로 갈라진다. 게다가 이 세마포어는 대기열 입장 세마포어와 **똑같은
+`trySetPermits(capacity, ttl)` 결함**을 갖고 있다 — 키가 있으면 아무 일도 하지 않아 TTL이 생성 시각에
+고정되고, permit이 키 만료 때 한꺼번에 돌아와 capacity가 "TTL 주기마다 리셋되는 예산"이 된다. 즉
+**경계에서 좌석을 다시 팔 수 있었다.** `SEATS` 카운터가 그 자리를 정확히 대신한다.
+(포트/어댑터 자체는 삭제하지 않고 남겨 둔다 — 참조가 사라졌을 뿐이라 정리는 별건으로 판단.)
+
+되돌리기(`ReleaseTimeTableSeat`)는 좌석 확보 이후 실패한 **모든** 경로에서 호출한다. 이전 구현은
+"좌석이 없다" 계열 예외에서 세마포어를 반납하지 않고 빠져나가 실패할 때마다 permit이 하나씩 샜다.
+
+> **`@Transactional` + JPA 저장은 이 단계에서 제거하지 않는다** (초안 대비 변경).
+> 초안은 "Phase 2에서 동기 저장을 없애고 Phase 3의 Kafka 발행으로 대체"였다. 그렇게 하면 Phase 2와
+> Phase 3 사이에 **예약이 접수되지만 어디에도 저장되지 않는 구간**이 생긴다 — 그 상태로 k6를 돌리면
+> `verify-overbooking.sql`이 항상 0건을 보고해 "오버부킹 없음"으로 잘못 읽힌다. 각 Phase가 끝난
+> 시점마다 시스템이 돌아가야 중간 측정이 가능하므로, 동기 저장은 Phase 3에서 Kafka 발행으로
+> **교체**한다(제거 후 나중에 추가가 아니라).
+
 테스트: 기존 Redis Testcontainers 패턴으로 동시성(N개 스레드 동시 요청) 원자성 검증 필수.
+→ `TimeTableSeatRedisAdapterTest`: 좌석 30 / 동시 요청 300 → 정확히 30건만 성공, 같은 사용자가
+50번 동시 요청해도 1건만 성공, 되돌리면 정확히 한 자리만 회수.
 
 ### Phase 3 — Kafka 파티셔닝 순서 보장 (③)
 
-새 토픽(예: `TIMETABLE_OCCUPANCY_REQUESTED`, 기존 프로듀서/컨슈머 토픽명 불일치 버그를 반복하지 않도록
-이름 통일) 신설, 파티션 키 = `"$restaurantId:$timeTableSlot"`. Phase 2의 Lua 성공 직후
+새 토픽 `TIMETABLE_OCCUPANCY_REQUESTED` 신설, 파티션 키 = `"$restaurantId:yyyyMMdd:HHmm"`
+(`TimeTableSlotKeyGenerator`, Redis 쪽 키 표기와 동일). Phase 2의 Lua 성공 직후
 `KafkaTemplate.send()`로 직접 발행 (커밋 전 outbox 단계는 생략 — Redis Lua 성공이 이미 원자적 커밋
 지점이므로). 기존 `KafkaConfig`의 Confluent Parallel Consumer(`ProcessingOrder.KEY`) 설정을 그대로
 재사용해 같은 슬롯의 이벤트가 파티션과 무관하게 키 단위로 순서 보장되도록 컨슈머를 구성.
+
+**동기 저장은 제거가 아니라 이동이다.** Phase 2 항목의 예고대로, `CreateTimeTableOccupancyService`에
+있던 `loadBookableTimeTables → saveOccupancy → publishEvent`를 통째로 새 유스케이스
+`OccupyTimeTableService`로 옮기고 컨슈머가 호출하게 했다. 그래서 Phase 3이 끝난 시점에도 예약은
+여전히 DB에 저장되고 `verify-overbooking.sql`이 의미 있는 값을 돌려준다. Phase 4는 이 저장 로직을
+row lock + PENDING 홀드로 **강화**하는 단계이지 처음 만드는 단계가 아니다.
+
+API 경로에는 `@Transactional`이 남지 않는다 — 쓰기가 없으니 트랜잭션을 열 이유가 없다.
+`loadBookableTimeTables` 조회는 남는데, 좌석 카운터에 심을 초기값(= 예약 가능한 행 개수)이 필요하기
+때문이다. 이 조회에서 **어느 행을 쓸지는 고르지 않는다.**
+
+**토픽명 불일치 버그를 실제로 고쳤다.** 프로듀서는 `OutboxEventType.TIME_TABLE_OCCUPIED`의 enum
+이름을, 컨슈머는 자기 클래스 상수 `"time-table-occupancy"`를 토픽으로 쓰고 있었다. 이름이 다르니
+발행된 메시지를 아무도 구독하지 않았고 브로커에는 두 토픽이 나란히 생겼다. 양쪽이 서로를 참조하지
+않으니 컴파일도 테스트도 통과하는 종류의 버그다. 이름을 `KafkaTopic` 오브젝트 한 곳으로 모았다.
+
+**컨슈머 빈을 하나 더 만든다.** `ParallelStreamProcessor`는 `subscribe` + `poll`을 한 번씩만 받는
+물건이라, 기존 빈을 두 리스너가 나눠 쓰면 나중에 초기화된 쪽이 앞선 구독을 덮어써 한쪽 토픽이 조용히
+소비되지 않는다. 그룹 ID도 분리한다(`-occupancy-request` 접미사) — 같은 그룹의 멤버가 서로 다른
+토픽을 구독하면 리밸런스마다 파티션 배정이 흔들린다. 두 빈은 `@Qualifier`로 구분한다.
+
+**보상(좌석 되돌리기)은 DLT 시점에 한 번만 한다.** 중간 실패에서 되돌리면 그 자리를 다른 사용자가
+가져가고 뒤이은 재시도까지 성공하면서 **좌석 수보다 많은 예약이 저장된다** — 되돌리기가 오버부킹을
+만든다. 그래서 `OccupyTimeTableService`는 실패하면 그냥 던지고, 재시도를 모두 소진한 시점에만
+`AbandonTimeTableOccupancyUseCase`가 회수한다. 페이로드 파싱조차 실패하면 되돌릴 대상을 특정할 수
+없어 그 한 자리는 카운터 TTL까지 묶인다(로그로 크게 남김).
+
+> **순서 보장의 한계 (Phase 4가 닫는다)**
+> `ProcessingOrder.KEY`는 **한 프로세서 인스턴스 안에서** 완전하다. 앱을 여러 대 띄우고 재시도
+> 토픽의 파티션이 다른 인스턴스로 배정되면, 원본 토픽의 요청과 재시도 요청이 같은 슬롯에 대해
+> 겹칠 수 있다. 순서 보장은 경합을 없애는 장치이지 마지막 방어선이 아니며, 그 창을 닫는 것이
+> Phase 4의 `PESSIMISTIC_WRITE` row lock이다.
+
+토픽 생성은 브로커 자동 생성(`compose.yaml`: `KAFKA_AUTO_CREATE_TOPICS_ENABLE: true`,
+`KAFKA_NUM_PARTITIONS: 3`)에 기댄다. 운영이라면 파티션 수를 코드나 IaC로 명시 선언해야 한다.
+
+테스트:
+- `PublishTimeTableOccupancyRequestKafkaAdapterTest`: 파티션 키가 슬롯인지(키가 틀리면 순서 보장이
+  통째로 무의미해진다), 페이로드에 특정 좌석이 안 담기는지, 발행 실패를 삼키지 않고 `false`로
+  돌려주는지.
+- `TimeTableOccupancyRequestKafkaListenerTest`: 중간 실패에서는 재시도 토픽으로 넘기고 **좌석을
+  되돌리지 않는지**, 소진 시점에만 정확히 한 번 되돌리는지, 재시도에서도 파티션 키가 유지되는지.
+- `OccupyTimeTableServiceTest`: 저장 시나리오(구 `CreateTimeTableOccupancyServiceTest`에서 이관),
+  소비 시점에 좌석 행을 새로 고르는지.
 
 ### Phase 4 — DB row lock 최종 방어선 (④) + 임시 홀드 만료 스케줄러
 
 새 파라렐 컨슈머 리스너(기존 `TimeTableOccupancyKafkaListener`의 subscribe/retry/DLT 구조를 그대로
 따름)가 Phase 3 토픽을 구독. `@Transactional` 안에서 `TimeTableEntity`를
-`@Lock(LockModeType.PESSIMISTIC_WRITE)`로 조회(신규 리포지토리 메서드, `SELECT ... FOR UPDATE`)해 최종
-가용성 재검증 후 `TimeTableOccupancyEntity`를 **임시 홀드 상태(PENDING)** 로 저장 + `tableStatus` 갱신.
+`@Lock(LockModeType.PESSIMISTIC_WRITE)`로 조회(신규 리포지토리 메서드, `SELECT ... FOR UPDATE ... LIMIT 1
+WHERE restaurant_id=? AND date=? AND start_time=? AND table_status='EMPTY'`)해 최종 가용성 재검증 후
+`TimeTableOccupancyEntity`를 **임시 홀드 상태(PENDING)** 로 저장 + `tableStatus` 갱신.
 
-- **UQ(null 활용) 중복 방지**: 신규 Flyway 마이그레이션으로 `timetable_occupancy`에
-  `released_at DATETIME NULL` 컬럼을 추가하고 `UNIQUE(timetable_id, released_at)`을 건다. MySQL은
-  UNIQUE 인덱스에서 NULL을 서로 다른 값으로 취급하므로, "활성 occupancy"는 `released_at IS NULL` 상태
-  1건만 허용되고, 취소/만료된 occupancy는 `released_at`에 실제 시각을 채워 유니크 제약을 우회하며
-  이력으로 남는다 — 이미지에 나온 "UQ(null 활용)" 트릭 그대로.
-- **5분 홀드 만료 스케줄러**: `batch-module`에 새 스케줄 작업(Spring `@Scheduled` 또는 기존 배치 스텝
-  패턴)을 추가해, `released_at IS NULL AND occupied_status = 'PENDING' AND occupied_datetime < now-5m`
-  인 row를 주기적으로 스캔 → 각 row를 `PESSIMISTIC_WRITE`로 잠그고 `released_at` 채움(취소) +
-  `tableStatus`를 다시 `EMPTY`로 복원 + Redis 좌석 카운터/세마포어도 함께 복원(`INCR`로 되돌림) — 이미지의
-  "결제 이벤트가 안쌓이면 스케쥴링 작업으로 취소 처리 + 모두 복원"에 대응.
-- 처리 결과(성공/실패/만료)는 Phase 1 폴링 엔드포인트가 읽을 수 있도록 `RESULT:{ticketId}` 같은 짧은
-  TTL 키에 기록.
-- **확정 액션 (사용자 확인, 무료 "가결제")**: 이 시스템엔 실제 결제가 없으므로 "가결제"는 결제 게이트웨이
-  연동이 아니라 **무료 확정 액션**으로 구현한다. 새 엔드포인트
-  `POST /api/v1/time-table/booking/{restaurantId}/queue/{ticketId}/confirm` — PENDING 상태의 occupancy를
-  `PESSIMISTIC_WRITE`로 잠그고 `occupied_status`를 `CONFIRMED`로 전환 (결제 처리 없음, 단순 상태 전이).
-  클라이언트는 대기열 통과 후 좌석이 PENDING으로 잡히면 5분 안에 이 confirm을 호출해야 하고, 안 하면
-  아래 스케줄러가 자동 취소한다. 참고 이미지의 "가결제 → 5분 내 미결제 시 자동 취소" 흐름을 그대로
-  재현하되 결제 자체만 없는 버전 — 좌석 홀드를 실제 사용자가 체감하는 예약 흐름으로 만들어 포트폴리오
-  스토리(한정 재고 레이싱 + 자동 해제)를 완성한다.
+- **특정 좌석 행 선택은 Phase 2/3에서 미리 고르지 않고 Phase 4에서 그때그때 새로 조회한다**: Phase 2의
+  `SEATS` 카운터는 "이 슬롯에 몇 자리가 남았는가"라는 총량만 원자적으로 방어하고, "어떤 특정
+  `timetable_id` 행을 줄 것인가"는 아직 정하지 않는다 (Kafka 이벤트 payload에도 특정 `timetableId`를
+  담지 않는다 — `restaurantId/date/startTime/userId`만 담음). 두 사용자가 동시에 같은 특정 행을
+  후보로 고르는 경쟁을 막기 위해 후보 목록을 미리 골라 재시도하는 로직을 두지 않고, 대신 Phase 3의
+  `ProcessingOrder.KEY` 보장(같은 파티션 키 = 같은 슬롯의 이벤트는 이전 이벤트의 DB 커밋까지 끝나야
+  다음 이벤트 처리가 시작됨)에 기대 Phase 4가 소비 시점에 매번 "그 순간 `EMPTY`인 아무 행 1개"를
+  `FOR UPDATE`로 새로 뽑는다. 같은 슬롯에 대한 Phase 4 쓰기가 Kafka 키 순서로 완전히 직렬화되므로,
+  Lua에서 `SEATS`가 성공적으로 감소한 횟수 = 실제로 `EMPTY→PENDING` 전환되는 행 수가 정확히 일치하고,
+  이 시점엔 오버부킹도 언더부킹도 발생하지 않는다.
+
+- **UQ 중복 방지 — 초안의 조건이 뒤집혀 있었다.**
+  > 초안: "`UNIQUE(timetable_id, released_at)`을 걸면 MySQL이 NULL을 서로 다른 값으로 취급하므로
+  > 활성 occupancy(`released_at IS NULL`)는 1건만 허용된다."
+  >
+  > **이 논리는 정반대다.** MySQL이 NULL을 서로 다르게 취급하기 **때문에** `(timetable_id, NULL)`은
+  > 몇 건이든 들어간다. 그 인덱스는 활성 행을 전혀 막지 않는다 — 보호가 있다고 믿는 채로 아무
+  > 보호가 없는, 가장 나쁜 종류의 결함이 될 뻔했다.
+
+  조건을 뒤집어야 한다. **살아 있는 점유에만 상수가 붙고 풀린 점유는 NULL이 되는** 생성 컬럼을 두고
+  거기에 유니크를 건다:
+  ```sql
+  ADD COLUMN released_at DATETIME NULL,
+  ADD COLUMN active_marker TINYINT
+      GENERATED ALWAYS AS (CASE WHEN released_at IS NULL THEN 1 ELSE NULL END) STORED,
+  ADD UNIQUE KEY unique_active_occupancy (timetable_id, active_marker)
+  ```
+  활성 행은 `(timetable_id, 1)`로 충돌해 한 건만 남고, 취소·만료된 이력은 `active_marker`가 NULL이라
+  얼마든지 쌓인다. 이력을 지우지 않고도 "지금 이 좌석을 쥔 사람은 한 명"을 DB가 보장한다.
+  (`V1_21__timetable_occupancy_hold.sql`. `occupied_status`가 MySQL ENUM이라 PENDING/CONFIRMED
+  추가를 위해 `MODIFY COLUMN`도 함께 필요했다.)
+
+- **홀드 만료 스케줄러**: `TimeTableHoldExpiryScheduler`가 주기적으로 `occupied_status='PENDING'
+  AND released_at IS NULL AND occupied_datetime < now-5m`인 row를 `PESSIMISTIC_WRITE`로 잠그고
+  `released_at`을 채운 뒤 `tableStatus`를 `EMPTY`로 복원한다. Redis 쪽은 기존
+  `ReleaseTimeTableSeat`을 그대로 재사용해 좌석 카운터 `INCR` + `DEDUP` 삭제를 함께 처리한다.
+
+  > **`batch-module`이 아니라 `adapter-module`에 뒀다** (초안 대비 변경).
+  > 회수는 DB만으로 끝나지 않고 Redis 좌석 카운터와 중복 마커까지 되돌려야 하는데, 그 어댑터들이
+  > 애플리케이션 컨텍스트에 있다. 별도 앱에서 돌리려면 Redis 배선을 한 벌 더 만들어야 하고, 그러면
+  > "좌석을 되돌리는 방법"이 두 군데로 갈라진다. 같은 주기 워커인 `WaitingQueueAdmissionScheduler`
+  > 옆에 두는 편이 일관적이다. 여러 인스턴스가 동시에 돌아도 회수 대상 조회가 행을 잠그므로
+  > 중복 처리되지 않는다 — 그래서 입장 워커와 달리 별도 분산 락을 두지 않았다.
+
+  **순서가 중요하다: DB를 먼저 풀고 Redis를 나중에 되돌린다.** 반대로 하면 Redis에서 자리가 열린
+  직후 들어온 요청이 아직 남아 있는 이전 홀드 때문에 행 잠금 뒤에서 헛돈다. 이 순서라면 최악이
+  "잠깐 카운터가 실제보다 보수적인" 것뿐이고, 그건 안전한 방향이다.
+
+- **확정 액션 (무료 "가결제")**: 실제 결제가 없으므로 단순 상태 전이(PENDING → CONFIRMED)로 구현.
+  `POST /api/v1/time-table/booking/{restaurantId}/confirm`
+
+  > **URL에서 ticketId를 뺐다** (초안은 `.../queue/{ticketId}/confirm`).
+  > 서버가 인증된 `userId`와 슬롯만으로 대상을 찾을 수 있어 클라이언트가 보낸 식별자는 아무것도
+  > 더해 주지 않으면서 **남의 홀드를 확정하는 통로만** 만든다. Phase 1에서 게이트가 클라이언트
+  > ticketId를 받지 않기로 한 것과 같은 판단이다.
+
+  이미 CONFIRMED인 홀드를 다시 확정하려 하면 거절한다 — 통과시키면 하류 이벤트가 두 번 나가
+  예약이 중복 생성된다. confirm을 두 번 누르는 것은 흔한 일이라 반드시 걸러야 한다.
+
+- **입장 permit 명시적 반납**: `RPermitExpirableSemaphore.tryAcquire()`가 돌려주는 permitId를
+  기존 코드가 **버리고 있어서** permit을 되돌려 줄 방법 자체가 없었다. `PERMIT_OF:{slot}:{ticketId}`에
+  보관하도록 고치고, 예약 접수에 성공한 시점에 `ReleaseAdmission`이 permit + `ADMITTED` 엔트리 +
+  인덱스를 함께 정리한다. 이게 없으면 30초면 끝날 사용자가 lease 5분치 자리를 차지해, 정원이 100이어도
+  실제 회전은 훨씬 느리다 (Phase 3 측정에서 상당수 VU가 끝내 입장하지 못한 원인 중 하나).
+  **성공 경로에서만 부른다** — 이 호출은 입장 자격 자체를 회수하므로, 재시도 여지가 있는 실패에서
+  부르면 사용자가 대기열 맨 뒤로 밀린다.
+
 - 하류의 기존 `TimeTableOccupiedDomainEvent → outbox → TimeTableOccupancyKafkaListener →
-  CreateReservationUseCase` 흐름은 confirm으로 CONFIRMED 전환된 시점에 트리거되도록 옮긴다 (PENDING
-  생성 시점이 아니라 confirm 시점에 도메인 이벤트 발행 — 그래야 만료된 PENDING이 하류에 잘못 전파되지
-  않음).
+  CreateReservationUseCase` 흐름은 confirm 시점에 트리거된다 (PENDING 생성 시점이 아니라 —
+  그래야 만료될 홀드가 하류에 잘못 전파되지 않는다).
+
+- **측정 기준이 바뀐다**: 점유가 `OCCUPIED`가 아니라 `PENDING`/`CONFIRMED`로 저장되므로
+  `verify-overbooking.sql`과 `wait-settle.sh`의 집계 조건을 상태 나열이 아니라
+  **`released_at IS NULL`(= 아직 살아 있는 점유)** 로 바꿔야 한다. 상태가 더 늘어도 그대로 맞는
+  질문이고, Phase 3 이전 데이터의 `OCCUPIED` 행도 같은 조건에 걸린다.
+  → **Phase 3 시점 측정치는 별도로 보존한다** (`docs/perf/baseline-vs-redesign.md`).
 
 ### Phase 5 — 재측정 + 비교 리포트
 
-Phase 0과 동일한 `perf/k6/run.sh`로 개선된 구조를 10회 측정. `docs/perf/baseline-vs-redesign.md`에
-p50/p95/p99·처리량·에러율·오버부킹 여부를 표/차트로 비교, 새 아키텍처 mermaid 다이어그램 포함 —
-포트폴리오 최종 산출물.
+Phase 0과 동일한 `perf/k6/run.sh`(시나리오·시드·검증 전부 동일)로 개선된 구조를 10회 측정.
+**결과 저장 위치만 분리한다** — before는 `perf/k6/results/`, after는 `perf/k6/result-after/`:
+
+```bash
+RUNS=10 RESULTS_DIR=perf/k6/result-after ./perf/k6/run.sh redesigned
+```
+
+`results/`는 gitignore 대상이지만 `result-after/`는 비교 리포트의 근거 자료이므로 커밋한다.
+
+`docs/perf/baseline-vs-redesign.md`에 p50/p95/p99·처리량·에러율·오버부킹 여부를 표/차트로 비교,
+새 아키텍처 mermaid 다이어그램 포함 — 포트폴리오 최종 산출물.
 
 ## 지금 실행할 것 (Phase 0)
 

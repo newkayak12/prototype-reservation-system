@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
-# Phase 0 perf-test seed: restaurant + limited-seat timetable slot (raw SQL) + real sign-up users (real HTTP, no auth bypass).
-# Idempotent: re-running wipes prior K6_PERF_RESTAURANT data and reseeds fresh (seat count reset).
+# perf-test seed: restaurant + limited-seat timetable slot (raw SQL) + real sign-up users (real HTTP, no auth bypass).
+#
+# 좌석(=timetable)도 유저 풀(=최대 VU 수)도 매 버스트마다 DELETE→INSERT로 초기화한다.
+# 둘 다 raw SQL 벌크 인서트라 60번 반복해도 회당 1초 미만이다.
+#
+# 레스토랑 UUID는 매번 새로 뽑는다 - Redis 세마포어/분산락 키가 restaurantId 기반이라
+# 같은 ID를 재사용하면 이전 버스트의 세마포어 permit(TTL 10분)이 남아 다음 측정을 오염시킨다.
 set -euo pipefail
 
 DB_HOST="${DB_HOST:-127.0.0.1}"
@@ -10,7 +15,7 @@ DB_PASS="${DB_PASS:-verysecret}"
 DB_NAME="${DB_NAME:-prototype_reservation}"
 BASE_URL="${BASE_URL:-http://localhost:8081}"
 SEAT_COUNT="${SEAT_COUNT:-30}"
-POOL_SIZE="${POOL_SIZE:-300}"
+POOL_SIZE="${POOL_SIZE:-2000}"
 RESTAURANT_NAME="K6_PERF_RESTAURANT"
 PASSWORD="K6perf!2026"
 
@@ -70,39 +75,63 @@ cat > "$LIB_DIR/env.json" <<JSON
 }
 JSON
 
-echo "==> Sign-up $POOL_SIZE real users via $BASE_URL/api/v1/user/sign-up (no auth bypass)"
-signup_one() {
-  local i="$1"
-  local n
-  n="$(printf '%03d' "$i")"
-  local login_id="k6perf$n"
-  local email="k6perf$n@test.local"
-  local mobile="010$(printf '%08d' "$i")"
-  local nickname="k6perf$n"
-  curl -s -o /dev/null -w '' -X POST "$BASE_URL/api/v1/user/sign-up" \
-    -H 'Content-Type: application/json' \
-    -d "{\"loginId\":\"$login_id\",\"password\":\"$PASSWORD\",\"email\":\"$email\",\"mobile\":\"$mobile\",\"nickname\":\"$nickname\"}" \
-    || true
-  echo "{\"loginId\":\"$login_id\",\"password\":\"$PASSWORD\"}"
-}
-export -f signup_one
-export BASE_URL PASSWORD
+# ---------------------------------------------------------------------------
+# 유저 풀: 최대 VU 수만큼 DB에 직접 벌크 INSERT 한다.
+#
+# 회원가입 API를 POOL_SIZE번 호출하는 방식은 2000명 기준 수 분이 걸리고, 측정 대상도 아니다
+# (측정 대상은 예약 API 하나). 로그인/토큰 발급은 여전히 실제 API를 쓰므로 인증 자체를
+# 우회하지는 않는다 - 우회하는 건 "계정 생성" 뿐이다.
+#
+# 매 시딩마다 지우고 다시 넣는다: 60번 반복하는 동안 로그인 실패가 누적돼 fail_count가
+# SignInPolicy 한계를 넘으면 계정이 잠기는데(DEACTIVATED), 그러면 다음 버스트의 setup()이
+# 조용히 토큰을 못 받는다. 매번 fail_count=0 / locked_datetime=NULL / ACTIVATED로 되돌린다.
+#
+# 비밀번호는 BCrypt(strength 10) 해시. 앱의 PasswordEncoderUtility(BCryptPasswordEncoder)가
+# 그대로 검증한다 - BCrypt는 해시에 salt가 박혀 있어 전원이 같은 해시 문자열을 써도 된다.
+# 아래 값은 'K6perf!2026'을 Spring의 BCryptPasswordEncoder로 인코딩한 결과다.
+# ---------------------------------------------------------------------------
+PASSWORD_HASH='$2a$10$XRUpNNPbgz/DSUtLZX4BxOxDSq/DU47QZ2N7X3wqea6TZANie.tkS'
+USER_PREFIX="k6perf"
 
-seq 1 "$POOL_SIZE" | xargs -P 20 -I{} bash -c 'signup_one "$@"' _ {} > "$LIB_DIR/users.ndjson"
+echo "==> Provisioning $POOL_SIZE users (bulk INSERT, 인증 상태 초기화)"
+python3 - "$LIB_DIR" "$POOL_SIZE" "$PASSWORD" "$PASSWORD_HASH" "$USER_PREFIX" <<'PY' > "$LIB_DIR/users.generated.sql"
+import json, sys, uuid
 
-python3 -c "
-import json
-users = []
-with open('$LIB_DIR/users.ndjson') as f:
-    for line in f:
-        line = line.strip()
-        if line:
-            users.append(json.loads(line))
-users.sort(key=lambda u: u['loginId'])
-with open('$LIB_DIR/users.json', 'w') as f:
+lib_dir, pool_size, password, pw_hash, prefix = sys.argv[1], int(sys.argv[2]), sys.argv[3], sys.argv[4], sys.argv[5]
+width = max(4, len(str(pool_size)))
+CHUNK = 500
+
+print(f"DELETE FROM `user` WHERE login_id LIKE '{prefix}%';")
+
+users, rows = [], []
+for i in range(1, pool_size + 1):
+    n = str(i).zfill(width)
+    login_id = f"{prefix}{n}"
+    users.append({"loginId": login_id, "password": password})
+    rows.append(
+        "('{id}','{lid}','{pw}','{lid}@t.local','{lid}','010{mob}','USER',0,NULL,'ACTIVATED',0)".format(
+            id=str(uuid.uuid4()), lid=login_id, pw=pw_hash, mob=str(i).zfill(8)
+        )
+    )
+
+cols = ("INSERT INTO `user` (id, login_id, password, email, nickname, mobile, role, "
+        "fail_count, locked_datetime, user_status, is_need_to_change_password) VALUES")
+for start in range(0, len(rows), CHUNK):
+    print(cols)
+    print(",\n".join(rows[start:start + CHUNK]) + ";")
+
+with open(f"{lib_dir}/users.json", "w") as f:
     json.dump(users, f, indent=2)
-print(f'{len(users)} users written to users.json')
-"
-rm -f "$LIB_DIR/users.ndjson"
+print(f"-- {len(users)} users", file=sys.stderr)
+PY
 
-echo "==> Done. env.json + users.json ready in $LIB_DIR"
+"${MYSQL[@]}" "$DB_NAME" < "$LIB_DIR/users.generated.sql"
+
+ACTUAL="$("${MYSQL[@]}" "$DB_NAME" -e \
+  "SELECT COUNT(*) FROM \`user\` WHERE login_id LIKE '${USER_PREFIX}%' AND user_status='ACTIVATED' AND fail_count=0;")"
+if [ "$ACTUAL" -ne "$POOL_SIZE" ]; then
+  echo "ERROR: 유저 $ACTUAL/$POOL_SIZE 만 생성됨" >&2
+  exit 1
+fi
+
+echo "==> Done. $ACTUAL users + $SEAT_COUNT seats ready. env.json + users.json in $LIB_DIR"

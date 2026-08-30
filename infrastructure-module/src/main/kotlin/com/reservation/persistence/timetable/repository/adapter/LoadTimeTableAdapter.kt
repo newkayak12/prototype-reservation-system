@@ -7,6 +7,13 @@ import com.reservation.timetable.port.output.LoadBookableTimeTables
 import com.reservation.timetable.port.output.LoadBookableTimeTables.LoadBookableTimeTablesInquiry
 import org.springframework.stereotype.Component
 
+/**
+ * 예약 가능한 좌석 목록을 잠그지 않고 읽는다.
+ *
+ * 예약 요청 경로에서 좌석 카운터에 심을 초기값(= 예약 가능한 행 개수)을 구하는 데 쓴다.
+ * **어느 행을 쓸지는 여기서 고르지 않는다** — 그 선택은 소비 시점에 [ClaimTimeTableAdapter]가
+ * 잠그면서 한다.
+ */
 @Component
 class LoadTimeTableAdapter(
     private val timeTableJpaRepository: TimeTableJpaRepository,

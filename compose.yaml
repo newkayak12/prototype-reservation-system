@@ -7,7 +7,9 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./mysql_data:/var/lib/mysql
+      # 호스트 디렉터리 대신 네임드 볼륨을 쓴다. 바인드 마운트로 두면 호스트 쪽 디렉터리가
+      # 사라지는 순간 InnoDB가 리두 로그를 쓰지 못해 그 자리에서 죽는다(실제로 겪었다).
+      - mysql-data:/var/lib/mysql
       - ./docker-entrypoint-initdb.d/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pverysecret"]
@@ -55,7 +57,7 @@ services:
     volumes:
       - kafka-1-data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server kafka-1:29092"]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka-1:29092"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -91,7 +93,7 @@ services:
     volumes:
       - kafka-2-data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server kafka-2:29092"]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka-2:29092"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -127,7 +129,7 @@ services:
     volumes:
       - kafka-3-data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server kafka-3:29092"]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka-3:29092"]
       interval: 30s
       timeout: 10s
       retries: 5

@@ -228,5 +228,13 @@ redis/sentinel-3/
 perf/k6/results/
 perf/k6/lib/env.json
 perf/k6/lib/users.json
-perf/k6/lib/users.ndjson
 perf/k6/lib/seed.generated.sql
+perf/k6/lib/users.generated.sql
+perf/k6/lib/__pycache__/
+# 회차별 원본은 용량이 커서 제외하고, 집계본(summary.md/summary.json)만 커밋한다.
+performance_test/**/raw/
+.harness-run
+
+# 포트폴리오 추출본은 저장소에 올리지 않는다
+performance_test/PORTFOLIO.md
+performance_test/K6-NOTES.md
