@@ -1,11 +1,11 @@
 import http from 'k6/http';
-import { check } from 'k6';
+import { check, sleep } from 'k6';
 import { Counter, Trend } from 'k6/metrics';
 import { SharedArray } from 'k6/data';
 import exec from 'k6/execution';
 
 // ---------------------------------------------------------------------------
-// 인기 좌석 티켓팅 버스트 시나리오.
+// 인기 좌석 티켓팅 버스트 시나리오 (재설계 후 아키텍처).
 //
 // 한 번의 k6 run = 하나의 VU 레벨에 대한 단일 버스트다:
 //   좌석 30석이 갓 리셋된 상태에서 N명이 "동시에 1번씩" 예약을 시도하고,
@@ -15,6 +15,17 @@ import exec from 'k6/execution';
 // 초반에 30석이 소진돼 나머지 200초가 전부 "이미 매진된 좌석에 대한 거절 응답"
 // 측정이었다. VU 레벨별로 런을 쪼개고 매 런 앞에서 좌석을 재시딩해야 각 레벨이
 // 동일 조건(=빈 좌석 30석)에서 비교된다.
+//
+// ## before 시나리오와 다른 점 — 대기열
+//
+// 재설계 후에는 예약 앞에 대기열이 있고, 서버가 이를 **강제**한다
+// (`CreateTimeTableOccupancyService.verifyAdmitted`). 대기열을 건너뛰고 booking을
+// 직접 부르면 입장 자격 없음으로 즉시 거절되므로, 이 시나리오는 진입 → 폴링 →
+// 예약 세 단계를 밟는다. 그게 이 아키텍처에서 사용자가 실제로 겪는 경로다.
+//
+// 그래서 t0 기준 시간(매진/해소)에는 대기 시간이 포함된다. before와 비교할 때
+// **그게 정확한 비교다** — 사용자 입장에서 "표를 사기까지 걸린 시간"이니까.
+// 예약 API 호출 자체의 지연만 보려면 booking_latency_ms를 본다.
 //
 // 실행: VUS=600 OUT=results/x.json k6 run scenarios/booking.js
 // ---------------------------------------------------------------------------
@@ -26,11 +37,39 @@ const users = new SharedArray('users', function () {
 });
 
 const VUS = Number(__ENV.VUS || 100);
-// 서버측 대기 상한이 k6 기본 타임아웃(60s)보다 길다: @DistributedLock waitTime 2분,
-// 세마포어 대기 5분. 60s로 끊으면 실제 레이턴시가 아니라 타임아웃 절단선을 재게 되므로
-// 넉넉히 잡고, 타임아웃은 별도 버킷으로 집계한다.
+// 서버측 대기 상한이 k6 기본 타임아웃(60s)보다 길 수 있으므로 넉넉히 잡고,
+// 타임아웃은 별도 버킷으로 집계한다.
 const REQ_TIMEOUT = __ENV.REQ_TIMEOUT || '180s';
 const ALLOW_TOKEN_REUSE = __ENV.ALLOW_TOKEN_REUSE === '1';
+
+// 폴링 간격. **이 시나리오에서 가장 중요한 손잡이다.**
+//
+// 예전에는 입장 워커(500ms 주기)의 박자를 따라가는 종속 변수였다. 지금은 반대다 - 승격이
+// 타이머가 아니라 요청 경로(진입/폴링)에서 일어나므로, 이 값이 곧 permit 회전 주기를 정한다:
+//
+//   회전 = 승격 -> 사용자가 다음 폴링에서 알아챔(간격/2) -> 예약(약 40ms) -> 반납
+//   처리량 상한 = admission-capacity / 회전
+//
+// 그래서 이 값은 서버의 admission-capacity와 짝으로 움직여야 한다. 한쪽만 바꾸면
+// 아키텍처가 아니라 그 불일치를 측정하게 된다.
+//
+// 실제 배포에서는 이 간격이 곧 **CDN TTL**이다. 순번 조회는 엣지에서 캐시될 것이므로,
+// 여기서 2로 두면 "TTL 2초짜리 CDN을 앞에 세운 상태"를 인프라 없이 재현한 것이 된다
+// (사용자마다 URL이 다른 현재 API 기준. 캐시 엔트리가 사용자별로 생기므로
+//  "각자 TTL마다 한 번 호출"과 origin 부하가 동일하다).
+const POLL_INTERVAL_SECONDS = Number(__ENV.POLL_INTERVAL_SECONDS || 0.5);
+
+// 한 VU가 입장을 기다리는 데 쓸 예산. **런이 끝나지 않는 것을 막는 안전장치일 뿐이다.**
+//
+// 한때는 이 값이 결과를 지배했다. permit이 성공 경로에서만 반납되던 시절에는 품절로 거절된
+// 사용자가 자리를 쥔 채 끝나 대기열이 정원 언저리에서 멈췄고, 남은 VU들이 예산을 다 쓰고
+// 나가면서 **해소 시간이 이 상수에 고정**됐다. 그 상태의 처리율을 before와 나란히 놓은 것이
+// 잘못된 비교였다.
+//
+// 종착 거절(품절/중복)도 자리를 반납하도록 고친 뒤로는 모든 VU 레벨에서 대기포기가 0이다.
+// 그러니 이 값이 결과에 나타나면 그건 "예산이 짧았다"가 아니라 **어딘가 막혔다는 신호**다.
+// queue_timeout이 0이 아닌 회차는 원인을 찾기 전까지 집계에 넣으면 안 된다.
+const QUEUE_WAIT_BUDGET_MS = Number(__ENV.QUEUE_WAIT_BUDGET_MS || 30000);
 
 // 성공/실패 사유별 분리 집계.
 // 주의: 현재 서버는 RestControllerExceptionHandler에서 ClientException 전체를 400 하나로
@@ -47,6 +86,12 @@ const cRejected = new Counter('booking_rejected_400');
 const cUnauthorized = new Counter('booking_unauthorized_401');
 const cServerError = new Counter('booking_server_error_5xx');
 const cTimeout = new Counter('booking_timeout');
+
+// 대기열 단계 (before에는 존재하지 않는 새 비용).
+const cQueueEnterFailed = new Counter('queue_enter_failed');
+const cQueueTimeout = new Counter('queue_timeout');
+const cQueueAdmitted = new Counter('queue_admitted');
+const queueWait = new Trend('queue_wait_ms', true);
 
 // 버스트 시작(t0) 기준 경과 시간.
 //   timeToSuccess의 max  = 마지막 좌석이 팔린 시각 = "매진 시간"
@@ -70,7 +115,7 @@ export const options = {
     },
   },
   thresholds: {
-    // 5xx는 0이어야 한다. 나머지(품절/충돌)는 시나리오상 정상 결과이므로 임계값을 걸지 않는다.
+    // 5xx는 0이어야 한다. 나머지(품절/충돌/대기열 초과)는 시나리오상 정상 결과다.
     booking_server_error_5xx: ['count==0'],
   },
 };
@@ -122,20 +167,68 @@ export function setup() {
 export default function (data) {
   // VU 1개 = 유저 1명 (토큰 공유 금지). 티켓팅에서 경쟁 주체는 커넥션이 아니라 사람이다.
   const token = data.tokens[(__VU - 1) % data.tokens.length];
+  const headers = { 'Content-Type': 'application/json', Authorization: token };
+  const slotBody = JSON.stringify({ date: data.date, startTime: data.startTime });
+  const queueUrl = `${env.baseUrl}/api/v1/time-table/booking/${data.restaurantId}/queue`;
   const t0 = exec.scenario.startTime;
 
+  cRequests.add(1);
+
+  // --- 1) 대기열 진입 -------------------------------------------------------
+  const enterRes = http.post(queueUrl, slotBody, {
+    headers,
+    timeout: REQ_TIMEOUT,
+    tags: { name: 'queue_enter' },
+  });
+
+  if (enterRes.status !== 201) {
+    cQueueEnterFailed.add(1);
+    if (enterRes.status >= 500) cServerError.add(1);
+    else if (enterRes.status === 0) cTimeout.add(1);
+    timeToResolve.add(Date.now() - t0);
+    return;
+  }
+
+  const entered = JSON.parse(enterRes.body);
+  const ticketId = entered.ticketId;
+
+  // --- 2) 입장 허용까지 폴링 -------------------------------------------------
+  // position 0은 "이미 입장 허용됨"을 뜻한다(EnterWaitingQueue.ADMITTED_POSITION).
+  // 대기 중인 티켓은 rank + 1 이라 항상 1 이상이다.
+  const waitStart = Date.now();
+  let admitted = entered.position === 0;
+
+  while (!admitted && Date.now() - waitStart < QUEUE_WAIT_BUDGET_MS) {
+    sleep(POLL_INTERVAL_SECONDS);
+
+    const pollRes = http.get(
+      `${queueUrl}/${ticketId}?date=${data.date}&startTime=${data.startTime}`,
+      { headers, timeout: REQ_TIMEOUT, tags: { name: 'queue_poll' } },
+    );
+
+    if (pollRes.status === 200 && JSON.parse(pollRes.body).status === 'ADMITTED') {
+      admitted = true;
+    }
+  }
+
+  if (!admitted) {
+    // 입장 정원에 막혀 예약 단계까지 가지 못했다. 거절도 실패도 아닌 "아직 줄 서 있음"이다.
+    cQueueTimeout.add(1);
+    timeToResolve.add(Date.now() - t0);
+    return;
+  }
+
+  queueWait.add(Date.now() - waitStart);
+  cQueueAdmitted.add(1);
+
+  // --- 3) 예약 -------------------------------------------------------------
   const res = http.post(
     `${env.baseUrl}/api/v1/time-table/booking/${data.restaurantId}`,
-    JSON.stringify({ date: data.date, startTime: data.startTime }),
-    {
-      headers: { 'Content-Type': 'application/json', Authorization: token },
-      timeout: REQ_TIMEOUT,
-      tags: { name: 'booking' },
-    },
+    slotBody,
+    { headers, timeout: REQ_TIMEOUT, tags: { name: 'booking' } },
   );
 
   const elapsed = Date.now() - t0;
-  cRequests.add(1);
   timeToResolve.add(elapsed);
 
   if (res.status === 201 || res.status === 200) {
@@ -184,6 +277,7 @@ export function handleSummary(data) {
   const selloutMs = trend(data, 'time_to_success_ms').max || 0;
   const resolveMs = trend(data, 'time_to_resolve_ms').max || 0;
   const lat = trend(data, 'booking_latency_ms');
+  const wait = trend(data, 'queue_wait_ms');
 
   const report = {
     vus: VUS,
@@ -201,12 +295,25 @@ export function handleSummary(data) {
       unauthorized401: count(data, 'booking_unauthorized_401'),
       serverError5xx: count(data, 'booking_server_error_5xx'),
       timeout: count(data, 'booking_timeout'),
+      // 재설계 후에만 존재하는 버킷. before 산출물에는 이 키가 없다.
+      queueTimeout: count(data, 'queue_timeout'),
+      queueEnterFailed: count(data, 'queue_enter_failed'),
+    },
+    queue: {
+      admitted: count(data, 'queue_admitted'),
+      waitMs: {
+        p50: wait['p(50)'] || 0,
+        p95: wait['p(95)'] || 0,
+        max: wait.max || 0,
+      },
+      budgetMs: QUEUE_WAIT_BUDGET_MS,
     },
     // 매진 시간: 버스트 발사부터 마지막 좌석이 팔리기까지. TPS = 팔린 좌석 / 매진 시간.
     selloutSeconds: selloutMs / 1000,
     tps: selloutMs > 0 ? success / (selloutMs / 1000) : 0,
-    // 전체 해소 시간: 마지막 요청(성공이든 거절이든)이 응답을 받기까지.
-    // 처리율 = 전체 요청 / 해소 시간 = 이 레벨에서 시스템이 실제로 소화한 req/s.
+    // 전체 해소 시간: 마지막 요청(성공/거절/대기 포기)이 종착점에 닿기까지.
+    // 대기 예산에 걸린 VU가 있으면 이 값은 예산(QUEUE_WAIT_BUDGET_MS)에 붙는다 -
+    // 시스템의 한계가 아니라 시나리오 상수이므로 그렇게 읽어야 한다.
     resolveSeconds: resolveMs / 1000,
     throughput: resolveMs > 0 ? requests / (resolveMs / 1000) : 0,
     latencyMs: {
@@ -224,8 +331,8 @@ export function handleSummary(data) {
       `\n  VU ${report.vus} | 성공 ${success}/${env.seatCount}석 | ` +
       `매진 ${report.selloutSeconds.toFixed(2)}s (TPS ${report.tps.toFixed(1)}) | ` +
       `해소 ${report.resolveSeconds.toFixed(2)}s (${report.throughput.toFixed(1)} req/s) | ` +
-      `p95 ${report.latencyMs.p95.toFixed(0)}ms | timeout ${report.outcome.timeout} | ` +
-      `5xx ${report.outcome.serverError5xx}\n`,
+      `p95 ${report.latencyMs.p95.toFixed(0)}ms | 대기포기 ${report.outcome.queueTimeout} | ` +
+      `timeout ${report.outcome.timeout} | 5xx ${report.outcome.serverError5xx}\n`,
   };
   if (__ENV.OUT) {
     out[__ENV.OUT] = JSON.stringify(report, null, 2);

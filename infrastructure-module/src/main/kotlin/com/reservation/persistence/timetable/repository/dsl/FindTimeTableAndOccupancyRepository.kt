@@ -42,7 +42,10 @@ class FindTimeTableAndOccupancyRepository(
                 TimeTableIdQuerySpec.timeTableIdEq(inquiry.timeTableId),
                 TimeTableOccupancyIdQuerySpec.timeTableOccupancyIdEq(inquiry.timeTableOccupancyId),
                 TimeTableStatusQuerySpec.timeTableStatusEq(TableStatus.OCCUPIED),
-                TimeTableOccupancyStatusQuerySpec.timeTableOccupancyEq(OCCUPIED),
+                // 하류(예약 생성)는 확정 시점에 트리거되므로 CONFIRMED를 보게 된다. 상태를
+                // 찍어서 비교하는 대신 "아직 풀리지 않았는가"로 묻는다 — 예전 OCCUPIED 데이터도
+                // 같은 조건으로 걸린다.
+                TimeTableOccupancyStatusQuerySpec.timeTableOccupancyIsAlive(),
             )
             .fetchOne()
     }

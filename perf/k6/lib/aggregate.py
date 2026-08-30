@@ -110,6 +110,12 @@ def summarize(vu, runs):
         "unauthorized401": sum(field(lambda r: r["outcome"]["unauthorized401"])),
         "serverError5xx": sum(field(lambda r: r["outcome"]["serverError5xx"])),
         "timeout": sum(field(lambda r: r["outcome"]["timeout"])),
+        # 재설계 후에만 존재하는 버킷. before 산출물에는 키가 없으므로 0으로 떨어진다.
+        "queueTimeout": median(field(lambda r: r["outcome"].get("queueTimeout", 0))),
+        "queueEnterFailed": sum(field(lambda r: r["outcome"].get("queueEnterFailed", 0))),
+        "queueWaitP95": median(
+            field(lambda r: r.get("queue", {}).get("waitMs", {}).get("p95", 0))
+        ),
         "settleSeconds": median(settles),
         "integrityChecked": integrity_checked,
         "overbookedRuns": overbooked_runs,
@@ -151,6 +157,8 @@ def render_md(label, rows):
             f"{r['serverError5xx']} | {r['settleSeconds']:.2f} | {integrity} |"
         )
 
+    has_queue = any(r.get("queueTimeout") or r.get("queueEnterFailed") for r in rows)
+
     lines += [
         "",
         "## 실패 사유 분포 (중앙값)",
@@ -164,6 +172,25 @@ def render_md(label, rows):
             f"{r['soldOut409']:.0f} | {r['semaphore423']:.0f} | {r['rateLimited429']:.0f} | "
             f"{r['rejected400']:.0f} | {r['unauthorized401']} | {r['timeout']} |"
         )
+
+    if has_queue:
+        lines += [
+            "",
+            "## 대기열 (재설계 후에만 존재하는 단계)",
+            "",
+            "`대기포기`는 입장 정원에 막혀 예약 단계까지 가지 못한 사용자다 - 거절도 실패도 아니고",
+            "**아직 줄 서 있는 상태**다. 예약 지연이 좋아 보이는 데에는 이만큼의 부하를 대기열이",
+            "막아 준 몫이 섞여 있으므로, 성공/거절 수치와 반드시 같이 읽어야 한다.",
+            "",
+            "| VU | 요청 | 입장 성공 | 대기포기 | 진입 실패 | 대기 p95(ms) |",
+            "|---:|---:|---:|---:|---:|---:|",
+        ]
+        for r in rows:
+            admitted = r["requests"] - r["queueTimeout"] - r["queueEnterFailed"]
+            lines.append(
+                f"| {r['vus']} | {r['requests']:.0f} | {admitted:.0f} | "
+                f"{r['queueTimeout']:.0f} | {r['queueEnterFailed']} | {r['queueWaitP95']:.0f} |"
+            )
 
     if any(r["rejected400"] for r in rows):
         lines += [

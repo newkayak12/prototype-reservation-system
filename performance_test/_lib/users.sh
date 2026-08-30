@@ -62,6 +62,27 @@ PY
   rm -f "$PERF_LIB/tokens.json"    # 유저가 바뀌었으면 토큰 캐시 무효
 else
   log "==> 유저 ${POOL_SIZE}명 이미 준비됨 (건너뜀)"
+
+  # users.json은 위 프로비저닝 분기에서만 만들어진다. 그런데 유저는 MySQL에 있고
+  # 이 파일은 워크트리마다 따로 생기는 산출물이라, 다른 워크트리가 만든 풀을 재사용하면
+  # "유저는 있는데 목록 파일은 없는" 상태가 된다. 아래 토큰 발급이 이 파일을 읽으므로
+  # 그대로 두면 FileNotFoundError로 죽는다 — before로 풀을 만든 뒤 after를 재려다 겪었다.
+  #
+  # loginId 규칙이 결정적(prefix + zero-pad)이라 DB를 다시 깔 필요가 없다. 목록만 되만든다.
+  # 재프로비저닝하면 로그인 이력이 초기화되어 조건이 달라지므로 그렇게 하면 안 된다.
+  if [ ! -s "$PERF_LIB/users.json" ]; then
+    log "    users.json 없음 — 목록만 재생성 (DB는 건드리지 않는다)"
+    python3 - "$PERF_LIB" "$POOL_SIZE" "$USER_PASSWORD" "$USER_PREFIX" <<'PY'
+import json, sys
+lib, pool, password, prefix = sys.argv[1], int(sys.argv[2]), sys.argv[3], sys.argv[4]
+width = max(4, len(str(pool)))
+users = [{"loginId": f"{prefix}{str(i).zfill(width)}", "password": password}
+         for i in range(1, pool + 1)]
+with open(f"{lib}/users.json", "w") as f:
+    json.dump(users, f)
+print(f"-- {len(users)} users (목록 재생성)", file=sys.stderr)
+PY
+  fi
 fi
 
 # --- 토큰 캐시 ---------------------------------------------------------------

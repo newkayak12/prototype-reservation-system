@@ -59,8 +59,32 @@ def summarize(crowd, bucket):
     def g(fn):
         return med([fn(r) for r in runs])
 
+    # 대기열은 after 전용 단계다. before의 회차 파일에는 queue 키 자체가 없으므로
+    # 전부 .get 으로 읽는다 — 같은 코드가 양쪽을 집계해야 하고, before를 재집계할 때
+    # 표가 달라지면 안 된다.
+    def q(r, *path):
+        node = r.get("queue") or {}
+        for k in path:
+            if not isinstance(node, dict):
+                return None
+            node = node.get(k)
+        return node
+
     return {
         "crowd": crowd,
+        "queueUsed": any(q(r, "skipped") is False for r in runs),
+        "queueAdmittedSlots": g(lambda r: q(r, "admittedSlots")),
+        "queueEnterFailedSlots": g(lambda r: q(r, "enterFailedSlots")),
+        "queueNotAdmittedSlots": g(lambda r: q(r, "notAdmittedSlots")),
+        "queueGaveUpAll": g(lambda r: q(r, "gaveUpAll")),
+        "queuePartialAdmit": g(lambda r: q(r, "partialAdmit")),
+        "queueWaitP50Ms": g(lambda r: q(r, "waitMs", "p50")),
+        "queueWaitP95Ms": g(lambda r: q(r, "waitMs", "p95")),
+        "queuePolls": g(lambda r: q(r, "polls")),
+        "originRequests": g(lambda r: q(r, "originRequests")),
+        "pollSec": q(runs[0], "pollSec"),
+        "bookingP50Ms": g(lambda r: (r["timing"].get("bookingMs") or {}).get("p50")),
+        "bookingP95Ms": g(lambda r: (r["timing"].get("bookingMs") or {}).get("p95")),
         "runs": len(runs),
         "discarded": n_bad,
         "fireSkewMaxMs": g(lambda r: r["validity"]["fireSkewMaxMs"]),
@@ -146,9 +170,48 @@ def render(rows, label):
         if not r["runs"]:
             out.append(f"| {r['crowd']:,} | — | — | — | — | — | — | — |")
             continue
-        out.append(f"| {r['crowd']:,} | {r['crowd'] * 3:,} | {fmt(r['reqSuccess'])} | "
+        # 대기열을 통과하지 못한 슬롯은 예약을 시도조차 하지 않았으므로 요청 수에서 뺀다.
+        # 인원×3으로 고정해 두면 after에서 "성공+거절이 요청 수에 한참 못 미치는" 표가 되고,
+        # 원인이 미입장인데 유실로 읽힌다. before는 미입장이 없어 인원×3 그대로다.
+        attempted = r["crowd"] * 3 - (r.get("queueNotAdmittedSlots") or 0)
+        out.append(f"| {r['crowd']:,} | {attempted:,} | {fmt(r['reqSuccess'])} | "
                    f"{fmt(r['reqSoldOut'])} | {fmt(r['reqNoAnswer'])} | {fmt(r['reqDropped'])} | "
                    f"{fmt(r['reqUnreachable'])} | {fmt(r['req5xx'])} |")
+
+    # 대기열이 없는 라벨(before)에서는 이 절 자체를 내지 않는다. 빈 표를 붙이면
+    # before 요약이 "대기열이 있었는데 0이었다"로 읽힌다 — 그런 단계는 없었다.
+    if any(r.get("queueUsed") for r in rows):
+        poll = next((r["pollSec"] for r in rows if r.get("pollSec") is not None), None)
+        out += [
+            "",
+            "## 대기열 (after 전용)",
+            "",
+            "대기열 키가 **슬롯 단위**라 3슬롯을 잡으려면 줄을 3개 서야 한다. 다건에 걸친",
+            "경계가 없다는 이 시나리오의 지적이 대기열에서도 그대로 반복된다.",
+            "",
+            "`전부 포기`·`일부만 입장`은 0이어야 정상이다. 0이 아니면 대기 예산이 짧은 게",
+            "아니라 승격이 막힌 것이고, 그 회차는 원인을 찾기 전까지 결과로 읽으면 안 된다.",
+            "특히 `일부만 입장`은 부분 성공 수치를 직접 흔든다.",
+            "",
+            f"`폴링`은 before에 없는 부하다. 실제 배포에서는 폴링 간격(={poll}s)이 CDN TTL이라",
+            "이 몫이 엣지로 넘어간다.",
+            "",
+            "| 인원 | 입장 슬롯 | 진입 실패 | 미입장 | 전부 포기 | 일부만 입장 | 대기 p50 | p95 | 예약 p95 | 폴링 | 앱이 받은 요청 |",
+            "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        ]
+        for r in rows:
+            if not r["runs"]:
+                out.append(f"| {r['crowd']:,} |" + " — |" * 10)
+                continue
+            gave, part = r["queueGaveUpAll"], r["queuePartialAdmit"]
+            out.append(
+                f"| {r['crowd']:,} | {fmt(r['queueAdmittedSlots'])} | "
+                f"{fmt(r['queueEnterFailedSlots'])} | {fmt(r['queueNotAdmittedSlots'])} | "
+                f"{fmt(gave)}{' ★' if gave else ''} | {fmt(part)}{' ★' if part else ''} | "
+                f"{fmt(r['queueWaitP50Ms'], 'ms')} | {fmt(r['queueWaitP95Ms'], 'ms')} | "
+                f"{fmt(r['bookingP95Ms'], 'ms')} | {fmt(r['queuePolls'])} | "
+                f"{fmt(r['originRequests'])} |"
+            )
 
     out += [
         "",

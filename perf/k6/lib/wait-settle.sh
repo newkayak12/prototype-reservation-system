@@ -13,12 +13,15 @@ POLL_INTERVAL="${POLL_INTERVAL:-0.5}"
 STABLE_ROUNDS_REQUIRED="${STABLE_ROUNDS_REQUIRED:-4}"
 MAX_WAIT_SECONDS="${MAX_WAIT_SECONDS:-60}"
 
+# 상태를 나열하지 않고 "아직 풀리지 않았는가"로 센다. Phase 4에서 점유가 PENDING/CONFIRMED로
+# 갈라졌는데 'OCCUPIED'만 세면 항상 0이 나와 "정착이 이미 끝났다"로 잘못 읽힌다.
+# released_at은 Phase 4 이전 행에서도 NULL이라 양쪽 데이터에 모두 맞는다.
 count_occupied() {
   mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" -N -B "$DB_NAME" -e "
     SELECT COUNT(*) FROM timetable_occupancy o
     JOIN timetable t ON t.id = o.timetable_id
     JOIN restaurant r ON r.id = t.restaurant_id
-    WHERE r.name = 'K6_PERF_RESTAURANT' AND o.occupied_status = 'OCCUPIED';
+    WHERE r.name = 'K6_PERF_RESTAURANT' AND o.released_at IS NULL;
   " 2>/dev/null
 }
 

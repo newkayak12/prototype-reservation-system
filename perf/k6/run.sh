@@ -27,7 +27,9 @@ DB_NAME="${DB_NAME:-prototype_reservation}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-OUT_ROOT="$REPO_ROOT/performance_test/$LABEL"
+# 시나리오별로 결과를 분리한다. 다중 경합 지점 스윕(run-multi.sh)은 축도 정합성 판정도
+# 달라서 같은 디렉터리에 섞이면 집계가 서로를 덮어쓴다.
+OUT_ROOT="$REPO_ROOT/performance_test/single-slot/$LABEL"
 RAW_DIR="$OUT_ROOT/raw"
 mkdir -p "$RAW_DIR"
 
@@ -81,6 +83,12 @@ for vu in $VU_LEVELS; do
     "$SCRIPT_DIR/lib/wait-settle.sh" > "$prefix-settle.json"
     cat "$prefix-settle.json"
 
+    # 살아 있는 점유의 기준은 `released_at IS NULL`이다.
+    #
+    # before 쪽 러너는 `occupied_status = 'OCCUPIED'`로 센다. 재설계 후에는 점유가 PENDING으로
+    # 생성됐다가 사용자가 확정해야 CONFIRMED가 되므로, 상태로 세면 **판 좌석을 전부 0으로
+    # 집계한다**(실제로 그렇게 나와서 발견했다). 상태를 나열하는 대신 "아직 풀리지 않았는가"
+    # 하나로 판단하면 상태가 더 늘어도 이 기준은 그대로 맞는다.
     echo "==> 정합성 (오버부킹)"
     mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" \
       < "$SCRIPT_DIR/verify-overbooking.sql" > "$prefix-overbooking.txt" 2>/dev/null
@@ -91,12 +99,12 @@ SELECT
   (SELECT COUNT(*) FROM timetable_occupancy o
     JOIN timetable t ON t.id = o.timetable_id
     JOIN restaurant r ON r.id = t.restaurant_id
-    WHERE r.name = 'K6_PERF_RESTAURANT' AND o.occupied_status = 'OCCUPIED'),
+    WHERE r.name = 'K6_PERF_RESTAURANT' AND o.released_at IS NULL),
   (SELECT COUNT(*) FROM (
       SELECT o.timetable_id FROM timetable_occupancy o
       JOIN timetable t ON t.id = o.timetable_id
       JOIN restaurant r ON r.id = t.restaurant_id
-      WHERE r.name = 'K6_PERF_RESTAURANT' AND o.occupied_status = 'OCCUPIED'
+      WHERE r.name = 'K6_PERF_RESTAURANT' AND o.released_at IS NULL
       GROUP BY o.timetable_id HAVING COUNT(*) > 1
     ) dup);
 SQL

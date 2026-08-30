@@ -95,9 +95,17 @@
 | 라벨 | 경로 | 브랜치 |
 |---|---|---|
 | before | `~/Downloads/port/prototype-reservation-system` | `chore/performance-test` |
+| after | `~/orca/workspaces/prototype-reservation-system/chore-performance-test-after` | `newkayak12/chore-performance-test-after` |
 
-`preflight.sh before`가 8081 리스닝 프로세스의 CWD가 이 경로인지 검사한다.
+`preflight.sh <라벨>`이 8081 리스닝 프로세스의 CWD를 보고 어느 워크트리 빌드인지 검사한다.
 1차 측정에서 다른 빌드가 떠 있는 걸 놓쳐 결과가 오염된 적이 있어 자동화했다.
+판정은 `$REPO_ROOT`가 아니라 **경로 문자열**로 한다 — 이 하네스가 두 워크트리에 같은
+내용으로 존재하기 때문에, "내가 있는 곳"을 기준으로 삼으면 after 사본으로 before를 잴 때
+검사가 거꾸로 통과한다.
+
+**두 라벨은 같은 시나리오 파일을 쓴다.** 갈라지는 건 `SKIP_QUEUE` 하나뿐이고 `run.sh`가
+라벨에서 정한다(`before*` → 1). 배리어, 예열, 인원 사다리, 좌석 수, 스큐 판정, 에러 분류,
+시간 기준점(`fireAt`)이 전부 같아야 비교가 성립하므로 파일을 나누지 않았다.
 
 ### 고정 기동 인자
 
@@ -133,6 +141,45 @@ java -jar adapter-module/build/libs/adapter-module-0.0.1-SNAPSHOT.jar \
 | `ulimit -n` (러너) | 200,000 | `run.sh`가 올린다 |
 | 유저 풀 | 최대 군중 이상 | 모자라면 토큰이 돌려쓰기 되어 같은 사람이 동시에 여러 번 예약하게 되고, "몇 명이 좌석을 받았나"가 흐려진다 |
 
+### after 전용 — 대기열 파라미터
+
+after는 예약 앞에 대기열이 있고 서버가 강제한다(`CreateTimeTableOccupancyService.verifyAdmitted`).
+건너뛰고 예약을 직접 부르면 전원이 입장 자격 없음으로 거절되므로, after의 `마지막 응답`은
+**줄 서는 시간을 포함한** 값이다. 그게 before와 같은 잣대다 — 사용자에게 중요한 건 버튼을
+누르고 답을 받기까지지 예약 API 하나의 지연이 아니다. 예약 호출만 따로 보려면
+리포트의 `timing.bookingMs`를 본다.
+
+| 항목 | 값 | 어디서 |
+|---|---:|---|
+| `reservation.queue.admission-capacity` | **150** | `application-module/src/main/resources/common.yaml` |
+| `reservation.queue.admission-time-to-live-seconds` | 300 | 동일 |
+| `reservation.queue.reconcile-interval-millis` | 5,000 | 동일 |
+| `reservation.queue.ticket-time-to-live-seconds` | 1,800 | 동일 |
+| k6 폴링 간격 `POLL_SEC` | **0.5s** | `run.sh` |
+| k6 대기 예산 `QUEUE_BUDGET_SEC` | 60s | `run.sh` |
+
+**capacity와 폴링 간격은 따로 만지는 손잡이가 아니다.** 승격이 타이머가 아니라 요청
+경로(진입/폴링)에서 일어나므로 permit 한 장의 회전 주기는 "승격 → 다음 폴링에서 인지
+(간격/2) → 예약 → 반납"이다. 따라서
+
+```
+capacity = 목표 처리량 × (폴링 간격/2 + 예약 지연)
+         = 500 req/s × (0.5s / 2 + 0.04s) ≈ 145   → 150
+```
+
+한쪽만 바꾸면 아키텍처가 아니라 그 불일치를 재게 된다. 별개의 천장이 하나 더 있다:
+capacity는 곧 "예약 API에 동시에 들어와 있는 요청 수"이므로 `tomcat.threads.max=200`을
+넘기면 배압이 앱 바깥이 아니라 Tomcat 큐에 쌓인다 — 대기열을 둔 이유가 사라진다.
+
+폴링 간격은 실제 배포에서 **CDN TTL**이다. 0.5s로 두는 건 "TTL 0.5초 CDN을 앞에 세운
+상태"를 인프라 없이 재현한 것이고, 리포트의 `queue.polls` / `queue.originRequests`가
+엣지로 넘길 수 있는 몫을 그대로 보여준다. **이 값을 세지 않으면 after의 실부하가
+통계에서 사라진다** — 예약만 세면 앱이 실제로 받은 요청의 일부만 잡힌다.
+
+`queue.gaveUp`(S1) / `queue.gaveUpAll`·`partialAdmit`(S2)은 **0이어야 정상이다.**
+0이 아니면 대기 예산이 짧은 게 아니라 승격이 막힌 것이므로, 원인을 찾기 전까지 그 회차를
+결과로 읽으면 안 된다.
+
 ## 6. 코드 조건
 
 ### `@RateLimiter`는 발동하지 않는다 (확인함)
@@ -147,13 +194,26 @@ grep -rn "@RateLimiter" --include="*.kt" */src/main   # → 위 한 줄만 나�
 
 → **스로틀링이 처리량 상한을 만들었을 가능성은 배제된다.**
 
-### 락 획득은 트랜잭션 바깥에서 일어난다
+after에서는 같은 grep이 `CreateTimeTableOccupancyService`에서 세 줄을 더 낸다. 전부
+주석이고 그중 하나는 **주석 처리된 애노테이션**이라 여전히 발동하지 않는다. 지운 게 아니라
+주석으로 남긴 건, 걷어낸 이유가 설계 판단이 아니라 측정 조건 맞추기였음을 코드에 남기기
+위해서다. 재활성화한다면 자리는 이 유스케이스가 아니라 게이트웨이 계층이다.
+
+```bash
+grep -rn "@RateLimiter" --include="*.kt" */src/main | grep -v '^\s*.*//'   # → 애스펙트 한 줄
+```
+
+### 락 획득은 트랜잭션 바깥에서 일어난다 (before)
 
 `DistributedLockAspect`가 `@Order(HIGHEST_PRECEDENCE)`이고 `@Transactional`은 기본
 `LOWEST_PRECEDENCE`이므로, 순서는 `락 획득 → 트랜잭션 시작 → 본문 → 커밋 → 락 해제`다.
 
 → 락 대기 중에는 DB 커넥션을 물지 않는다. 실측 DB 커넥션 최대 12가 이것과 일치한다.
 대신 **락 대기가 Tomcat 워커 스레드를 점유한다** (워커는 200개).
+
+after의 예약 경로에는 이 락이 없다. 재고 경합은 Redis Lua 원자 획득 + 조건부 UPDATE가
+받고, 동시 진입 수는 대기열이 제한한다. 남은 `@DistributedLock`은 리컨실 워커 하나뿐이라
+(중복 실행 방지) 요청 경로에 걸리지 않는다.
 
 ### 커넥션 풀 크기 — 미확인 항목
 
