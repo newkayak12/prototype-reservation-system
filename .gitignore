@@ -225,6 +225,15 @@ redis/sentinel-3/
 
 
 # k6 perf test generated artifacts
+# raw/ 는 회차별 원본(~80MB) — summary.md/json 만 커밋한다
+# tokens.json(JWT) / users.json(평문 비밀번호) 은 절대 커밋 금지
+performance_test/*/*/raw/
+performance_test/_lib/env.json
+performance_test/_lib/tokens.json
+performance_test/_lib/users.json
+performance_test/_lib/users.ndjson
+performance_test/_lib/*.generated.sql
+performance_test/**/__pycache__/
 perf/k6/results/
 perf/k6/lib/env.json
 perf/k6/lib/users.json
@@ -239,3 +248,4 @@ cycles/
 .claude/settings.json
 .claude/worktrees
 .claude/.harness-markers/
+.harness-run
