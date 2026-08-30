@@ -46,8 +46,8 @@
   "performance": {
     "token_management": {
       "auto_compress_threshold": 0.6,
-      "emergency_threshold": 0.80,
-      "reserve_percentage": 0.10
+      "emergency_threshold": 0.8,
+      "reserve_percentage": 0.1
     },
     "parallel_operations": {
       "enabled": true,
@@ -119,14 +119,39 @@
     "documentation_format": "markdown"
   },
   "command_defaults": {
-    "/analyze": ["--think", "--seq"],
-    "/build": ["--uc", "--validate"],
-    "/implement": ["--c7", "--magic"],
-    "/improve": ["--loop", "--validate"],
-    "/document": ["--persona-scribe", "--c7"],
-    "/test": ["--persona-qa", "--play"],
-    "/troubleshoot": ["--think", "--seq", "--persona-analyzer"],
-    "/git": ["--persona-devops", "--validate"]
+    "/analyze": [
+      "--think",
+      "--seq"
+    ],
+    "/build": [
+      "--uc",
+      "--validate"
+    ],
+    "/implement": [
+      "--c7",
+      "--magic"
+    ],
+    "/improve": [
+      "--loop",
+      "--validate"
+    ],
+    "/document": [
+      "--persona-scribe",
+      "--c7"
+    ],
+    "/test": [
+      "--persona-qa",
+      "--play"
+    ],
+    "/troubleshoot": [
+      "--think",
+      "--seq",
+      "--persona-analyzer"
+    ],
+    "/git": [
+      "--persona-devops",
+      "--validate"
+    ]
   },
   "advanced": {
     "experimental_features": false,
@@ -159,5 +184,21 @@
     "emoji_enabled": true,
     "table_formatting": "github",
     "diagram_format": "mermaid"
+  },
+  "enabledPlugins": {
+    "planning@newkayak12-claude-skills": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Task|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/goal-gate.mjs\""
+          }
+        ]
+      }
+    ]
   }
 }
