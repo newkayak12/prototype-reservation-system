@@ -9,6 +9,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -20,7 +21,7 @@ class CreateRestaurantController(
 ) {
     @PostMapping(RestaurantUrl.CREATE_RESTAURANT, consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun createRestaurant(
-        header: HttpHeaders,
+        @RequestHeader header: HttpHeaders,
         @RequestPart(name = "request") @Valid request: CreateRestaurantRequest,
         @RequestPart(name = "photos") photos: List<MultipartFile> = listOf(),
     ): BooleanResponse {

@@ -4,6 +4,8 @@ import com.reservation.enumeration.AccessStatus
 import com.reservation.persistence.common.TimeBasedPrimaryKey
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Table
 import org.hibernate.annotations.Comment
 import java.time.LocalDateTime
@@ -24,6 +26,7 @@ class UserAccessHistoryEntity(
 
     @Column(name = "access_status", columnDefinition = "ENUM ('SUCCESS', 'FAILURE')")
     @Comment("상태(SUCCESS, FAILURE)")
+    @Enumerated(value = EnumType.STRING)
     val accessStatus: AccessStatus = accessStatus
 
     @Column(name = "access_datetime", columnDefinition = "DATETIME")

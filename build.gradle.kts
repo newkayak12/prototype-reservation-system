@@ -62,7 +62,12 @@ jacoco {
 
 fun String.runCommand(): String =
     ProcessBuilder(*split(" ").toTypedArray())
+        .directory(project.projectDir)
         .redirectErrorStream(true)
+        .apply {
+            environment().remove("GIT_DIR")
+            environment().remove("GIT_WORK_TREE")
+        }
         .start()
         .inputStream
         .bufferedReader()
@@ -125,7 +130,10 @@ tasks.named("gitPreCommitHook") {
     outputs.cacheIf { false }
     outputs.upToDateWhen { false }
     doLast {
-        val hookFile = File(project.rootDir, ".git/hooks/pre-commit")
+        val gitCommonDir = "git rev-parse --git-common-dir".runCommand().trim()
+        val gitCommonDirFile =
+            File(gitCommonDir).let { if (it.isAbsolute) it else File(project.rootDir, gitCommonDir) }
+        val hookFile = gitCommonDirFile.resolve("hooks/pre-commit")
         if (!hookFile.exists()) {
             hookFile.parentFile.mkdirs()
             hookFile.writeText(

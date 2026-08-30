@@ -223,6 +223,14 @@ redis/sentinel-3/
 .claude/settings.json
 .kotlin
 
+
+# k6 perf test generated artifacts
+perf/k6/results/
+perf/k6/lib/env.json
+perf/k6/lib/users.json
+perf/k6/lib/users.ndjson
+perf/k6/lib/seed.generated.sql
+perf/k6/lib/__pycache__/
 # Harness (cycle-discipline 툴링 — 레포에 커밋하지 않음. docs/ 산출물은 추적)
 cycles/
 .claude/.feedback/
