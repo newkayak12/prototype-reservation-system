@@ -1,0 +1,32 @@
+{
+  "label": "before-rerun",
+  "levels": [
+    {
+      "crowd": 10000,
+      "seats": 30,
+      "runs": 5,
+      "discarded": 0,
+      "fireSkewMaxMs": 66,
+      "fireSkewP95Ms": 62,
+      "pageOpenFailed": 0,
+      "seatWon": 30,
+      "soldOut": 9689,
+      "rejected": 0,
+      "error5xx": 0,
+      "noAnswer": 0,
+      "dropped": 79,
+      "unreachable": 189,
+      "soldOutSec": 0.8,
+      "lastAnswerSec": 28.2,
+      "waitP50Ms": 14583,
+      "waitP95Ms": 26966.2,
+      "waitP99Ms": 27954.6,
+      "settleSec": 2.4,
+      "overbookedSlots": 0,
+      "unsoldSlots": 0,
+      "mysqlCpuPeak": 12.3,
+      "dbSaturatedAny": false,
+      "portPressureAny": false
+    }
+  ]
+}
