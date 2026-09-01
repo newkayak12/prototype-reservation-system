@@ -1,0 +1,9 @@
+apiVersion: v2
+name: edge
+description: >-
+  엣지(입구) — GatewayClass(envoy) + Gateway(HTTP :80).
+  Envoy Gateway operator 가 이 Gateway 를 보고 Envoy 프록시 데이터플레인을 프로비저닝한다.
+  실제 라우팅(HTTPRoute)은 앱 워크로드가 생기는 Phase 7 에 추가한다.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
