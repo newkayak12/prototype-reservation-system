@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.reservation.httpinterface.exceptions.ResponseBodyRequiredException
 import com.reservation.httpinterface.timetable.FindTimeTableOccupancyHttpInterface
 import com.reservation.httpinterface.timetable.response.FindTimeTableOccupancyInternallyHttpInterfaceResponse
+import com.reservation.kafka.config.KafkaConfig.Companion.OCCUPIED_CONSUMER
 import com.reservation.kafka.config.KafkaHeader.ERROR_REASON_KEY
 import com.reservation.kafka.config.KafkaHeader.FAILED_TIMESTAMP_KEY
 import com.reservation.kafka.config.KafkaHeader.ORIGINAL_TOPIC_KEY
 import com.reservation.kafka.config.KafkaHeader.RETRY_COUNT_KEY
+import com.reservation.kafka.config.KafkaTopic
 import com.reservation.kafka.event.TimeTableOccupancyReceivedEvent
 import com.reservation.reservation.port.input.CreateReservationUseCase
 import com.reservation.reservation.port.input.IsReservationExistsUseCase
@@ -21,6 +23,7 @@ import jakarta.annotation.PreDestroy
 import kotlin.math.pow
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.header.Headers
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 import java.nio.charset.StandardCharsets
@@ -35,13 +38,21 @@ class TimeTableOccupancyKafkaListener(
     private val createReservationUseCase: CreateReservationUseCase,
     private val isReservationExistsUseCase: IsReservationExistsUseCase,
     private val kafkaTemplate: KafkaTemplate<String, String>,
+    @Qualifier(OCCUPIED_CONSUMER)
     private val parallelEventConsumer: ParallelStreamProcessor<String, String>,
     private val objectMapper: ObjectMapper,
 ) {
     private val log = loggerFactory<TimeTableOccupancyKafkaListener>()
 
     companion object {
-        const val TOPIC = "time-table-occupancy"
+        /**
+         * 프로듀서와 같은 상수를 본다.
+         *
+         * 여기에는 `"time-table-occupancy"`가 박혀 있었고 프로듀서는
+         * `OutboxEventType.TIME_TABLE_OCCUPIED`를 토픽으로 썼다. 이름이 다르니 발행된 메시지를
+         * 아무도 구독하지 않았고, 브로커에는 두 토픽이 나란히 만들어졌다.
+         */
+        const val TOPIC = KafkaTopic.TIME_TABLE_OCCUPIED
         const val DLT_SUFFIX = "dlt"
         const val GROUP_ID = "reservation-service"
         const val RETRY_ATTEMPTS = 3

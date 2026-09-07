@@ -7,6 +7,7 @@ import com.reservation.enumeration.OutboxEventType.TIME_TABLE_OCCUPIED
 import com.reservation.event.abstractEvent.AbstractEvent
 import com.reservation.kafka.config.KafkaHeader.ORIGINAL_TOPIC_KEY
 import com.reservation.kafka.config.KafkaHeader.RETRY_COUNT_KEY
+import com.reservation.kafka.config.KafkaTopic
 import com.reservation.persistence.outbox.entity.OutBox
 import com.reservation.persistence.outbox.repository.OutboxRepository
 import com.reservation.timetable.event.TimeTableOccupiedDomainEvent
@@ -57,7 +58,9 @@ class TimeTableOccupiedDomainEventListener(
         val outboxId = outboxEvent.outboxId
         val createdEvent = outboxEvent.event
 
-        val kafkaTopic = createdEvent.eventType.name
+        // enum 이름을 토픽으로 쓰던 자리다. 컨슈머가 보는 상수와 같은 것을 보게 바꿨다 —
+        // 양쪽이 서로를 참조하지 않으면 이름이 어긋나도 컴파일도 테스트도 통과한다.
+        val kafkaTopic = KafkaTopic.TIME_TABLE_OCCUPIED
         val kafkaKey = createdEvent.key()
 
         val outbox =

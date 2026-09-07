@@ -72,6 +72,19 @@ def summarize(crowd, bucket):
     def g(fn):
         return med([fn(r) for r in runs])
 
+    # 대기열은 after 전용 단계다. before의 회차 파일에는 queue 키 자체가 없으므로
+    # 전부 .get 으로 읽는다 — 이 스크립트는 양쪽 결과를 같은 코드로 집계해야 하고,
+    # before를 재집계할 때 표가 달라지면 안 된다.
+    def q(r, *path):
+        node = r.get("queue") or {}
+        for k in path:
+            if not isinstance(node, dict):
+                return None
+            node = node.get(k)
+        return node
+
+    queue_used = any(q(r, "skipped") is False for r in runs)
+
     return {
         "crowd": crowd,
         "seats": runs[0].get("seats"),
@@ -95,6 +108,18 @@ def summarize(crowd, bucket):
         "waitP50Ms": g(lambda r: r["timing"]["waitMs"]["p50"]),
         "waitP95Ms": g(lambda r: r["timing"]["waitMs"]["p95"]),
         "waitP99Ms": g(lambda r: r["timing"]["waitMs"]["p99"]),
+
+        "queueUsed": queue_used,
+        "queueAdmitted": g(lambda r: q(r, "admitted")),
+        "queueEnterFailed": g(lambda r: q(r, "enterFailed")),
+        "queueGaveUp": g(lambda r: q(r, "gaveUp")),
+        "queueWaitP50Ms": g(lambda r: q(r, "waitMs", "p50")),
+        "queueWaitP95Ms": g(lambda r: q(r, "waitMs", "p95")),
+        "queuePolls": g(lambda r: q(r, "polls")),
+        "originRequests": g(lambda r: q(r, "originRequests")),
+        "pollSec": q(runs[0], "pollSec"),
+        "bookingP50Ms": g(lambda r: (r["timing"].get("bookingMs") or {}).get("p50")),
+        "bookingP95Ms": g(lambda r: (r["timing"].get("bookingMs") or {}).get("p95")),
 
         "settleSec": g(lambda r: r["_settle"].get("settleSeconds")),
         "overbookedSlots": max((r["_integrity"].get("overbookedSlots", 0) for r in runs),
@@ -178,6 +203,42 @@ def render(rows, label):
             f"{fmt(r['waitP50Ms'], 'ms')} | {fmt(r['waitP95Ms'], 'ms')} | "
             f"{fmt(r['waitP99Ms'], 'ms')} | {fmt(r['settleSec'], 's')} |"
         )
+
+    # 대기열이 없는 라벨(before)에서는 이 절 자체를 내지 않는다. 빈 표를 붙이면
+    # before 요약이 "대기열이 있었는데 0이었다"로 읽힌다 — 그런 단계는 없었다.
+    if any(r.get("queueUsed") for r in rows):
+        poll = next((r["pollSec"] for r in rows if r.get("pollSec") is not None), None)
+        out += [
+            "",
+            "## 대기열 (after 전용)",
+            "",
+            "위 `대기 p50/p95`는 **줄 서는 시간을 포함한** 값이다 — 사용자가 버튼을 누르고",
+            "답을 받기까지고, before와 같은 잣대다. `예약 p95`는 대기를 뺀 예약 호출 자체의",
+            "지연이라, 둘을 같이 봐야 느림의 출처가 갈린다.",
+            "",
+            f"`포기`는 0이어야 정상이다. 0이 아니면 대기 예산이 짧은 게 아니라 승격이 막힌 것이므로,",
+            "그 회차는 원인을 찾기 전까지 결과로 읽으면 안 된다.",
+            "",
+            f"`폴링`은 before에 존재하지 않는 부하다. 이걸 세지 않으면 after의 실부하가 통계에서",
+            f"사라진다. 실제 배포에서는 폴링 간격(={poll}s)이 CDN TTL이라 이 몫이 엣지로 넘어간다.",
+            "",
+            "| 인원 | 입장 | 진입 실패 | 포기 | 대기 p50 | p95 | 예약 p50 | 예약 p95 | 폴링 | 앱이 받은 요청 | 폴링 비중 |",
+            "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        ]
+        for r in rows:
+            if not r["runs"]:
+                out.append(f"| {r['crowd']:,} |" + " — |" * 10)
+                continue
+            polls, origin = r["queuePolls"], r["originRequests"]
+            share = f"{polls / origin * 100:.0f}%" if polls and origin else "—"
+            gave = r["queueGaveUp"]
+            out.append(
+                f"| {r['crowd']:,} | {fmt(r['queueAdmitted'])} | {fmt(r['queueEnterFailed'])} | "
+                f"{fmt(gave)}{' ★' if gave else ''} | "
+                f"{fmt(r['queueWaitP50Ms'], 'ms')} | {fmt(r['queueWaitP95Ms'], 'ms')} | "
+                f"{fmt(r['bookingP50Ms'], 'ms')} | {fmt(r['bookingP95Ms'], 'ms')} | "
+                f"{fmt(polls)} | {fmt(origin)} | {share} |"
+            )
 
     out += [
         "",

@@ -140,7 +140,7 @@ class CreateTimeTableOccupancyDomainServiceTest : BehaviorSpec(
                 Then(
                     """
                     TimeTableSnapshot이 반환되고
-                    And: TimetableOccupancy가 OCCUPIED 상태로 생성되고
+                    And: TimetableOccupancy가 PENDING 상태로 생성되고
                     And: 점유 시간이 현재 시간으로 설정되고
                     And: 해제 시간은 null이다
                     """.trimIndent(),
@@ -148,7 +148,10 @@ class CreateTimeTableOccupancyDomainServiceTest : BehaviorSpec(
                     val timetableOccupancy = result.timetableOccupancy
                     result.shouldBeInstanceOf<TimeTableSnapshot>()
                     timetableOccupancy shouldNotBe null
-                    timetableOccupancy?.occupiedStatus shouldBe OccupyStatus.OCCUPIED
+                    // 좌석을 잡는 것과 사용자가 그 좌석을 쓰겠다고 확정하는 것은 다른 사건이다.
+                    // 그래서 점유는 확정이 아니라 임시 홀드에서 시작한다 — 확정되지 않은 홀드는
+                    // 만료 스케줄러가 회수한다.
+                    timetableOccupancy?.occupiedStatus shouldBe OccupyStatus.PENDING
                     timetableOccupancy?.occupiedDatetime shouldNotBe null
                     timetableOccupancy?.unoccupiedDatetime shouldBe null
                 }

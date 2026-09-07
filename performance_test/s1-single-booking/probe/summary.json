@@ -1,0 +1,43 @@
+{
+  "label": "probe",
+  "levels": [
+    {
+      "crowd": 1000,
+      "seats": 30,
+      "runs": 1,
+      "discarded": 0,
+      "fireSkewMaxMs": 8,
+      "fireSkewP95Ms": 8,
+      "pageOpenFailed": 0,
+      "seatWon": 30,
+      "soldOut": 970,
+      "rejected": 0,
+      "error5xx": 0,
+      "noAnswer": 0,
+      "dropped": 0,
+      "unreachable": 0,
+      "soldOutSec": 0.3,
+      "lastAnswerSec": 0.5,
+      "waitP50Ms": 315,
+      "waitP95Ms": 446,
+      "waitP99Ms": 453,
+      "queueUsed": true,
+      "queueAdmitted": 1000,
+      "queueEnterFailed": 0,
+      "queueGaveUp": 0,
+      "queueWaitP50Ms": 0,
+      "queueWaitP95Ms": 0,
+      "queuePolls": 0,
+      "originRequests": 2000,
+      "pollSec": 0.5,
+      "bookingP50Ms": 310,
+      "bookingP95Ms": 439,
+      "settleSec": 2.4,
+      "overbookedSlots": 0,
+      "unsoldSlots": 0,
+      "mysqlCpuPeak": 2.4,
+      "dbSaturatedAny": false,
+      "portPressureAny": false
+    }
+  ]
+}

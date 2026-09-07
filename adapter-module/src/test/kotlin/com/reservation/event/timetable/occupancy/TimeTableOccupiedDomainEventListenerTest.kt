@@ -3,13 +3,10 @@ package com.reservation.event.timetable.occupancy
 import com.ninjasquad.springmockk.MockkBean
 import com.ninjasquad.springmockk.SpykBean
 import com.reservation.enumeration.OutboxEventType.TIME_TABLE_OCCUPIED
-import com.reservation.enumeration.TableStatus
-import com.reservation.enumeration.TimeTableConfirmStatus
-import com.reservation.timetable.TimeTable
-import com.reservation.timetable.port.input.command.request.CreateTimeTableOccupancyCommand
-import com.reservation.timetable.port.output.CreateTimeTableOccupancy
-import com.reservation.timetable.port.output.LoadBookableTimeTables
-import com.reservation.timetable.usecase.CreateTimeTableOccupancyService
+import com.reservation.timetable.port.input.ConfirmTimeTableOccupancyUseCase
+import com.reservation.timetable.port.input.command.request.ConfirmTimeTableOccupancyCommand
+import com.reservation.timetable.port.output.ConfirmTimeTableOccupancy
+import com.reservation.timetable.port.output.ConfirmTimeTableOccupancy.ConfirmedOccupancy
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import io.mockk.every
 import io.mockk.verify
@@ -92,16 +89,22 @@ class TimeTableOccupiedDomainEventListenerTest {
     }
 
     @MockkBean
-    private lateinit var loadBookableTimeTables: LoadBookableTimeTables
-
-    @MockkBean
-    private lateinit var createTimeTableOccupancy: CreateTimeTableOccupancy
+    private lateinit var confirmTimeTableOccupancy: ConfirmTimeTableOccupancy
 
     @SpykBean
     private lateinit var kafkaTemplate: KafkaTemplate<String, String>
 
+    /**
+     * 진입점이 두 번 옮겨졌다.
+     *
+     * 원래는 사용자 요청 경로에서 저장과 발행이 같이 일어났다. Phase 3에서 저장이 컨슈머로
+     * 넘어갔고, Phase 4에서는 발행이 다시 **확정 시점**으로 옮겨졌다 — 좌석을 잡는 시점의 점유는
+     * 아직 PENDING이라, 거기서 발행하면 확정되지 않고 만료될 홀드까지 하류 예약으로 전파된다.
+     *
+     * 그래서 이 테스트가 보려는 outbox → Kafka 발행을 일으키려면 확정을 호출해야 한다.
+     */
     @Autowired
-    private lateinit var createTimeTableOccupancyService: CreateTimeTableOccupancyService
+    private lateinit var confirmTimeTableOccupancyUseCase: ConfirmTimeTableOccupancyUseCase
 
     @Autowired
     private lateinit var kafkaAdmin: KafkaAdmin
@@ -120,25 +123,10 @@ class TimeTableOccupiedDomainEventListenerTest {
         }
     }
 
-    private fun createValidTimeTable() =
-        TimeTable(
-            UuidGenerator.generate(),
-            UuidGenerator.generate(),
-            LocalDate.now(),
-            LocalDate.now().dayOfWeek,
-            LocalTime.of(11, 0),
-            LocalTime.of(12, 0),
-            1,
-            1,
-            TableStatus.EMPTY,
-            TimeTableConfirmStatus.NOT_CONFIRMED,
-            null,
-        )
-
     @Test
     fun `when Publish Event`() {
         val command =
-            CreateTimeTableOccupancyCommand(
+            ConfirmTimeTableOccupancyCommand(
                 UuidGenerator.generate(),
                 UuidGenerator.generate(),
                 LocalDate.now(),
@@ -146,14 +134,14 @@ class TimeTableOccupiedDomainEventListenerTest {
             )
 
         every {
-            loadBookableTimeTables.query(any())
-        } returns listOf(createValidTimeTable())
+            confirmTimeTableOccupancy.confirm(any())
+        } returns
+            ConfirmedOccupancy(
+                timeTableId = UuidGenerator.generate(),
+                timeTableOccupancyId = UuidGenerator.generate(),
+            )
 
-        every {
-            createTimeTableOccupancy.createTimeTableOccupancy(any())
-        } returns UuidGenerator.generate()
-
-        createTimeTableOccupancyService.execute(command)
+        confirmTimeTableOccupancyUseCase.execute(command)
 
         verify(exactly = 1) {
             kafkaTemplate.send(

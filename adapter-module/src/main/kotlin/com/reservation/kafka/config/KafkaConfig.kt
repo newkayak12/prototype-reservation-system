@@ -34,6 +34,20 @@ class KafkaConfig(
         const val FETCH_MIN_BYTES = "fetch.min.bytes"
         const val FETCH_MAX_WAIT_MS = "fetch.max.wait.ms"
         const val TEN_SECONDS = 10L
+
+        /** 하류 예약 생성 컨슈머. */
+        const val OCCUPIED_CONSUMER = "parallelConsumer"
+
+        /** 좌석 점유 요청 컨슈머. */
+        const val OCCUPANCY_REQUEST_CONSUMER = "occupancyRequestParallelConsumer"
+
+        /**
+         * 점유 요청 컨슈머만 다른 컨슈머 그룹을 쓴다.
+         *
+         * 같은 그룹의 멤버들이 서로 다른 토픽을 구독하면 리밸런스마다 마지막에 합류한 멤버의
+         * 구독을 기준으로 파티션이 재배정되면서 한쪽이 굶는다. 토픽이 다르면 그룹도 나눈다.
+         */
+        const val OCCUPANCY_REQUEST_GROUP_SUFFIX = "-occupancy-request"
     }
 
     private fun resolveProducerBootstrapServers(kafkaProperties: KafkaProperties): List<String>? =
@@ -93,7 +107,10 @@ class KafkaConfig(
         producerFactory: ProducerFactory<String, String>,
     ): KafkaTemplate<String, String> = KafkaTemplate(producerFactory)
 
-    private fun createConsumerConfig(kafkaProperties: KafkaProperties): Map<String, Any> {
+    private fun createConsumerConfig(
+        kafkaProperties: KafkaProperties,
+        groupIdSuffix: String,
+    ): Map<String, Any> {
         val consumerConfig = kafkaProperties.consumer
         val properties = consumerConfig.properties ?: emptyMap()
 
@@ -103,7 +120,9 @@ class KafkaConfig(
         consumerConfig.bootstrapServers?.let {
             configMap[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = it
         }
-        consumerConfig.groupId?.let { configMap[ConsumerConfig.GROUP_ID_CONFIG] = it }
+        consumerConfig.groupId?.let {
+            configMap[ConsumerConfig.GROUP_ID_CONFIG] = it + groupIdSuffix
+        }
         consumerConfig.autoOffsetReset?.let {
             configMap[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = it
         }
@@ -134,8 +153,9 @@ class KafkaConfig(
 
     private fun createParallelConsumerOptions(
         kafkaProperties: KafkaProperties,
+        groupIdSuffix: String,
     ): ParallelConsumerOptionsBuilder<String, String> {
-        val configProps = createConsumerConfig(kafkaProperties)
+        val configProps = createConsumerConfig(kafkaProperties, groupIdSuffix)
         val kafkaConsumer = KafkaConsumer<String, String>(configProps)
 
         return ParallelConsumerOptions.builder<String, String>()
@@ -144,15 +164,36 @@ class KafkaConfig(
             .consumer(kafkaConsumer) // KafkaConsumer 직접 전달
     }
 
-    @Bean
-    fun parallelConsumer(
+    private fun createStreamProcessor(
         kafkaProperties: KafkaProperties,
+        groupIdSuffix: String,
     ): ParallelStreamProcessor<String, String> {
         val consumer =
-            createParallelConsumerOptions(kafkaProperties)
+            createParallelConsumerOptions(kafkaProperties, groupIdSuffix)
                 .shutdownTimeout(Duration.ofSeconds(TEN_SECONDS))
                 .build()
 
         return ParallelStreamProcessor.createEosStreamProcessor(consumer)
     }
+
+    @Bean(OCCUPIED_CONSUMER)
+    fun parallelConsumer(
+        kafkaProperties: KafkaProperties,
+    ): ParallelStreamProcessor<String, String> = createStreamProcessor(kafkaProperties, "")
+
+    /**
+     * 좌석 점유 요청 전용 컨슈머.
+     *
+     * 컨슈머를 하나 더 두는 이유는 [ParallelStreamProcessor]가 `subscribe` + `poll`을 한 번씩만
+     * 받는 물건이기 때문이다. 기존 빈을 두 리스너가 나눠 쓰면 나중에 초기화된 쪽이 앞선 구독을
+     * 덮어써서 한쪽 토픽이 조용히 소비되지 않는다.
+     *
+     * `ProcessingOrder.KEY`(설정 파일 기준)를 그대로 물려받는다 — 이 컨슈머에는 그 설정이
+     * 편의가 아니라 필수다. 같은 슬롯의 요청이 병렬로 처리되면 둘이 같은 좌석 행을 집는다.
+     */
+    @Bean(OCCUPANCY_REQUEST_CONSUMER)
+    fun occupancyRequestParallelConsumer(
+        kafkaProperties: KafkaProperties,
+    ): ParallelStreamProcessor<String, String> =
+        createStreamProcessor(kafkaProperties, OCCUPANCY_REQUEST_GROUP_SUFFIX)
 }

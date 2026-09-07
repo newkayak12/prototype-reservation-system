@@ -37,10 +37,13 @@ for p in $PIDS; do
   # 이전 버전은 정확히 'before'/'after'만 매칭해서, before-2 는 *) 로 빠지며
   # 워크트리 검사를 통째로 건너뛰었다. 이 스크립트에서 가장 중요한 검사가
   # 재측정에서만 조용히 꺼지는 셈이라, 접두사로 매칭한다.
+  # 이 하네스는 두 워크트리에 같은 내용으로 존재한다. 그래서 "내가 있는 곳"($REPO_ROOT)을
+  # 기준으로 판정하면 안 된다 — after 워크트리의 사본으로 before를 재려 할 때 REPO_ROOT가
+  # after를 가리켜 검사가 거꾸로 통과한다. 워크트리는 경로 자체로 판정한다.
   case "$LABEL" in
-    before*) [[ "$CWD" == "$REPO_ROOT" ]] \
+    before*) [[ "$CWD" != *"chore-performance-test-after"* ]] \
               && ok "before 워크트리 빌드 확인 (label=$LABEL)" \
-              || bad "before 계열을 재려는데 CWD가 $REPO_ROOT 가 아니다" ;;
+              || bad "before 계열을 재려는데 8081에 after 빌드가 떠 있다" ;;
     after*)  [[ "$CWD" == *"chore-performance-test-after"* ]] \
               && ok "after 워크트리 빌드 확인 (label=$LABEL)" \
               || bad "after 계열을 재려는데 after 워크트리가 아니다" ;;

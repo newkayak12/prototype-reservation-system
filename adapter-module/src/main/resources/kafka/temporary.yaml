@@ -10,7 +10,10 @@ spring:
             batch-size: 16384
             buffer-memory: 33554432
             key-serializer: org.apache.kafka.common.serialization.StringSerializer
-            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+            # 애플리케이션이 objectMapper.writeValueAsString()으로 이미 직렬화한 문자열을 보낸다.
+            # 그 위에 JsonSerializer를 얹으면 이중 인코딩이 된다. 토픽명이 어긋나 아무것도
+            # 소비되지 않던 동안에는 드러나지 않았을 뿐이다 (local 프로파일과 동일하게 맞춤).
+            value-serializer: org.apache.kafka.common.serialization.StringSerializer
             properties:
                 linger.ms: 5
                 enable.idempotence: false  # 중복 방지
@@ -23,7 +26,9 @@ spring:
             auto-offset-reset: earliest
             enable-auto-commit: false  # 수동 커밋으로 정확한 처리 보장
             key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-            value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+            # 컨슈머도 문자열로 받아 애플리케이션이 직접 파싱한다
+            # (KafkaConsumer<String, String>으로 생성되므로 타입이 맞아야 한다).
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
             properties:
                 isolation.level: read_committed  # 트랜잭션 커밋된 메시지만 읽기
                 session.timeout.ms: 30000
