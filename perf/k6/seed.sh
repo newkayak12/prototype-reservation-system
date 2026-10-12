@@ -50,13 +50,13 @@ SQL
 echo "==> Seeding restaurant $RESTAURANT_ID + $SEAT_COUNT timetable seats on $BOOKING_DATE $BOOKING_DAY $START_TIME"
 {
   echo "INSERT INTO restaurant (id, name, phone, zip_code, address, detail, is_deleted) VALUES"
-  echo "  ('$RESTAURANT_ID', '$RESTAURANT_NAME', '0212345678', '06236', 'Seoul', 'K6 load test fixture', 0);"
+  echo "  (UNHEX(REPLACE('$RESTAURANT_ID','-','')), '$RESTAURANT_NAME', '0212345678', '06236', 'Seoul', 'K6 load test fixture', 0);"
   echo "INSERT INTO timetable (id, restaurant_id, date, day, start_time, end_time, table_number, table_size, table_status, time_table_confirm_status, version) VALUES"
   for i in $(seq 1 "$SEAT_COUNT"); do
     tid="$(uuid)"
     sep=","
     if [ "$i" -eq "$SEAT_COUNT" ]; then sep=";"; fi
-    echo "  ('$tid', '$RESTAURANT_ID', '$BOOKING_DATE', '$BOOKING_DAY', '$START_TIME', '$END_TIME', $i, 4, 'EMPTY', 'NOT_CONFIRMED', 0)$sep"
+    echo "  (UNHEX(REPLACE('$tid','-','')), UNHEX(REPLACE('$RESTAURANT_ID','-','')), '$BOOKING_DATE', '$BOOKING_DAY', '$START_TIME', '$END_TIME', $i, 4, 'EMPTY', 'NOT_CONFIRMED', 0)$sep"
   done
 } > "$LIB_DIR/seed.generated.sql"
 
@@ -109,7 +109,7 @@ for i in range(1, pool_size + 1):
     login_id = f"{prefix}{n}"
     users.append({"loginId": login_id, "password": password})
     rows.append(
-        "('{id}','{lid}','{pw}','{lid}@t.local','{lid}','010{mob}','USER',0,NULL,'ACTIVATED',0)".format(
+        "(UNHEX(REPLACE('{id}','-','')),'{lid}','{pw}','{lid}@t.local','{lid}','010{mob}','USER',0,NULL,'ACTIVATED',0)".format(
             id=str(uuid.uuid4()), lid=login_id, pw=pw_hash, mob=str(i).zfill(8)
         )
     )

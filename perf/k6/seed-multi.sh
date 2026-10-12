@@ -76,7 +76,7 @@ restaurants, slots, seat_rows = [], [], []
 for _ in range(r_count):
     rid = str(uuid.uuid4())
     restaurants.append(
-        f"('{rid}', '{name}', '0212345678', '06236', 'Seoul', 'K6 load test fixture', 0)"
+        f"(UNHEX(REPLACE('{rid}','-','')), '{name}', '0212345678', '06236', 'Seoul', 'K6 load test fixture', 0)"
     )
     for s in range(s_count):
         start, end = slot_times(s)
@@ -84,7 +84,7 @@ for _ in range(r_count):
                       "startTime": start, "endTime": end})
         for n in range(1, seat_count + 1):
             seat_rows.append(
-                f"('{uuid.uuid4()}', '{rid}', '{date}', '{day}', '{start}', '{end}', "
+                f"(UNHEX(REPLACE('{uuid.uuid4()}','-','')), UNHEX(REPLACE('{rid}','-','')), '{date}', '{day}', '{start}', '{end}', "
                 f"{n}, 4, 'EMPTY', 'NOT_CONFIRMED', 0)"
             )
 
@@ -132,7 +132,7 @@ for i in range(1, pool_size + 1):
     login_id = f"{prefix}{n}"
     users.append({"loginId": login_id, "password": password})
     rows.append(
-        "('{id}','{lid}','{pw}','{lid}@t.local','{lid}','010{mob}','USER',0,NULL,'ACTIVATED',0)".format(
+        "(UNHEX(REPLACE('{id}','-','')),'{lid}','{pw}','{lid}@t.local','{lid}','010{mob}','USER',0,NULL,'ACTIVATED',0)".format(
             id=str(uuid.uuid4()), lid=login_id, pw=pw_hash, mob=str(i).zfill(8)
         )
     )

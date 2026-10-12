@@ -49,7 +49,7 @@ users, rows = [], []
 for i in range(1, pool + 1):
     lid = f"{prefix}{str(i).zfill(width)}"
     users.append({"loginId": lid, "password": password})
-    rows.append("('{id}','{l}','{p}','{l}@t.local','{l}','010{m}','USER',0,NULL,'ACTIVATED',0)"
+    rows.append("(UNHEX(REPLACE('{id}','-','')),'{l}','{p}','{l}@t.local','{l}','010{m}','USER',0,NULL,'ACTIVATED',0)"
                 .format(id=str(uuid.uuid4()), l=lid, p=pw_hash, m=str(i).zfill(8)))
 cols = ("INSERT INTO `user` (id, login_id, password, email, nickname, mobile, role, "
         "fail_count, locked_datetime, user_status, is_need_to_change_password) VALUES")
