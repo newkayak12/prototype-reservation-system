@@ -31,7 +31,7 @@ jobs:
                         PR NUMBER: ${{ github.event.pull_request.number }}
                         LANGUAGE: Korean
 
-                        ${{ secrets.OPENAI_PROMPT }}
+                        ${{ vars.CODE_REVIEW_PROMPT }}
 
                         구체적인 문제는 해당 라인에 인라인 코멘트로, 전체 요약은 PR 코멘트 하나로 남겨라.
                     claude_args: |
