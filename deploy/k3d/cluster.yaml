@@ -1,0 +1,40 @@
+# k3d 클러스터 정의 — 로컬 k3s(패리티) 환경
+# 적용: k3d cluster create --config deploy/k3d/cluster.yaml
+# 참고: DESIGN-012 §2 (k3s 단일 노드 클러스터)
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: reservation
+
+# 단일 서버 노드. 노드 분리(DESIGN-010 §4.2)는 운영 관심사이고 로컬은 단일 노드로 충분하다.
+# (노드 분리 구현 방식은 08-k6 측정 후 확정 — 로컬에서는 미적용)
+servers: 1
+agents: 0
+
+# k3s 버전 핀(재현성 — DESIGN-012 §4 "베이스 이미지 다이제스트 핀"의 취지).
+# 필요 시 최신 안정 태그로 갱신.
+image: rancher/k3s:v1.31.4-k3s1
+
+# Envoy Gateway(Phase 7)가 쓸 호스트 인그레스 포트. 로드밸런서 → 8080/8443 로 노출.
+ports:
+  - port: 8080:80
+    nodeFilters:
+      - loadbalancer
+  - port: 8443:443
+    nodeFilters:
+      - loadbalancer
+
+# 앱 이미지(Phase 7)를 로컬에서 밀어넣을 레지스트리.
+registries:
+  create:
+    name: reservation-registry
+    host: "0.0.0.0"
+    hostPort: "5001"
+
+options:
+  k3s:
+    extraArgs:
+      # traefik 비활성 — 엣지는 Envoy Gateway(Gateway API)로 간다(DESIGN-010 개정 2026-07-20).
+      - arg: --disable=traefik
+        nodeFilters:
+          - server:*

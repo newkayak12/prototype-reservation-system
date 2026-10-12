@@ -1,0 +1,60 @@
+{{- /* localstack — "AWS-고유 서비스만" 위임(DESIGN-012 §3): S3 / Secrets Manager / SSM. */ -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: localstack
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "data-plane.labels" . | nindent 4 }}
+    app: localstack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: localstack
+  template:
+    metadata:
+      labels:
+        {{- include "data-plane.labels" . | nindent 8 }}
+        app: localstack
+    spec:
+      containers:
+        - name: localstack
+          image: {{ .Values.localstack.image }}
+          env:
+            - name: SERVICES
+              value: {{ .Values.localstack.services | quote }}
+            - name: DEBUG
+              value: "0"
+          ports:
+            - containerPort: 4566
+              name: edge
+          readinessProbe:
+            httpGet:
+              path: /_localstack/health
+              port: 4566
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /_localstack/health
+              port: 4566
+            initialDelaySeconds: 20
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: localstack
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "data-plane.labels" . | nindent 4 }}
+    app: localstack
+spec:
+  type: ClusterIP
+  selector:
+    app: localstack
+  ports:
+    - port: 4566
+      targetPort: 4566
+      name: edge
