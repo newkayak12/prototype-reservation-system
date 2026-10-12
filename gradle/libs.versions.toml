@@ -6,9 +6,20 @@ springDependencyManagement = "1.1.6"
 
 # Database
 querydsl = "5.1.0"
-mysql = "8.0.33"
+# JDBC driver version for the Flyway Gradle plugin's own buildscript classpath (adapter-module).
+# That classpath is NOT managed by the Spring Boot BOM (io.spring.dependency-management only
+# governs this project's own configurations, never a buildscript{} classpath), so it must be
+# pinned explicitly here. Kept in sync with the version Spring Boot's BOM actually resolves for
+# the runtime classpath (confirmed via `./gradlew :infrastructure-module:dependencies
+# --configuration runtimeClasspath`: com.mysql:mysql-connector-j -> 9.1.0).
+mysql = "9.1.0"
 h2 = "2.2.224"
-flyway = "10.0.0"
+# Flyway Gradle plugin + flyway-mysql version for adapter-module's buildscript classpath, used by
+# the `flywayMigrate`/`flywayInfo` tasks. Must be >= the runtime version that is confirmed (via
+# flywayInfo/flywayMigrate's own version banner) to parse this repo's V1_22/V1_23 stored-procedure
+# bodies correctly: flyway-core 10.20.1 / flyway-mysql 10.20.1. Like `mysql` above, this classpath
+# is outside Spring Boot BOM management, so the version is pinned here rather than inherited.
+flyway = "10.20.1"
 jakarta-annotation = "3.0.0"
 jakarta-persistence = "3.1.0"
 
@@ -138,7 +149,11 @@ spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 asciidoctor = { id = "org.asciidoctor.jvm.convert", version.ref = "asciidoctor" }
 restdocs-api-spec = { id = "com.epages.restdocs-api-spec", version.ref = "restdocsApiSpec" }
 swagger-generator = { id = "org.hidetake.swagger.generator", version = "2.19.2" }
-flyway = { id = "org.flywaydb.flyway", version.ref = "flyway" }
+# No `flyway` plugin alias here: adapter-module applies the Flyway Gradle plugin the old-style
+# way (`buildscript { classpath(...) }` + `apply(plugin = "org.flywaydb.flyway")`), not via this
+# `plugins {}` DSL alias — see adapter-module/build.gradle.kts for why the two cannot coexist for
+# this plugin id. The `flyway` version above is still used directly as `libs.versions.flyway.get()`
+# for that buildscript classpath's coordinates.
 
 [bundles]
 spring-web = ["spring-boot-starter-web", "spring-boot-starter-validation", "spring-boot-starter-security", "spring-boot-starter-actuator"]
