@@ -9,6 +9,7 @@ import com.reservation.utilities.generator.uuid.UuidGenerator
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import jakarta.persistence.EntityManagerFactory
+import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -18,10 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
-import org.springframework.core.io.ClassPathResource
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
-import org.springframework.jdbc.datasource.init.DataSourceInitializer
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator
 import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter
@@ -52,6 +50,17 @@ import java.util.concurrent.TimeUnit.SECONDS
  * 트랜잭션 스냅샷이 우연히 "센다 → 고른다"를 일관되게 만들어 결함을 가려버리지만,
  * READ COMMITTED(Aurora 등에서 흔한 설정)에서는 두 워커가 각자 0을 세고 서로 다른 row를 골라
  * 정원의 두 배를 승격시킨다. `SELECT ... FOR UPDATE`가 그 창을 닫는다.
+ *
+ * ## 마이그레이션 적용 방식을 바꾼 이유 (2026-10-06, binary-pk 회귀 수정)
+ *
+ * 과거에는 `V1_19`/`V1_20`만 Spring `ResourceDatabasePopulator`로 적용했다. `V1_22`/`V1_23`
+ * (binary-pk expand/contract)이 추가되자 이 목록이 조용히 스키마와 어긋났다 — 실제 DB 컬럼은
+ * 여전히 VARCHAR(128)인데 `WaitingQueueEntity.restaurantId`/`userId`는 이미
+ * `UuidBinaryConverter`로 BINARY(16) 바이트를 insert하려 해서 깨졌다
+ * (`docs/v2/analysis/binary-pk-query-audit.md` §5). 게다가 `ResourceDatabasePopulator`는
+ * `V1_22`/`V1_23`의 `CREATE PROCEDURE ... BEGIN ... END` 블록(본문에 `;`가 여러 개 들어있다)을
+ * 애초에 올바르게 파싱하지 못한다 — 그래서 손으로 고른 부분집합을 보수하는 대신 **실제 Flyway
+ * 라이브러리로 전체 체인(`classpath:db/migration`, V1_0~최신)을 그대로 적용**하도록 바꿨다.
  */
 @ExtendWith(SpringExtension::class)
 @ContextConfiguration(
@@ -97,18 +106,14 @@ class WaitingQueueDatabaseAdapterIntegrationTest {
                 },
             )
 
-        /** 운영에서 쓰는 마이그레이션 DDL을 그대로 올린다. */
+        /** 운영에서 쓰는 마이그레이션 DDL을 실제 Flyway로, 전체 체인 그대로 올린다. */
         @Bean
-        fun dataSourceInitializer(dataSource: DataSource): DataSourceInitializer =
-            DataSourceInitializer().apply {
-                setDataSource(dataSource)
-                setDatabasePopulator(
-                    ResourceDatabasePopulator(
-                        ClassPathResource("db/migration/V1_19__waiting_queue.sql"),
-                        ClassPathResource("db/migration/V1_20__waiting_queue_user_id.sql"),
-                    ),
-                )
-            }
+        fun flywayMigration(dataSource: DataSource): Flyway =
+            Flyway.configure()
+                .dataSource(dataSource)
+                .locations("classpath:db/migration")
+                .load()
+                .also { it.migrate() }
 
         @Bean
         fun entityManagerFactory(dataSource: DataSource): LocalContainerEntityManagerFactoryBean =
@@ -147,7 +152,22 @@ class WaitingQueueDatabaseAdapterIntegrationTest {
         ticketId: String,
     ) = coordinator.enter(slot, userIdOf(ticketId), ticketId)
 
-    private fun userIdOf(ticketId: String) = "user-$ticketId"
+    /**
+     * 수정(2026-10-06, binary-pk 회귀 수정): 과거엔 `"user-$ticketId"`(접두사가 붙어 표준
+     * UUID 형식이 아님)를 썼다 — `restaurant_id`/`user_id`가 평문 VARCHAR였던 시절에는 아무
+     * 검증도 없어 그냥 저장됐을 뿐이다. `user_id`가 `UuidBinaryConverter`로 BINARY(16)
+     * 변환을 타게 된 지금은 `UuidBinaryCodec.encode`가 표준 UUID 형식을 요구해 매 호출이
+     * `IllegalArgumentException`으로 깨진다. 실제 운영에서 `userId`는 인증된 사용자의
+     * `user.id`(표준 UUID)이므로, 이 fixture도 표준 UUID 모양을 내도록 고친다 — ticketId의
+     * 32자 16진수를 뒤집어서 "같은 ticketId → 항상 같은 userId"(멱등)와 "다른 ticketId →
+     * 다른 userId"(유니크 제약 `unique_slot_user_id` 충족)를 그대로 유지한다.
+     */
+    private fun userIdOf(ticketId: String): String {
+        val reversedHex = ticketId.replace("-", "").reversed()
+        return listOf(0, 8, 12, 16, 20, 32)
+            .zipWithNext { start, end -> reversedHex.substring(start, end) }
+            .joinToString("-")
+    }
 
     @DisplayName("진입한 순서대로 순번이 매겨지고 같은 티켓은 순번을 유지한다.")
     @Test

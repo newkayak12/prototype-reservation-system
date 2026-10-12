@@ -7,6 +7,7 @@ import com.reservation.persistence.timetable.repository.jpa.TimeTableJpaReposito
 import com.reservation.persistence.timetable.repository.jpa.TimeTableOccupancyJpaRepository
 import com.reservation.utilities.generator.uuid.UuidGenerator
 import jakarta.persistence.EntityManagerFactory
+import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -62,6 +63,23 @@ import java.util.concurrent.atomic.AtomicInteger
  * 검증 대상이 애플리케이션 코드가 아니라 **DDL 그 자체**다. 테스트에 DDL을 따로 적어 두면
  * 마이그레이션이 틀려도 테스트는 통과한다 — 그건 아무것도 증명하지 않는다. 그래서
  * `db/migration`의 실제 파일을 읽어서 적용한다.
+ *
+ * ## 전체 체인으로 바꾼 이유 (2026-10-06, binary-pk 회귀 수정)
+ *
+ * 과거에는 이 테스트가 필요로 하는 테이블만 만드는 최소 체인(V1_13/V1_15/V1_16/V1_17/V1_21)을
+ * 손으로 골라 `;`로 잘라 직접 실행했다. `V1_22`/`V1_23`(binary-pk expand/contract)이 추가되자
+ * 이 손수 고른 목록이 조용히 스키마와 어긋났다 — 실제 DB 컬럼은 여전히 VARCHAR(128)인데
+ * `TimeTableEntity.restaurantId`는 이미 `UuidBinaryConverter`로 BINARY(16) 바이트를 만들어
+ * insert하려 해서 `Incorrect string value` 에러로 깨졌다
+ * (`docs/v2/analysis/binary-pk-query-audit.md` §5가 이 회귀를 처음 기록했다).
+ *
+ * "필요한 마이그레이션만 손으로 골라 쓰기"는 새 마이그레이션이 추가될 때마다 이런 drift를
+ * 재발시키는 구조적 결함이다. 그래서 목록을 보수하는 대신 **실제 Flyway 라이브러리로 전체
+ * 체인(`classpath:db/migration`, V1_0~최신)을 그대로 적용**하도록 바꿨다 — 운영이 쓰는 것과
+ * 정확히 같은 마이그레이션 적용 순서/파서를 쓰므로 이런 구조적 drift가 재발하지 않는다. 손으로
+ * 짠 `;` 분리기는 애초에 `V1_22`/`V1_23`의 `CREATE PROCEDURE ... BEGIN ... END` 블록(본문에
+ * `;`가 여러 개 들어있다)을 올바르게 파싱할 수도 없었다 — Flyway의 SQL 파서만 이를 안전하게
+ * 처리한다.
  */
 @ExtendWith(SpringExtension::class)
 @ContextConfiguration(
@@ -77,61 +95,19 @@ class TimeTableOccupancyConcurrencyTest {
         private const val CONTENDER_SIZE = 80
         private const val POOL_SIZE = 16
 
-        /**
-         * 이 테스트가 필요로 하는 테이블만 만드는 최소 체인.
-         *
-         * - `V1_13` : `timetable`
-         * - `V1_15` : `timetable_occupancy`
-         * - `V1_16` : `outbox` (V1_17이 함께 건드리므로 필요)
-         * - `V1_17` : `timetable.version` (엔티티의 `@Version`이 이 컬럼을 요구한다)
-         * - `V1_21` : `released_at` / `active_marker` / `UNIQUE(timetable_id, active_marker)`
-         */
-        private val MIGRATIONS =
-            listOf(
-                "db/migration/V1_13__schedule_context.sql",
-                "db/migration/V1_15__timetable.sql",
-                "db/migration/V1_16__outbox.sql",
-                "db/migration/V1_17__add_optimistic_lock_for_timetable.sql",
-                "db/migration/V1_21__timetable_occupancy_hold.sql",
-            )
-
         @JvmStatic
         @Container
         private val mysqlContainer =
             MySQLContainer(DockerImageName.parse("mysql:8.0.33"))
                 .withDatabaseName(DATABASE)
 
-        /**
-         * `--` 줄 주석을 걷어내고 `;`로 문장을 나눈다.
-         *
-         * 대상 파일이 전부 순수 DDL이라 이 정도로 충분하다. 문자열 리터럴 안에 `;`가 들어가는
-         * INSERT 계열 마이그레이션은 [MIGRATIONS]에 포함하지 않는다.
-         */
-        private fun statementsOf(resource: String): List<String> {
-            val sql =
-                checkNotNull(
-                    TimeTableOccupancyConcurrencyTest::class.java
-                        .classLoader
-                        .getResourceAsStream(resource),
-                ) { "마이그레이션을 클래스패스에서 찾지 못했다: $resource" }
-                    .bufferedReader()
-                    .readText()
-
-            return sql.lineSequence()
-                .filterNot { it.trimStart().startsWith("--") }
-                .joinToString("\n")
-                .split(";")
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-        }
-
+        /** 운영과 동일한 전체 Flyway 체인(`V1_0`~최신)을 실제 Flyway로 적용한다. */
         private fun migrate(dataSource: DataSource) {
-            dataSource.connection.use { connection ->
-                connection.createStatement().use { statement ->
-                    MIGRATIONS.flatMap { statementsOf(it) }
-                        .forEach { statement.execute(it) }
-                }
-            }
+            Flyway.configure()
+                .dataSource(dataSource)
+                .locations("classpath:db/migration")
+                .load()
+                .migrate()
         }
     }
 
