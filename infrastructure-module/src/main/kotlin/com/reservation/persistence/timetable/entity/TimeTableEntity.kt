@@ -4,7 +4,9 @@ import com.reservation.enumeration.TableStatus
 import com.reservation.enumeration.TimeTableConfirmStatus
 import com.reservation.enumeration.TimeTableConfirmStatus.NOT_CONFIRMED
 import com.reservation.persistence.common.TimeBasedPrimaryKey
+import com.reservation.persistence.converter.UuidBinaryConverter
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType.STRING
 import jakarta.persistence.Enumerated
@@ -23,7 +25,8 @@ import java.time.LocalTime
 @Entity
 @Suppress("LongParameterList")
 class TimeTableEntity(
-    @Column(name = "restaurant_id")
+    @Convert(converter = UuidBinaryConverter::class)
+    @Column(name = "restaurant_id", columnDefinition = "BINARY(16)")
     @Comment("매장 ID")
     val restaurantId: String,
     @Column(name = "date")

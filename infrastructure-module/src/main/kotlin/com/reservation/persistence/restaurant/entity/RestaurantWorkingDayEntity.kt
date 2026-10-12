@@ -22,10 +22,18 @@ import java.time.LocalTime
 class RestaurantWorkingDayEntity(
     @EmbeddedId
     val id: RestaurantWorkingDayId,
+    // ADR-028 결정 3 / inventory 3a#1: @MapsId가 공유하는 이 FK 컬럼은
+    // 참조되는 PK의 JDBC 타입(BINARY)은 물려받지만 길이는 안 물려받는다 —
+    // BinaryPkHibernateVerificationTest로 확인: columnDefinition 없이는
+    // Hibernate가 BINARY(255)를 생성한다(UserType의 기본 길이 255). 바이트
+    // 변환 자체는 맞지만 ddl-auto: validate가 실제 BINARY(16) 스키마와
+    // 불일치로 실패한다. 그래서 이 JoinColumn은 "순수 암묵 상속"이 아니라
+    // 명시적으로 columnDefinition을 재선언해야 하는 사이트다.
     @MapsId("identifier")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
         name = "restaurant_id",
+        columnDefinition = "BINARY(16)",
         insertable = true,
         nullable = false,
         updatable = false,

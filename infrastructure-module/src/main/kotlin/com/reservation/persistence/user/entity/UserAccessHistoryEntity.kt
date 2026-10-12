@@ -2,7 +2,9 @@ package com.reservation.persistence.user.entity
 
 import com.reservation.enumeration.AccessStatus
 import com.reservation.persistence.common.TimeBasedPrimaryKey
+import com.reservation.persistence.converter.UuidBinaryConverter
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -20,7 +22,8 @@ class UserAccessHistoryEntity(
     accessStatus: AccessStatus,
     accessDatetime: LocalDateTime,
 ) : TimeBasedPrimaryKey() {
-    @Column(name = "user_uuid", columnDefinition = "VARCHAR(128)")
+    @Convert(converter = UuidBinaryConverter::class)
+    @Column(name = "user_uuid", columnDefinition = "BINARY(16)")
     @Comment("식별키")
     val userUuid: String = userId
 

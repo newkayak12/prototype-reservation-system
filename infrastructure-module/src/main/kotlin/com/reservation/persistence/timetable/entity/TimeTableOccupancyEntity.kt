@@ -5,8 +5,10 @@ import com.reservation.enumeration.OccupyStatus.CONFIRMED
 import com.reservation.enumeration.OccupyStatus.PENDING
 import com.reservation.enumeration.OccupyStatus.UNOCCUPIED
 import com.reservation.persistence.common.TimeBasedPrimaryKey
+import com.reservation.persistence.converter.UuidBinaryConverter
 import jakarta.persistence.Column
 import jakarta.persistence.ConstraintMode.NO_CONSTRAINT
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType.STRING
 import jakarta.persistence.Enumerated
@@ -42,7 +44,8 @@ class TimeTableOccupancyEntity(
     )
     @ManyToOne(fetch = EAGER)
     val timeTable: TimeTableEntity,
-    @Column(name = "user_id", length = 128)
+    @Convert(converter = UuidBinaryConverter::class)
+    @Column(name = "user_id", columnDefinition = "BINARY(16)")
     val userId: String,
 ) : TimeBasedPrimaryKey() {
     @Enumerated(STRING)

@@ -1,7 +1,9 @@
 package com.reservation.persistence.schedule.entity
 
 import com.reservation.persistence.common.TimeBasedPrimaryKey
+import com.reservation.persistence.converter.UuidBinaryConverter
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType.STRING
 import jakarta.persistence.Enumerated
@@ -16,7 +18,8 @@ import java.time.LocalTime
 )
 @Entity
 class TimeSpanEntity(
-    @Column(name = "restaurant_id")
+    @Convert(converter = UuidBinaryConverter::class)
+    @Column(name = "restaurant_id", columnDefinition = "BINARY(16)")
     val restaurantId: String,
     day: DayOfWeek,
     startTime: LocalTime,
