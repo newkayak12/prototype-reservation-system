@@ -3,9 +3,6 @@ name: Code Review
 on:
     pull_request:
         types: [ opened, reopened, synchronize ]
-        paths:
-            - "**/*.kt"
-            - "**/*.java"
 
 permissions:
     pull-requests: write
@@ -16,12 +13,23 @@ jobs:
         if: "!contains(github.event.pull_request.title, '[NO_REVIEW]')"
         runs-on: ubuntu-latest
         steps:
+            -   name: Check reviewable changes
+                id: changes
+                env:
+                    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                run: |
+                    count=$(gh api --paginate "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+                        --jq '.[].filename' | grep -cE '\.(kt|java)$' || true)
+                    echo "count=$count" >> "$GITHUB_OUTPUT"
+
             -   name: Checkout code
+                if: steps.changes.outputs.count != '0'
                 uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v5.0.0
                 with:
                     fetch-depth: 1
 
             -   name: Claude Code Review
+                if: steps.changes.outputs.count != '0'
                 uses: anthropics/claude-code-action@1d6de8cb0c237e7c15e9e1bdf973826ebae490cc # v1.0.248
                 with:
                     anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
