@@ -1,7 +1,9 @@
 package com.reservation.persistence.reservation.entity.vo
 
 import com.reservation.enumeration.ReservationStatus
+import com.reservation.persistence.converter.UuidBinaryConverter
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Embeddable
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -10,7 +12,8 @@ import java.time.LocalDateTime
 
 @Embeddable
 class ReservationTimeTableOccupancy(
-    @Column(name = "timetable_occupancy_id")
+    @Convert(converter = UuidBinaryConverter::class)
+    @Column(name = "timetable_occupancy_id", columnDefinition = "BINARY(16)")
     @Comment("시간표 점유 ID")
     val timetableOccupancyId: String,
     @Column(name = "reservation_status")

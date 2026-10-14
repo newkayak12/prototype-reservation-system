@@ -75,6 +75,16 @@ design_doc가 확정한 결정들을 ADR로 옮기는 작업 계획이다. 무�
 
 ---
 
+## V1 인프라 결정 (V2 범위 밖, 단일 ADR 경로 원칙으로 여기 기록)
+
+이 결정들은 CQRS/ES 설계 흐름(Wave 1~3)과 무관하게, `docs/v2/adr/`를 모든 아키텍처 결정의 단일 기록 위치로 못박은 `boundaries.md` 규칙에 따라 여기 기록된다.
+
+| ADR | 제목 | 근거 | 상태 |
+|-----|------|------|------|
+| ADR-028 | 식별자 컬럼 BINARY(16) 전환 — 영속성 경계 변환자 선택과 바이트 순서 | `analysis/binary-pk-identifier-inventory` (V1 `refactor/to-binary-pk`) | Proposed |
+
+---
+
 ## 손봐야 할 항목
 
 - **ADR-025** — DESIGN-004가 "필요 시"로 남긴 조건부 결정이다. 읽기 신선도 예외가 실제로 필요해질 때만 작성한다.

@@ -2,8 +2,10 @@ package com.reservation.persistence.menu.entity
 
 import com.reservation.persistence.common.LogicalDelete
 import com.reservation.persistence.common.TimeBasedPrimaryKey
+import com.reservation.persistence.converter.UuidBinaryConverter
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -33,7 +35,8 @@ class MenuEntity(
     description: String,
     price: BigDecimal,
 ) : TimeBasedPrimaryKey() {
-    @Column(name = "restaurant_id")
+    @Convert(converter = UuidBinaryConverter::class)
+    @Column(name = "restaurant_id", columnDefinition = "BINARY(16)")
     @Comment("restaurant 식별 키")
     val restaurantId: String = restaurantId
 

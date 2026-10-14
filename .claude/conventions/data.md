@@ -42,6 +42,8 @@
   - `CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ... IF NOT EXISTS`, `INSERT ... ON CONFLICT DO NOTHING`
   - Backfill scripts are *safe to re-run* (where clause processes only unhandled rows)
   - Use the migration tool's transactional support where available
+  - **MySQL caveat**: `ALTER TABLE ... ADD/DROP COLUMN IF [NOT] EXISTS` and `ADD/DROP INDEX IF [NOT] EXISTS` are NOT portable — check the target engine before using them. PostgreSQL and MariaDB support this syntax; **MySQL never has, at any version** (confirmed directly against this project's own `mysql:latest` container while building V1_22/V1_23 — every one of `ADD COLUMN IF NOT EXISTS`, `DROP COLUMN IF EXISTS`, `ADD INDEX IF NOT EXISTS`, `ADD UNIQUE KEY IF NOT EXISTS`, `DROP INDEX IF EXISTS` is `ERROR 1064`, a hard syntax error). An earlier draft of this convention cited "MySQL >= 8.0.29" for this syntax — that citation was fabricated; 8.0.29 added INSTANT `ADD COLUMN` in any position, an unrelated feature. **On MySQL**, make each DDL statement idempotent with a guard procedure that checks `information_schema.COLUMNS` / `information_schema.STATISTICS` / `information_schema.TABLE_CONSTRAINTS` first and only runs the `ALTER TABLE` (via `PREPARE`/`EXECUTE` dynamic SQL) when the target is actually missing/present — see `V1_22__binary_pk_identifier_expand.sql` and `V1_23__binary_pk_identifier_contract.sql` for the pattern (`sp_add_column_if_absent`, `sp_drop_column_if_exists`, `sp_add_index_if_absent`, `sp_drop_index_if_exists`, `sp_drop_pk_if_exists`/`sp_add_pk_if_absent`, `sp_rename_column_if_exists`).
+  - **Rename-back guard**: a guard that only checks "does a column/index with this name exist" is not enough when a step **renames** something back to its original name (e.g. an expand/contract swap): after a full successful run, the final column exists under the pre-migration name too, so a naive existence check would let a second run drop it again. Guard the destructive step on a property that actually distinguishes "not yet migrated" from "already migrated" (e.g. `DATA_TYPE` for a type-changing swap), not merely on name existence.
 
 ## D-06: Schema changes are backward-compatible first
 
@@ -88,6 +90,15 @@
 - **How**:
   - If user regions are likely to diversify, review *region-aware data storage* design in advance
   - Record legal requirements as an ADR when selecting a cloud region
+
+## D-12: Identifier storage — BINARY(16) in the DB, string at every other boundary
+
+- **Why**: Storing a UUID identifier as `VARCHAR` text wastes space and makes every PK/FK comparison a string comparison. But rewriting every layer to pass `UUID`/`byte[]` around spreads a storage decision into domain and API code that should never need to know about it. See [[ADR-028-binary-pk-identifier-storage]] for the full argument (mechanism choice, byte order, expand/contract path).
+- **How**:
+  - **Storage form**: UUID-bearing identifier columns (primary keys and the columns/association join columns that reference them) are `BINARY(16)`, holding the 16 bytes of the UUID in the text's own hex order (no `UUID_TO_BIN(x, 1)`-style swap) — see ADR-028 for why no swap applies to this project's UUIDv7 identifiers.
+  - **Who owns the conversion**: the persistence boundary only, via a single `AttributeConverter<String, ByteArray>` (or, if `@Convert` is not honored on an `@Id`/`@EmbeddedId` member, the designated fallback: per-entity `@Convert` redeclaration or a Hibernate `UserType`/`BasicValueConverter` — ADR-028 §결정 3). Never hand-roll the byte conversion at a call site; delegate to the shared codec.
+  - **Canonical form elsewhere**: domain, application, and API layers keep the identifier as a lowercase, hyphenated UUID string (the `Persistable<String>` / `UuidGenerator.generate(): String` contract is unchanged). Nothing above the persistence boundary ever sees a `ByteArray` or a raw binary column.
+  - **Out of scope**: business-meaningful strings that happen to live in an identifier-shaped column are not UUIDs and are not converted — e.g. a user's chosen login id (`user.login_id`), or a nonce-based ticket code (`waiting_queue.ticket_id`, a `SecureRandom` hex string, not a `UuidGenerator` value). Confirm with the writer-tracing method in [[binary-pk-identifier-inventory]] before assuming a column is a UUID.
 
 ## Related skills
 

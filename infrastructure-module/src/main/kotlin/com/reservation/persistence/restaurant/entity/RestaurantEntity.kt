@@ -3,8 +3,10 @@ package com.reservation.persistence.restaurant.entity
 import com.reservation.persistence.common.AuditDateTime
 import com.reservation.persistence.common.LogicalDelete
 import com.reservation.persistence.common.TimeBasedPrimaryKey
+import com.reservation.persistence.converter.UuidBinaryConverter
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -39,12 +41,14 @@ class RestaurantEntity(
     latitude: BigDecimal,
     longitude: BigDecimal,
 ) : TimeBasedPrimaryKey() {
-    @Column(name = "company_id")
+    @Convert(converter = UuidBinaryConverter::class)
+    @Column(name = "company_id", columnDefinition = "BINARY(16)")
     @Comment("company 식별키")
     var companyId: String = companyId
         protected set
 
-    @Column(name = "user_id")
+    @Convert(converter = UuidBinaryConverter::class)
+    @Column(name = "user_id", columnDefinition = "BINARY(16)")
     @Comment("user 식별키")
     var userId: String = userId
         protected set

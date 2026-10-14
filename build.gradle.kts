@@ -6,7 +6,22 @@ plugins {
     alias(libs.plugins.kotlin.spring) apply false
     alias(libs.plugins.kotlin.jpa) apply false
     alias(libs.plugins.kotlin.kapt) apply false
-    alias(libs.plugins.flyway) apply false
+    // NOT alias(libs.plugins.flyway) here: pre-registering this plugin ID via the root
+    // `plugins {}` DSL (even with `apply false`) makes Gradle resolve every later
+    // `apply(plugin = "org.flywaydb.flyway")` from the plugin-portal-managed classloader it
+    // caches for that ID — a classloader built ONLY from the `org.flywaydb.flyway` plugin
+    // marker coordinate, with no visibility into adapter-module's own `buildscript {}` block
+    // where `flyway-mysql`/the JDBC driver are added. That mismatch is exactly why
+    // `flywayMigrate`/`flywayInfo` failed with "No database found to handle jdbc:mysql://..."
+    // even though `buildEnvironment` showed flyway-mysql correctly resolved on
+    // adapter-module's buildscript classpath — the task never ran against that classpath.
+    // adapter-module is the ONLY module that uses this plugin (grep confirmed), and it already
+    // declares its own `buildscript { classpath(...) }` + `apply(plugin = "org.flywaydb.flyway")`
+    // (see adapter-module/build.gradle.kts) — the old-style application Flyway's docs
+    // recommend specifically so the plugin and its MySQL extension share one classloader.
+    // Leaving this alias here does not just skip the fix: once Gradle has resolved an "apply
+    // false" plugin ID via the version-catalog/plugin-portal path, that cached resolution wins
+    // over a later old-style buildscript apply of the SAME id, so the two cannot coexist.
     alias(libs.plugins.asciidoctor) apply false
     alias(libs.plugins.restdocs.api.spec) apply false
     alias(libs.plugins.swagger.generator) apply false

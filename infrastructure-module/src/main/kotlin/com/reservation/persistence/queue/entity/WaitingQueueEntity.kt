@@ -3,7 +3,9 @@ package com.reservation.persistence.queue.entity
 import com.reservation.enumeration.QueueStatus
 import com.reservation.enumeration.QueueStatus.ADMITTED
 import com.reservation.enumeration.QueueStatus.WAITING
+import com.reservation.persistence.converter.UuidBinaryConverter
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType.STRING
 import jakarta.persistence.Enumerated
@@ -27,7 +29,8 @@ import java.time.LocalTime
 )
 @Entity
 class WaitingQueueEntity(
-    @Column(name = "restaurant_id")
+    @Convert(converter = UuidBinaryConverter::class)
+    @Column(name = "restaurant_id", columnDefinition = "BINARY(16)")
     @Comment("매장 ID")
     val restaurantId: String,
     @Column(name = "date")
@@ -36,9 +39,13 @@ class WaitingQueueEntity(
     @Column(name = "start_time")
     @Comment("시작 시간")
     val startTime: LocalTime,
-    @Column(name = "user_id", length = 128)
+    @Convert(converter = UuidBinaryConverter::class)
+    @Column(name = "user_id", columnDefinition = "BINARY(16)")
     @Comment("사용자 ID")
     val userId: String,
+    // LEAVE-AS-VARCHAR(U1 2d#17): SecureRandom 기반 32자 hex nonce — UuidGenerator 값이 아니다.
+    // 변환하지 않는다. length=128 유지(실제 폭은 32자지만 원래부터 이 선언이었고, 이번 전환의
+    // 대상이 아니므로 폭 표현은 U1 범위 밖 — 손대지 않는다).
     @Column(name = "ticket_id", length = 128)
     @Comment("대기열 티켓 ID")
     val ticketId: String,

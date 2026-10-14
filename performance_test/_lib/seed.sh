@@ -61,19 +61,19 @@ for i in range(1, points + 1):
     rid = uid()
     point_ids.append(rid)
     restaurants.append(
-        f"('{rid}','{hot_prefix}_{i:04d}','0212345678','06236','Seoul','perf hot',0)")
+        f"(UNHEX(REPLACE('{rid}','-','')),'{hot_prefix}_{i:04d}','0212345678','06236','Seoul','perf hot',0)")
     for sl in slots:
         for n in range(1, seats + 1):
             timetables.append(
-                f"('{uid()}','{rid}','{date}','{day}','{sl['startTime']}','{sl['endTime']}',"
+                f"(UNHEX(REPLACE('{uid()}','-','')),UNHEX(REPLACE('{rid}','-','')),'{date}','{day}','{sl['startTime']}','{sl['endTime']}',"
                 f"{n},4,'EMPTY','NOT_CONFIRMED',0)")
 
 # 배경 식당은 커넥션 예열용 GET 대상이다. 락도 쓰기도 타지 않으므로 첫 슬롯만 있으면 된다.
 bg_id = uid()
-restaurants.append(f"('{bg_id}','{bg_name}','0212345679','06236','Seoul','perf background',0)")
+restaurants.append(f"(UNHEX(REPLACE('{bg_id}','-','')),'{bg_name}','0212345679','06236','Seoul','perf background',0)")
 for n in range(1, bg_seats + 1):
     timetables.append(
-        f"('{uid()}','{bg_id}','{date}','{day}','{slots[0]['startTime']}',"
+        f"(UNHEX(REPLACE('{uid()}','-','')),UNHEX(REPLACE('{bg_id}','-','')),'{date}','{day}','{slots[0]['startTime']}',"
         f"'{slots[0]['endTime']}',{n},4,'EMPTY','NOT_CONFIRMED',0)")
 
 R_COLS = ("INSERT INTO restaurant (id, name, phone, zip_code, address, detail, is_deleted) "

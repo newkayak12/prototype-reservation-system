@@ -17,6 +17,7 @@
 - [[02-domain-limitations]] — 이벤트 소싱 관점 한계 (빈약 도메인 등)
 - [[03-open-decisions]] — 논의 과정·옵션·합의 기록
 - [[04-design-completeness-audit]] — **전수 감사(2026-06-16)**: 6/6 N·횡단 미결 7 + 선행 게이트(이벤트 카탈로그)·클러스터별 미결 체크리스트
+- [[binary-pk-identifier-inventory]] — **Binary PK 식별자 표면 전수조사(2026-10-06, 베이스 `244a93b3`)**: `refactor/to-binary-pk` 작업을 위한 VARCHAR(128)→BINARY(16) 전환 대상 식별자 54개 표면(PK 18 + 명시 컬럼 22 + 뒤늦게 발견된 미전환 컬럼 1(`schedule.id`, ACCEPTED-RESIDUAL) + 암묵 컬럼 13) CONVERT/LEAVE-AS-VARCHAR/ACCEPTED-RESIDUAL 판정, FK 0건 확인, 제약/인덱스·정렬 의존(batch 커서) 영향, 스키마 검증 컨텍스트 기록
 
 ## RFC (rfc/)
 - [[RFC-001-v2-cqrs-and-event-sourcing]] — V2 방향 결정의 서사 (라운드1 — 큰 그림)
@@ -70,6 +71,7 @@
 - [[20.auth-token-transport]] — 인증 토큰: transport V1 계승+SameSite·무상태 refresh·즉시 폐기 포기
 - [[22.event-identity-and-global-ordering]] — 이벤트 정체성·전역 순서: `event_id`(공통 dedup/causation 앵커)+`global_seq`(재구축 열거 커서, 전순서 아님)·adr/05 스키마 보강
 - [[ADR-027-event-store-outbox-atomicity]] — **event_store·outbox 원자성(2026-07-28)**: 동일 datasource 트랜잭셔널 아웃박스(불변식 I-OUTBOX-1)로 dual-write 차단·A now / CDC(Debezium binlog) later 졸업 경로로 one-way door 해소
+- [[ADR-028-binary-pk-identifier-storage]] — **식별자 컬럼 BINARY(16) 전환(2026-10-06, V1 인프라)**: `AttributeConverter<String, ByteArray>`를 영속성 경계에 선언(폴백: 엔티티별 `@Convert`/커스텀 `UserType`)·바이트 순서는 스왑 없이 텍스트 16진수 순서 그대로(UUIDv7이라 `UUID_TO_BIN(x,1)` 불필요)·expand/contract 분리 Flyway 경로·`data.md` D-12로 V2가 상속하는 식별자 저장 규칙 확정
 
 ## 설계 (design_doc/)
 - [[00-design-overview]] — 목표 아키텍처 개요
